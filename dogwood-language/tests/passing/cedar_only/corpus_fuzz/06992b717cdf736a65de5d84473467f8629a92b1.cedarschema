@@ -1,0 +1,17 @@
+entity A000000vW tags __cedar::ipaddr;
+
+action "" appliesTo {
+  principal: [A000000vW],
+  resource: [A000000vW],
+  context: {
+    Aai00000w?: __cedar::Bool,
+    zrppppppps323?: __cedar::Bool
+  }
+};
+
+action "\u{7}" in [Action::""] appliesTo {
+  principal: [A000000vW],
+  resource: [A000000vW],
+  context: {}
+};
+

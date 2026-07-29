@@ -1,0 +1,12 @@
+entity a = {
+  A000002l03I3l: __cedar::ipaddr
+} tags __cedar::ipaddr;
+
+action "" in [Action::"A"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "A";
+

@@ -1,0 +1,13 @@
+entity a = {
+  K?: __cedar::String,
+  Q0?: __cedar::String,
+  r?: __cedar::String,
+  r3333333333333?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

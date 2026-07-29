@@ -1,0 +1,11 @@
+@r("")
+@v("")
+@zppZ3pp31313233("")
+entity a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

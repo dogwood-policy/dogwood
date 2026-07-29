@@ -1,0 +1,14 @@
+// Permit SellShares only after a fixed cutover date.
+//
+// New idea: the `datetime("...")` literal and `context.system.now`,
+// which carries the request's wall-clock timestamp. Datetimes
+// support the full set of comparison operators (==, !=, <, <=, >,
+// >=), unlike decimals (see 0010 / decimal_equality).
+permit(
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+)
+when {
+    context.system.now > datetime("2024-01-01T00:00:00Z")
+};

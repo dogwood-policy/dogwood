@@ -1,0 +1,2 @@
+@0 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { stock: "AMZN" }) Drupe::Action::"GetStockInfo"::request(input: { stock: "AMZN" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u1")
+@100 scope(principal: Drupe::OAuthUser::"bob", resource: Drupe::Gateway::"gw1") request_context(input: { stock: "MSFT" }) Drupe::Action::"GetStockInfo"::request(input: { stock: "MSFT" }, callerPrincipal: Drupe::OAuthUser::"bob", callerResource: Drupe::Gateway::"gw1", requestId: "u2")

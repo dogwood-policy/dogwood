@@ -1,0 +1,11 @@
+// Write is permitted unless the user has logged out
+// within the last hour
+
+permit (
+    principal,
+    action == Drupe::Action::"Write",
+    resource
+)
+unless temporal {
+    formerly within 1h Drupe::Action::"Logout"::request{ input.user: context.input.user }
+};

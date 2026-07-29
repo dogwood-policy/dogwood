@@ -1,0 +1,18 @@
+entity a tags {
+  ""?: __cedar::datetime,
+  @A("`\0\0!!")
+  @T("\0--:-!!!!!0000!!!!!!!!!!!!!!!!!!!")
+  @hXXXXX00000000000
+  @hXXXXX100nXXXXXXX("!!!!!!!!!!!!!\u{17}!!!!!!!!!`!!!!!!!!!!-")
+  @hXXXXXXXXXXXXXXXX("!!!!!!!!!!!!!!!!!!$!!!!z\n\0\0")
+  @hXXXXgXXXXXXXXXXX("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+  "\u{c}": Set<Set<Set<__cedar::Long>>>,
+  "@]*Debian \'\0\0\0r3Debian bian 00000"?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,8 @@
+
+forbid (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    exists (n: Long). ((count for (t: Timepoint). where (formerly within 1h (Drupe::Action::"Transfer"::request{ input.user: context.input.user, input.amount: _ } && tp(t)))) == n && n >= 3)};

@@ -1,0 +1,16 @@
+// Permit Read when a Scan returned score decimal("0.50") within 1h.
+// The trace sends score: 0.50 which is numerically equal to 0.5 and 0.50.
+// This case SHOULD pass — decimal("0.50") and score: 0.50 represent the same
+// value — but currently FAILS because the DSQL backend compares the decimal
+// literal string '0.50' against the trace-serialized string '0.50', and
+// decimal("0.5") would NOT match score: 0.50 for the same reason.
+// This test documents the expected correct behavior (match) which the
+// implementation currently gets wrong for certain string representations.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h (Drupe::Action::"Scan"::response{ input.user: context.input.user, output.score: decimal("0.50") })
+};

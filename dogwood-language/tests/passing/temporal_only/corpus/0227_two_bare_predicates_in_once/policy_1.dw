@@ -1,0 +1,9 @@
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    (formerly within 1h Drupe::Action::"Probe"::request{ input.user: context.input.user })
+    && (formerly within 1h Drupe::Action::"Heartbeat"::request{ input.user: context.input.user })
+};

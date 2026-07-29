@@ -1,0 +1,7 @@
+forbid(
+  principal in a::"",
+  action in [Action::"action",Action::"action",Action::"action"],
+  resource in a::"\u{b2cf2}\u{2}\0\0\0"
+) when {
+  (true && ((if ([[context, context], []].containsAny([[principal, resource], [action, resource]])) then (if false then {"\0": false} else context) else (if false then {"\0": false} else context))["\0"])) && ("U" like "")
+};

@@ -1,0 +1,16 @@
+namespace B::BW_3f33333 {
+  entity Pf enum [""];
+
+  entity fB enum [""];
+
+  entity g enum [""];
+
+  entity r enum [""];
+
+  action "action" appliesTo {
+    principal: [fB],
+    resource: [fB],
+    context: {}
+  };
+}
+

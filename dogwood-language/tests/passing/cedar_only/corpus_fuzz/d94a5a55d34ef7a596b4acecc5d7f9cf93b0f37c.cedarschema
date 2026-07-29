@@ -1,0 +1,19 @@
+entity a;
+
+action "" in [Action::":;", Action::"V\u{1d}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    r3bbbbb?: __cedar::Long
+  }
+};
+
+@x000000W000000000
+action ":;" in [Action::"V\u{1d}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "V\u{1d}";
+

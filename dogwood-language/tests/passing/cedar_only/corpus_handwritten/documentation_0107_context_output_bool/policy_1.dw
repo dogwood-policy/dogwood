@@ -1,0 +1,17 @@
+// Permit ApproveSale only when the tool's resolved output reports
+// `approved: true`. The new idea: clause bodies can read fields
+// from `context.output` the same way they read `context.input`,
+// and Bool fields are compared with `== true` / `== false`.
+//
+// Because `output` is optional on tool actions in the schema, the
+// reference is guarded with `context has output` so the validator
+// is satisfied when no resolution is attached to the request.
+
+permit (
+    principal,
+    action == Drupe::Action::"ApproveSale",
+    resource
+)
+when {
+    if context has output then context.output.approved == true else false
+};

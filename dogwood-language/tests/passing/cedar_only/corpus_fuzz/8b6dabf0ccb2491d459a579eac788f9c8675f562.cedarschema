@@ -1,0 +1,11 @@
+@r3T1RRN
+@rcmRR000000000000
+@rcmRR000333RRwR3E("")
+entity a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

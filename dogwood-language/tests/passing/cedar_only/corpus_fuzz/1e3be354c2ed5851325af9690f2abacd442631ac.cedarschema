@@ -1,0 +1,20 @@
+entity a;
+
+action "" in [Action::":", Action::"\u{e}", Action::"[@\u{16}\u{1d}", Action::"V", Action::"\u{1d}\u{1b}Debian e/datetDebian e/", Action::"m"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{e}" in [Action::"[@\u{16}\u{1d}", Action::"V", Action::"\u{1d}\u{1b}Debian e/datetDebian e/", Action::"m"];
+
+action "\u{1d}\u{1b}Debian e/datetDebian e/" in [Action::"m"];
+
+action ":" in [Action::"\u{e}", Action::"[@\u{16}\u{1d}", Action::"V", Action::"\u{1d}\u{1b}Debian e/datetDebian e/", Action::"m"];
+
+action "V" in [Action::"\u{1d}\u{1b}Debian e/datetDebian e/", Action::"m"];
+
+action "[@\u{16}\u{1d}" in [Action::"V", Action::"\u{1d}\u{1b}Debian e/datetDebian e/", Action::"m"];
+
+action "m";
+

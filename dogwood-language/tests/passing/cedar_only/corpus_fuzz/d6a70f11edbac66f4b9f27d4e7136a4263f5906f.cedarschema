@@ -1,0 +1,24 @@
+entity a = {
+  ORRT33S1S3T: __cedar::ipaddr,
+  duRa?: Set<__cedar::Bool>
+} tags {
+  ""?: __cedar::String,
+  "\0\0"?: __cedar::String,
+  "\u{e}"?: __cedar::String,
+  "\u{1d}"?: __cedar::String,
+  "\u{1d}\u{3}"?: __cedar::String,
+  "\u{1d}@gffd~"?: __cedar::String,
+  "$?@:\u{f}e"?: __cedar::String,
+  ":~"?: __cedar::String,
+  "=\u{e}"?: __cedar::String,
+  "[@"?: __cedar::String,
+  "[@["?: __cedar::String,
+  "^"?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,21 @@
+// Permit Read only when the document contains NO detected PII, as decided
+// by the `Pii::Scan` information provider (implemented in pii.rhai).
+//
+// This is the regex-backed, runnable analog of the reference sensitive-information
+// guardrail (`documentation_0402` / `0404`), which gates on a classifier's
+// `confidenceScore`. Here the provider scans the text with the `regex_count`
+// host function for two PII shapes — SSN-like runs and email-like tokens —
+// and returns a per-category count record `{ ssn: Long, email: Long }`. The
+// zero-argument output method `maxCount()` reduces that record to the single
+// worst category count (exactly the reference `maxConfidenceScore()` shape: a
+// method with no arguments of its own, only the pipeline value), and the
+// policy permits only when that worst count is below 1 (i.e. zero PII hits).
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Pii::Scan(context.input.document).maxCount() < 1
+};

@@ -1,0 +1,61 @@
+entity a tags __cedar::String;
+
+action "" in [Action::":~", Action::"\u{1d}@[", Action::"\u{3}\u{1d}w", Action::"$", Action::"\u{1d}\u{14}", Action::"@", Action::"$=\u{e}", Action::"[", Action::"\u{3}dd\u{e}", Action::"\u{3}dddd"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    O?: __cedar::ipaddr,
+    r?: __cedar::String,
+    vbbbbkR15cZgYlWe?: __cedar::ipaddr
+  }
+};
+
+action "\u{3}\u{1d}w" in [Action::"$", Action::"\u{1d}\u{14}", Action::"@", Action::"$=\u{e}", Action::"[", Action::"\u{3}dd\u{e}", Action::"\u{3}dddd"];
+
+action "\u{3}dd\u{e}" in [Action::"\u{3}dddd"];
+
+action "\u{3}dddd";
+
+action "\u{1d}\u{14}" in [Action::"@", Action::"$=\u{e}", Action::"[", Action::"\u{3}dd\u{e}", Action::"\u{3}dddd"];
+
+action "\u{1d}@[" in [Action::"\u{3}\u{1d}w", Action::"$", Action::"\u{1d}\u{14}", Action::"@", Action::"$=\u{e}", Action::"[", Action::"\u{3}dd\u{e}", Action::"\u{3}dddd"];
+
+action "$" in [Action::"\u{1d}\u{14}", Action::"@", Action::"$=\u{e}", Action::"[", Action::"\u{3}dd\u{e}", Action::"\u{3}dddd"];
+
+action "$=\u{e}" in [Action::"[", Action::"\u{3}dd\u{e}", Action::"\u{3}dddd"];
+
+action ":~" in [Action::"\u{1d}@[", Action::"\u{3}\u{1d}w", Action::"$", Action::"\u{1d}\u{14}", Action::"@", Action::"$=\u{e}", Action::"[", Action::"\u{3}dd\u{e}", Action::"\u{3}dddd"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @D3S1S3T1eddb0("\u{e}")
+    @Leddb03ERVR3T("")
+    @Y("")
+    @r("")
+    @r3("")
+    @rPPPPPeRw
+    @rzE("")
+    @v
+    @vK13ERRT33("@[")
+    @vbbb("")
+    @y33bbPPPP("\u{19}\u{19}\u{19}\u{19}\u{19}\u{19}\u{19}\u{19}")
+    NRLmeeeA0SRRR: __cedar::Long,
+    @LS3T1e0
+    @d("")
+    @e("\u{3}\u{e}")
+    @r("")
+    @r333("")
+    @v("")
+    @vRRRR("")
+    @w("")
+    @y
+    @z("")
+    r: a,
+    u?: __cedar::String
+  }
+};
+
+action "@" in [Action::"$=\u{e}", Action::"[", Action::"\u{3}dd\u{e}", Action::"\u{3}dddd"];
+
+action "[" in [Action::"\u{3}dd\u{e}", Action::"\u{3}dddd"];
+

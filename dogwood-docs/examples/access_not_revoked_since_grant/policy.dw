@@ -1,0 +1,15 @@
+// The "open session" idiom: a negated LEFT operand expresses "has not happened
+// since". Because `!` binds tighter than `since`, `!A since within W B`
+// negates only A. Permit an Access only if the user has NOT been revoked on
+// this resource since they were granted it within the last hour.
+@id("access_not_revoked_since_grant")
+permit (
+    principal,
+    action == Drupe::Action::"Access",
+    resource
+)
+when temporal {
+    !Drupe::Action::"Revoke"::request{ input.user: context.input.user, input.resource: context.input.resource }
+    since within 1h
+    Drupe::Action::"Grant"::request{ input.user: context.input.user, input.resource: context.input.resource }
+};

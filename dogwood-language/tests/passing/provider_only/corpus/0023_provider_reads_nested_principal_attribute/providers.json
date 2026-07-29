@@ -1,0 +1,20 @@
+{
+  "availableProviders": {
+    "Zone::Blocked": {
+      "argumentTypes": [
+        { "paramType": "string" }
+      ],
+      "outputType": {
+        "paramType": "record",
+        "fields": {
+          "blocked": { "paramType": "bool" }
+        },
+        "required": ["blocked"]
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "zone_blocked.rhai"
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+// A `forbid` guarded by a provider whose argument is a *nested* principal
+// entity attribute (`principal.address.zone`, two segments deep). The
+// unconditional `permit` allows Read; the `forbid` blocks it when the
+// principal is in a restricted zone.
+//
+// The forbid shape is the point: if the nested provider argument failed to
+// resolve (the pre-fix behaviour, where paths deeper than one segment silently
+// became `Null`), the provider would not see "restricted", the forbid would
+// not fire, and the request would be **allowed** — a fail-open security hole.
+// With nested paths resolving correctly, the forbid fires and the request is
+// denied. (Contrast `0020`/`0021`, which use single-segment paths.)
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+);
+
+forbid (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Zone::Blocked(principal.address.zone).blocked == true
+};

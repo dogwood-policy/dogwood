@@ -1,0 +1,50 @@
+namespace v::B::FSRRR {
+  entity QN = {
+    U3T1S33T: __cedar::duration
+  } tags __cedar::Long;
+
+  entity v tags __cedar::String;
+
+  action "" in [v::B::FSRRR::Action::"\u{3}[", v::B::FSRRR::Action::"@T", v::B::FSRRR::Action::"\u{1d}@gffd~", v::B::FSRRR::Action::"\u{e}", v::B::FSRRR::Action::"^", v::B::FSRRR::Action::"\u{1d}\u{3}", v::B::FSRRR::Action::"[@", v::B::FSRRR::Action::":~$=dddddddd\u{1d}@", v::B::FSRRR::Action::"n:~", v::B::FSRRR::Action::"\u{1d}@[", v::B::FSRRR::Action::"\u{3}\u{1d}w", v::B::FSRRR::Action::"3", v::B::FSRRR::Action::"=\u{e}", v::B::FSRRR::Action::"[E", v::B::FSRRR::Action::"\u{6}\u{6}!"] appliesTo {
+    principal: [v],
+    resource: [v, QN],
+    context: {}
+  };
+
+  action "\u{3}\u{1d}w" in [v::B::FSRRR::Action::"3", v::B::FSRRR::Action::"=\u{e}", v::B::FSRRR::Action::"[E", v::B::FSRRR::Action::"\u{6}\u{6}!"];
+
+  action "\u{3}[" in [v::B::FSRRR::Action::"@T", v::B::FSRRR::Action::"\u{1d}@gffd~", v::B::FSRRR::Action::"\u{e}", v::B::FSRRR::Action::"^", v::B::FSRRR::Action::"\u{1d}\u{3}", v::B::FSRRR::Action::"[@", v::B::FSRRR::Action::":~$=dddddddd\u{1d}@", v::B::FSRRR::Action::"n:~", v::B::FSRRR::Action::"\u{1d}@[", v::B::FSRRR::Action::"\u{3}\u{1d}w", v::B::FSRRR::Action::"3", v::B::FSRRR::Action::"=\u{e}", v::B::FSRRR::Action::"[E", v::B::FSRRR::Action::"\u{6}\u{6}!"] appliesTo {
+    principal: [QN, v],
+    resource: [v],
+    context: {
+      A?: __cedar::String
+    }
+  };
+
+  action "\u{6}\u{6}!";
+
+  action "\u{e}" in [v::B::FSRRR::Action::"^", v::B::FSRRR::Action::"\u{1d}\u{3}", v::B::FSRRR::Action::"[@", v::B::FSRRR::Action::":~$=dddddddd\u{1d}@", v::B::FSRRR::Action::"n:~", v::B::FSRRR::Action::"\u{1d}@[", v::B::FSRRR::Action::"\u{3}\u{1d}w", v::B::FSRRR::Action::"3", v::B::FSRRR::Action::"=\u{e}", v::B::FSRRR::Action::"[E", v::B::FSRRR::Action::"\u{6}\u{6}!"];
+
+  action "\u{1d}\u{3}" in [v::B::FSRRR::Action::"[@", v::B::FSRRR::Action::":~$=dddddddd\u{1d}@", v::B::FSRRR::Action::"n:~", v::B::FSRRR::Action::"\u{1d}@[", v::B::FSRRR::Action::"\u{3}\u{1d}w", v::B::FSRRR::Action::"3", v::B::FSRRR::Action::"=\u{e}", v::B::FSRRR::Action::"[E", v::B::FSRRR::Action::"\u{6}\u{6}!"];
+
+  action "\u{1d}@[" in [v::B::FSRRR::Action::"\u{3}\u{1d}w", v::B::FSRRR::Action::"3", v::B::FSRRR::Action::"=\u{e}", v::B::FSRRR::Action::"[E", v::B::FSRRR::Action::"\u{6}\u{6}!"];
+
+  action "\u{1d}@gffd~" in [v::B::FSRRR::Action::"\u{e}", v::B::FSRRR::Action::"^", v::B::FSRRR::Action::"\u{1d}\u{3}", v::B::FSRRR::Action::"[@", v::B::FSRRR::Action::":~$=dddddddd\u{1d}@", v::B::FSRRR::Action::"n:~", v::B::FSRRR::Action::"\u{1d}@[", v::B::FSRRR::Action::"\u{3}\u{1d}w", v::B::FSRRR::Action::"3", v::B::FSRRR::Action::"=\u{e}", v::B::FSRRR::Action::"[E", v::B::FSRRR::Action::"\u{6}\u{6}!"];
+
+  action "3" in [v::B::FSRRR::Action::"=\u{e}", v::B::FSRRR::Action::"[E", v::B::FSRRR::Action::"\u{6}\u{6}!"];
+
+  action ":~$=dddddddd\u{1d}@" in [v::B::FSRRR::Action::"n:~", v::B::FSRRR::Action::"\u{1d}@[", v::B::FSRRR::Action::"\u{3}\u{1d}w", v::B::FSRRR::Action::"3", v::B::FSRRR::Action::"=\u{e}", v::B::FSRRR::Action::"[E", v::B::FSRRR::Action::"\u{6}\u{6}!"];
+
+  action "=\u{e}" in [v::B::FSRRR::Action::"[E", v::B::FSRRR::Action::"\u{6}\u{6}!"];
+
+  action "@T" in [v::B::FSRRR::Action::"\u{1d}@gffd~", v::B::FSRRR::Action::"\u{e}", v::B::FSRRR::Action::"^", v::B::FSRRR::Action::"\u{1d}\u{3}", v::B::FSRRR::Action::"[@", v::B::FSRRR::Action::":~$=dddddddd\u{1d}@", v::B::FSRRR::Action::"n:~", v::B::FSRRR::Action::"\u{1d}@[", v::B::FSRRR::Action::"\u{3}\u{1d}w", v::B::FSRRR::Action::"3", v::B::FSRRR::Action::"=\u{e}", v::B::FSRRR::Action::"[E", v::B::FSRRR::Action::"\u{6}\u{6}!"];
+
+  action "[@" in [v::B::FSRRR::Action::":~$=dddddddd\u{1d}@", v::B::FSRRR::Action::"n:~", v::B::FSRRR::Action::"\u{1d}@[", v::B::FSRRR::Action::"\u{3}\u{1d}w", v::B::FSRRR::Action::"3", v::B::FSRRR::Action::"=\u{e}", v::B::FSRRR::Action::"[E", v::B::FSRRR::Action::"\u{6}\u{6}!"];
+
+  action "[E" in [v::B::FSRRR::Action::"\u{6}\u{6}!"];
+
+  action "^" in [v::B::FSRRR::Action::"\u{1d}\u{3}", v::B::FSRRR::Action::"[@", v::B::FSRRR::Action::":~$=dddddddd\u{1d}@", v::B::FSRRR::Action::"n:~", v::B::FSRRR::Action::"\u{1d}@[", v::B::FSRRR::Action::"\u{3}\u{1d}w", v::B::FSRRR::Action::"3", v::B::FSRRR::Action::"=\u{e}", v::B::FSRRR::Action::"[E", v::B::FSRRR::Action::"\u{6}\u{6}!"];
+
+  action "n:~" in [v::B::FSRRR::Action::"\u{1d}@[", v::B::FSRRR::Action::"\u{3}\u{1d}w", v::B::FSRRR::Action::"3", v::B::FSRRR::Action::"=\u{e}", v::B::FSRRR::Action::"[E", v::B::FSRRR::Action::"\u{6}\u{6}!"];
+}
+

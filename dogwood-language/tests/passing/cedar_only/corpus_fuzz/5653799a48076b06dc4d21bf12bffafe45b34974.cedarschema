@@ -1,0 +1,10 @@
+namespace R::ydb000d00000000::A::Q::slWQ::tgYl2W00dd00dHHHH {
+  entity a;
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

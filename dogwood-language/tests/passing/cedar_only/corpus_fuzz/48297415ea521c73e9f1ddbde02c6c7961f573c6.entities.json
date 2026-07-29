@@ -1,0 +1,69 @@
+[
+  {
+    "uid": {
+      "type": "j1::Action",
+      "id": "@"
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "j1::Action",
+        "id": "?S"
+      },
+      {
+        "type": "j1::Action",
+        "id": ":"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "j1::Action",
+      "id": "?S"
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "j1::Action",
+        "id": ":"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "j1::a",
+      "id": ""
+    },
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "j1::Action",
+      "id": "\u0001\u000f"
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "j1::Action",
+        "id": ":"
+      },
+      {
+        "type": "j1::Action",
+        "id": "?S"
+      },
+      {
+        "type": "j1::Action",
+        "id": "@"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "j1::Action",
+      "id": ":"
+    },
+    "attrs": {},
+    "parents": []
+  }
+]

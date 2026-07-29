@@ -1,0 +1,14 @@
+namespace iOn {
+  entity A00 enum [""];
+
+  entity iOO enum [""];
+
+  entity iOz enum [""];
+
+  action "action" appliesTo {
+    principal: [iOO],
+    resource: [iOO],
+    context: {}
+  };
+}
+

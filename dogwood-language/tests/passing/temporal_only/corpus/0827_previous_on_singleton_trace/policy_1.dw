@@ -1,0 +1,14 @@
+// L7 probe: `previous within` on a 1-event trace.
+//
+// On a singleton trace, there is no strictly-prior time point, so
+// `previous` must evaluate to false at the only tp. The expected
+// behavior is no permits emitted.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    previous within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

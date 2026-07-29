@@ -1,0 +1,12 @@
+namespace A0 {
+  entity a = {
+    B?: Set<A0::a>
+  };
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

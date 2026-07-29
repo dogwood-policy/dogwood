@@ -1,0 +1,26 @@
+entity a = {
+  @A("")
+  @D3S1S3V000000
+  @Hooooooooooo("qqqqq\u{1}\u{4}qfd~")
+  @LS33TuRa3zERR("\u{3}")
+  @LS3T1ed("")
+  @PNNg0u00RRw
+  @U3F0("")
+  @U3T1S33T("")
+  @d1Ra("\u{14}")
+  @e33("@")
+  @rKR("qqqqqqqqqqqqqqqqqq\u{1}\u{4}qfd~")
+  @rzE("")
+  @vRS30003R1AFNNg
+  @vVR3T33S1R00000
+  @vVR3T33S1RazjER("[")
+  @ydRRx03F0V3ERR("")
+  A: __cedar::ipaddr
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,18 @@
+entity Blf enum ["", "", "", "", "", "\u{1f}"];
+
+entity Hf enum [""];
+
+entity Y45424a44402 enum [""];
+
+entity g2;
+
+entity l enum ["\u{2}"];
+
+entity n;
+
+action "action" appliesTo {
+  principal: [g2],
+  resource: [l, n, Y45424a44402, g2, Hf, Blf],
+  context: {}
+};
+

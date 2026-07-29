@@ -1,0 +1,11 @@
+entity a = {
+  @A000000000000000
+  A: __cedar::decimal
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

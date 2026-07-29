@@ -1,0 +1,34 @@
+entity a;
+
+action "" in [Action::":", Action::"\u{e}", Action::"ir", Action::"d", Action::"p[da", Action::"["] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: __cedar::String,
+    w?: __cedar::decimal
+  }
+};
+
+action "\u{e}" in [Action::"ir", Action::"d", Action::"p[da", Action::"["] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action ":" in [Action::"\u{e}", Action::"ir", Action::"d", Action::"p[da", Action::"["];
+
+action "[";
+
+action "d" in [Action::"p[da", Action::"["];
+
+action "ir" in [Action::"d", Action::"p[da", Action::"["] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: __cedar::String,
+    EOOaaaaR1000w013?: __cedar::String
+  }
+};
+
+action "p[da" in [Action::"["];
+

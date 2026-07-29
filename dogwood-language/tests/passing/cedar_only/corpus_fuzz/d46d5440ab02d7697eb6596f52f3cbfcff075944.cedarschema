@@ -1,0 +1,74 @@
+entity a = {
+  A4233?: {
+    ""?: __cedar::String,
+    "\0"?: __cedar::String,
+    "\0\0"?: __cedar::String,
+    "\u{3}\u{1d}wDebian "?: __cedar::String,
+    "\u{3}ddddddffd~\u{1d}"?: __cedar::String,
+    "\u{e}"?: __cedar::String,
+    @r("\0\u{1d}Debian ")
+    @vRT30qdVR35cZgY
+    "\u{1d}": {
+      ""?: Set<Set<__cedar::Long>>,
+      "\u{1d}"?: __cedar::String,
+      "V@"?: Set<Set<__cedar::Long>>
+    },
+    "\u{1d}\u{3}"?: __cedar::String,
+    "\u{1d}@["?: __cedar::String,
+    "\u{1d}@gffd~"?: __cedar::String,
+    "!\u{3}"?: __cedar::String,
+    "$"?: __cedar::String,
+    "$\u{e}="?: __cedar::String,
+    ":pVV"?: __cedar::String,
+    ":~"?: __cedar::String,
+    "=\u{e}"?: __cedar::String,
+    "?\0\0\0"?: __cedar::String,
+    "V@"?: {
+      ""?: __cedar::String,
+      "\0"?: __cedar::String,
+      "\0\0"?: __cedar::String,
+      "\0\0\u{1d}"?: __cedar::String,
+      "\0\u{1d}"?: __cedar::String,
+      "\u{3}\u{1d}w"?: __cedar::String,
+      "\u{3}\u{1d}wDebian "?: __cedar::String,
+      "\u{3}ddddddffd\0\0"?: __cedar::String,
+      "\u{e}"?: __cedar::String,
+      "\u{1d}\u{3}"?: __cedar::String,
+      "\u{1d}@"?: __cedar::String,
+      "\u{1d}@["?: __cedar::String,
+      "\u{1d}@gffd~"?: __cedar::String,
+      "!\u{3}"?: __cedar::String,
+      "$"?: __cedar::String,
+      "$\u{e}="?: __cedar::String,
+      @r("")
+      "3"?: Set<a>,
+      ":p"?: __cedar::String,
+      ":~"?: __cedar::String,
+      "=\u{e}"?: __cedar::String,
+      "?\0\0\0"?: __cedar::String,
+      @A("")
+      @U3T17S30
+      "@"?: __cedar::Long,
+      "V@"?: __cedar::Bool,
+      "["?: __cedar::String,
+      "[:@["?: __cedar::String,
+      "[@"?: __cedar::String,
+      "[@["?: __cedar::String,
+      "^"?: __cedar::String,
+      "^$"?: __cedar::String,
+      "gffd~"?: __cedar::String,
+      zpVV?: __cedar::String
+    },
+    "["?: __cedar::String,
+    "[@"?: __cedar::String,
+    "[@["?: __cedar::String,
+    "^"?: __cedar::String
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

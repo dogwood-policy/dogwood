@@ -1,0 +1,482 @@
+{
+  "policies": "corpus-tests/07de8e1367e4456283395e592cbe2b7e4bdd465c.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/07de8e1367e4456283395e592cbe2b7e4bdd465c.entities.json",
+  "schema": "corpus-tests/07de8e1367e4456283395e592cbe2b7e4bdd465c.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "v::B::FSRRR::v",
+        "id": ""
+      },
+      "action": {
+        "type": "v::B::FSRRR::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "v::B::FSRRR::v",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": false,
+          "\u0003\u001d$w": {
+            "__entity": {
+              "type": "v::B::FSRRR::v",
+              "id": ""
+            }
+          },
+          "\u0003[": {
+            "__entity": {
+              "type": "v::B::FSRRR::QN",
+              "id": ""
+            }
+          },
+          "\u001d": "",
+          "$": [],
+          "=\u000e": {
+            "__entity": {
+              "type": "v::B::FSRRR::QN",
+              "id": ""
+            }
+          },
+          "@T": {
+            "__extn": {
+              "fn": "datetime",
+              "arg": "0000-01-01"
+            }
+          },
+          "@g": {
+            "__entity": {
+              "type": "v::B::FSRRR::v",
+              "id": ""
+            }
+          }
+        },
+        "z": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "v::B::FSRRR::v",
+        "id": ""
+      },
+      "action": {
+        "type": "v::B::FSRRR::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "v::B::FSRRR::v",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": false,
+          "\u0003\u001d$w": {
+            "__entity": {
+              "type": "v::B::FSRRR::v",
+              "id": ""
+            }
+          },
+          "\u0003[": {
+            "__entity": {
+              "type": "v::B::FSRRR::QN",
+              "id": ""
+            }
+          },
+          "\u001d": "",
+          "$": [],
+          "=\u000e": {
+            "__entity": {
+              "type": "v::B::FSRRR::QN",
+              "id": ""
+            }
+          },
+          "@T": {
+            "__extn": {
+              "fn": "datetime",
+              "arg": "0000-01-01"
+            }
+          },
+          "@g": {
+            "__entity": {
+              "type": "v::B::FSRRR::v",
+              "id": ""
+            }
+          }
+        },
+        "z": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "v::B::FSRRR::v",
+        "id": ""
+      },
+      "action": {
+        "type": "v::B::FSRRR::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "v::B::FSRRR::v",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": false,
+          "\u0003\u001d$w": {
+            "__entity": {
+              "type": "v::B::FSRRR::v",
+              "id": ""
+            }
+          },
+          "\u0003[": {
+            "__entity": {
+              "type": "v::B::FSRRR::QN",
+              "id": ""
+            }
+          },
+          "\u001d": "",
+          "$": [],
+          "=\u000e": {
+            "__entity": {
+              "type": "v::B::FSRRR::QN",
+              "id": ""
+            }
+          },
+          "@T": {
+            "__extn": {
+              "fn": "datetime",
+              "arg": "0000-01-01"
+            }
+          },
+          "@g": {
+            "__entity": {
+              "type": "v::B::FSRRR::v",
+              "id": ""
+            }
+          }
+        },
+        "z": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "v::B::FSRRR::v",
+        "id": ""
+      },
+      "action": {
+        "type": "v::B::FSRRR::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "v::B::FSRRR::v",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": false,
+          "\u0003\u001d$w": {
+            "__entity": {
+              "type": "v::B::FSRRR::v",
+              "id": ""
+            }
+          },
+          "\u0003[": {
+            "__entity": {
+              "type": "v::B::FSRRR::QN",
+              "id": ""
+            }
+          },
+          "\u001d": "",
+          "$": [],
+          "=\u000e": {
+            "__entity": {
+              "type": "v::B::FSRRR::QN",
+              "id": ""
+            }
+          },
+          "@T": {
+            "__extn": {
+              "fn": "datetime",
+              "arg": "0000-01-01"
+            }
+          },
+          "@g": {
+            "__entity": {
+              "type": "v::B::FSRRR::v",
+              "id": ""
+            }
+          }
+        },
+        "z": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "v::B::FSRRR::v",
+        "id": ""
+      },
+      "action": {
+        "type": "v::B::FSRRR::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "v::B::FSRRR::v",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": false,
+          "\u0003\u001d$w": {
+            "__entity": {
+              "type": "v::B::FSRRR::v",
+              "id": ""
+            }
+          },
+          "\u0003[": {
+            "__entity": {
+              "type": "v::B::FSRRR::QN",
+              "id": ""
+            }
+          },
+          "\u001d": "",
+          "$": [],
+          "=\u000e": {
+            "__entity": {
+              "type": "v::B::FSRRR::QN",
+              "id": ""
+            }
+          },
+          "@T": {
+            "__extn": {
+              "fn": "datetime",
+              "arg": "0000-01-01"
+            }
+          },
+          "@g": {
+            "__entity": {
+              "type": "v::B::FSRRR::v",
+              "id": ""
+            }
+          }
+        },
+        "z": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "v::B::FSRRR::v",
+        "id": ""
+      },
+      "action": {
+        "type": "v::B::FSRRR::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "v::B::FSRRR::v",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": false,
+          "\u0003\u001d$w": {
+            "__entity": {
+              "type": "v::B::FSRRR::v",
+              "id": ""
+            }
+          },
+          "\u0003[": {
+            "__entity": {
+              "type": "v::B::FSRRR::QN",
+              "id": ""
+            }
+          },
+          "\u001d": "",
+          "$": [],
+          "=\u000e": {
+            "__entity": {
+              "type": "v::B::FSRRR::QN",
+              "id": ""
+            }
+          },
+          "@T": {
+            "__extn": {
+              "fn": "datetime",
+              "arg": "0000-01-01"
+            }
+          },
+          "@g": {
+            "__entity": {
+              "type": "v::B::FSRRR::v",
+              "id": ""
+            }
+          }
+        },
+        "z": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "v::B::FSRRR::v",
+        "id": ""
+      },
+      "action": {
+        "type": "v::B::FSRRR::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "v::B::FSRRR::v",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": false,
+          "\u0003\u001d$w": {
+            "__entity": {
+              "type": "v::B::FSRRR::v",
+              "id": ""
+            }
+          },
+          "\u0003[": {
+            "__entity": {
+              "type": "v::B::FSRRR::QN",
+              "id": ""
+            }
+          },
+          "\u001d": "",
+          "$": [],
+          "=\u000e": {
+            "__entity": {
+              "type": "v::B::FSRRR::QN",
+              "id": ""
+            }
+          },
+          "@T": {
+            "__extn": {
+              "fn": "datetime",
+              "arg": "0000-01-01"
+            }
+          },
+          "@g": {
+            "__entity": {
+              "type": "v::B::FSRRR::v",
+              "id": ""
+            }
+          }
+        },
+        "z": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "v::B::FSRRR::v",
+        "id": ""
+      },
+      "action": {
+        "type": "v::B::FSRRR::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "v::B::FSRRR::v",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": false,
+          "\u0003\u001d$w": {
+            "__entity": {
+              "type": "v::B::FSRRR::v",
+              "id": ""
+            }
+          },
+          "\u0003[": {
+            "__entity": {
+              "type": "v::B::FSRRR::QN",
+              "id": ""
+            }
+          },
+          "\u001d": "",
+          "$": [],
+          "=\u000e": {
+            "__entity": {
+              "type": "v::B::FSRRR::QN",
+              "id": ""
+            }
+          },
+          "@T": {
+            "__extn": {
+              "fn": "datetime",
+              "arg": "0000-01-01"
+            }
+          },
+          "@g": {
+            "__entity": {
+              "type": "v::B::FSRRR::v",
+              "id": ""
+            }
+          }
+        },
+        "z": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

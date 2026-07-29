@@ -1,0 +1,346 @@
+{
+  "policies": "corpus-tests/1e50ea9c02ffd6169bf1d8572b25db755042228e.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/1e50ea9c02ffd6169bf1d8572b25db755042228e.entities.json",
+  "schema": "corpus-tests/1e50ea9c02ffd6169bf1d8572b25db755042228e.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "A000AIII333::r::r::r::Pg::A00000::r",
+        "id": ""
+      },
+      "action": {
+        "type": "A000AIII333::r::r::r::Pg::A00000::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A000AIII333::r::r::r::Pg::A00000::r",
+        "id": ""
+      },
+      "context": {
+        "B": "",
+        "B3334": "",
+        "Q31Fg33HWki0fKKK": false,
+        "Qnw2nn1333444dee": "",
+        "eEKKKKKKKKKKK333": "",
+        "eK1KKKRKKKKKKKKK": "",
+        "eKKKKKKKKKKKKKKJ": [],
+        "eKKKKKKKKKKKKKKK": "",
+        "eKPKKKKKKKKKKKKK": {
+          "__entity": {
+            "type": "A000AIII333::r::r::r::Pg::A00000::r",
+            "id": ""
+          }
+        },
+        "i4deeeA": "",
+        "kz": "",
+        "neeeAee": "",
+        "r": "",
+        "ym3331Fnnw2": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "A000AIII333::r::r::r::Pg::A00000::r",
+        "id": ""
+      },
+      "action": {
+        "type": "A000AIII333::r::r::r::Pg::A00000::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A000AIII333::r::r::r::Pg::A00000::r",
+        "id": ""
+      },
+      "context": {
+        "B": "",
+        "B3334": "",
+        "Q31Fg33HWki0fKKK": false,
+        "Qnw2nn1333444dee": "",
+        "eEKKKKKKKKKKK333": "",
+        "eK1KKKRKKKKKKKKK": "",
+        "eKKKKKKKKKKKKKKJ": [],
+        "eKKKKKKKKKKKKKKK": "",
+        "eKPKKKKKKKKKKKKK": {
+          "__entity": {
+            "type": "A000AIII333::r::r::r::Pg::A00000::r",
+            "id": ""
+          }
+        },
+        "i4deeeA": "",
+        "kz": "",
+        "neeeAee": "",
+        "r": "",
+        "ym3331Fnnw2": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "A000AIII333::r::r::r::Pg::A00000::r",
+        "id": ""
+      },
+      "action": {
+        "type": "A000AIII333::r::r::r::Pg::A00000::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A000AIII333::r::r::r::Pg::A00000::r",
+        "id": ""
+      },
+      "context": {
+        "B": "",
+        "B3334": "",
+        "Q31Fg33HWki0fKKK": false,
+        "Qnw2nn1333444dee": "",
+        "eEKKKKKKKKKKK333": "",
+        "eK1KKKRKKKKKKKKK": "",
+        "eKKKKKKKKKKKKKKJ": [],
+        "eKKKKKKKKKKKKKKK": "",
+        "eKPKKKKKKKKKKKKK": {
+          "__entity": {
+            "type": "A000AIII333::r::r::r::Pg::A00000::r",
+            "id": ""
+          }
+        },
+        "i4deeeA": "",
+        "kz": "",
+        "neeeAee": "",
+        "r": "",
+        "ym3331Fnnw2": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "A000AIII333::r::r::r::Pg::A00000::r",
+        "id": ""
+      },
+      "action": {
+        "type": "A000AIII333::r::r::r::Pg::A00000::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A000AIII333::r::r::r::Pg::A00000::r",
+        "id": ""
+      },
+      "context": {
+        "B": "",
+        "B3334": "",
+        "Q31Fg33HWki0fKKK": false,
+        "Qnw2nn1333444dee": "",
+        "eEKKKKKKKKKKK333": "",
+        "eK1KKKRKKKKKKKKK": "",
+        "eKKKKKKKKKKKKKKJ": [],
+        "eKKKKKKKKKKKKKKK": "",
+        "eKPKKKKKKKKKKKKK": {
+          "__entity": {
+            "type": "A000AIII333::r::r::r::Pg::A00000::r",
+            "id": ""
+          }
+        },
+        "i4deeeA": "",
+        "kz": "",
+        "neeeAee": "",
+        "r": "",
+        "ym3331Fnnw2": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "A000AIII333::r::r::r::Pg::A00000::r",
+        "id": ""
+      },
+      "action": {
+        "type": "A000AIII333::r::r::r::Pg::A00000::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A000AIII333::r::r::r::Pg::A00000::r",
+        "id": ""
+      },
+      "context": {
+        "B": "",
+        "B3334": "",
+        "Q31Fg33HWki0fKKK": false,
+        "Qnw2nn1333444dee": "",
+        "eEKKKKKKKKKKK333": "",
+        "eK1KKKRKKKKKKKKK": "",
+        "eKKKKKKKKKKKKKKJ": [],
+        "eKKKKKKKKKKKKKKK": "",
+        "eKPKKKKKKKKKKKKK": {
+          "__entity": {
+            "type": "A000AIII333::r::r::r::Pg::A00000::r",
+            "id": ""
+          }
+        },
+        "i4deeeA": "",
+        "kz": "",
+        "neeeAee": "",
+        "r": "",
+        "ym3331Fnnw2": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "A000AIII333::r::r::r::Pg::A00000::r",
+        "id": ""
+      },
+      "action": {
+        "type": "A000AIII333::r::r::r::Pg::A00000::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A000AIII333::r::r::r::Pg::A00000::r",
+        "id": ""
+      },
+      "context": {
+        "B": "",
+        "B3334": "",
+        "Q31Fg33HWki0fKKK": false,
+        "Qnw2nn1333444dee": "",
+        "eEKKKKKKKKKKK333": "",
+        "eK1KKKRKKKKKKKKK": "",
+        "eKKKKKKKKKKKKKKJ": [],
+        "eKKKKKKKKKKKKKKK": "",
+        "eKPKKKKKKKKKKKKK": {
+          "__entity": {
+            "type": "A000AIII333::r::r::r::Pg::A00000::r",
+            "id": ""
+          }
+        },
+        "i4deeeA": "",
+        "kz": "",
+        "neeeAee": "",
+        "r": "",
+        "ym3331Fnnw2": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "A000AIII333::r::r::r::Pg::A00000::r",
+        "id": ""
+      },
+      "action": {
+        "type": "A000AIII333::r::r::r::Pg::A00000::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A000AIII333::r::r::r::Pg::A00000::r",
+        "id": ""
+      },
+      "context": {
+        "B": "",
+        "B3334": "",
+        "Q31Fg33HWki0fKKK": false,
+        "Qnw2nn1333444dee": "",
+        "eEKKKKKKKKKKK333": "",
+        "eK1KKKRKKKKKKKKK": "",
+        "eKKKKKKKKKKKKKKJ": [],
+        "eKKKKKKKKKKKKKKK": "",
+        "eKPKKKKKKKKKKKKK": {
+          "__entity": {
+            "type": "A000AIII333::r::r::r::Pg::A00000::r",
+            "id": ""
+          }
+        },
+        "i4deeeA": "",
+        "kz": "",
+        "neeeAee": "",
+        "r": "",
+        "ym3331Fnnw2": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "A000AIII333::r::r::r::Pg::A00000::r",
+        "id": ""
+      },
+      "action": {
+        "type": "A000AIII333::r::r::r::Pg::A00000::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A000AIII333::r::r::r::Pg::A00000::r",
+        "id": ""
+      },
+      "context": {
+        "B": "",
+        "B3334": "",
+        "Q31Fg33HWki0fKKK": false,
+        "Qnw2nn1333444dee": "",
+        "eEKKKKKKKKKKK333": "",
+        "eK1KKKRKKKKKKKKK": "",
+        "eKKKKKKKKKKKKKKJ": [],
+        "eKKKKKKKKKKKKKKK": "",
+        "eKPKKKKKKKKKKKKK": {
+          "__entity": {
+            "type": "A000AIII333::r::r::r::Pg::A00000::r",
+            "id": ""
+          }
+        },
+        "i4deeeA": "",
+        "kz": "",
+        "neeeAee": "",
+        "r": "",
+        "ym3331Fnnw2": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

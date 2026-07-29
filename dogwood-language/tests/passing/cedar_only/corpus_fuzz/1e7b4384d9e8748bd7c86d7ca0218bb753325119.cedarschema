@@ -1,0 +1,75 @@
+entity A000000xf12f3xf15 enum [""];
+
+entity B9333333333 enum [""];
+
+entity BxB enum [""];
+
+@L
+entity L enum [""];
+
+entity _YlW3Zx3319SSQ enum [""];
+
+entity dSSSSSS enum ["V@"];
+
+@fBBXXXXXX
+entity f1 tags mSSSS1W;
+
+entity fBBh enum [""];
+
+entity m0SSSSS enum [""];
+
+entity m1W_3f1 enum [""];
+
+entity mQSSS0S = {
+  L?: __cedar::String,
+  fB?: __cedar::String
+};
+
+entity mSSSJSS = {
+  @L
+  @_YlW3Zx3333333("")
+  @p("")
+  @r("")
+  A0o000001W_3f1xBB?: {
+    ""?: B9333333333
+  },
+  fsf3D31G00?: __cedar::String,
+  rB?: __cedar::String,
+  rD3?: __cedar::String
+} tags __cedar::String;
+
+entity mSSSS1W enum [""];
+
+entity mSSSSSS enum [""];
+
+entity mSSSSSW enum ["\u{f}", "\u{f}"];
+
+entity mSWSSSS enum [""];
+
+entity r enum ["\u{f}\u{f}", "\u{f}\u{f}"];
+
+entity rB enum [""];
+
+entity rD3 enum [""];
+
+entity z enum [""];
+
+entity z3D31G00000001W_ enum [""];
+
+action "" in [Action::"\u{f}"] appliesTo {
+  principal: [B9333333333, r, mSSSSSS, z, BxB, A000000xf12f3xf15, dSSSSSS, mSSSSSW, z3D31G00000001W_, mSWSSSS, mSSSS1W, rB, f1, m0SSSSS, _YlW3Zx3319SSQ, m1W_3f1, rD3, fBBh],
+  resource: [mSSSSSS, r, f1],
+  context: {
+    Gxxxxxxii?: __cedar::String,
+    Gxxxxxxxx?: __cedar::String
+  }
+};
+
+action "\u{f}";
+
+action "z" in [Action::"", Action::"\u{f}"] appliesTo {
+  principal: [mSSSSSS, rD3, L],
+  resource: [mSSSSSS, rD3, L],
+  context: {}
+};
+

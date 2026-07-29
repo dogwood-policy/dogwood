@@ -1,0 +1,18 @@
+// IMPLEMENTATION-SPECIFIC EXPECTATION. This case's total does not fit a `Long`, which
+// the language leaves implementation-defined (formal specification 5.4, "Aggregate
+// value"): a conforming implementation may clamp, evaluate at a wider precision, or
+// report an error. The expected verdicts below pin THIS engine's choice to clamp, so
+// they are a regression guard for this crate and NOT a conformance requirement. A
+// consumer running differential tests over the embedded corpus should expect an
+// implementation that does not clamp to disagree here, and exclude the case.
+def temporal let_(?n, ?A, ?B) {
+    exists (?n: Long). (?A == ?n && ?B)
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    let_(total, sum a for (a: Long), (t: Timepoint). where (formerly within 1h (Drupe::Action::"Transfer"::request{ input.user: context.input.user, input.amount: a } && tp(t))), total < -9000000000000000000)};

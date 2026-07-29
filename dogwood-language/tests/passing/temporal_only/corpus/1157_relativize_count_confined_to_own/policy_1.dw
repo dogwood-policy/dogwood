@@ -1,0 +1,40 @@
+// Relativization / partition-safety, `count` aggregation.
+//
+// A Read is permitted iff THIS principal has at least two of its own Logins in
+// the last hour. The event schema pins `callerPrincipal` universally, so the
+// count ranges over this principal's own events only — another principal's
+// logins must not count toward the threshold.
+//
+// Two differential pairs, each `_with_foreign` vs `_without_foreign`:
+//
+//   DENY pair — alice below threshold, foreign logins must not lift her over:
+//     trace_1: alice Login @1, BOB Login @2, BOB Login @3, alice Read @4.
+//     trace_2: alice Login @1,                             alice Read @4.
+//   alice has ONE own Login in both, count 1 (< 2) → DENY in both. Under
+//   (incorrect) global semantics trace_1 would count bob's two logins
+//   (total 3 >= 2) and PERMIT, diverging from trace_2.
+//
+//   PERMIT pair — alice at threshold on her OWN events, foreign login is inert:
+//     trace_3: alice Login @1, BOB Login @2, alice Login @3, alice Read @4.
+//     trace_4: alice Login @1,               alice Login @3, alice Read @4.
+//   alice has TWO own Logins in both, count 2 (>= 2) → PERMIT in both; bob's
+//   interleaved login neither adds nor removes.
+//
+// The rewrite confines the count to alice's own events, so each pair agrees.
+//
+// All Login events carry `input.user: _` (unconstrained) — the count body does
+// not correlate on user at all, so the pinned `callerPrincipal` is the ONLY
+// thing confining the count to alice; without it bob's logins would leak in.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    exists (n: Long). (
+        (count for (t: Timepoint). where (
+            formerly within 1h (Drupe::Action::"Login"::request{ input.user: _ } && tp(t))
+        )) == n && n >= 2
+    )
+};

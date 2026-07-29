@@ -1,0 +1,11 @@
+// Temporal half, scoped by resource TYPE: Gateway reads are forbidden
+// unless the same user logged in within the hour. Bucket reads are outside
+// this forbid's scope — even a never-logged-in user may read a bucket.
+forbid (
+    principal,
+    action == Drupe::Action::"Read",
+    resource is Drupe::Gateway
+)
+unless temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

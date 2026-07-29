@@ -1,0 +1,8 @@
+// References output field "result" on ::request kind — but "result"
+// is only available on ::response.
+// Expected: rejected by event schema validation.
+
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ result: true }
+};

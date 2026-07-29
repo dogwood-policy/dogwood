@@ -1,0 +1,14 @@
+entity r = {
+  Oif?: __cedar::String,
+  r?: {
+    ""?: __cedar::String,
+    "?"?: __cedar::String
+  }
+};
+
+action "action" appliesTo {
+  principal: [r],
+  resource: [r],
+  context: {}
+};
+

@@ -1,0 +1,10 @@
+// Ordinary login-gated read; the schema shape (cross-namespace chained
+// context reference) is what this case exercises.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

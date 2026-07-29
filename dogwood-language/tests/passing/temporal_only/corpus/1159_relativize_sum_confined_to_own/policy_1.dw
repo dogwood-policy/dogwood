@@ -1,0 +1,38 @@
+// Relativization / partition-safety, `sum` aggregation.
+//
+// A Read is permitted iff the SUM of THIS principal's own Transfer amounts in
+// the last hour exceeds 100. The event schema pins `callerPrincipal`
+// universally, so the sum ranges over this principal's own events only —
+// another principal's transfers must not contribute to the total.
+//
+// The aggregation body binds the amount but does NOT correlate on user
+// (`Transfer{ input.amount: a }`), so the schema pin is the only thing
+// confining the sum. This makes the traces discriminate key-local from global:
+//
+//   DENY pair — alice at/under threshold; a large foreign transfer must not
+//   push her total over:
+//     trace_1: alice Transfer 100, BOB Transfer 500, alice Read.
+//     trace_2: alice Transfer 100,                   alice Read.
+//   Correct (key-local): sum = 100, not > 100 → DENY in both. Under
+//   (incorrect) global semantics trace_1 would sum 600 > 100 → PERMIT,
+//   diverging from trace_2.
+//
+//   PERMIT pair — alice's OWN transfers exceed the threshold; the foreign
+//   transfer is inert:
+//     trace_3: alice Transfer 60, BOB Transfer 500, alice Transfer 60, alice Read.
+//     trace_4: alice Transfer 60,                   alice Transfer 60, alice Read.
+//   Correct: sum = 120 > 100 → PERMIT in both. Confirms own transfers DO sum
+//   (not always-deny), and bob's 500 neither adds nor blocks.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    exists (total: Long). (
+        (sum a for (a: Long), (t: Timepoint). where (
+            formerly within 1h (Drupe::Action::"Transfer"::request{ input.amount: a } && tp(t))
+        )) == total && total > 100
+    )
+};

@@ -1,0 +1,10 @@
+namespace A::r::z::A::hDc0 {
+  entity a;
+
+  action "" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

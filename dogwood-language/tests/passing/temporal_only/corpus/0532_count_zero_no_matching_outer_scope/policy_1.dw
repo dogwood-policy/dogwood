@@ -1,0 +1,7 @@
+forbid (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    exists (total: Long). ((sum a for (a: Long). where Drupe::Action::"Transfer"::request{ input.user: _, input.amount: a }) == total && total == 0)};

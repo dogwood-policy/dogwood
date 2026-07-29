@@ -1,0 +1,14 @@
+// FORBID-polarity guardrail under the same three-action list scope. Deny
+// Read/Write/Delete when the document name is long. Because forbid
+// overrides permit, the out-of-scope Ping with a long document is the
+// discriminating timepoint: if this forbid's scope leaked to Ping, the
+// Ping verdict would flip to false — unlike the permit-polarity variant
+// (case 5000), where an extra permit masks a scope leak.
+forbid (
+    principal,
+    action in [Drupe::Action::"Read", Drupe::Action::"Write", Drupe::Action::"Delete"],
+    resource
+)
+when guardrails {
+    Strings::Length(context.input.document).length >= 6
+};

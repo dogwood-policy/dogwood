@@ -1,0 +1,20 @@
+// stdlib `bind`: name the `exists (n: Long). ((agg) == n && …)` binding
+// scaffold. Here it wraps a RAW, hand-written `count for …` aggregate (a
+// legal term-position argument), independent of the other stdlib macros.
+// Permit an Alert when more than two Logins to the same server occurred
+// within the last hour — verdict-equivalent to stdlib_0002.
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    bind(
+        n,
+        count for (t: Timepoint). where (
+            formerly within 1h (Drupe::Action::"Login"::request{ input.user: _, input.server: context.input.server } && tp(t))
+        ),
+        n > 2
+    )
+};

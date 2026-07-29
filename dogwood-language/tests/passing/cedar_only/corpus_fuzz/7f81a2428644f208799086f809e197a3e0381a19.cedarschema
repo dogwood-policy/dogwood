@@ -1,0 +1,11 @@
+@ZN000000
+entity LY0 enum ["\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"];
+
+entity p;
+
+action "action" appliesTo {
+  principal: [p],
+  resource: [p],
+  context: {}
+};
+

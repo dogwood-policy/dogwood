@@ -1,0 +1,11 @@
+entity a enum ["\0\0\0"];
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    F: __cedar::datetime,
+    r?: __cedar::datetime
+  }
+};
+

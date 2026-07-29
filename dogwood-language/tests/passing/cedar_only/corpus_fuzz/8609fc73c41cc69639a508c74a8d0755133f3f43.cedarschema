@@ -1,0 +1,14 @@
+namespace r3333ppp::z::r {
+  entity A enum [""];
+
+  entity o enum [""];
+
+  entity r enum [""];
+
+  action "action" appliesTo {
+    principal: [r],
+    resource: [r],
+    context: {}
+  };
+}
+

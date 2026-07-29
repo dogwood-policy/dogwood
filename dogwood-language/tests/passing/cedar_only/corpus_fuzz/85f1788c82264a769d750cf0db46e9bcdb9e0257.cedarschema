@@ -1,0 +1,12 @@
+entity a = {
+  F?: __cedar::duration,
+  PR?: Set<__cedar::datetime>
+} tags __cedar::duration;
+
+@MCCC000000000
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,10 @@
+namespace Pcc203E::A000000::Pcccccc {
+  entity a enum [""];
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

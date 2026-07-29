@@ -1,0 +1,18 @@
+@A0
+@A1S0000002m1RRR("\u{1}")
+@B00("")
+@_M11111n("u3VV\0\0\u{5}")
+@m3("")
+@m3331
+@r("")
+@r33("Ac")
+@vR("")
+@x("")
+entity a enum ["22222222\n\u{3}666600", "$:"];
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

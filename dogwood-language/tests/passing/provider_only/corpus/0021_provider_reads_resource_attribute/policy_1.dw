@@ -1,0 +1,17 @@
+// Permit Read only when the target resource's `tier` attribute is "prod",
+// as decided by the `Access::ByTier` information provider.
+//
+// Symmetric to `0020_provider_reads_principal_attribute`, but the provider
+// argument is a *resource* entity attribute (`resource.tier`) rather than a
+// principal one — exercising the `resource` scope path of provider-argument
+// resolution. The attribute is supplied per event via the `.log`
+// `entities(...)` envelope and resolved from the decision's entity store.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Access::ByTier(resource.tier).allowed == true
+};

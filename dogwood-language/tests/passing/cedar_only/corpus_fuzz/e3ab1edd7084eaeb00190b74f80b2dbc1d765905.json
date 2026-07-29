@@ -1,0 +1,186 @@
+{
+  "policies": "corpus-tests/e3ab1edd7084eaeb00190b74f80b2dbc1d765905.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/e3ab1edd7084eaeb00190b74f80b2dbc1d765905.entities.json",
+  "schema": "corpus-tests/e3ab1edd7084eaeb00190b74f80b2dbc1d765905.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "FS::wS::Im::uro0pn7m000wp::C::A::C0::j5e0rccc::KS::a",
+        "id": "\u0016\u0010\u0000"
+      },
+      "action": {
+        "type": "FS::wS::Im::uro0pn7m000wp::C::A::C0::j5e0rccc::KS::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "FS::wS::Im::uro0pn7m000wp::C::A::C0::j5e0rccc::KS::a",
+        "id": "\u0016\u0010\u0000"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "FS::wS::Im::uro0pn7m000wp::C::A::C0::j5e0rccc::KS::a",
+        "id": "\u0016\u0010\u0000"
+      },
+      "action": {
+        "type": "FS::wS::Im::uro0pn7m000wp::C::A::C0::j5e0rccc::KS::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "FS::wS::Im::uro0pn7m000wp::C::A::C0::j5e0rccc::KS::a",
+        "id": "\u0016\u0010\u0000"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "FS::wS::Im::uro0pn7m000wp::C::A::C0::j5e0rccc::KS::a",
+        "id": "\u0016\u0010\u0000"
+      },
+      "action": {
+        "type": "FS::wS::Im::uro0pn7m000wp::C::A::C0::j5e0rccc::KS::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "FS::wS::Im::uro0pn7m000wp::C::A::C0::j5e0rccc::KS::a",
+        "id": "\u0016\u0010\u0000"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "FS::wS::Im::uro0pn7m000wp::C::A::C0::j5e0rccc::KS::a",
+        "id": "\u0016\u0010\u0000"
+      },
+      "action": {
+        "type": "FS::wS::Im::uro0pn7m000wp::C::A::C0::j5e0rccc::KS::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "FS::wS::Im::uro0pn7m000wp::C::A::C0::j5e0rccc::KS::a",
+        "id": "\u0016\u0010\u0000"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "FS::wS::Im::uro0pn7m000wp::C::A::C0::j5e0rccc::KS::a",
+        "id": "\u0016\u0010\u0000"
+      },
+      "action": {
+        "type": "FS::wS::Im::uro0pn7m000wp::C::A::C0::j5e0rccc::KS::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "FS::wS::Im::uro0pn7m000wp::C::A::C0::j5e0rccc::KS::a",
+        "id": "\u0016\u0010\u0000"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "FS::wS::Im::uro0pn7m000wp::C::A::C0::j5e0rccc::KS::a",
+        "id": "\u0016\u0010\u0000"
+      },
+      "action": {
+        "type": "FS::wS::Im::uro0pn7m000wp::C::A::C0::j5e0rccc::KS::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "FS::wS::Im::uro0pn7m000wp::C::A::C0::j5e0rccc::KS::a",
+        "id": "\u0016\u0010\u0000"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "FS::wS::Im::uro0pn7m000wp::C::A::C0::j5e0rccc::KS::a",
+        "id": "\u0016\u0010\u0000"
+      },
+      "action": {
+        "type": "FS::wS::Im::uro0pn7m000wp::C::A::C0::j5e0rccc::KS::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "FS::wS::Im::uro0pn7m000wp::C::A::C0::j5e0rccc::KS::a",
+        "id": "\u0016\u0010\u0000"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "FS::wS::Im::uro0pn7m000wp::C::A::C0::j5e0rccc::KS::a",
+        "id": "\u0016\u0010\u0000"
+      },
+      "action": {
+        "type": "FS::wS::Im::uro0pn7m000wp::C::A::C0::j5e0rccc::KS::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "FS::wS::Im::uro0pn7m000wp::C::A::C0::j5e0rccc::KS::a",
+        "id": "\u0016\u0010\u0000"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

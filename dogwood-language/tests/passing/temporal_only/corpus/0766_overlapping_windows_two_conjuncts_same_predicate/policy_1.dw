@@ -1,0 +1,9 @@
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    formerly within 5s Drupe::Action::"Login"::request{ input.user: context.input.user }
+    && formerly within 60s Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

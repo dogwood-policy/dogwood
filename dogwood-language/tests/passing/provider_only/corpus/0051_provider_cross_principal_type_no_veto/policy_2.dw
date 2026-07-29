@@ -1,0 +1,7 @@
+// ServiceBot reads (the dept-less principal type) are permitted without
+// the provider.
+permit (
+    principal is Drupe::ServiceBot,
+    action == Drupe::Action::"Read",
+    resource
+);

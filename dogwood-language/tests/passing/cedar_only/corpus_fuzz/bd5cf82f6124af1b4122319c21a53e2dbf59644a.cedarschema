@@ -1,0 +1,20 @@
+entity a;
+
+action "" in [Action::":p", Action::"%[\u{1d}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "%[\u{1d}" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action ":p" in [Action::"%[\u{1d}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

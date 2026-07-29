@@ -1,0 +1,116 @@
+namespace u {
+  entity Jt enum [""];
+
+  entity g = {
+    Pcccebm?: __cedar::String,
+    @A("")
+    @EWGGGGGGGG330
+    @EWYWd000cPgYW("")
+    @EWdWd000cPgYW("")
+    @F("")
+    @O("")
+    @P("")
+    @P00RRw0
+    @P00RRwR("\u{e}")
+    @PVccc__("")
+    @P__YBZg("")
+    @Pc2cccc("")
+    @Pc3ERJS("@")
+    @Pc80ccc("")
+    @PcT1RSN("\u{1b}")
+    @PcXcccc("")
+    @PcYWd000cPgYW("")
+    @PccccVc("")
+    @Pccccc8
+    @Pcccccc("")
+    @Pcceb5c
+    @Pccebmm
+    @Pcebmmm("P")
+    @_YWc("")
+    @bc
+    @d1RSNRR
+    @d1Rccc0
+    @gcccccccccccc("")
+    @gd000cPgYWccc("")
+    @hRcW33ccccXccc("")
+    @hccWd00
+    @hcccccc("")
+    @mT1RSNRcW3("")
+    @mT1Rcccccc("gd000cP")
+    @n000cPgYWccccccc("")
+    @n____eYBZg____("")
+    @neYBZg_____33G("\0\0\0")
+    @sWd000c
+    @u("\0\0\0")
+    @u3("\0\0")
+    @uG("")
+    @uGGGGGGGGG3300("")
+    @v33GB000("")
+    @v3ERJST1("")
+    @vJST1Rccc00RRwR("\u{e}")
+    @vJST1Rccccccccc
+    @w
+    @ybsnraH("")
+    hRcW33ccccXccc: __cedar::decimal,
+    v3ERJST1: __cedar::datetime
+  };
+
+  @A("")
+  @P00RRwR("\u{e}")
+  @Pc3__cc("")
+  @Pcccc33("")
+  @_3__k_ccccccccc("")
+  @gcccccccccccc("")
+  @mT1Rcccccc("gd000cP")
+  @n____eYBZg____("")
+  @r
+  @sWd000c
+  @u("\0\0\0")
+  @uG("")
+  @v3ERJST1("")
+  entity gMM = {
+    @A
+    @F("")
+    @Fq________cccc("")
+    @LRSNRRwR3ERJS("@")
+    @P("")
+    @P__YBZg("")
+    @Pc00RRw("")
+    @Pc2cccc("")
+    @Pc3ERJS("@")
+    @PcT1RSN("e ")
+    @PcYWd000cPgYW("")
+    @Pcc3333("")
+    @Pcccc3E("")
+    @Pccccc8
+    @Pcccccc("")
+    @Pcccccccc33333("")
+    @PccccccccebmmmaHc("a \'\0\0\0eXia ")
+    @Pcccctt("77")
+    @Pccebmm
+    @_YWc("")
+    @bc
+    @d1RSNRc
+    @gd000cPgYWccc("")
+    @hRcW33ccccXccc("")
+    @hccWd00
+    @hcccccc("")
+    @n("")
+    @r("")
+    @uG("")
+    @uGGGGGGGGG3300("")
+    @v3ERJST1("")
+    @vJST1RSNRcW33cc("")
+    @vJST1Rccccccccc
+    @ybmmmaH("")
+    @ybsnraH("")
+    _gagggA0000000?: __cedar::Bool
+  } tags __cedar::decimal;
+
+  action "action" appliesTo {
+    principal: [gMM],
+    resource: [gMM],
+    context: {}
+  };
+}
+

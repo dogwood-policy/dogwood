@@ -1,0 +1,6 @@
+// Base permit for Write - always allowed (provides history for Read policy)
+permit (
+    principal,
+    action == Drupe::Action::"Write",
+    resource
+);

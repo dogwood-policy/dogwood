@@ -1,0 +1,14 @@
+namespace A::A::A::A {
+  entity a;
+
+  action "" in [A::A::A::A::Action::"\u{1}<", A::A::A::A::Action::"r\u{2}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{1}<" in [A::A::A::A::Action::"r\u{2}"];
+
+  action "r\u{2}";
+}
+

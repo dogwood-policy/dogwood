@@ -1,0 +1,258 @@
+{
+  "policies": "corpus-tests/6f8dd6ed1c56dd53c8c488e428d2811fbc7e7aa6.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/6f8dd6ed1c56dd53c8c488e428d2811fbc7e7aa6.entities.json",
+  "schema": "corpus-tests/6f8dd6ed1c56dd53c8c488e428d2811fbc7e7aa6.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "DQQQQQQQQQQQ::DQQQQQQQQQQQ::gQQQQQQQQ::DQQ04uq133SR",
+        "id": ""
+      },
+      "action": {
+        "type": "DQQQQQQQQQQQ::DQQQQQQQQQQQ::gQQQQQQQQ::Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "DQQQQQQQQQQQ::DQQQQQQQQQQQ::gQQQQQQQQ::Nq1233333V3399999",
+        "id": ""
+      },
+      "context": {
+        "r3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3333Wo": "",
+        "v": false
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "DQQQQQQQQQQQ::DQQQQQQQQQQQ::gQQQQQQQQ::DQQ04uq133SR",
+        "id": ""
+      },
+      "action": {
+        "type": "DQQQQQQQQQQQ::DQQQQQQQQQQQ::gQQQQQQQQ::Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "DQQQQQQQQQQQ::DQQQQQQQQQQQ::gQQQQQQQQ::Nq1233333V3399999",
+        "id": ""
+      },
+      "context": {
+        "r3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3333Wo": "",
+        "v": false
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "DQQQQQQQQQQQ::DQQQQQQQQQQQ::gQQQQQQQQ::DQQ04uq133SR",
+        "id": ""
+      },
+      "action": {
+        "type": "DQQQQQQQQQQQ::DQQQQQQQQQQQ::gQQQQQQQQ::Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "DQQQQQQQQQQQ::DQQQQQQQQQQQ::gQQQQQQQQ::Nq1233333V3399999",
+        "id": ""
+      },
+      "context": {
+        "r3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3333Wo": "",
+        "v": false
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "DQQQQQQQQQQQ::DQQQQQQQQQQQ::gQQQQQQQQ::DQQ04uq133SR",
+        "id": ""
+      },
+      "action": {
+        "type": "DQQQQQQQQQQQ::DQQQQQQQQQQQ::gQQQQQQQQ::Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "DQQQQQQQQQQQ::DQQQQQQQQQQQ::gQQQQQQQQ::Nq1233333V3399999",
+        "id": ""
+      },
+      "context": {
+        "r3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3333Wo": "",
+        "v": false
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "DQQQQQQQQQQQ::DQQQQQQQQQQQ::gQQQQQQQQ::DQQ04uq133SR",
+        "id": ""
+      },
+      "action": {
+        "type": "DQQQQQQQQQQQ::DQQQQQQQQQQQ::gQQQQQQQQ::Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "DQQQQQQQQQQQ::DQQQQQQQQQQQ::gQQQQQQQQ::Nq1233333V3399999",
+        "id": ""
+      },
+      "context": {
+        "r3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3333Wo": "",
+        "v": false
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "DQQQQQQQQQQQ::DQQQQQQQQQQQ::gQQQQQQQQ::DQQ04uq133SR",
+        "id": ""
+      },
+      "action": {
+        "type": "DQQQQQQQQQQQ::DQQQQQQQQQQQ::gQQQQQQQQ::Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "DQQQQQQQQQQQ::DQQQQQQQQQQQ::gQQQQQQQQ::Nq1233333V3399999",
+        "id": ""
+      },
+      "context": {
+        "r3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3333Wo": "",
+        "v": false
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "DQQQQQQQQQQQ::DQQQQQQQQQQQ::gQQQQQQQQ::DQQ04uq133SR",
+        "id": ""
+      },
+      "action": {
+        "type": "DQQQQQQQQQQQ::DQQQQQQQQQQQ::gQQQQQQQQ::Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "DQQQQQQQQQQQ::DQQQQQQQQQQQ::gQQQQQQQQ::Nq1233333V3399999",
+        "id": ""
+      },
+      "context": {
+        "r3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3333Wo": "",
+        "v": false
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "DQQQQQQQQQQQ::DQQQQQQQQQQQ::gQQQQQQQQ::DQQ04uq133SR",
+        "id": ""
+      },
+      "action": {
+        "type": "DQQQQQQQQQQQ::DQQQQQQQQQQQ::gQQQQQQQQ::Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "DQQQQQQQQQQQ::DQQQQQQQQQQQ::gQQQQQQQQ::Nq1233333V3399999",
+        "id": ""
+      },
+      "context": {
+        "r3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3333Wo": "",
+        "v": false
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+namespace A::A {
+  entity a;
+
+  action "" in [A::A::Action::"VV"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      AoRRR1S333333Ha33?: __cedar::String,
+      B33344?: __cedar::String,
+      D?: __cedar::Bool,
+      I?: __cedar::Bool,
+      P?: __cedar::String,
+      _YlW1Fnnw3gl2n?: __cedar::String,
+      f?: __cedar::Bool,
+      h0?: __cedar::String,
+      i4W1233?: __cedar::String,
+      p233333V33z0333S?: __cedar::String,
+      r?: __cedar::String,
+      r3?: __cedar::String,
+      r33: __cedar::String,
+      v?: __cedar::String,
+      vR: __cedar::Bool,
+      z33333391W3?: __cedar::String
+    }
+  };
+
+  action "VV" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

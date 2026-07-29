@@ -1,0 +1,13 @@
+namespace A {
+  entity a tags Set<Set<{
+  @r
+  "": {  }
+}>>;
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

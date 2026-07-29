@@ -1,0 +1,27 @@
+{
+  "availableProviders": {
+    "BedrockGuardrails::ContentFilter": {
+      "argumentTypes": [
+        { "paramType": "string" }
+      ],
+      "outputType": {
+        "paramType": "record",
+        "fields": {
+          "violence": { "paramType": "integer" },
+          "malicious": { "paramType": "integer" }
+        },
+        "required": ["violence", "malicious"]
+      },
+      "availableMethods": {
+        "maxConfidenceScore": {
+          "argumentTypes": [],
+          "outputType": { "paramType": "integer" }
+        }
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "content_filter.rhai"
+      }
+    }
+  }
+}

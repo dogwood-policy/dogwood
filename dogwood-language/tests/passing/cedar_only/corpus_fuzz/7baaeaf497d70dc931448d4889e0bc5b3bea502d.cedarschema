@@ -1,0 +1,68 @@
+entity a tags __cedar::String;
+
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1}\u{f}" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{3}\u{1d}[w@\u{1d}" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{3}dddddddddd." appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1d}\u{3}" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "$" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "$(\u{e}" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action ":~" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "=\u{e}" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "@" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "[" in [Action::"\u{1}\u{f}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

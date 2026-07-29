@@ -1,0 +1,13 @@
+@y
+entity a tags __cedar::Long;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A: __cedar::Long,
+    b: Set<{    }>,
+    r3: Set<Set<__cedar::Long>>
+  }
+};
+

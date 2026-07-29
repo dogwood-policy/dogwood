@@ -1,0 +1,15 @@
+entity a;
+
+action "" in [Action::":p", Action::"&[\u{1d}:p"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    j3huRNag3ENNR?: Set<__cedar::ipaddr>,
+    vRNNRDNc?: {    }
+  }
+};
+
+action "&[\u{1d}:p";
+
+action ":p" in [Action::"&[\u{1d}:p"];
+

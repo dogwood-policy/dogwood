@@ -1,0 +1,18 @@
+// The sentinel POLARITY TRAP, pinned under forbid: the provider's rule is a
+// forbid over [Read, Ping]; Ping's context has no document, so the
+// provider's argument is absent there and the script returns its sentinel.
+// A guard-false sentinel is the PERMISSIVE direction under forbid — the
+// denial does not fire, and the Ping is permitted. This is intended,
+// contract-documented behavior that a policy author must choose knowingly.
+namespace Drupe {
+  entity OAuthUser;
+  entity Gateway;
+  action "Read" appliesTo {
+    principal: [OAuthUser], resource: [Gateway],
+    context: { input: { document: String } }
+  };
+  action "Ping" appliesTo {
+    principal: [OAuthUser], resource: [Gateway],
+    context: { input: { seq: Long } }
+  };
+}

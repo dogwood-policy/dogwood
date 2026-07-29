@@ -1,0 +1,471 @@
+{
+  "policies": "corpus-tests/35c973220369aa40bf55048185eadb63ec41be50.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/35c973220369aa40bf55048185eadb63ec41be50.entities.json",
+  "schema": "corpus-tests/35c973220369aa40bf55048185eadb63ec41be50.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "a",
+        "id": "zzzzzzzzzzzzzzzzzzzzSSSSSSSSSSS"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "zzzzzzzzzzzzzzzzzzzzSSSSSSSSSSS"
+      },
+      "context": {
+        "r": {
+          "": "\u0000\u0000\u0000SSSSSSSSSSSS",
+          "\u001d": [
+            [
+              []
+            ]
+          ],
+          "'ggg\ng\u0003gg": "SSSSSSSSSSSSSSSSSSSSS\u001fSSSSSSSSSSSSSS\ng\u0003gg",
+          "*\u0000\u0000\u0000SSSSSSSSSSSSSS": [
+            [
+              []
+            ]
+          ],
+          ":~": "ggg",
+          "qqqqqqqq\u0000\u0000\u0000": " ",
+          "z~": "SSS1SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "zzzzzzzzzzzzzzzzzzzzSSSSSSSSSSS"
+      },
+      "context": {
+        "r": {
+          "\u001d": [
+            [
+              []
+            ]
+          ],
+          " ": "\u0000\u0000\u0000SSSSSSSSSSSSSSSSSSSSSSSSSS}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}\u001f\u001f\u001f\u001f\u001f\u001f\u001f\u001f\u001f\u001f\u001f\u001f\u0000\u0000\u0000\u0000\u0000}}}}}}}}}}}}}}}}}}}}}}}}}}g",
+          "'ggg\ng\u0003gg": "A",
+          "*\u0000\u0000\u0000SSSSSSSSSSSSSS": [
+            [
+              []
+            ]
+          ],
+          "=\u0000 v>>>>>>>>>>>>": false,
+          "?VV": {
+            "__entity": {
+              "type": "a",
+              "id": ""
+            }
+          },
+          "[": "SSSSSSSSSSSSSSSSSSSSSSSSSSSS",
+          "h": "\u0018\u0000*\u0000\u0000",
+          "qqqqqqqq\u0000\u0000\u0000": "\u0000\u0000\u0000SSSSSSSSSSSSSSSSSSSSSSSS\u0001\u0000\u0000\u0000\u0000\u0000\u0000\bSSSSSSSSSSSS>>>>>"
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "a",
+        "id": "zzzzzzzzzzzzzzzzzzzzSSSSSSSSSSS"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "zzzzzzzzzzzzzzzzzzzzSSSSSSSSSSS"
+      },
+      "context": {
+        "r": {
+          "": "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz\u0000\u0000\u0000\u0000\u0000\u0000.\u0018",
+          "\u0000": "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS",
+          "\u0001\u000f": {},
+          "\u0003\u001dw": "\u0000\u0000SSSSSSSSSSSSSSSSSSSSSSSSSS}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}\u001f\u001f\u001f\u001f\u001f\u001f\u001f\u001f\u001f\u001f\u001f\u001f\u0000\u0000\u0000\u0000\u0000}}}}}}}}}}}}}}}}}}}}}}}}}}g",
+          "\u001d": [
+            [
+              []
+            ]
+          ],
+          " ": " ",
+          "'ggg\ng\u0003gg": "hSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS",
+          "*\u0000\u0000\u0000SSSSSSSSSSSSSS": [
+            [],
+            [
+              []
+            ]
+          ],
+          "*\u0000\u0018\u0000\u0000\u0000\u0000\u0000\u0000\u0000SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS": "\u0000\u0000\u0000\u0000\u0000\u0000SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS\u001fSSSSSSSSSSSSSS\ng\u0003gg",
+          "Debian \u0001\u000f": "ggg"
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "a",
+        "id": "zzzzzzzzzzzzzzzzzzzzSSSSSSSSSSS"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "\u0000": "SSS1SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS",
+          "\u0001\u000f": {},
+          "\u001d": [
+            [
+              []
+            ]
+          ],
+          "'ggg\ng\u0003gg": "",
+          "*\u0000\u0000\u0000SSSSSSSSSSSSSS": [
+            [],
+            [
+              []
+            ]
+          ],
+          "*\u0000\u0018\u0000\u0000\u0000\u0000\u0000\u0000\u0000SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS": "SSSSSSSSSSSSSSSSSSSSSSSSSS}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}\u001f\u001f\u001f\u001f\u001f\u001f\u001f\u001f\u001f\u001f\u001f\u001f\u0000\u0000\u0000\u0000\u0000}}}}}}}}}}}}}}}}}}}}}}}}}}g",
+          "P \t\u0000iSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS": false,
+          "V@": "SSSSSSSSSSS\u0016SSSSSSSSSSSSSSSSSSSSSSSSSSSS",
+          "g": "\u0000\u0018\u0000\u0000\u0000\u0000\u0000\u0000\u0000SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS\u0000\u0000\u0000SSSSSSSSSSSSSSSSSSSSSSSSSS}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000qqqaqqq?????????\u001f\u001f\u001f",
+          "yA": " "
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "a",
+        "id": "zzzzzzzzzzzzzzzzzzzzSSSSSSSSSSS"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "\u001d": [
+            [
+              []
+            ]
+          ],
+          "'ggg\ng\u0003gg": "SSSSSSSSSSSSSSSS",
+          "*\u0000\u0000\u0000SSSSSSSSSSSSSS": [
+            [],
+            [
+              []
+            ]
+          ],
+          "*\u0000\u0018\u0000\u0000\u0000\u0000\u0000\u0000\u0000SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS": "\u0000\u0000\u0000\u0000\u0000\u0000SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS}}}}}}}}\u001f\u001f\u001f\u001f\u001f\u001f\u001f\u001f\u001f\u001f\u001f\u001f\u0000\u0000\u0000\u0000\u0000}}}}}}}}}}}}}}",
+          "z~": " "
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "\u001d": [
+            [
+              []
+            ]
+          ],
+          "'ggg\ng\u0003gg": "SSSSSSSSSSSSSSS",
+          "*\u0000\u0000\u0000SSSSSSSSSSSSSS": [
+            [
+              []
+            ]
+          ],
+          "*\u0000\u0018\u0000\u0000\u0000\u0000\u0000\u0000\u0000SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS": "\u0018\u0000\u0000\u0000\u0000\u0000\u0000\u0000SSSSSSSSSSSSSSSSSSSSSSSSSSSSSS",
+          "?VV": {
+            "__entity": {
+              "type": "a",
+              "id": "zzzzzzzzzzzzzzzzzzzzSSSSSSSSSSS"
+            }
+          },
+          "Debian \u0001\u000f": "",
+          "Debian g\ngfg": false,
+          "N~\u001f": "",
+          "P ": "",
+          "P \t\u0000iSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS": false,
+          "V\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000<\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000&\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000qqqaqqq?????????\u001f\u001f\u001f": "",
+          "V\u0000\u0000\u0000\u0000\u0000:\u0000\u0000\u0000\u0000\u0000\u0000<\u0000\u0000\u0000\u0000\u001d": "",
+          "V@": "",
+          "V@[\u001d": "",
+          "[": "",
+          "[@[": "",
+          "g": "",
+          "h": "",
+          "hSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS": "",
+          "qqqqqqqq\u0000\u0000\u0000": "",
+          "y": false,
+          "yA": "",
+          "z~": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "a",
+        "id": "zzzzzzzzzzzzzzzzzzzzSSSSSSSSSSS"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "zzzzzzzzzzzzzzzzzzzzSSSSSSSSSSS"
+      },
+      "context": {
+        "r": {
+          "": "",
+          "\u0000": "",
+          "\u0000\u0000": "",
+          "\u0000\u0000\u0000": {
+            "__extn": {
+              "fn": "duration",
+              "arg": "0ms"
+            }
+          },
+          "\u0001": "",
+          "\u0001\u000f": {},
+          "\u0003\u001dw": "",
+          "\u0003\u001dwz": "",
+          "\u000e": "",
+          "\u0013\u0013\u0013\u0013:\u000b\u000fi": "",
+          "\u0014": {
+            "__extn": {
+              "fn": "datetime",
+              "arg": "0000-01-01"
+            }
+          },
+          "\u001d": [],
+          "\u001d\u0003": "",
+          "\u001d@\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000xKppLs\u0000\u0000[": "",
+          "\u001d@[": "",
+          " ": "",
+          "$": "",
+          "'ggg\ng\u0003-\u0000\u0001": false,
+          "'ggg\ng\u0003gg": "",
+          "'ggg\nggg": {
+            "__extn": {
+              "fn": "duration",
+              "arg": "0ms"
+            }
+          },
+          "(": false,
+          "*\u0000\u0000\u0000SSSSSSSSSSSSSS": [],
+          "*\u0000\u0018\u0000\u0000\u0000\u0000\u0000\u0000\u0000SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS": "",
+          "1'ggg\ngfg": "",
+          ":pVV": "",
+          ":~": "",
+          "=\u0000 v>>>>>>>>>>>>": false,
+          "=\u000e": "",
+          "???????j????????????????????\u0003\u001d@": "",
+          "?VV": {
+            "__entity": {
+              "type": "a",
+              "id": "zzzzzzzzzzzzzzzzzzzzSSSSSSSSSSS"
+            }
+          },
+          "Debian \u0001\u000f": "",
+          "Debian g\ngfg": false,
+          "N~\u001f": "",
+          "P ": "",
+          "P \t\u0000iSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS": false,
+          "V\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000<\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000&\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000qqqaqqq?????????\u001f\u001f\u001f": "",
+          "V\u0000\u0000\u0000\u0000\u0000:\u0000\u0000\u0000\u0000\u0000\u0000<\u0000\u0000\u0000\u0000\u001d": "",
+          "V@": "",
+          "V@[\u001d": "",
+          "[": "",
+          "[@[": "",
+          "g": "",
+          "h": "",
+          "hSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS": "",
+          "qqqqqqqq\u0000\u0000\u0000": "",
+          "y": false,
+          "yA": "",
+          "z~": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "a",
+        "id": "zzzzzzzzzzzzzzzzzzzzSSSSSSSSSSS"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "zzzzzzzzzzzzzzzzzzzzSSSSSSSSSSS"
+      },
+      "context": {
+        "r": {
+          "": "",
+          "\u0000": "",
+          "\u0000\u0000": "",
+          "\u0000\u0000\u0000": {
+            "__extn": {
+              "fn": "duration",
+              "arg": "0ms"
+            }
+          },
+          "\u0001": "",
+          "\u0001\u000f": {},
+          "\u0003\u001dw": "",
+          "\u0003\u001dwz": "",
+          "\u000e": "",
+          "\u0013\u0013\u0013\u0013:\u000b\u000fi": "",
+          "\u0014": {
+            "__extn": {
+              "fn": "datetime",
+              "arg": "0000-01-01"
+            }
+          },
+          "\u001d": [],
+          "\u001d\u0003": "",
+          "\u001d@\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000xKppLs\u0000\u0000[": "",
+          "\u001d@[": "",
+          " ": "",
+          "$": "",
+          "'ggg\ng\u0003-\u0000\u0001": false,
+          "'ggg\ng\u0003gg": "",
+          "'ggg\nggg": {
+            "__extn": {
+              "fn": "duration",
+              "arg": "0ms"
+            }
+          },
+          "(": false,
+          "*\u0000\u0000\u0000SSSSSSSSSSSSSS": [],
+          "*\u0000\u0018\u0000\u0000\u0000\u0000\u0000\u0000\u0000SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS": "",
+          "1'ggg\ngfg": "",
+          ":pVV": "",
+          ":~": "",
+          "=\u0000 v>>>>>>>>>>>>": false,
+          "=\u000e": "",
+          "???????j????????????????????\u0003\u001d@": "",
+          "?VV": {
+            "__entity": {
+              "type": "a",
+              "id": "zzzzzzzzzzzzzzzzzzzzSSSSSSSSSSS"
+            }
+          },
+          "Debian \u0001\u000f": "",
+          "Debian g\ngfg": false,
+          "N~\u001f": "",
+          "P ": "",
+          "P \t\u0000iSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS": false,
+          "V\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000<\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000&\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000qqqaqqq?????????\u001f\u001f\u001f": "",
+          "V\u0000\u0000\u0000\u0000\u0000:\u0000\u0000\u0000\u0000\u0000\u0000<\u0000\u0000\u0000\u0000\u001d": "",
+          "V@": "",
+          "V@[\u001d": "",
+          "[": "",
+          "[@[": "",
+          "g": "",
+          "h": "",
+          "hSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS": "",
+          "qqqqqqqq\u0000\u0000\u0000": "",
+          "y": false,
+          "yA": "",
+          "z~": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

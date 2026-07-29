@@ -1,0 +1,10 @@
+entity a enum [""];
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    Y44424F00Ca2?: Set<__cedar::Long>
+  }
+};
+

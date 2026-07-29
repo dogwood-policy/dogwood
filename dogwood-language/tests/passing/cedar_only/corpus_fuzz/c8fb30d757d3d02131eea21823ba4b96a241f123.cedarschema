@@ -1,0 +1,10 @@
+namespace w2 {
+  entity a enum [""];
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

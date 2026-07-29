@@ -1,0 +1,14 @@
+entity a = {
+  qgPOOV: __cedar::Bool
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    H0?: {
+      ""?: __cedar::String
+    }
+  }
+};
+

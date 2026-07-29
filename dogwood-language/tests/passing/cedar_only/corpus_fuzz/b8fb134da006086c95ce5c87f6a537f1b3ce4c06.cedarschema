@@ -1,0 +1,12 @@
+@A
+@r("")
+@r3T1RR3("")
+@rcmRR0003330EwR3E("")
+entity a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

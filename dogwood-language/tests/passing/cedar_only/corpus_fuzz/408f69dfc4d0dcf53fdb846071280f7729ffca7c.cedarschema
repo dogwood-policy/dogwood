@@ -1,0 +1,19 @@
+@W
+@ru0SSSS800000
+entity a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @F
+    @M00
+    @w5
+    @xS
+    H30SSRRRRRR: Set<Set<__cedar::Bool>>,
+    m?: {    },
+    @vR("")
+    r: Set<Set<Set<Set<__cedar::Long>>>>
+  }
+};
+

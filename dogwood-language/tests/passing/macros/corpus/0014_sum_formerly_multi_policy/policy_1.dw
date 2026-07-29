@@ -1,0 +1,18 @@
+// Macro-form rewrite of 0305_sum_except_multi_permit / policy_1.
+//
+// Two-policy file: policy_1 (this) uses sum_formerly via macro;
+// policy_2 is an unrelated `except` policy and is copied verbatim.
+// The macro definition is declared at the top of policy_1 and lives in
+// the same combined policy set when concatenated with policy_2.
+
+def temporal sum_formerly(?a, ?w, ?body) {
+    sum ?a for (?a: Long), ($t: Timepoint). where (formerly within ?w (?body && tp($t)))
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    exists (total: Long). ((sum_formerly(a, 1h, Drupe::Action::"Transfer"::request{ input.user: context.input.user, input.amount: a })) == total && total > 100)};

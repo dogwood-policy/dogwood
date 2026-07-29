@@ -1,0 +1,13 @@
+// Two INDEPENDENT existentials (distinct bound vars `u` and `v`, no join)
+// — contrast with ea_0012, which shares one `u` across both predicates.
+// "Some login AND some transfer happened in the window", even by DIFFERENT
+// users. The point: a login by alice and a transfer by bob suffices here,
+// whereas the shared-var correlation would require the same user to do both.
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (u: String). formerly within 1h Drupe::Action::"Login"::request{ input.user: u } && exists (v: String). formerly within 1h Drupe::Action::"Transfer"::request{ input.user: v }};

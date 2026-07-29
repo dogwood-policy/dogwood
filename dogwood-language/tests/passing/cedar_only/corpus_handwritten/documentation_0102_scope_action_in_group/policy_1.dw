@@ -1,0 +1,15 @@
+// Scope a single rule to several tools by listing them in a Cedar
+// set on the action position with `in`. The new idea: one rule can
+// cover multiple Drupe actions without duplication.
+//
+// The body is empty here because each listed action has its own
+// input shape, and a body that referenced `context.input.shares`
+// would not type-check against `GetStockInfo`-style actions. See
+// 0104 for the single-action form that unlocks tool-specific
+// input fields.
+
+permit (
+    principal,
+    action in [Drupe::Action::"SellShares", Drupe::Action::"ApproveSale"],
+    resource
+);

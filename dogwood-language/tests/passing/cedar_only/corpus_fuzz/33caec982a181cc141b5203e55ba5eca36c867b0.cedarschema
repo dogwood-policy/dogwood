@@ -1,0 +1,10 @@
+entity a enum ["\u{2}"];
+
+action "   j0" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    w388?: __cedar::ipaddr
+  }
+};
+

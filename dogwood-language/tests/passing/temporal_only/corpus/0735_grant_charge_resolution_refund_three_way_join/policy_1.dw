@@ -1,0 +1,12 @@
+permit (
+    principal,
+    action == Drupe::Action::"Refund",
+    resource
+)
+when temporal {
+    exists (a: Long). (
+        formerly within 1h Drupe::Action::"Grant"::response{ input.user: context.input.user, output.amount: a }
+        && formerly within 1h Drupe::Action::"Charge"::response{ input.user: context.input.user, input.amount: a }
+        && context.input.amount == a
+    )
+};

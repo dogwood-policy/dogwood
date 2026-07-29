@@ -1,0 +1,26 @@
+entity a = {
+  B?: __cedar::ipaddr,
+  Cmmmm?: __cedar::ipaddr,
+  Mnn?: __cedar::ipaddr,
+  Qw2nn1?: __cedar::ipaddr,
+  _3335cZgYlW1Fn31?: __cedar::ipaddr,
+  _YlW1Fnnw2nn13?: __cedar::ipaddr,
+  eKKKKKK?: __cedar::ipaddr,
+  eKKKKKKFn31Fg333?: __cedar::ipaddr,
+  g33f333?: __cedar::ipaddr,
+  i?: __cedar::ipaddr,
+  i4deeeA?: __cedar::ipaddr,
+  neeeAee?: __cedar::ipaddr,
+  r?: __cedar::ipaddr,
+  r1Fn?: __cedar::ipaddr,
+  r335?: __cedar::ipaddr,
+  y?: __cedar::ipaddr,
+  y4?: __cedar::ipaddr
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

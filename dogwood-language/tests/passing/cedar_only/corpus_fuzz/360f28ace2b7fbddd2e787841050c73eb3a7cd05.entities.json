@@ -1,0 +1,48 @@
+[
+  {
+    "uid": {
+      "type": "Action",
+      "id": "S"
+    },
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "Action",
+      "id": "@"
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "Action",
+        "id": "S"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "Action",
+      "id": "\u0001\u000e"
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "Action",
+        "id": "@"
+      },
+      {
+        "type": "Action",
+        "id": "S"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "a",
+      "id": "+"
+    },
+    "attrs": {},
+    "parents": []
+  }
+]

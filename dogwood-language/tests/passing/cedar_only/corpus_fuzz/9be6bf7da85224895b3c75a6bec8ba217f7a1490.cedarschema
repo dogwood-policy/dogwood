@@ -1,0 +1,28 @@
+@A
+entity a = {
+  A?: {
+    ""?: __cedar::ipaddr,
+    "\0"?: __cedar::ipaddr,
+    "\0\0!"?: __cedar::ipaddr,
+    "\u{1}\n\u{f}VV"?: __cedar::ipaddr,
+    "\u{3}\u{1d}w": __cedar::ipaddr,
+    @v3T33S1RaQ
+    "\u{e}\u{1a}\u{1a}\u{1a}4"?: __cedar::ipaddr,
+    "\u{1d}\u{3}": __cedar::ipaddr,
+    "\u{1d}@["?: __cedar::ipaddr,
+    "\u{1d}@gf\u{14}"?: __cedar::ipaddr,
+    @aQQQQQQQQQ
+    "$"?: __cedar::ipaddr,
+    ":~"?: __cedar::ipaddr,
+    "=\u{e}"?: __cedar::ipaddr,
+    "[@["?: __cedar::ipaddr,
+    "qqqqqqqqqqqqq%qqqqqqqqq\u{1}\u{4}qfd~"?: __cedar::ipaddr
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

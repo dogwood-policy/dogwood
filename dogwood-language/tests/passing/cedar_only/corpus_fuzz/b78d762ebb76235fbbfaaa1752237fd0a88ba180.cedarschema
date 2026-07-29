@@ -1,0 +1,23 @@
+entity Blf;
+
+entity C4445491W33f;
+
+entity Hf enum [""];
+
+entity T317f33_33HH44;
+
+entity g3;
+
+entity l enum ["\u{2}"];
+
+entity n tags {
+  @YT("*")
+  ""?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [g3],
+  resource: [T317f33_33HH44, Hf, n, g3, C4445491W33f, l, Blf],
+  context: {}
+};
+

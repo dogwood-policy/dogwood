@@ -1,0 +1,5 @@
+// The expression-level counterpart of the `is`/`is-in` scope constraint:
+// an entity-type + hierarchy membership test inside a when body.
+@id("cond_is_oauth_in_team")
+permit ( principal, action == Drupe::Action::"GetStockInfo", resource )
+when { principal is Drupe::OAuthUser in Drupe::Team::"traders" };

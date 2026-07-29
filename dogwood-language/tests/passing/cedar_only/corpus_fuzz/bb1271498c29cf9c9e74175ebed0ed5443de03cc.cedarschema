@@ -1,0 +1,10 @@
+entity d5_f_0B enum [""];
+
+action "action" appliesTo {
+  principal: [d5_f_0B],
+  resource: [d5_f_0B],
+  context: {
+    z?: Set<d5_f_0B>
+  }
+};
+

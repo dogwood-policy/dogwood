@@ -1,0 +1,298 @@
+{
+  "policies": "corpus-tests/1b0525c85504354a22e505434f14ae879594e47a.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/1b0525c85504354a22e505434f14ae879594e47a.entities.json",
+  "schema": "corpus-tests/1b0525c85504354a22e505434f14ae879594e47a.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "r::f::g04uq1233::D",
+        "id": ""
+      },
+      "action": {
+        "type": "r::f::g04uq1233::Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "r::f::g04uq1233::h4",
+        "id": ""
+      },
+      "context": {
+        "r3": {
+          "__entity": {
+            "type": "r::f::g04uq1233::I",
+            "id": ""
+          }
+        },
+        "r3333Wo": "",
+        "v": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "r::f::g04uq1233::D",
+        "id": ""
+      },
+      "action": {
+        "type": "r::f::g04uq1233::Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "r::f::g04uq1233::h4",
+        "id": ""
+      },
+      "context": {
+        "r3": {
+          "__entity": {
+            "type": "r::f::g04uq1233::I",
+            "id": ""
+          }
+        },
+        "r3333Wo": "",
+        "v": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "r::f::g04uq1233::D",
+        "id": ""
+      },
+      "action": {
+        "type": "r::f::g04uq1233::Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "r::f::g04uq1233::h4",
+        "id": ""
+      },
+      "context": {
+        "r3": {
+          "__entity": {
+            "type": "r::f::g04uq1233::I",
+            "id": ""
+          }
+        },
+        "r3333Wo": "",
+        "v": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "r::f::g04uq1233::D",
+        "id": ""
+      },
+      "action": {
+        "type": "r::f::g04uq1233::Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "r::f::g04uq1233::h4",
+        "id": ""
+      },
+      "context": {
+        "r3": {
+          "__entity": {
+            "type": "r::f::g04uq1233::I",
+            "id": ""
+          }
+        },
+        "r3333Wo": "",
+        "v": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "r::f::g04uq1233::D",
+        "id": ""
+      },
+      "action": {
+        "type": "r::f::g04uq1233::Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "r::f::g04uq1233::h4",
+        "id": ""
+      },
+      "context": {
+        "r3": {
+          "__entity": {
+            "type": "r::f::g04uq1233::I",
+            "id": ""
+          }
+        },
+        "r3333Wo": "",
+        "v": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "r::f::g04uq1233::D",
+        "id": ""
+      },
+      "action": {
+        "type": "r::f::g04uq1233::Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "r::f::g04uq1233::h4",
+        "id": ""
+      },
+      "context": {
+        "r3": {
+          "__entity": {
+            "type": "r::f::g04uq1233::I",
+            "id": ""
+          }
+        },
+        "r3333Wo": "",
+        "v": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "r::f::g04uq1233::D",
+        "id": ""
+      },
+      "action": {
+        "type": "r::f::g04uq1233::Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "r::f::g04uq1233::h4",
+        "id": ""
+      },
+      "context": {
+        "r3": {
+          "__entity": {
+            "type": "r::f::g04uq1233::I",
+            "id": ""
+          }
+        },
+        "r3333Wo": "",
+        "v": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "r::f::g04uq1233::D",
+        "id": ""
+      },
+      "action": {
+        "type": "r::f::g04uq1233::Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "r::f::g04uq1233::h4",
+        "id": ""
+      },
+      "context": {
+        "r3": {
+          "__entity": {
+            "type": "r::f::g04uq1233::I",
+            "id": ""
+          }
+        },
+        "r3333Wo": "",
+        "v": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

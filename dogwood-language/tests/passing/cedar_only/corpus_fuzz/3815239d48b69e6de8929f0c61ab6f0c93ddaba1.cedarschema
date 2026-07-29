@@ -1,0 +1,12 @@
+entity A000 enum [""];
+
+entity M2222 enum [""];
+
+entity g2222 enum [""];
+
+action "action" appliesTo {
+  principal: [M2222],
+  resource: [M2222],
+  context: {}
+};
+

@@ -1,0 +1,19 @@
+@Fy333333("")
+@M33("")
+@q("")
+@r("")
+entity a = {
+  @Lf0G2d01kR1("")
+  @P("")
+  @r("")
+  @r3("")
+  @r3s33
+  A0?: __cedar::datetime
+} tags a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

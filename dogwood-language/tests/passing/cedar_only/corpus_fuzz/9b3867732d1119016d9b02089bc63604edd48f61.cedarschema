@@ -1,0 +1,13 @@
+@r
+entity a = {
+  J?: a,
+  v: a,
+  vR?: a
+} tags a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

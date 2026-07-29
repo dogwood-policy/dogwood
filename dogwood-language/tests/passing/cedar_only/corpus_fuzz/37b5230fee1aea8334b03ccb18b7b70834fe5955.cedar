@@ -1,0 +1,8 @@
+@YEEEEEEEEE("MMMMMMMMMMMMMMMMMMMMMMMMMM0E")
+forbid(
+  principal in a::"",
+  action == Action::"action",
+  resource in a::""
+) when {
+  true && (!(!(!true)))
+};

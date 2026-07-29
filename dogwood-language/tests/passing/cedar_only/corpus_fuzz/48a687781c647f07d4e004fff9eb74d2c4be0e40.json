@@ -1,0 +1,170 @@
+{
+  "policies": "corpus-tests/48a687781c647f07d4e004fff9eb74d2c4be0e40.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/48a687781c647f07d4e004fff9eb74d2c4be0e40.entities.json",
+  "schema": "corpus-tests/48a687781c647f07d4e004fff9eb74d2c4be0e40.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "gCC::gC4::Y444CCCCCCCC::a",
+        "id": "\u0002"
+      },
+      "action": {
+        "type": "gCC::gC4::Y444CCCCCCCC::Action",
+        "id": "B\u0011"
+      },
+      "resource": {
+        "type": "gCC::gC4::Y444CCCCCCCC::a",
+        "id": "\u0002"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "gCC::gC4::Y444CCCCCCCC::a",
+        "id": "\u0002"
+      },
+      "action": {
+        "type": "gCC::gC4::Y444CCCCCCCC::Action",
+        "id": "B\u0011"
+      },
+      "resource": {
+        "type": "gCC::gC4::Y444CCCCCCCC::a",
+        "id": "\u0002"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "gCC::gC4::Y444CCCCCCCC::a",
+        "id": "\u0002"
+      },
+      "action": {
+        "type": "gCC::gC4::Y444CCCCCCCC::Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "gCC::gC4::Y444CCCCCCCC::a",
+        "id": "\u0002"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "gCC::gC4::Y444CCCCCCCC::a",
+        "id": "\u0002"
+      },
+      "action": {
+        "type": "gCC::gC4::Y444CCCCCCCC::Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "gCC::gC4::Y444CCCCCCCC::a",
+        "id": "\u0002"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "gCC::gC4::Y444CCCCCCCC::a",
+        "id": "\u0002"
+      },
+      "action": {
+        "type": "gCC::gC4::Y444CCCCCCCC::Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "gCC::gC4::Y444CCCCCCCC::a",
+        "id": "\u0002"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "gCC::gC4::Y444CCCCCCCC::a",
+        "id": "\u0002"
+      },
+      "action": {
+        "type": "gCC::gC4::Y444CCCCCCCC::Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "gCC::gC4::Y444CCCCCCCC::a",
+        "id": "\u0002"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "gCC::gC4::Y444CCCCCCCC::a",
+        "id": "\u0002"
+      },
+      "action": {
+        "type": "gCC::gC4::Y444CCCCCCCC::Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "gCC::gC4::Y444CCCCCCCC::a",
+        "id": "\u0002"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "gCC::gC4::Y444CCCCCCCC::a",
+        "id": "\u0002"
+      },
+      "action": {
+        "type": "gCC::gC4::Y444CCCCCCCC::Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "gCC::gC4::Y444CCCCCCCC::a",
+        "id": "\u0002"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}

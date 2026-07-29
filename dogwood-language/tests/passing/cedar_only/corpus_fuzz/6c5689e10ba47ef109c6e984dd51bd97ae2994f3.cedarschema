@@ -1,0 +1,10 @@
+namespace P2333Rl55555OO::A00000000r05p_ {
+  entity a enum ["", "e", ""];
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

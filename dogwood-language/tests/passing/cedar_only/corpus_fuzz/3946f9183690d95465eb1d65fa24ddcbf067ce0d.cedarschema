@@ -1,0 +1,54 @@
+namespace S::A {
+  entity a;
+
+  action "" in [S::A::Action::":~", S::A::Action::"\u{e}", S::A::Action::"\u{3}", S::A::Action::"w\u{1d}[", S::A::Action::"$", S::A::Action::"=\u{e}", S::A::Action::"L[", S::A::Action::"\u{1f}\u{1d}@J<", S::A::Action::"r@"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      h?: __cedar::Long
+    }
+  };
+
+  action "\u{3}" in [S::A::Action::"w\u{1d}[", S::A::Action::"$", S::A::Action::"=\u{e}", S::A::Action::"L[", S::A::Action::"\u{1f}\u{1d}@J<", S::A::Action::"r@"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      B?: __cedar::ipaddr,
+      CmmXX?: __cedar::ipaddr,
+      Qw2nn1?: __cedar::ipaddr,
+      i4deeeA?: __cedar::ipaddr,
+      r?: __cedar::ipaddr,
+      y?: __cedar::ipaddr
+    }
+  };
+
+  action "\u{e}" in [S::A::Action::"\u{3}", S::A::Action::"w\u{1d}[", S::A::Action::"$", S::A::Action::"=\u{e}", S::A::Action::"L[", S::A::Action::"\u{1f}\u{1d}@J<", S::A::Action::"r@"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      LBy3p13__RRRw?: __cedar::String,
+      m?: __cedar::Bool,
+      ruTS?: S::A::a,
+      rzE: __cedar::Bool
+    }
+  };
+
+  action "\u{1f}\u{1d}@J<" in [S::A::Action::"r@"];
+
+  action "$" in [S::A::Action::"=\u{e}", S::A::Action::"L[", S::A::Action::"\u{1f}\u{1d}@J<", S::A::Action::"r@"];
+
+  action ":~" in [S::A::Action::"\u{e}", S::A::Action::"\u{3}", S::A::Action::"w\u{1d}[", S::A::Action::"$", S::A::Action::"=\u{e}", S::A::Action::"L[", S::A::Action::"\u{1f}\u{1d}@J<", S::A::Action::"r@"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "=\u{e}" in [S::A::Action::"L[", S::A::Action::"\u{1f}\u{1d}@J<", S::A::Action::"r@"];
+
+  action "L[" in [S::A::Action::"\u{1f}\u{1d}@J<", S::A::Action::"r@"];
+
+  action "r@";
+
+  action "w\u{1d}[" in [S::A::Action::"$", S::A::Action::"=\u{e}", S::A::Action::"L[", S::A::Action::"\u{1f}\u{1d}@J<", S::A::Action::"r@"];
+}
+

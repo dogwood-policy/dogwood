@@ -1,0 +1,33 @@
+// BUG REPRO (entity-type swap): the temporal type-checker enforces operand
+// types on `==`/`!=`, but does NOT type-check a predicate FIELD PATTERN whose
+// declared type is an entity type. Here `Tool2::request{ input.mode: ... }`
+// declares `input.mode : Drupe::Tool2_Input_mode`, but the pattern binds
+// it to an entity literal of a DIFFERENT type, `Tool1_Input_mode::"read"`.
+//
+// `"read"` IS a permitted id of `Tool1_Input_mode`, so the enum-eid check in
+// `check_entity_types` passes it — the ONLY thing that should reject this is
+// the field-argument type check (`check_arg_type`), which must see the
+// expected type `entity:Tool2_Input_mode` and the actual `entity:Tool1_Input_mode`
+// and reject the mismatch. It currently does not fire for `input.<field>`
+// patterns (the arg name is looked up as the dotted string "input.mode" inside
+// the `input` record, which never matches), so this policy validates cleanly
+// when it should be rejected. This can cause a silent runtime failure: the
+// wrong-typed literal never matches a real Tool2 event.
+//
+// NOTE — this is a TEMPORAL-DIALECT-SPECIFIC rejection, stricter than Cedar.
+// The temporal checker's `types_compatible`/`param_accepts` require EQUAL
+// entity tags, so a mismatched-entity `==` or field pattern is a hard type
+// error (verified: the temporal `==` path already errors on `OAuthUser` vs
+// `Tool1_Input_mode`). Cedar's own validator, by contrast, treats any
+// `entity == entity` as well-typed and downgrades this to an "impossible
+// policy" WARNING (see 1039/1040 for the scalar variants Cedar *does* reject
+// as errors; the entity-swap Cedar analogue is intentionally NOT an
+// expected-failure). Do not "align" this to Cedar's warning behavior.
+//
+// Expected: rejected at `validate` by the temporal type-checker.
+permit (principal, action == Drupe::Action::"Tool1", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Tool2"::request{
+        input.mode: Drupe::Tool1_Input_mode::"read"
+    }
+};

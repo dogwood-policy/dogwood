@@ -1,0 +1,10 @@
+entity a = {
+  V?: __cedar::Long
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

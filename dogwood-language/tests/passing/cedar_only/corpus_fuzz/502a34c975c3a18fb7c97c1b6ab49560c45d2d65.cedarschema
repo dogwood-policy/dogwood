@@ -1,0 +1,16 @@
+namespace Q::Qpppp3::Qnnnnn::r3::z {
+  entity W0;
+
+  entity nf;
+
+  entity r enum ["\0\0\0\0", "", ""];
+
+  entity y enum ["", "", ""];
+
+  action "action" appliesTo {
+    principal: [nf, r, y],
+    resource: [nf, r, y],
+    context: {}
+  };
+}
+

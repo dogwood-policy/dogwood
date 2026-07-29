@@ -1,0 +1,4 @@
+// A single datetime literal compared with an ordinary operator.
+@id("sell_after_2024")
+permit ( principal, action == Drupe::Action::"SellShares", resource )
+when { context.system.now > datetime("2024-01-01T00:00:00Z") };

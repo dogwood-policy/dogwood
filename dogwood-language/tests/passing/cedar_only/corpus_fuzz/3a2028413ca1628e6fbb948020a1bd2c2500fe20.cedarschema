@@ -1,0 +1,41 @@
+@A
+@wSS
+entity a = {
+  @A
+  @L
+  @tjjjjjjjjjjj("---")
+  @w5
+  @wS
+  r: {
+    ""?: a,
+    "\0": {
+      @A
+      @wSS
+      "": a,
+      @d
+      @m("")
+      @r
+      "----": {
+        @L
+        @tjjjjjjjjjjj("---")
+        @wS
+        "\0\0\0"?: a
+      },
+      @A
+      @L
+      @tjjjjjjjjjjj("---")
+      @w5
+      @wS
+      "-----------"?: {      }
+    }
+  }
+} tags a;
+
+@r("------")
+@tjjj00000000
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

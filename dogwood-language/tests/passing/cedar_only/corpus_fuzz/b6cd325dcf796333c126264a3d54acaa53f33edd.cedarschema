@@ -1,0 +1,34 @@
+entity a;
+
+action "" in [Action::":p", Action::"&:", Action::"pm", Action::"&[\u{1d}", Action::"+w", Action::"V$*", Action::"\u{e}VPV", Action::":", Action::"VV", Action::"V$", Action::":CCCCCC", Action::"=", Action::"C"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{e}VPV" in [Action::":", Action::"VV", Action::"V$", Action::":CCCCCC", Action::"=", Action::"C"];
+
+action "&:" in [Action::"pm", Action::"&[\u{1d}", Action::"+w", Action::"V$*", Action::"\u{e}VPV", Action::":", Action::"VV", Action::"V$", Action::":CCCCCC", Action::"=", Action::"C"];
+
+action "&[\u{1d}" in [Action::"+w", Action::"V$*", Action::"\u{e}VPV", Action::":", Action::"VV", Action::"V$", Action::":CCCCCC", Action::"=", Action::"C"];
+
+action "+w" in [Action::"V$*", Action::"\u{e}VPV", Action::":", Action::"VV", Action::"V$", Action::":CCCCCC", Action::"=", Action::"C"];
+
+action ":" in [Action::"VV", Action::"V$", Action::":CCCCCC", Action::"=", Action::"C"];
+
+action ":CCCCCC" in [Action::"=", Action::"C"];
+
+action ":p" in [Action::"&:", Action::"pm", Action::"&[\u{1d}", Action::"+w", Action::"V$*", Action::"\u{e}VPV", Action::":", Action::"VV", Action::"V$", Action::":CCCCCC", Action::"=", Action::"C"];
+
+action "=" in [Action::"C"];
+
+action "C";
+
+action "V$" in [Action::":CCCCCC", Action::"=", Action::"C"];
+
+action "V$*" in [Action::"\u{e}VPV", Action::":", Action::"VV", Action::"V$", Action::":CCCCCC", Action::"=", Action::"C"];
+
+action "VV" in [Action::"V$", Action::":CCCCCC", Action::"=", Action::"C"];
+
+action "pm" in [Action::"&[\u{1d}", Action::"+w", Action::"V$*", Action::"\u{e}VPV", Action::":", Action::"VV", Action::"V$", Action::":CCCCCC", Action::"=", Action::"C"];
+

@@ -1,0 +1,12 @@
+// Permit Read only if the same user has Written within 1h.
+// Self-referential: Write requests both produce decisions AND serve as
+// history for this temporal check. Tests the exact 1h = 3600s boundary:
+// an event exactly 3600s ago is in-window, one at 3601s is not.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Write"::request{ input.user: context.input.user }
+};

@@ -1,0 +1,13 @@
+// Edge: 0 < count ... — literal on the left side of aggregate comparison.
+// Tests agg_right and literal_vs_literal coverage constructs.
+// Self-referencing Transfer action: formerly includes the current event,
+// so count is always >= 1 at every Transfer time point → 0 < 1 = true.
+
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    0 < count for (t: Timepoint). where (formerly within 1h Drupe::Action::"Transfer"::request{ input.user: context.input.user } && tp(t))
+};

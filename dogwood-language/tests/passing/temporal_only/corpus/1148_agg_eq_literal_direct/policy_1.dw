@@ -1,0 +1,18 @@
+// Edge: (count for ...) == 1 — direct aggregate equality with non-zero
+// literal, no exists wrapper. Confirms that direct aggregate comparison
+// works for non-zero values (== 0 also works — see case 1149).
+// Note: count deduplicates by the bound timepoint variable, so two Logins
+// with identical field values at different times still count as distinct tp's
+// — but here count remains 1 at tp4 because formerly sees only 1 distinct
+// matching tp at a time (the aggregate scans within the window per-tp).
+// At tp0: 0 Logins, 0==1 false. At tp2: 1 Login, 1==1 true.
+// At tp4: still 1==1 true (see above).
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    (count for (t: Timepoint). where (formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.server } && tp(t))) == 1
+};

@@ -1,0 +1,18 @@
+// BUG REPRO (int for entity): `Tool2::request{ input.mode: ... }` declares
+// `input.mode : Drupe::Tool2_Input_mode` (an enum entity type), but the
+// pattern binds it to the integer literal `5`. An int is not an entity value,
+// so the field-argument type check (`check_arg_type`) should reject this with
+// expected `entity:Tool2_Input_mode` vs actual `int`.
+//
+// The type-checker does enforce this for `==`/`!=` operands, but currently
+// skips predicate `input.<field>` patterns entirely, so this validates cleanly
+// when it should be rejected — a silently mis-typed field that never matches a
+// real Tool2 event at runtime.
+//
+// Expected: rejected at `validate` by the temporal type-checker.
+permit (principal, action == Drupe::Action::"Tool1", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Tool2"::request{
+        input.mode: 5
+    }
+};

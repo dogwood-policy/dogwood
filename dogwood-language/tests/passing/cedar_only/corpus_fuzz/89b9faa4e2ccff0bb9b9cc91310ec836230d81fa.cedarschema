@@ -1,0 +1,73 @@
+entity a = {
+  A?: {
+    ""?: __cedar::String,
+    "\0"?: __cedar::String,
+    "\0\0"?: __cedar::String,
+    "\0\0\0"?: __cedar::String,
+    "\u{1}\n\u{f}VV"?: {
+      @I("")
+      @r("")
+      @rSRR("g!vvvv")
+      "": a,
+      "g!Cw4"?: __cedar::String
+    },
+    "\u{3}"?: __cedar::String,
+    "\u{3}\u{1d}w"?: __cedar::String,
+    "\u{3}Debian \u{1d}\u{3}"?: __cedar::String,
+    "\u{3}ddddd"?: __cedar::String,
+    "\u{8}\0"?: __cedar::String,
+    "\u{c}"?: __cedar::String,
+    "\r"?: __cedar::String,
+    "\u{e}"?: __cedar::String,
+    "\u{e}VV"?: __cedar::String,
+    "\u{14}"?: __cedar::String,
+    "\u{1d}\u{3}"?: __cedar::String,
+    "\u{1d}@"?: __cedar::String,
+    "\u{1d}@=\u{e}"?: __cedar::String,
+    "\u{1d}@["?: __cedar::String,
+    "\u{1d}@gf"?: __cedar::String,
+    "\u{1d}@gffd~*"?: __cedar::String,
+    "\u{1f}"?: __cedar::String,
+    "$"?: __cedar::String,
+    "$\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"?: __cedar::String,
+    "$\0@\0\u{1d}@gf"?: __cedar::String,
+    "$=\u{e}"?: __cedar::String,
+    "&[\u{1d}"?: __cedar::String,
+    "("?: __cedar::String,
+    ")V$"?: __cedar::String,
+    "+wV@"?: __cedar::String,
+    ":"?: __cedar::String,
+    ":dd"?: __cedar::String,
+    ":i"?: __cedar::String,
+    ":p"?: __cedar::String,
+    ":~"?: __cedar::String,
+    ":~\u{1d}w"?: __cedar::String,
+    "="?: __cedar::String,
+    "=\u{e}"?: __cedar::String,
+    "=\u{e}ƙ"?: __cedar::String,
+    A?: __cedar::String,
+    "N~\u{1f}VV"?: __cedar::String,
+    V?: __cedar::String,
+    "V("?: __cedar::String,
+    VV?: __cedar::String,
+    "Zd~*"?: __cedar::String,
+    "["?: __cedar::String,
+    "[@VV"?: __cedar::String,
+    "[@["?: __cedar::String,
+    "[@dddd\u{1d}@"?: __cedar::String,
+    "[w"?: __cedar::String,
+    "^"?: __cedar::String,
+    "fd~*"?: __cedar::String,
+    ff?: __cedar::String,
+    qqqqqqqqqsqqqqq?: __cedar::String,
+    "z~"?: __cedar::String,
+    "\u{7f}"?: __cedar::String
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

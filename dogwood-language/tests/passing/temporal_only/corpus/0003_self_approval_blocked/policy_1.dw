@@ -1,0 +1,12 @@
+// Approve is permitted if the approver has logged in recently.
+// However, it is blocked if the approver is the same person
+// who submitted the request (separation of duty).
+
+permit (
+    principal,
+    action == Drupe::Action::"Approve",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.approver }
+};

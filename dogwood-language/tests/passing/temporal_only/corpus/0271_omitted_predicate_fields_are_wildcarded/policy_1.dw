@@ -1,0 +1,21 @@
+// Logout permitted if the same user logged in within the last hour.
+// `Login` has fields `(user, server)`, but the predicate only mentions
+// `user` — `server` is omitted. Per the documented "omitted fields are
+// implicitly wildcarded" rule, the runtime must match any prior Login
+// for `context.input.user` regardless of which `server` it used.
+//
+// Distinct from 0270 (which exercises trace-field *ordering*), this
+// case asserts the *omission* semantics directly: the trace's Login
+// and Logout deliberately use different `server` values so that any
+// implementation that constrains the predicate by all schema-declared
+// fields would fail to match. The expected verdict is permit at the
+// Logout time-point.
+
+permit (
+    principal,
+    action == Drupe::Action::"Logout",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

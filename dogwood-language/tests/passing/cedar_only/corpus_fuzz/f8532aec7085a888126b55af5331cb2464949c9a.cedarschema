@@ -1,0 +1,17 @@
+entity a tags {
+  ""?: __cedar::Bool,
+  "\u{3}\u{1d}$"?: __cedar::Bool,
+  "\u{1d}\u{3}"?: __cedar::Bool,
+  "\u{1d}@["?: __cedar::Bool,
+  ":~"?: __cedar::Bool,
+  "=\u{e}"?: __cedar::Bool,
+  "[@["?: __cedar::Bool,
+  "t/ionVA\0\0n\\\\\\\\\\"?: __cedar::Bool
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

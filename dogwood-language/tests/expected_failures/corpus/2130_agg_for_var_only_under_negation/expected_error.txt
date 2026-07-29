@@ -1,0 +1,1 @@
+aggregation `for`-variable `x` is not range-restricted by any positive atom in the `where` body; bind it with a predicate field (`P{ f: x }`), a `tp(x)`, or an equality (`(count …) == x`) — an occurrence under a negation or in the left operand of a `since` does not restrict

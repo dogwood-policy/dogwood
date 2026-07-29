@@ -1,0 +1,4 @@
+// String supports == and != only: sell any stock except BLOCKED.
+@id("sell_not_blocked_string")
+permit ( principal, action == Drupe::Action::"SellShares", resource )
+when { context.input.stock != "BLOCKED" };

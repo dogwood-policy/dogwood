@@ -1,0 +1,12 @@
+// Pin a boolean input field to `true`. Flag has no declared
+// output, so the predicate matches fully-resolved events with
+// the `== {}` form.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Flag"::request{ input.enabled: true, input.user: context.input.user }
+};

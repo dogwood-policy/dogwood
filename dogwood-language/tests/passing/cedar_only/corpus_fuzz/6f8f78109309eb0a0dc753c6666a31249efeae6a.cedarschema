@@ -1,0 +1,24 @@
+namespace r::f::r {
+  entity D;
+
+  entity I;
+
+  entity N enum ["\0\0\0\0\0\0\u{2}"];
+
+  entity h0;
+
+  entity m3;
+
+  entity v;
+
+  entity vR;
+
+  action "action" appliesTo {
+    principal: [h0, I, vR, m3],
+    resource: [h0, I, vR, m3],
+    context: {
+      h33333?: __cedar::Bool
+    }
+  };
+}
+

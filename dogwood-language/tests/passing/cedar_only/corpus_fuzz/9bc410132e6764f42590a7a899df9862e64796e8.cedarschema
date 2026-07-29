@@ -1,0 +1,22 @@
+entity N = {
+  r?: {  }
+};
+
+entity UA;
+
+@Szz
+@r("")
+entity r;
+
+action "" appliesTo {
+  principal: [UA, N, r],
+  resource: [r, UA],
+  context: {}
+};
+
+action "fBBB" in [Action::""] appliesTo {
+  principal: [r, UA],
+  resource: [r, UA],
+  context: {}
+};
+

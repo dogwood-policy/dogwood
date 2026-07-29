@@ -1,0 +1,16 @@
+@A("")
+@v01133F0
+entity a = {
+  r: __cedar::ipaddr
+} tags a;
+
+@F
+@Y("\0\0\0\0\0\0\0A0\0\0\0\0\0")
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    O: __cedar::String
+  }
+};
+

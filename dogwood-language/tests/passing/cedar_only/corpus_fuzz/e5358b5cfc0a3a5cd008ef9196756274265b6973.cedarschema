@@ -1,0 +1,10 @@
+@A("")
+@is
+entity js enum ["", ""];
+
+action "action" appliesTo {
+  principal: [js],
+  resource: [js],
+  context: {}
+};
+

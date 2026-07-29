@@ -1,0 +1,12 @@
+entity a tags {
+  ""?: __cedar::String,
+  "\u{3}\u{3}\u{3}"?: __cedar::String,
+  "\u{3}:\u{3}"?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

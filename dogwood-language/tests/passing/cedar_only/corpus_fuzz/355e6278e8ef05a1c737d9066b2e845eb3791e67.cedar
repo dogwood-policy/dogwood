@@ -1,0 +1,8 @@
+@A000000000000("")
+permit(
+  principal,
+  action == r::r::z::E::hDjf::Action::"\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}",
+  resource
+) when {
+  true
+};

@@ -1,0 +1,57 @@
+entity J3 = {
+  @EJaaaaaz1("\u{4}")
+  A: __cedar::Bool,
+  AcRp?: __cedar::Long,
+  E: {  },
+  Fjj3333333: __cedar::Long,
+  Krrrr3333333: __cedar::ipaddr,
+  @r
+  @r33RnZ343333l333("")
+  L: __cedar::Bool,
+  M?: __cedar::datetime,
+  _: {  },
+  i?: __cedar::Bool,
+  iOO?: __cedar::datetime,
+  @q("\u{5}")
+  r: J3,
+  r3: __cedar::datetime,
+  @k("YYYYYYYYYYYYYYYYYYYYYYYYY")
+  @r("")
+  r3333?: __cedar::ipaddr,
+  r33340aax133333: __cedar::datetime,
+  r33RpZ343333l333?: __cedar::ipaddr,
+  ri33l?: __cedar::Bool,
+  rm3ukRcRpZ: __cedar::String,
+  rm3ukucR30: {  },
+  v?: __cedar::String,
+  @xJJ1x
+  v3: __cedar::datetime,
+  vRcRpZ343i33lRZN?: __cedar::String,
+  z: __cedar::Bool
+};
+
+@A0
+entity r tags __cedar::Bool;
+
+@AA
+action "" appliesTo {
+  principal: [r, J3],
+  resource: [r, J3],
+  context: {
+    @N("ooll")
+    @r("YYYYYYYYYYYYYYYYYYYYY")
+    T?: __cedar::String
+  }
+};
+
+action "Y" appliesTo {
+  principal: [J3, r],
+  resource: [J3, r],
+  context: {
+    @m("\u{3}dddddddd~")
+    A006?: __cedar::Long
+  }
+};
+
+action "q" in [Action::"Y"];
+

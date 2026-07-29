@@ -1,0 +1,15 @@
+namespace r::r::r::b {
+  @B
+  @C330000000000
+  @C33000000080A
+  entity A enum ["\0\u{8}\0\n"];
+
+  entity r enum [""];
+
+  action "action" appliesTo {
+    principal: [r],
+    resource: [r],
+    context: {}
+  };
+}
+

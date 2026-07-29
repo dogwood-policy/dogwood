@@ -1,0 +1,23 @@
+// The decision action's context is a CHAINED reference whose intermediate
+// hop is written in a FOREIGN namespace: `Shared::Ctx = Inner` must
+// resolve `Inner` relative to Shared (where that definition is written),
+// not relative to the referencing action's namespace.
+namespace Shared {
+    type Ctx = Inner;
+    type Inner = { input: { document: String, user: String } };
+}
+namespace Drupe {
+    entity OAuthUser;
+    entity Gateway;
+    type LoginInput = { user: String };
+    action Login appliesTo {
+        principal: [OAuthUser],
+        resource: [Gateway],
+        context: { input: LoginInput }
+    };
+    action Read appliesTo {
+        principal: [OAuthUser],
+        resource: [Gateway],
+        context: Shared::Ctx
+    };
+}

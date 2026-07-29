@@ -1,0 +1,16 @@
+// Permit Read only when a two-method pipeline over the `Text::Analyze`
+// information provider (implemented in analyze.rhai) stays below 100.
+//
+// Methods chain left-to-right: `.normalize().clamp()` evaluates as
+// `clamp(normalize(evaluate(document)))`. `evaluate` returns the document
+// length as `raw`; `normalize()` returns `raw * 10`; `clamp()` caps its
+// input at 100. The pipeline's integer result is compared with `< 100`.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Text::Analyze(context.input.document).normalize().clamp() < 100
+};

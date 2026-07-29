@@ -1,0 +1,10 @@
+namespace wS::wS::wS::A0::A::A::A::A::F0 {
+  entity a enum [""];
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

@@ -1,0 +1,20 @@
+@J("")
+@LpYrgml333000000
+@r("")
+@r33("")
+@xTT("")
+entity a = {
+  @A
+  @J("")
+  @r("")
+  @xT3("")
+  @xTT("")
+  r: __cedar::Long
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

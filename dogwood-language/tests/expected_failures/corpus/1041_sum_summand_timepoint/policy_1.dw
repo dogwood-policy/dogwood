@@ -1,0 +1,20 @@
+// BUG REPRO (Timepoint summand): the aggregation summand — the variable whose
+// values are added together — must be a `Long`. Here `sum t` adds together
+// `t`, which is declared `Timepoint`. Timepoints are ordinal positions, not
+// quantities, so summing them is meaningless (and the two backends disagree on
+// it). A `Timepoint` is legitimate in the `for (…)` binders — it controls
+// per-timepoint row distinctness — but not as the value being summed.
+//
+// The summand's type was never checked: `collect_declared_binders` records only
+// the `for_vars` into the type env, and `term_type(Agg)` hard-codes the whole
+// aggregate to `int`, so a non-Long summand validated cleanly. This should be
+// rejected by the temporal type-checker.
+//
+// Expected: rejected at `validate`.
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    exists (n: Long). (
+        (sum t for (t: Timepoint). where (Drupe::Action::"Charge"::request{} && tp(t))) == n
+        && n > 0
+    )
+};

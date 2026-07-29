@@ -1,0 +1,12 @@
+namespace K::A {
+  entity a = {
+    D?: K::A::a
+  };
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

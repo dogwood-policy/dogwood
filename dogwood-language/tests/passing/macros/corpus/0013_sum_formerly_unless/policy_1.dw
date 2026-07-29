@@ -1,0 +1,17 @@
+// Macro-form rewrite of 0458_unless_clause_with_sum_aggregation.
+//
+// Macro call lives in an `unless temporal { ... }` clause: the permit
+// fires *unless* the user has transferred more than 1000 in the last
+// hour.
+
+def temporal sum_formerly(?a, ?w, ?body) {
+    sum ?a for (?a: Long), ($t: Timepoint). where (formerly within ?w (?body && tp($t)))
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+unless temporal {
+    exists (total: Long). ((sum_formerly(a, 1h, Drupe::Action::"Transfer"::request{ input.user: context.input.user, input.amount: a })) == total && total > 1000)};

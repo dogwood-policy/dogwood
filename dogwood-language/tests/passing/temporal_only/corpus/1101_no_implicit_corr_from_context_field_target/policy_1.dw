@@ -1,0 +1,11 @@
+// Permit Approve if the APPROVER(a context field, not the acting
+// principal) has logged in within the last hour.
+
+permit (
+    principal,
+    action == Drupe::Action::"Approve",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{  }
+};

@@ -1,0 +1,10 @@
+// Forbid ApproveSale when the resolved approval is explicitly false.
+// New idea: the dual `== false` reads as "deny on negative outcome".
+forbid (
+    principal,
+    action == Drupe::Action::"ApproveSale",
+    resource
+)
+when {
+    if context has output then context.output.approved == false else false
+};

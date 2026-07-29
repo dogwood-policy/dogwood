@@ -1,0 +1,1 @@
+permit (principal, action, resource) when temporal { exists x. formerly within 1h (Drupe::Action::"Login"::request{}) };

@@ -1,0 +1,10 @@
+namespace DaaaaaT1ed::v::Daaaooooaa {
+  entity a tags __cedar::String;
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

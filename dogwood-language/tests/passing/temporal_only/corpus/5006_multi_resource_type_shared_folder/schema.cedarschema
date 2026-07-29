@@ -1,0 +1,22 @@
+// An action with multiple resource types unified by a HIERARCHY: Gateway
+// and Bucket are both `in [Folder]`, and one policy spans both types via
+// `resource in Folder::"prod"`. Per-instance membership (declared in the
+// trace's entities(...) envelopes) drives the verdicts, not the type.
+namespace Drupe {
+    entity OAuthUser;
+    entity Folder;
+    entity Gateway in [Folder];
+    entity Bucket in [Folder];
+    type LoginInput = { user: String };
+    type ReadInput = { document: String, user: String };
+    action Login appliesTo {
+        principal: [OAuthUser],
+        resource: [Gateway],
+        context: { input: LoginInput }
+    };
+    action Read appliesTo {
+        principal: [OAuthUser],
+        resource: [Gateway, Bucket],
+        context: { input: ReadInput }
+    };
+}

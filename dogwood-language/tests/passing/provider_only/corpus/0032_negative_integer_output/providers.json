@@ -1,0 +1,13 @@
+{
+  "availableProviders": {
+    "Num::Diff": {
+      "argumentTypes": [{ "paramType": "string" }],
+      "outputType": {
+        "paramType": "record",
+        "fields": { "diff": { "paramType": "integer" } },
+        "required": ["diff"]
+      },
+      "implementation": { "kind": "rhai", "scriptFile": "diff.rhai" }
+    }
+  }
+}

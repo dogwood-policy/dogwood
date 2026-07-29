@@ -1,0 +1,12 @@
+entity a = {
+  @A000000000000000
+  L: Set<Set<Set<Set<__cedar::Long>>>>,
+  PR?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

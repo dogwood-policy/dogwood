@@ -1,0 +1,13 @@
+entity a;
+
+action "D" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @r
+    k: __cedar::Long,
+    r?: __cedar::String,
+    z?: __cedar::Long
+  }
+};
+

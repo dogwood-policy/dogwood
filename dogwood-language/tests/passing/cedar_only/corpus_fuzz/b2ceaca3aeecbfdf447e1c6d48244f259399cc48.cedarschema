@@ -1,0 +1,16 @@
+namespace Pf::I00191W33f00f3 {
+  entity E;
+
+  entity l tags {};
+
+  entity l2aHHH;
+
+  entity n;
+
+  action "action" appliesTo {
+    principal: [n],
+    resource: [n],
+    context: {}
+  };
+}
+

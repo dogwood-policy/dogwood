@@ -1,0 +1,36 @@
+entity a = {
+  @F
+  @J("V@\u{1d}\u{1d}\u{1d}\u{1d}\u{1d}\u{1d}\u{1d}\u{1d}\u{1d}\u{1d}\u{1d}\u{1d}\u{1d}")
+  @L3("\0\0\0")
+  @LS("")
+  @Qdedddd0
+  @W33333f331WWWW0("")
+  @_YlWT333300RYw
+  @dT33j3333OOO0
+  @dTTTTTTTTTTTT("\u{1d}")
+  @m("\u{1d}")
+  @r("")
+  @r3("")
+  M?: a,
+  @A
+  @AK
+  @AKhlp("t")
+  @AKwnR("\0\0")
+  @Q00W00033GB("")
+  @Q00W000E3GB("")
+  @f
+  @g("")
+  @m
+  @r("\u{1d}\u{1d}\u{1d}\u{1d}\u{1d}")
+  @r30N130000RRw
+  @r333339000RRw
+  j?: {  },
+  y?: __cedar::Bool
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

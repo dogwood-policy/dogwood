@@ -1,0 +1,10 @@
+// Second policy that calls the macro defined in policy_1.
+
+permit (
+    principal,
+    action == Drupe::Action::"GetStockInfo",
+    resource
+)
+when {
+    is_priority_stock(context.input.stock)
+};

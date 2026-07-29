@@ -1,0 +1,20 @@
+entity a = {
+  @r("")
+  M: __cedar::datetime,
+  N?: __cedar::String,
+  XkRj3333Ox?: __cedar::String,
+  i00?: __cedar::String,
+  j?: __cedar::Bool,
+  r?: __cedar::String,
+  r333l?: __cedar::String,
+  @N("o")
+  v3: __cedar::decimal,
+  w: {  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

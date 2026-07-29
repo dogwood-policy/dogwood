@@ -1,0 +1,13 @@
+// PURE-CEDAR PARALLEL to 1036 (int for entity). An ordinary Cedar `when`
+// equality: `context.input.mode` on Tool2 is declared an enum entity type
+// `Drupe::Tool2_Input_mode`, compared with `==` against the integer
+// literal `5`. An int is not an entity, so Cedar's strict-mode validator is
+// expected to reject the comparison as ill-typed.
+//
+// This exercises the base Cedar validation path (not the temporal dialect's
+// type-checker), establishing whether the int-for-entity gap seen in 1036 is
+// specific to the temporal sublanguage.
+//
+// Expected: rejected at `validate` (by Cedar's own validator).
+permit (principal, action == Drupe::Action::"Tool2", resource)
+when { context.input.mode == 5 };

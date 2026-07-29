@@ -1,0 +1,290 @@
+{
+  "policies": "corpus-tests/5aee049215d5fcf328e128fa9f560974a94b82f0.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/5aee049215d5fcf328e128fa9f560974a94b82f0.entities.json",
+  "schema": "corpus-tests/5aee049215d5fcf328e128fa9f560974a94b82f0.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "a",
+        "id": "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
+      },
+      "context": {
+        "H30SSaaaaaa": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "5b00:307:af5:ffff:ff4a:8000:0:500"
+          }
+        },
+        "r": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0:89a:9a9a:9a9b:9aff:5:9a9a:ff00"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "a",
+        "id": "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
+      },
+      "context": {
+        "H30SSaaaaaa": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "9999:9a9b:9999:199:9999:9999:999a:5b00"
+          }
+        },
+        "r": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "41:9b03:ff00:419b:9999:5299:999a:9b99/3"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "a",
+        "id": "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
+      },
+      "context": {
+        "H30SSaaaaaa": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "13.154.0.0"
+          }
+        },
+        "r": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "245.255.255.255"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "a",
+        "id": "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
+      },
+      "context": {
+        "H30SSaaaaaa": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "41:9b99:9952:9999:9a9b:9999:199:9999/3"
+          }
+        },
+        "r": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "41:9b99:9952:9999:9a9b:9999:199:9999"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "a",
+        "id": "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
+      },
+      "context": {
+        "H30SSaaaaaa": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "ff00:500:d9a:0:419b:9999:5299:999a"
+          }
+        },
+        "r": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "5b00:199:9999:9999:999a:5b00:307:af5"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "a",
+        "id": "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
+      },
+      "context": {
+        "H30SSaaaaaa": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "9b99:9901:9999:ffff:6f42:ff3a:9999:9999"
+          }
+        },
+        "r": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "::89a:9a9a:9a9b:9aff:5:9a9a"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "a",
+        "id": "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
+      },
+      "context": {
+        "H30SSaaaaaa": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "9b99:9901:9999:9999:9999:9a5b:1:9999"
+          }
+        },
+        "r": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "9999:199:99ff:ff6f:42ff:9999:199:99ff/25"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "a",
+        "id": "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"
+      },
+      "context": {
+        "H30SSaaaaaa": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "138.29.145.32/24"
+          }
+        },
+        "r": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

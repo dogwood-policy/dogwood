@@ -1,0 +1,29 @@
+// Relativization / partition-safety, negated-left `since` (the "session still
+// open" idiom: no Logout since the last Login).
+//
+// A Read is permitted iff, for THIS principal, no Logout has occurred since
+// its Login (within 1h). The event schema pins `callerPrincipal` universally,
+// so the streak is evaluated over this principal's own events only.
+//
+// Differential pair for principal alice's Read at @3:
+//   trace_1: alice Login @1, BOB Logout @2 (foreign), alice Read @3.
+//   trace_2: alice Login @1,                          alice Read @3.
+// Under key-local semantics bob's Logout cannot break alice's session, so the
+// verdict is PERMIT in both traces. Under (incorrect) global semantics
+// trace_1's bob Logout would fall in the (login, read] window and deny,
+// diverging from trace_2. The rewrite makes them agree.
+//
+// Both Logout and Read events carry `input.user: "u"`, so the pinned
+// `callerPrincipal` is the ONLY thing distinguishing alice's events from
+// bob's — this is what the relativization must key on.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    !Drupe::Action::"Logout"::request{ input.user: context.input.user }
+    since within 1h
+    Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

@@ -1,0 +1,11 @@
+// Approve is permitted if logged in, but forbidden if
+// self-submitted OR if logged out
+
+permit (
+    principal,
+    action == Drupe::Action::"Approve",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.approver }
+};

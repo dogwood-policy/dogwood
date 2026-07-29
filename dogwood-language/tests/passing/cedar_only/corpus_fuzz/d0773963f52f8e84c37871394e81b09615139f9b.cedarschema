@@ -1,0 +1,10 @@
+entity ff;
+
+entity r1G000000qqqqq;
+
+action "action" appliesTo {
+  principal: [ff],
+  resource: [ff],
+  context: {}
+};
+

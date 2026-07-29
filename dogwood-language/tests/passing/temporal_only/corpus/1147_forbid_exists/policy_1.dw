@@ -1,0 +1,20 @@
+// `exists` driving a `forbid` (the deny path — all prior exists cases were
+// `permit`). Read is permitted unconditionally, but forbidden whenever some
+// user has logged in within the window. Since a forbid overrides a permit,
+// the effective decision is: permit Read only when NO login precedes it.
+// This exercises `exists` inside a `forbid` rule and the permit/forbid
+// interaction.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+);
+
+forbid (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    exists (u: String). formerly within 1h Drupe::Action::"Login"::request{ input.user: u }};

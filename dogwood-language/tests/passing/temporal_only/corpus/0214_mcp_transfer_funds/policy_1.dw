@@ -1,0 +1,23 @@
+// Named-field policy against an MCP-generated Cedar schema.
+//
+// Exercises the full new pipeline:
+//   - Schema generated from an MCP tool manifest via
+//     cedar-policy-mcp-schema-generator
+//   - Named-field predicate syntax (field: value)
+//   - Implicit wildcarding of unmentioned fields
+//   - Cross-action reference (CallTool as a prerequisite)
+//
+// Semantics: permit a transfer_funds call if the same principal
+// made any transfer from the same account within the last hour.
+// Uses the bare predicate form (no output matching) since the
+// MCP-generated schema puts output in the context, not as a
+// Temporal output: clause.
+
+permit (
+    principal,
+    action == Drupe::Action::"transfer_funds",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"transfer_funds"::request{ input.from_account: context.input.from_account }
+};

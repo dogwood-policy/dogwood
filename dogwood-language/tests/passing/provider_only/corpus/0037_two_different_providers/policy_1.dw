@@ -1,0 +1,12 @@
+// Edge case: two completely different providers in one guardrails clause.
+// Both must be evaluated and their results combined.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Strings::Matches(context.input.document, "^[A-Z]").matched == true
+    && Strings::Length(context.input.document).length < 10
+};

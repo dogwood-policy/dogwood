@@ -1,0 +1,10 @@
+entity a tags {};
+
+@V("")
+@c("bian \0\0\0\0\0\0\0\0\0Deb")
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,27 @@
+{
+  "availableProviders": {
+    "Pii::Scan": {
+      "argumentTypes": [
+        { "paramType": "string" }
+      ],
+      "outputType": {
+        "paramType": "record",
+        "fields": {
+          "ssn": { "paramType": "integer" },
+          "email": { "paramType": "integer" }
+        },
+        "required": ["ssn", "email"]
+      },
+      "availableMethods": {
+        "maxCount": {
+          "argumentTypes": [],
+          "outputType": { "paramType": "integer" }
+        }
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "pii.rhai"
+      }
+    }
+  }
+}

@@ -1,0 +1,103 @@
+entity a = {
+  A?: {
+    @bo("שּׁ")
+    ""?: __cedar::String,
+    "\u{1}\n\u{f}VV\n\ne?\0:\u{f}ee~": a,
+    "\u{3}\u{1d}@": Set<{
+      "": a,
+      "\0\0\0@"?: __cedar::duration,
+      "\u{1}\n\u{f}VV\n\ne?\0:\u{f}ee~": __cedar::ipaddr,
+      @aQYQQQQQQQ
+      "\u{3}\u{1d}@"?: __cedar::ipaddr,
+      "\u{3}\u{1d}w"?: __cedar::ipaddr,
+      @LRaQQQQ
+      @d("")
+      "\u{3}\u{1d}w["?: Set<__cedar::Long>,
+      @NSo5So5000RwT
+      @Nkk0oo
+      @UV3ERRS33T1("")
+      "\u{e}": __cedar::Long,
+      "\u{14}"?: __cedar::ipaddr,
+      @booooooooo
+      "\u{1a}\u{1a}\u{1a}": __cedar::duration,
+      @bo("שּׁ")
+      "\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}"?: __cedar::String,
+      "\u{1d}\u{3}": __cedar::String,
+      "\u{1d}@["?: __cedar::ipaddr,
+      @LRaQQQQ
+      @d("\0\0\0\u{3}")
+      "\u{1d}@gf"?: Set<__cedar::Long>,
+      @Hkkkkkkkkkko("")
+      @LRa3KRookk
+      @r3T1Ra3
+      "\u{1d}G\0\0\0\u{3}": a,
+      "$"?: __cedar::ipaddr,
+      "$\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}"?: __cedar::Bool,
+      @Nkk0oo
+      "$=-\u{e}"?: __cedar::Bool,
+      @aQYQQQQQQQ
+      ":~"?: __cedar::ipaddr,
+      "=\u{e}"?: __cedar::ipaddr,
+      @Hooo00XRRw03("")
+      "N~\u{1f}"?: a,
+      @Hkkkkkkkkkko("")
+      @booooooooQ
+      "["?: a,
+      "[@"?: __cedar::Bool,
+      @aQYQQQQQQQ
+      "[@["?: __cedar::ipaddr,
+      "^"?: a,
+      @EWookkkR1RKRw("qqqqqqqqqqqqqbian \u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}")
+      @Hooooooooooo
+      @_YlWookkkR1RKR
+      @aQYQQQQQQQ
+      @bo
+      "an \u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1d}w"?: __cedar::String,
+      "qqqqq\0\0!"?: __cedar::ipaddr,
+      @D3S1S3T1edRRx
+      @EWQQQQQQQQQQQ("w")
+      @UV3ERRS33T1("")
+      @rzE("")
+      @v3T33S1Raz("\u{e}")
+      "z~"?: __cedar::ipaddr
+    }>,
+    "\u{3}\u{1d}w"?: __cedar::Bool,
+    "\u{3}\u{1d}w["?: __cedar::String,
+    "\u{e}"?: __cedar::ipaddr,
+    @F
+    @LS33TuS000000
+    @aQQQQQQQRV("")
+    @rKR("qqqq\0\0!")
+    @vRx03F0V3ERRS("\u{3}\u{1d}@")
+    "\u{14}"?: __cedar::ipaddr,
+    "\u{1d}\u{3}"?: a,
+    @Hkkkkkkkkkko("")
+    @LRa3KRookk
+    @r3T1Ra3
+    "\u{1d}@[": a,
+    @Nkk0oo
+    "\u{1d}@gf"?: __cedar::Bool,
+    "$"?: __cedar::Bool,
+    ":~"?: __cedar::String,
+    @booooooooo
+    "=\u{e}": __cedar::duration,
+    "N~\u{1f}"?: __cedar::ipaddr,
+    @aQYQQQQQQQ
+    "["?: __cedar::ipaddr,
+    "[@[": __cedar::String,
+    "qqqqq\0\0!"?: __cedar::String,
+    @EWookkkR1RKRw("qqq\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}")
+    @Hooooooooooo
+    @_YlWookkkR1RKR
+    @aQYQQQQQQQ
+    @bo
+    "z~"?: __cedar::String
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

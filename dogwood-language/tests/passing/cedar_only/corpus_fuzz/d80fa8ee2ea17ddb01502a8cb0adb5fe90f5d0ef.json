@@ -1,0 +1,170 @@
+{
+  "policies": "corpus-tests/d80fa8ee2ea17ddb01502a8cb0adb5fe90f5d0ef.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/d80fa8ee2ea17ddb01502a8cb0adb5fe90f5d0ef.entities.json",
+  "schema": "corpus-tests/d80fa8ee2ea17ddb01502a8cb0adb5fe90f5d0ef.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "t::tFFugC04000z3::r::r::r3z333kSRRReX4u::p2::t::r",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+      },
+      "action": {
+        "type": "t::tFFugC04000z3::r::r::r3z333kSRRReX4u::p2::t::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "t::tFFugC04000z3::r::r::r3z333kSRRReX4u::p2::t::r",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "t::tFFugC04000z3::r::r::r3z333kSRRReX4u::p2::t::r",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+      },
+      "action": {
+        "type": "t::tFFugC04000z3::r::r::r3z333kSRRReX4u::p2::t::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "t::tFFugC04000z3::r::r::r3z333kSRRReX4u::p2::t::r",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "t::tFFugC04000z3::r::r::r3z333kSRRReX4u::p2::t::r",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+      },
+      "action": {
+        "type": "t::tFFugC04000z3::r::r::r3z333kSRRReX4u::p2::t::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "t::tFFugC04000z3::r::r::r3z333kSRRReX4u::p2::t::r",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "t::tFFugC04000z3::r::r::r3z333kSRRReX4u::p2::t::r",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+      },
+      "action": {
+        "type": "t::tFFugC04000z3::r::r::r3z333kSRRReX4u::p2::t::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "t::tFFugC04000z3::r::r::r3z333kSRRReX4u::p2::t::r",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "t::tFFugC04000z3::r::r::r3z333kSRRReX4u::p2::t::r",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+      },
+      "action": {
+        "type": "t::tFFugC04000z3::r::r::r3z333kSRRReX4u::p2::t::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "t::tFFugC04000z3::r::r::r3z333kSRRReX4u::p2::t::r",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "t::tFFugC04000z3::r::r::r3z333kSRRReX4u::p2::t::r",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+      },
+      "action": {
+        "type": "t::tFFugC04000z3::r::r::r3z333kSRRReX4u::p2::t::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "t::tFFugC04000z3::r::r::r3z333kSRRReX4u::p2::t::r",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "t::tFFugC04000z3::r::r::r3z333kSRRReX4u::p2::t::r",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+      },
+      "action": {
+        "type": "t::tFFugC04000z3::r::r::r3z333kSRRReX4u::p2::t::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "t::tFFugC04000z3::r::r::r3z333kSRRReX4u::p2::t::r",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "t::tFFugC04000z3::r::r::r3z333kSRRReX4u::p2::t::r",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+      },
+      "action": {
+        "type": "t::tFFugC04000z3::r::r::r3z333kSRRReX4u::p2::t::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "t::tFFugC04000z3::r::r::r3z333kSRRReX4u::p2::t::r",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}

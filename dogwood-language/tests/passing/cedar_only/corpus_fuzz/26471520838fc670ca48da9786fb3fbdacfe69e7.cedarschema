@@ -1,0 +1,10 @@
+namespace dS::wS::wS::wS::wS::wS::wS::wS::d_ {
+  entity a;
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

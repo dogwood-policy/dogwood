@@ -1,0 +1,35 @@
+entity a tags __cedar::String;
+
+@rS1RWzERI0000000
+action "" in [Action::"J4", Action::"A", Action::"\u{13}", Action::"6[\u{1d}\u{3}", Action::"w", Action::"$", Action::"=\u{e}", Action::"w2eiabDn ", Action::"\u{1d}\u{3}", Action::"6[\u{1d}[@[", Action::"\u{1d}@hhhr3hu|\u{7}", Action::"^", Action::"$=\u{e}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{13}" in [Action::"6[\u{1d}\u{3}", Action::"w", Action::"$", Action::"=\u{e}", Action::"w2eiabDn ", Action::"\u{1d}\u{3}", Action::"6[\u{1d}[@[", Action::"\u{1d}@hhhr3hu|\u{7}", Action::"^", Action::"$=\u{e}"];
+
+action "\u{1d}\u{3}" in [Action::"6[\u{1d}[@[", Action::"\u{1d}@hhhr3hu|\u{7}", Action::"^", Action::"$=\u{e}"];
+
+action "\u{1d}@hhhr3hu|\u{7}" in [Action::"^", Action::"$=\u{e}"];
+
+action "$" in [Action::"=\u{e}", Action::"w2eiabDn ", Action::"\u{1d}\u{3}", Action::"6[\u{1d}[@[", Action::"\u{1d}@hhhr3hu|\u{7}", Action::"^", Action::"$=\u{e}"];
+
+action "$=\u{e}";
+
+action "6[\u{1d}\u{3}" in [Action::"w", Action::"$", Action::"=\u{e}", Action::"w2eiabDn ", Action::"\u{1d}\u{3}", Action::"6[\u{1d}[@[", Action::"\u{1d}@hhhr3hu|\u{7}", Action::"^", Action::"$=\u{e}"];
+
+action "6[\u{1d}[@[" in [Action::"\u{1d}@hhhr3hu|\u{7}", Action::"^", Action::"$=\u{e}"];
+
+action "=\u{e}" in [Action::"w2eiabDn ", Action::"\u{1d}\u{3}", Action::"6[\u{1d}[@[", Action::"\u{1d}@hhhr3hu|\u{7}", Action::"^", Action::"$=\u{e}"];
+
+action "A" in [Action::"\u{13}", Action::"6[\u{1d}\u{3}", Action::"w", Action::"$", Action::"=\u{e}", Action::"w2eiabDn ", Action::"\u{1d}\u{3}", Action::"6[\u{1d}[@[", Action::"\u{1d}@hhhr3hu|\u{7}", Action::"^", Action::"$=\u{e}"];
+
+action "J4" in [Action::"A", Action::"\u{13}", Action::"6[\u{1d}\u{3}", Action::"w", Action::"$", Action::"=\u{e}", Action::"w2eiabDn ", Action::"\u{1d}\u{3}", Action::"6[\u{1d}[@[", Action::"\u{1d}@hhhr3hu|\u{7}", Action::"^", Action::"$=\u{e}"];
+
+action "^" in [Action::"$=\u{e}"];
+
+action "w" in [Action::"$", Action::"=\u{e}", Action::"w2eiabDn ", Action::"\u{1d}\u{3}", Action::"6[\u{1d}[@[", Action::"\u{1d}@hhhr3hu|\u{7}", Action::"^", Action::"$=\u{e}"];
+
+action "w2eiabDn " in [Action::"\u{1d}\u{3}", Action::"6[\u{1d}[@[", Action::"\u{1d}@hhhr3hu|\u{7}", Action::"^", Action::"$=\u{e}"];
+

@@ -1,0 +1,12 @@
+// Two permits with DIFFERENT action scopes. Every tp triggers at
+// most one rule (based on which action happened at that tp). The
+// trace interleaves Reads and Writes.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.server: context.input.user }
+};

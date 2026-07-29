@@ -1,0 +1,186 @@
+{
+  "policies": "corpus-tests/f954d1c26b5ce81405fb688fab2f8aa2906f0193.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/f954d1c26b5ce81405fb688fab2f8aa2906f0193.entities.json",
+  "schema": "corpus-tests/f954d1c26b5ce81405fb688fab2f8aa2906f0193.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "g3",
+        "id": "\u0000\u0000\u0000\u0000\u0000,gg\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000g\u0001\u000f?ƚ\u0000\u0000\u0000a"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "g3",
+        "id": "\u0000\u0000\u0000\u0000\u0000,gg\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000g\u0001\u000f?ƚ\u0000\u0000\u0000a"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "g3",
+        "id": "\u0000\u0000\u0000\u0000\u0000,gg\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000g\u0001\u000f?ƚ\u0000\u0000\u0000a"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "g3",
+        "id": "\u0000\u0000\u0000\u0000\u0000,gg\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000g\u0001\u000f?ƚ\u0000\u0000\u0000a"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "g3",
+        "id": "\u0000\u0000\u0000\u0000\u0000,gg\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000g\u0001\u000f?ƚ\u0000\u0000\u0000a"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "g3",
+        "id": "\u0000\u0000\u0000\u0000\u0000,gg\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000g\u0001\u000f?ƚ\u0000\u0000\u0000a"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "g3",
+        "id": "\u0000\u0000\u0000\u0000\u0000,gg\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000g\u0001\u000f?ƚ\u0000\u0000\u0000a"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "g3",
+        "id": "\u0000\u0000\u0000\u0000\u0000,gg\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000g\u0001\u000f?ƚ\u0000\u0000\u0000a"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "g3",
+        "id": "\u0000\u0000\u0000\u0000\u0000,gg\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000g\u0001\u000f?ƚ\u0000\u0000\u0000a"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "g3",
+        "id": "\u0000\u0000\u0000\u0000\u0000,gg\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000g\u0001\u000f?ƚ\u0000\u0000\u0000a"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "g3",
+        "id": "\u0000\u0000\u0000\u0000\u0000,gg\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000g\u0001\u000f?ƚ\u0000\u0000\u0000a"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "g3",
+        "id": "\u0000\u0000\u0000\u0000\u0000,gg\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000g\u0001\u000f?ƚ\u0000\u0000\u0000a"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "g3",
+        "id": "\u0000\u0000\u0000\u0000\u0000,gg\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000g\u0001\u000f?ƚ\u0000\u0000\u0000a"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "g3",
+        "id": "\u0000\u0000\u0000\u0000\u0000,gg\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000g\u0001\u000f?ƚ\u0000\u0000\u0000a"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "g3",
+        "id": "\u0000\u0000\u0000\u0000\u0000,gg\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000g\u0001\u000f?ƚ\u0000\u0000\u0000a"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "g3",
+        "id": "\u0000\u0000\u0000\u0000\u0000,gg\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000g\u0001\u000f?ƚ\u0000\u0000\u0000a"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

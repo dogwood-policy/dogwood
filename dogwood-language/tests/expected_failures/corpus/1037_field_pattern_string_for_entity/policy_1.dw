@@ -1,0 +1,20 @@
+// BUG REPRO (bare string for entity): `Tool2::request{ input.mode: ... }`
+// declares `input.mode : Drupe::Tool2_Input_mode` (an enum entity type),
+// but the pattern binds it to the bare string literal `"read"`. A String is
+// not an entity value — even though `"read"` happens to be a permitted enum id,
+// the entity literal would have to be written `Drupe::Tool2_Input_mode::"read"`.
+// The field-argument type check (`check_arg_type`) should reject this with
+// expected `entity:Tool2_Input_mode` vs actual `string`.
+//
+// This is the most insidious variant: the string looks right to a human but is
+// the wrong *type*. The type-checker enforces this for `==`/`!=` operands, but
+// currently skips predicate `input.<field>` patterns, so it validates cleanly
+// when it should be rejected — and silently never matches a real Tool2 event.
+//
+// Expected: rejected at `validate` by the temporal type-checker.
+permit (principal, action == Drupe::Action::"Tool1", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Tool2"::request{
+        input.mode: "read"
+    }
+};

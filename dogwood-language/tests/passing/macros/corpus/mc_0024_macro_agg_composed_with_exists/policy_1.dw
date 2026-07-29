@@ -1,0 +1,22 @@
+// Compose a macro-produced aggregate with an independent `exists`. The
+// `count_unresolved_transfer_within` macro (itself built from exists +
+// negation, correlating request/resolution by uid) is used inside an
+// `exists (n: Long)` threshold, AND conjoined with a separate
+// `exists (u: String)` login check. Exercises a macro-expanded aggregate
+// sitting alongside a hand-written existential in one condition.
+//
+// "Permit the Alert when >= 2 transfers are unresolved AND some user has
+// logged in within the window."
+
+def temporal count_unresolved_transfer_within(?w) {
+    count for ($q: String). where (formerly within ?w Drupe::Action::"Transfer"::request{ requestId: $q } && !exists ($r: Timepoint). formerly within ?w (Drupe::Action::"Transfer"::response{ requestId: $q } && tp($r)))
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (n: Long). ((count_unresolved_transfer_within(1h)) == n && n >= 2)
+    && exists (u: String). formerly within 1h Drupe::Action::"Login"::request{ input.user: u }};

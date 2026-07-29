@@ -1,0 +1,10 @@
+// Permit SellShares with no further condition. The single new
+// idea here is the scope-level `action == ...` constraint in
+// isolation: it pins the rule to exactly one MCP tool. No
+// `when`, no guardrails, no temporal — just scope.
+
+permit (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+);

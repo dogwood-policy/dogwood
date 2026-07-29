@@ -1,0 +1,9 @@
+@AzFR33
+entity a tags __cedar::ipaddr;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,27 @@
+// Adjacent to 0904: the NEGATIVE control for the past-anchor `since` fix.
+//
+// `left since B` requires `left` to hold at EVERY step in the half-open range
+// `(anchor, i]`. Here a mismatching event sits between the past anchor and the
+// decision, so the left streak is BROKEN and the correct verdict is DENY.
+//
+// This guards against a fix that threads the request correlation through the
+// since-anchor branch but drops the guard-streak filter (which would wrongly
+// PERMIT): the fix must both carry the correlation AND still enforce that the
+// left held over the whole range. A fix that only makes 0904 permit, without
+// preserving the streak, would over-permit here.
+//
+// The interpreter is the oracle (see expected_1.out). Unlike 0904/0913 this
+// case's verdict is DENY, so a broken-streak fix that over-permits diverges
+// here in the OPPOSITE direction — a strong anti-overfit signal. Found via the
+// SMT differential fuzzer.
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    (Drupe::Action::"Transfer"::request{ input.user: context.input.user }
+        && context.input.amount >= 10)
+    since within 1h
+    Drupe::Action::"Transfer"::request{ input.user: "carol" }
+};

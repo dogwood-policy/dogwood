@@ -1,0 +1,23 @@
+namespace r::f::r {
+  entity D;
+
+  entity I;
+
+  entity I3;
+
+  entity N;
+
+  entity h0;
+
+  entity v;
+
+  entity vR;
+
+  @FXXOXE
+  action "action" appliesTo {
+    principal: [I],
+    resource: [I],
+    context: {}
+  };
+}
+

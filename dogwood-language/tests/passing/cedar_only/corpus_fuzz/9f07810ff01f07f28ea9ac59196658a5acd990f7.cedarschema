@@ -1,0 +1,9 @@
+@f("\u{1f}\u{1f}\u{1f}\0\0\0\0\u{c}\0\0\0\0\0\0\0\0\0\u{1}\u{4}\0||||||||")
+entity A enum [""];
+
+action "action" appliesTo {
+  principal: [A],
+  resource: [A],
+  context: {}
+};
+

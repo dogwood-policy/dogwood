@@ -1,0 +1,12 @@
+entity a tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: {
+      "ArV1\0\u{1}\u{f}"?: __cedar::String
+    }
+  }
+};
+

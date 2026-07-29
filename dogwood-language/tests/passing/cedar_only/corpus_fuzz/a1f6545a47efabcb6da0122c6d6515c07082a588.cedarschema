@@ -1,0 +1,11 @@
+entity a;
+
+@Dq("3")
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    Y4444424?: __cedar::String
+  }
+};
+

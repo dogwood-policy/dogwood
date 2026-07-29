@@ -1,0 +1,61 @@
+entity a = {
+  @sFFF
+  D: {
+    @t
+    @tFFFFFTO133ERwR3E("")
+    "": __cedar::Long,
+    "\u{3}": {
+      ""?: {
+        ""?: {        },
+        @g("")
+        @vNTwFFFFFFTjTVS33("")
+        "\u{3}"?: __cedar::Long,
+        "\u{18}@"?: {        }
+      },
+      @sFFF
+      @sRwR("^[")
+      "\u{3}"?: {
+        "\u{18}@VU": {        }
+      },
+      "\u{18}@"?: {      }
+    },
+    "\u{18}@"?: {    },
+    @A0RRwR1ERRVTVSg("")
+    @DDkyh200RRwR("\u{e}")
+    @LNMMMMMM("")
+    @t
+    @vNTwFFFFFFTO1NMMM
+    "-\\^["?: {
+      ""?: {      }
+    }
+  },
+  t?: {
+    ""?: __cedar::String,
+    "\u{3}"?: {
+      @g
+      "": {
+        @t
+        "\u{18}": a
+      },
+      @sFFF
+      @sRwR("^[")
+      "\u{3}"?: {
+        "\u{18}@VU": {        }
+      },
+      "\u{18}@"?: {      }
+    },
+    "\u{18}@"?: {    },
+    "-\\^["?: __cedar::String
+  },
+  @L33ERwR3
+  @sFFF
+  @v("\\^[")
+  v3ERRjTV?: {  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

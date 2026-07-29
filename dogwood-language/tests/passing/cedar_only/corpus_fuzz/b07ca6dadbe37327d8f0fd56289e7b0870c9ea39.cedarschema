@@ -1,0 +1,8 @@
+entity a;
+
+action "OOOOOOOOOOODebian OOOOOOO" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

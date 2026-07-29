@@ -1,0 +1,33 @@
+namespace r {
+  entity r = {
+    rN13R3313NNg0?: __cedar::Bool,
+    w?: __cedar::Bool
+  };
+
+  entity rNNg000RR tags r::rNNg000RR;
+
+  action "" in [r::Action::"\u{8}0[\u{1d}", r::Action::"@\u{1b}", r::Action::"V\u{e}e", r::Action::":p", r::Action::"0[\u{1d}", r::Action::"V@", r::Action::"\u{1b}", r::Action::"\u{7f}", r::Action::"VV"] appliesTo {
+    principal: [r, rNNg000RR],
+    resource: [rNNg000RR],
+    context: {}
+  };
+
+  action "\u{8}0[\u{1d}" in [r::Action::"@\u{1b}", r::Action::"V\u{e}e", r::Action::":p", r::Action::"0[\u{1d}", r::Action::"V@", r::Action::"\u{1b}", r::Action::"\u{7f}", r::Action::"VV"];
+
+  action "\u{1b}" in [r::Action::"\u{7f}", r::Action::"VV"];
+
+  action "0[\u{1d}" in [r::Action::"V@", r::Action::"\u{1b}", r::Action::"\u{7f}", r::Action::"VV"];
+
+  action ":p" in [r::Action::"0[\u{1d}", r::Action::"V@", r::Action::"\u{1b}", r::Action::"\u{7f}", r::Action::"VV"];
+
+  action "@\u{1b}" in [r::Action::"V\u{e}e", r::Action::":p", r::Action::"0[\u{1d}", r::Action::"V@", r::Action::"\u{1b}", r::Action::"\u{7f}", r::Action::"VV"];
+
+  action "V\u{e}e" in [r::Action::":p", r::Action::"0[\u{1d}", r::Action::"V@", r::Action::"\u{1b}", r::Action::"\u{7f}", r::Action::"VV"];
+
+  action "V@" in [r::Action::"\u{1b}", r::Action::"\u{7f}", r::Action::"VV"];
+
+  action "VV";
+
+  action "\u{7f}" in [r::Action::"VV"];
+}
+

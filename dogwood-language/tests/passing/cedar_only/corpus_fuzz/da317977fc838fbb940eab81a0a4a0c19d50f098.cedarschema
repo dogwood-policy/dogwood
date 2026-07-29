@@ -1,0 +1,50 @@
+entity a tags __cedar::String;
+
+action "" in [Action::":~", Action::"\u{1d}@[", Action::"\u{3}\u{1d}w", Action::"$JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ", Action::"=\u{e}", Action::"\u{1d}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{3}\u{1d}w" in [Action::"$JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ", Action::"=\u{e}", Action::"\u{1d}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    Heee?: __cedar::ipaddr,
+    O?: __cedar::ipaddr,
+    v?: __cedar::ipaddr
+  }
+};
+
+action "\u{1d}" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1d}@[" in [Action::"\u{3}\u{1d}w", Action::"$JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ", Action::"=\u{e}", Action::"\u{1d}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "$JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ" in [Action::"=\u{e}", Action::"\u{1d}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action ":~" in [Action::"\u{1d}@[", Action::"\u{3}\u{1d}w", Action::"$JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ", Action::"=\u{e}", Action::"\u{1d}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    vazERRS33bbb40?: __cedar::String
+  }
+};
+
+action "=\u{e}" in [Action::"\u{1d}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

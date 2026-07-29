@@ -1,0 +1,16 @@
+// stdlib `count_within`: count events matching a predicate within a window.
+// Used in the hand-written binding idiom (aggregate as a comparison operand
+// inside `exists`). Permit an Alert when more than two Logins to the same
+// server occurred within the last hour.
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (n: Long). (
+        (count_within(1h, Drupe::Action::"Login"::request{ input.user: _, input.server: context.input.server })) == n
+        && n > 2
+    )
+};

@@ -1,0 +1,12 @@
+namespace A::WjjjKLLLj2jfcZ {
+  entity A = {
+    A?: __cedar::String
+  };
+
+  action "action" appliesTo {
+    principal: [A],
+    resource: [A],
+    context: {}
+  };
+}
+

@@ -1,0 +1,19 @@
+entity a tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: {
+      ""?: __cedar::String,
+      @ErggWvR1vv
+      "\u{1}<"?: {      },
+      @Y
+      "\u{4}5\u{3}"?: __cedar::String,
+      "**"?: __cedar::datetime,
+      "_\n"?: __cedar::String,
+      "v\0"?: __cedar::String
+    }
+  }
+};
+

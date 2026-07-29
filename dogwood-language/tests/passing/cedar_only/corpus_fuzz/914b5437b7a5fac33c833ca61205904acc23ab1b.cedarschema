@@ -1,0 +1,19 @@
+entity a;
+
+@z2RRRRRRR5555
+action "" in [Action::"2", Action::"@$", Action::".", Action::"s\u{15}", Action::"l3oX33cA3tiomn-"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "." in [Action::"s\u{15}", Action::"l3oX33cA3tiomn-"];
+
+action "2" in [Action::"@$", Action::".", Action::"s\u{15}", Action::"l3oX33cA3tiomn-"];
+
+action "@$" in [Action::".", Action::"s\u{15}", Action::"l3oX33cA3tiomn-"];
+
+action "l3oX33cA3tiomn-";
+
+action "s\u{15}" in [Action::"l3oX33cA3tiomn-"];
+

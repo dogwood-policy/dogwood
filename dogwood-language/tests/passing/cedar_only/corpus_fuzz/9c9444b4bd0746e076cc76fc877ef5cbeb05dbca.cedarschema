@@ -1,0 +1,13 @@
+entity a = {
+  @m55K3("n ")
+  M: a,
+  X: a,
+  vR?: a
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

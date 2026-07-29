@@ -1,0 +1,19 @@
+entity a tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: {
+      ""?: {
+        "3"?: {
+          "36": {          },
+          @A
+          @RolooYo("")
+          "3733": a
+        }
+      }
+    }
+  }
+};
+

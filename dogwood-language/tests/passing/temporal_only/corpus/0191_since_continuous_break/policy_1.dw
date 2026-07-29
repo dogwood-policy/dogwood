@@ -1,0 +1,35 @@
+// Read is permitted iff Heartbeat has held continuously since a
+// Login — i.e. at every tp after the anchor, up to and including
+// the Read's tp.
+//
+// This test exercises a structural property of `A == {} since B == {}`
+// with separate request/resolution tps: `A == {}` only holds at
+// Heartbeat_resolution tps, so it's always false at Heartbeat_request
+// tps and at the Read's own tp. Both traces below have at least one
+// tp in the interval (Login, Read] where A doesn't hold, so the
+// `since` never satisfies its continuity requirement. Neither trace
+// fires. Confirming this is the test's purpose: to guard against the
+// compiler erroneously firing `since` when A is false at some
+// intermediate tp.
+//
+// trace.log: intermediate Login_request/resolution for bob at @20/@21
+// — A is false there because those aren't alice's Heartbeat tps.
+// trace_2.log: no bob tps, but A is still false at Heartbeat_request
+// tps (@10, @20, @30) and at the Read's own tp (@32).
+//
+// A `since` on resolved forms like this is rarely useful in a real
+// policy — request and resolution events don't align on every tp, so
+// continuity is effectively unsatisfiable. A realistic pattern
+// wraps A in `formerly within Δ`, e.g. `(formerly within 5s Heartbeat == {})
+// since Login == {}`, which says "at every tp since the Login, there
+// has been a recent heartbeat."
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    Drupe::Action::"Heartbeat"::request{ input.user: context.input.user }
+    since within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

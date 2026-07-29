@@ -1,0 +1,132 @@
+entity o0v00 enum [""];
+
+entity r = {
+  KF?: {
+    ""?: {
+      ""?: __cedar::Bool,
+      "\0"?: __cedar::Bool,
+      "\0\0"?: __cedar::Bool,
+      "\u{3}"?: __cedar::Bool,
+      "\u{3}\u{1d}w"?: __cedar::Bool,
+      "\u{3}dddddddddddddd\u{1d}@"?: __cedar::Bool,
+      "\u{e}": {      },
+      "\u{14}"?: __cedar::Bool,
+      "\u{14}7"?: __cedar::Bool,
+      "\u{1d}\u{3}"?: __cedar::Bool,
+      "\u{1d}\u{3}@["?: __cedar::Bool,
+      "\u{1d}\u{3}]"?: __cedar::Bool,
+      "\u{1d}@"?: __cedar::Bool,
+      "\u{1d}@["?: __cedar::Bool,
+      "\u{1d}@gf"?: __cedar::Bool,
+      "\u{1d}@gffd~"?: __cedar::Bool,
+      "\u{1d}@gffd~*"?: __cedar::Bool,
+      "$"?: __cedar::Bool,
+      "$="?: __cedar::Bool,
+      "$=\u{e}"?: __cedar::Bool,
+      "$?\u{e}"?: __cedar::Bool,
+      ":~"?: __cedar::Bool,
+      "=\u{e}"?: __cedar::Bool,
+      Ff?: __cedar::Bool,
+      "N~\u{1f}"?: __cedar::Bool,
+      VV?: __cedar::Bool,
+      "["?: __cedar::Bool,
+      "[@"?: __cedar::Bool,
+      "[@["?: __cedar::Bool,
+      "[@[~*"?: __cedar::Bool,
+      "[w"?: __cedar::Bool,
+      "]7"?: __cedar::Bool,
+      "^"?: {
+        @A
+        @Daaaaaaaa8
+        @_YlWaaaa3333u0("")
+        @r("")
+        "sssssssa_:sssss\0r33333\0\0"?: __cedar::Bool,
+        ssssssssssssssssssssssssssss?: __cedar::Bool
+      },
+      ff?: __cedar::Bool,
+      @v1S33333Sg5("bian \'\0\0\0r3333333")
+      @vRS37T1Ra3KRooo("qqqqqsq\03")
+      "ffd~*": __cedar::ipaddr,
+      qqqqqqqqqsqqqqq?: __cedar::Bool,
+      "z~"?: __cedar::Bool,
+      "~*"?: __cedar::Bool,
+      "\u{7f}"?: __cedar::Bool
+    },
+    "\0"?: __cedar::String,
+    "\0\0"?: __cedar::String,
+    "\u{3}"?: __cedar::Bool,
+    "\u{3}\u{1d}w"?: __cedar::String,
+    "\u{3}dddddddddddddd\u{1d}@"?: __cedar::String,
+    "\u{e}"?: __cedar::String,
+    "\u{14}"?: __cedar::String,
+    "\u{14}7"?: __cedar::String,
+    @A("")
+    @C33T1edR1("z~")
+    @DU3S1S3T1eddb
+    @U3T1S33T("")
+    @UV3ERRS37T1("$")
+    @hg
+    @rzE("")
+    @vVR3S333zERRT33("w")
+    @vooo("qqqqqsqqqqq")
+    @x("[@[")
+    "\u{1d}\u{3}"?: __cedar::ipaddr,
+    "\u{1d}\u{3}@["?: __cedar::String,
+    "\u{1d}\u{3}]"?: __cedar::String,
+    "\u{1d}@"?: __cedar::String,
+    "\u{1d}@["?: __cedar::Bool,
+    "\u{1d}@gf"?: __cedar::String,
+    "\u{1d}@gffd~"?: __cedar::String,
+    "\u{1d}@gffd~*"?: __cedar::String,
+    "#\0\0\0"?: __cedar::String,
+    @LERRT31("")
+    @Leddb03ERVR30
+    @vVR3T33S1RjazER("[")
+    @vbbb
+    "$": Set<o0v00>,
+    "$="?: __cedar::String,
+    "$=\u{e}"?: __cedar::String,
+    "$?\u{e}"?: __cedar::String,
+    ":~"?: __cedar::Bool,
+    "=\u{e}"?: Set<__cedar::Bool>,
+    "N~\u{1f}"?: __cedar::String,
+    VV?: __cedar::String,
+    "["?: __cedar::String,
+    "[@"?: __cedar::String,
+    "[@\u{e}"?: __cedar::String,
+    "[@["?: __cedar::String,
+    "[@[~*"?: __cedar::String,
+    "[@u"?: __cedar::String,
+    "[qqqqqqqqqsqqqqq"?: __cedar::String,
+    "[w": r,
+    "[¤\0"?: __cedar::String,
+    @LRjazER("[")
+    @LS0g3ER
+    @NRa3zER("ff")
+    @d("")
+    @vRw03T1S333zER("\u{1d}\u{3}")
+    @vbbb
+    "]7"?: __cedar::String,
+    "^"?: __cedar::String,
+    ff?: __cedar::String,
+    qqqqqqqqqsqqqqq?: __cedar::String,
+    qqqqqqqqsqqqqq?: __cedar::String,
+    @A000
+    @LS3T1ed("\u{7f}")
+    @NRa3zER("ff")
+    @U3F0("")
+    @v("")
+    @vRS37T1Ra3Kt33T
+    @vRw03T1S333zER("\u{1d}\u{3}")
+    "z~"?: __cedar::String,
+    "~*"?: __cedar::String,
+    "\u{7f}"?: __cedar::String
+  }
+};
+
+action "action" appliesTo {
+  principal: [r],
+  resource: [r],
+  context: {}
+};
+

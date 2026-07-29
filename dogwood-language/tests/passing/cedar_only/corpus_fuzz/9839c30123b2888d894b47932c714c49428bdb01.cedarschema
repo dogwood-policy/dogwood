@@ -1,0 +1,75 @@
+namespace r::f::g04uq1233 {
+  entity D;
+
+  entity I enum ["", "", "\0\0\'", "", ":~"];
+
+  entity h4;
+
+  entity p;
+
+  entity vR;
+
+  action "" in [r::f::g04uq1233::Action::"\u{3}", r::f::g04uq1233::Action::"\u{e}", r::f::g04uq1233::Action::"^", r::f::g04uq1233::Action::"ffd~", r::f::g04uq1233::Action::"\u{1d}\u{3}", r::f::g04uq1233::Action::"[@", r::f::g04uq1233::Action::"$=\u{e}", r::f::g04uq1233::Action::"2", r::f::g04uq1233::Action::"\u{1}[", r::f::g04uq1233::Action::"B", r::f::g04uq1233::Action::"Z\u{5}"] appliesTo {
+    principal: [p, h4],
+    resource: [I, p],
+    context: {
+      Mbcagqgmltttttttt?: __cedar::datetime,
+      qoqqPbop333?: __cedar::datetime
+    }
+  };
+
+  action "\u{1}[" in [r::f::g04uq1233::Action::"B", r::f::g04uq1233::Action::"Z\u{5}"];
+
+  action "\u{3}" in [r::f::g04uq1233::Action::"\u{e}", r::f::g04uq1233::Action::"^", r::f::g04uq1233::Action::"ffd~", r::f::g04uq1233::Action::"\u{1d}\u{3}", r::f::g04uq1233::Action::"[@", r::f::g04uq1233::Action::"$=\u{e}", r::f::g04uq1233::Action::"2", r::f::g04uq1233::Action::"\u{1}[", r::f::g04uq1233::Action::"B", r::f::g04uq1233::Action::"Z\u{5}"] appliesTo {
+    principal: [h4, vR, D, I],
+    resource: [h4, vR, D, I],
+    context: {}
+  };
+
+  action "\u{e}" in [r::f::g04uq1233::Action::"^", r::f::g04uq1233::Action::"ffd~", r::f::g04uq1233::Action::"\u{1d}\u{3}", r::f::g04uq1233::Action::"[@", r::f::g04uq1233::Action::"$=\u{e}", r::f::g04uq1233::Action::"2", r::f::g04uq1233::Action::"\u{1}[", r::f::g04uq1233::Action::"B", r::f::g04uq1233::Action::"Z\u{5}"] appliesTo {
+    principal: [h4, vR, D, I],
+    resource: [h4, vR, D, I],
+    context: {}
+  };
+
+  action "\u{1d}\u{3}" in [r::f::g04uq1233::Action::"[@", r::f::g04uq1233::Action::"$=\u{e}", r::f::g04uq1233::Action::"2", r::f::g04uq1233::Action::"\u{1}[", r::f::g04uq1233::Action::"B", r::f::g04uq1233::Action::"Z\u{5}"] appliesTo {
+    principal: [h4, vR, D, I],
+    resource: [h4, vR, D, I],
+    context: {}
+  };
+
+  action "$=\u{e}" in [r::f::g04uq1233::Action::"2", r::f::g04uq1233::Action::"\u{1}[", r::f::g04uq1233::Action::"B", r::f::g04uq1233::Action::"Z\u{5}"] appliesTo {
+    principal: [h4, vR, D, I],
+    resource: [h4, vR, D, I],
+    context: {}
+  };
+
+  action "2" in [r::f::g04uq1233::Action::"\u{1}[", r::f::g04uq1233::Action::"B", r::f::g04uq1233::Action::"Z\u{5}"] appliesTo {
+    principal: [I],
+    resource: [h4, p, I, D],
+    context: {
+      y: r::f::g04uq1233::D
+    }
+  };
+
+  action "B" in [r::f::g04uq1233::Action::"Z\u{5}"];
+
+  action "Z\u{5}";
+
+  action "[@" in [r::f::g04uq1233::Action::"$=\u{e}", r::f::g04uq1233::Action::"2", r::f::g04uq1233::Action::"\u{1}[", r::f::g04uq1233::Action::"B", r::f::g04uq1233::Action::"Z\u{5}"];
+
+  action "^" in [r::f::g04uq1233::Action::"ffd~", r::f::g04uq1233::Action::"\u{1d}\u{3}", r::f::g04uq1233::Action::"[@", r::f::g04uq1233::Action::"$=\u{e}", r::f::g04uq1233::Action::"2", r::f::g04uq1233::Action::"\u{1}[", r::f::g04uq1233::Action::"B", r::f::g04uq1233::Action::"Z\u{5}"] appliesTo {
+    principal: [h4, vR, D, p],
+    resource: [h4, vR, D, I],
+    context: {
+      Fltt?: __cedar::datetime
+    }
+  };
+
+  action "ffd~" in [r::f::g04uq1233::Action::"\u{1d}\u{3}", r::f::g04uq1233::Action::"[@", r::f::g04uq1233::Action::"$=\u{e}", r::f::g04uq1233::Action::"2", r::f::g04uq1233::Action::"\u{1}[", r::f::g04uq1233::Action::"B", r::f::g04uq1233::Action::"Z\u{5}"] appliesTo {
+    principal: [h4, vR, D, I],
+    resource: [h4, vR, D, I],
+    context: {}
+  };
+}
+

@@ -1,0 +1,16 @@
+entity a tags {
+  ""?: __cedar::Bool,
+  "  "?: __cedar::datetime,
+  "                        "?: __cedar::String,
+  wwwwwwwwww: __cedar::duration,
+  @nuuuuuuuuu("")
+  @r("#\u{3}jAhU12 ")
+  wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

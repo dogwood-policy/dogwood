@@ -1,0 +1,21 @@
+// Permit any SellShares request, but forbid selling AMZN.
+// The forbid carves a hole out of the permit. A SellShares
+// request asking to sell AMZN matches both rules; the forbid
+// wins, so the request is denied.
+
+@id("permit-sell-shares")
+permit (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+);
+
+@id("forbid-sell-amzn")
+forbid (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+)
+when {
+    context.input.stock == "AMZN"
+};

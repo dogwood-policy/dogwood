@@ -1,0 +1,27 @@
+// Cedar-macro rewrite of documentation_0205_boolean_combinators.
+//
+// Two macros compose: `is_eligible(?shares, ?stock)` checks the
+// disjunctive precondition; `is_not_blocked(?stock)` rules out the
+// blocked ticker. The policy combines them with `&&`.
+//
+// Each macro is called with multiple argument shapes:
+//   * a Long (`context.input.shares`)
+//   * a String (`context.input.stock`)
+// proving that ?p literal-splicing carries call-site types through.
+
+def cedar is_eligible(?shares, ?stock) {
+    ?shares < 100 || ?stock == "FOO"
+};
+
+def cedar is_not_blocked(?stock) {
+    !(?stock == "BLOCKED")
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+)
+when {
+    is_eligible(context.input.shares, context.input.stock) && is_not_blocked(context.input.stock)
+};

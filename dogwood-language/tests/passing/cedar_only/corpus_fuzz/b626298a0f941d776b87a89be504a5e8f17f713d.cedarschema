@@ -1,0 +1,28 @@
+entity a = {
+  L33E0R3E?: {
+    ""?: {    },
+    "\u{3}"?: __cedar::Bool,
+    "\u{e}"?: __cedar::Bool,
+    ":"?: __cedar::Bool,
+    "A\0\0"?: {
+      ""?: __cedar::Bool,
+      "\0\0\0\0\0e"?: __cedar::Bool,
+      "\u{3}"?: __cedar::Bool,
+      "\u{8}\0\0"?: __cedar::Bool,
+      "\u{18}@"?: __cedar::Bool,
+      "\u{1d}\u{3}qqqq\0\0!"?: __cedar::Bool,
+      "\u{1d}@\0\0\0HHHHHHHHH"?: __cedar::Bool,
+      ":~"?: __cedar::Bool,
+      V?: __cedar::Bool
+    },
+    "^\\^["?: __cedar::Bool
+  },
+  p?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

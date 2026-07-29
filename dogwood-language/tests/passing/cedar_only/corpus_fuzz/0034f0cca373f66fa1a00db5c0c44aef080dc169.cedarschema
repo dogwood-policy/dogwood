@@ -1,0 +1,27 @@
+entity a;
+
+action "" in [Action::"ݙ:n", Action::"\u{e}~\u{e}", Action::"^", Action::"dete"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    B?: __cedar::String,
+    I?: __cedar::String,
+    OeRWRRRRRRR?: __cedar::String,
+    r?: __cedar::String,
+    r3333?: __cedar::String,
+    rEla?: __cedar::String,
+    v?: __cedar::String,
+    vRR?: __cedar::String,
+    x?: __cedar::String,
+    zmxMRRRR?: __cedar::String
+  }
+};
+
+action "\u{e}~\u{e}" in [Action::"^", Action::"dete"];
+
+action "^" in [Action::"dete"];
+
+action "dete";
+
+action "ݙ:n" in [Action::"\u{e}~\u{e}", Action::"^", Action::"dete"];
+

@@ -1,0 +1,202 @@
+{
+  "policies": "corpus-tests/17d7162b791b00220f989acf32b5d3e14f537fc5.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/17d7162b791b00220f989acf32b5d3e14f537fc5.entities.json",
+  "schema": "corpus-tests/17d7162b791b00220f989acf32b5d3e14f537fc5.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": false,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "a",
+        "id": "n\u0001\u0000 \u0000 'Debia;."
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "n\u0001\u0000 \u0000 'Debia;."
+      },
+      "context": {
+        "A": false
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "a",
+        "id": "n\u0001\u0000 \u0000 'Debia;."
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "n\u0001\u0000 \u0000 'Debia;."
+      },
+      "context": {
+        "A": false
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "a",
+        "id": "n\u0001\u0000 \u0000 'Debia;."
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "n\u0001\u0000 \u0000 'Debia;."
+      },
+      "context": {
+        "A": false
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "a",
+        "id": "n\u0001\u0000 \u0000 'Debia;."
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "n\u0001\u0000 \u0000 'Debia;."
+      },
+      "context": {
+        "A": false
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "a",
+        "id": "n\u0001\u0000 \u0000 'Debia;."
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "n\u0001\u0000 \u0000 'Debia;."
+      },
+      "context": {
+        "A": false
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "a",
+        "id": "n\u0001\u0000 \u0000 'Debia;."
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "n\u0001\u0000 \u0000 'Debia;."
+      },
+      "context": {
+        "A": false
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "a",
+        "id": "n\u0001\u0000 \u0000 'Debia;."
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "n\u0001\u0000 \u0000 'Debia;."
+      },
+      "context": {
+        "A": false
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "a",
+        "id": "n\u0001\u0000 \u0000 'Debia;."
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "n\u0001\u0000 \u0000 'Debia;."
+      },
+      "context": {
+        "A": false
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    }
+  ]
+}

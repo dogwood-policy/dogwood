@@ -1,0 +1,10 @@
+namespace ftVVVVVVVVVVVtM::fVVVV {
+  entity a enum [""];
+
+  action "SS" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

@@ -1,0 +1,18 @@
+entity B enum [""];
+
+entity C;
+
+entity MppG;
+
+entity r;
+
+entity r3333;
+
+entity r33333k tags __cedar::Long;
+
+action "action" appliesTo {
+  principal: [r33333k],
+  resource: [r33333k],
+  context: {}
+};
+

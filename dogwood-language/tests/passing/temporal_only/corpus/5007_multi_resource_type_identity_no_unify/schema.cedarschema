@@ -1,0 +1,23 @@
+// Type-respecting entity identity under a multi-resource-type action: the
+// trace contains a Gateway and a Bucket with the SAME entity id string
+// ("r1"). A temporal policy correlating on the past event's resource
+// (callerResource pinned to the current `resource` scope term) must NOT
+// unify Gateway::"r1" with Bucket::"r1" — entity equality is (type, id),
+// not id.
+namespace Drupe {
+    entity OAuthUser;
+    entity Gateway;
+    entity Bucket;
+    type ReadInput = { document: String, user: String };
+    type WriteInput = { document: String, user: String };
+    action Read appliesTo {
+        principal: [OAuthUser],
+        resource: [Gateway, Bucket],
+        context: { input: ReadInput }
+    };
+    action Write appliesTo {
+        principal: [OAuthUser],
+        resource: [Gateway, Bucket],
+        context: { input: WriteInput }
+    };
+}

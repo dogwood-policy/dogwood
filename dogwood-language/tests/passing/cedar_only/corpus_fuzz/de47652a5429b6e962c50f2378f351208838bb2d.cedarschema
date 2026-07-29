@@ -1,0 +1,14 @@
+@A003333("")
+@J("")
+@V("")
+@r("")
+@r31WWW33("")
+@vwwR3333333333333("")
+entity a tags Set<a>;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

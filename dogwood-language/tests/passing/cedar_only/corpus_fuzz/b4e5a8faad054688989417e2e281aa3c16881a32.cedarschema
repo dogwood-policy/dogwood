@@ -1,0 +1,11 @@
+entity a tags Set<Set<{
+  @r
+  "\u{1b}": {  }
+}>>;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

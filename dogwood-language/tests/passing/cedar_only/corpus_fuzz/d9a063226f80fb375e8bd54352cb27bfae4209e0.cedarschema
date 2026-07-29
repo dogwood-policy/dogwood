@@ -1,0 +1,29 @@
+namespace A::A {
+  @A000
+  @A0033
+  @K("")
+  @T33333333zzzzz("")
+  @c("")
+  @czzzzzz("")
+  @g("")
+  @l("")
+  @n("")
+  @r("")
+  @r33333333333l3("\u{13}")
+  entity a;
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      A0033?: __cedar::String,
+      @c("")
+      b: __cedar::String,
+      c?: __cedar::String,
+      r?: __cedar::String,
+      r33?: __cedar::String,
+      r33333333333l3?: __cedar::String
+    }
+  };
+}
+

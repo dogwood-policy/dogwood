@@ -1,0 +1,14 @@
+entity a;
+
+action "" in [Action::":", Action::"\u{e}:YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY", Action::"YYYYYYYYYYYYYYYYYYYYYYYYYYYV"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{e}:YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY" in [Action::"YYYYYYYYYYYYYYYYYYYYYYYYYYYV"];
+
+action ":" in [Action::"\u{e}:YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY", Action::"YYYYYYYYYYYYYYYYYYYYYYYYYYYV"];
+
+action "YYYYYYYYYYYYYYYYYYYYYYYYYYYV";
+

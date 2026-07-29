@@ -1,0 +1,91 @@
+[
+  {
+    "uid": {
+      "type": "Action",
+      "id": "action"
+    },
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "a",
+      "id": "&&&"
+    },
+    "attrs": {
+      "M": {
+        "__entity": {
+          "type": "a",
+          "id": "&"
+        }
+      },
+      "vR": {
+        "__entity": {
+          "type": "a",
+          "id": "&"
+        }
+      },
+      "X": {
+        "__entity": {
+          "type": "a",
+          "id": "&"
+        }
+      }
+    },
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "a",
+      "id": "&&"
+    },
+    "attrs": {
+      "X": {
+        "__entity": {
+          "type": "a",
+          "id": "&"
+        }
+      },
+      "M": {
+        "__entity": {
+          "type": "a",
+          "id": "&"
+        }
+      },
+      "vR": {
+        "__entity": {
+          "type": "a",
+          "id": "&"
+        }
+      }
+    },
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "a",
+      "id": "&"
+    },
+    "attrs": {
+      "M": {
+        "__entity": {
+          "type": "a",
+          "id": "&"
+        }
+      },
+      "vR": {
+        "__entity": {
+          "type": "a",
+          "id": "&"
+        }
+      },
+      "X": {
+        "__entity": {
+          "type": "a",
+          "id": "&"
+        }
+      }
+    },
+    "parents": []
+  }
+]

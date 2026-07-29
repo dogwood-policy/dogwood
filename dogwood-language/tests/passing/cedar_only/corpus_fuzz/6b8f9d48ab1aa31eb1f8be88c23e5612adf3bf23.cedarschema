@@ -1,0 +1,11 @@
+entity L = {
+  F?: __cedar::datetime,
+  v: __cedar::decimal
+} tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [L],
+  resource: [L],
+  context: {}
+};
+

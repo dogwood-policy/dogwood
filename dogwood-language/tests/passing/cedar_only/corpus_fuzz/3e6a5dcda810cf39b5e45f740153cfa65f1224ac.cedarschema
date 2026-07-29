@@ -1,0 +1,52 @@
+@r("")
+@x("")
+entity A tags Set<Set<__cedar::Long>>;
+
+@r("")
+@v("")
+entity CttRR tags Set<Set<Set<Set<__cedar::Long>>>>;
+
+@B("")
+@Ctttt("777777")
+@r("")
+@r3333("")
+@v("")
+@vRRRRRRRRRRRRR("#")
+entity Ctttt tags Set<Set<Set<Set<__cedar::Long>>>>;
+
+@r("")
+@v("")
+entity FcR tags Set<Set<Set<Set<__cedar::Long>>>>;
+
+@r("")
+@v
+@vRR("")
+entity p tags Set<Set<Set<Set<__cedar::Long>>>>;
+
+@r("")
+@v("")
+entity r tags Set<Set<Set<Set<__cedar::Long>>>>;
+
+@r("")
+@v("")
+@vRR("")
+entity r3 tags FcR;
+
+@r("")
+@x("")
+entity r33RfLmxM3RR tags Set<Set<__cedar::Long>>;
+
+@B("")
+@P("bian ")
+@pLm
+@r("")
+@t("")
+@v("")
+entity v tags Set<Set<__cedar::Long>>;
+
+action "action" appliesTo {
+  principal: [FcR],
+  resource: [FcR],
+  context: {}
+};
+

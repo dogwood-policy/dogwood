@@ -1,0 +1,29 @@
+// Headline flexibility case: an input field and an output field that share
+// a name (`verdict`) are DISTINCT fields once nested, addressable as
+// `input.verdict` and `output.verdict`.
+//
+// The Review action's input carries the *requested* verdict and its output
+// carries the *system's* verdict. A Publish is permitted only if there was
+// formerly a Review resolution where the requested verdict was "approve"
+// AND the system's verdict was "deny" — i.e. a request/outcome mismatch.
+// This predicate is only expressible because the two `verdict` fields are
+// kept distinct; a flat model would have collapsed them into one key and
+// this filter could not be written.
+//
+// Positive/negative control across two traces:
+//   trace_1: Review resolution input.verdict="approve", output.verdict="deny"
+//            → mismatch → Publish permitted.
+//   trace_2: IDENTICAL except output.verdict="approve" (they agree) → the
+//            `output.verdict: "deny"` constraint fails → NOT permitted.
+// If input.verdict and output.verdict were the same key, trace_2 could not
+// differ from trace_1 in the way that flips the verdict.
+
+permit (
+    principal,
+    action == Drupe::Action::"Publish",
+    resource
+)
+when temporal {
+    formerly within 1h
+        Drupe::Action::"Review"::response{ input.verdict: "approve", output.verdict: "deny" }
+};

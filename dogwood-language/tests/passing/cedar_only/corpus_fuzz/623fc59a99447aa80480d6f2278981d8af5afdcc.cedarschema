@@ -1,0 +1,12 @@
+entity a tags {
+  ""?: __cedar::Bool,
+  "\u{16}in++++++++++++++++++++++++++++777777777777777777777777777777777777777777777777777": __cedar::Bool,
+  "7777777+++++++++++++++++U\0"?: __cedar::Bool
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

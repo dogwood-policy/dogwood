@@ -1,0 +1,77 @@
+entity a;
+
+@LR
+action "" in [Action::":p", Action::"&[\u{1d}:p", Action::"&[\u{1d}", Action::"\u{e}VV*", Action::"\u{e}VV", Action::":"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+@O
+@r
+action "\u{e}VV" in [Action::"V", Action::"V$*", Action::":"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @LR
+    h?: __cedar::ipaddr,
+    r: __cedar::Bool
+  }
+};
+
+action "\u{e}VV*" in [Action::"\u{e}VV", Action::"V", Action::"V$*", Action::":"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "&$*" in [Action::"\u{e}VV*", Action::"\u{e}VV", Action::"V", Action::"V$*", Action::":"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "&[\u{1d}" in [Action::"+w", Action::"&$*", Action::"\u{e}VV*", Action::"\u{e}VV", Action::"V", Action::"V$*", Action::":"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "&[\u{1d}:p" in [Action::"&[\u{1d}", Action::"+w", Action::"&$*", Action::"\u{e}VV*", Action::"\u{e}VV", Action::"V", Action::"V$*", Action::":"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "+w" in [Action::"&$*", Action::"\u{e}VV*", Action::"\u{e}VV", Action::"V", Action::"V$*", Action::":"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action ":" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action ":p" in [Action::"&[\u{1d}:p", Action::"+w", Action::"&$*", Action::"\u{e}VV*", Action::"\u{e}VV", Action::"V", Action::"V$*", Action::":"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "V" in [Action::"V$*", Action::":"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    v?: Set<__cedar::Bool>
+  }
+};
+
+action "V$*" in [Action::":"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

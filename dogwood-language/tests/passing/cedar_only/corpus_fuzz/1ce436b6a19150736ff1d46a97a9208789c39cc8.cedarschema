@@ -1,0 +1,60 @@
+namespace XNAeppN {
+  entity KN;
+
+  entity XNNNNNN tags __cedar::String;
+
+  @D3S1WWWWWWWWW
+  entity r333 = {
+    @O
+    D?: XNAeppN::z,
+    L: XNAeppN::r333
+  };
+
+  entity z = {
+    U3T1S33T: __cedar::duration
+  } tags __cedar::Long;
+
+  action "" in [XNAeppN::Action::":~", XNAeppN::Action::"\u{1d}@[", XNAeppN::Action::"\u{3}\u{1d}$w", XNAeppN::Action::"$", XNAeppN::Action::"=\u{e}", XNAeppN::Action::"\u{1d}", XNAeppN::Action::"\u{3}[", XNAeppN::Action::"@T", XNAeppN::Action::"\u{1d}@gf\u{e}fd", XNAeppN::Action::"~", XNAeppN::Action::"R&", XNAeppN::Action::"\u{1d}\u{3}", XNAeppN::Action::"[@   ====================  "] appliesTo {
+    principal: [z, KN],
+    resource: [XNNNNNN],
+    context: {
+      A?: __cedar::String,
+      H?: __cedar::String
+    }
+  };
+
+  action "\u{3}\u{1d}$w" in [XNAeppN::Action::"$", XNAeppN::Action::"=\u{e}", XNAeppN::Action::"\u{1d}", XNAeppN::Action::"\u{3}[", XNAeppN::Action::"@T", XNAeppN::Action::"\u{1d}@gf\u{e}fd", XNAeppN::Action::"~", XNAeppN::Action::"R&", XNAeppN::Action::"\u{1d}\u{3}", XNAeppN::Action::"[@   ====================  "];
+
+  action "\u{3}[" in [XNAeppN::Action::"@T", XNAeppN::Action::"\u{1d}@gf\u{e}fd", XNAeppN::Action::"~", XNAeppN::Action::"R&", XNAeppN::Action::"\u{1d}\u{3}", XNAeppN::Action::"[@   ====================  "];
+
+  action "\u{1d}" in [XNAeppN::Action::"\u{3}[", XNAeppN::Action::"@T", XNAeppN::Action::"\u{1d}@gf\u{e}fd", XNAeppN::Action::"~", XNAeppN::Action::"R&", XNAeppN::Action::"\u{1d}\u{3}", XNAeppN::Action::"[@   ====================  "];
+
+  action "\u{1d}\u{3}" in [XNAeppN::Action::"[@   ====================  "];
+
+  action "\u{1d}@[" in [XNAeppN::Action::"\u{3}\u{1d}$w", XNAeppN::Action::"$", XNAeppN::Action::"=\u{e}", XNAeppN::Action::"\u{1d}", XNAeppN::Action::"\u{3}[", XNAeppN::Action::"@T", XNAeppN::Action::"\u{1d}@gf\u{e}fd", XNAeppN::Action::"~", XNAeppN::Action::"R&", XNAeppN::Action::"\u{1d}\u{3}", XNAeppN::Action::"[@   ====================  "];
+
+  action "\u{1d}@gf\u{e}fd" in [XNAeppN::Action::"~", XNAeppN::Action::"R&", XNAeppN::Action::"\u{1d}\u{3}", XNAeppN::Action::"[@   ====================  "];
+
+  action "                                   " in [XNAeppN::Action::"", XNAeppN::Action::":~", XNAeppN::Action::"\u{1d}@[", XNAeppN::Action::"\u{3}\u{1d}$w", XNAeppN::Action::"$", XNAeppN::Action::"=\u{e}", XNAeppN::Action::"\u{1d}", XNAeppN::Action::"\u{3}[", XNAeppN::Action::"@T", XNAeppN::Action::"\u{1d}@gf\u{e}fd", XNAeppN::Action::"~", XNAeppN::Action::"R&", XNAeppN::Action::"\u{1d}\u{3}", XNAeppN::Action::"[@   ====================  "];
+
+  action "$" in [XNAeppN::Action::"=\u{e}", XNAeppN::Action::"\u{1d}", XNAeppN::Action::"\u{3}[", XNAeppN::Action::"@T", XNAeppN::Action::"\u{1d}@gf\u{e}fd", XNAeppN::Action::"~", XNAeppN::Action::"R&", XNAeppN::Action::"\u{1d}\u{3}", XNAeppN::Action::"[@   ====================  "];
+
+  action ":~" in [XNAeppN::Action::"\u{1d}@[", XNAeppN::Action::"\u{3}\u{1d}$w", XNAeppN::Action::"$", XNAeppN::Action::"=\u{e}", XNAeppN::Action::"\u{1d}", XNAeppN::Action::"\u{3}[", XNAeppN::Action::"@T", XNAeppN::Action::"\u{1d}@gf\u{e}fd", XNAeppN::Action::"~", XNAeppN::Action::"R&", XNAeppN::Action::"\u{1d}\u{3}", XNAeppN::Action::"[@   ====================  "];
+
+  action "=\u{e}" in [XNAeppN::Action::"\u{1d}", XNAeppN::Action::"\u{3}[", XNAeppN::Action::"@T", XNAeppN::Action::"\u{1d}@gf\u{e}fd", XNAeppN::Action::"~", XNAeppN::Action::"R&", XNAeppN::Action::"\u{1d}\u{3}", XNAeppN::Action::"[@   ====================  "];
+
+  action "=========================  " in [XNAeppN::Action::"                                   ", XNAeppN::Action::"", XNAeppN::Action::":~", XNAeppN::Action::"\u{1d}@[", XNAeppN::Action::"\u{3}\u{1d}$w", XNAeppN::Action::"$", XNAeppN::Action::"=\u{e}", XNAeppN::Action::"\u{1d}", XNAeppN::Action::"\u{3}[", XNAeppN::Action::"@T", XNAeppN::Action::"\u{1d}@gf\u{e}fd", XNAeppN::Action::"~", XNAeppN::Action::"R&", XNAeppN::Action::"\u{1d}\u{3}", XNAeppN::Action::"[@   ====================  "] appliesTo {
+    principal: [XNNNNNN],
+    resource: [XNNNNNN],
+    context: {}
+  };
+
+  action "@T" in [XNAeppN::Action::"\u{1d}@gf\u{e}fd", XNAeppN::Action::"~", XNAeppN::Action::"R&", XNAeppN::Action::"\u{1d}\u{3}", XNAeppN::Action::"[@   ====================  "];
+
+  action "R&" in [XNAeppN::Action::"\u{1d}\u{3}", XNAeppN::Action::"[@   ====================  "];
+
+  action "[@   ====================  ";
+
+  action "~" in [XNAeppN::Action::"R&", XNAeppN::Action::"\u{1d}\u{3}", XNAeppN::Action::"[@   ====================  "];
+}
+

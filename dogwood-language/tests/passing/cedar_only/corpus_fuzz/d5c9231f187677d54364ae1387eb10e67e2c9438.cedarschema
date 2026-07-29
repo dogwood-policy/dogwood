@@ -1,0 +1,10 @@
+entity A0000000 enum [""];
+
+entity _WZZKkW enum [""];
+
+action "action" appliesTo {
+  principal: [_WZZKkW],
+  resource: [_WZZKkW],
+  context: {}
+};
+

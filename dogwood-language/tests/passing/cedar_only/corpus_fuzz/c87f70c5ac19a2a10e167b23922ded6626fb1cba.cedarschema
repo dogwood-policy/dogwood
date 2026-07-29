@@ -1,0 +1,64 @@
+entity a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    r?: {
+      ""?: __cedar::Long,
+      @F
+      "\0"?: __cedar::String,
+      "\0\0": __cedar::ipaddr,
+      "\u{3}\u{1d}wDebian ": __cedar::ipaddr,
+      "\u{3}ddddddffd~\u{1d}"?: __cedar::String,
+      "\u{e}"?: __cedar::String,
+      @A("")
+      @r("\0\u{1d}")
+      "\u{1d}": {
+        ""?: __cedar::String,
+        "V@"?: Set<Set<__cedar::Long>>
+      },
+      "\u{1d}\u{3}"?: __cedar::String,
+      @LS33TuRa3zERR("\u{3}")
+      @LS3T1ed
+      "\u{1d}@["?: Set<Set<__cedar::datetime>>,
+      "\u{1d}@gffd~"?: __cedar::String,
+      "!\u{3}"?: __cedar::String,
+      "$"?: Set<{
+        ""?: __cedar::String,
+        "\0"?: __cedar::String,
+        "\0\0"?: __cedar::String,
+        "\u{3}"?: __cedar::String,
+        "\u{3}\u{1d}w"?: __cedar::String,
+        "\u{e}"?: __cedar::String,
+        "\u{1d}@["?: __cedar::String,
+        "\u{1d}@gffd~"?: __cedar::String,
+        "!\u{3}"?: __cedar::String,
+        "$"?: __cedar::String,
+        "$\u{e}="?: __cedar::String,
+        ":~"?: __cedar::String,
+        "=\u{e}"?: __cedar::String,
+        "@"?: __cedar::String,
+        "[:pVV"?: __cedar::String,
+        "[@"?: __cedar::String,
+        "[@["?: __cedar::String,
+        "^"?: __cedar::String
+      }>,
+      "$\u{e}="?: __cedar::String,
+      @L3("")
+      @LS("")
+      @v("")
+      ":pVV": Set<a>,
+      ":~"?: a,
+      "=\u{e}"?: __cedar::String,
+      "?\0\0\0": Set<Set<a>>,
+      @r("")
+      "V@"?: Set<a>,
+      "["?: __cedar::String,
+      "[@"?: __cedar::String,
+      "[@["?: __cedar::String,
+      "^"?: __cedar::String
+    }
+  }
+};
+

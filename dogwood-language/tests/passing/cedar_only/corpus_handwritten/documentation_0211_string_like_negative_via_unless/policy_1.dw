@@ -1,0 +1,9 @@
+// Permit GetStockInfo for any stock except those whose ticker matches
+// a denylist pattern. New idea: pair `like` with `unless` to express
+// "forbid this shape" without needing a separate forbid rule.
+permit (
+    principal,
+    action == Drupe::Action::"GetStockInfo",
+    resource
+)
+unless { context.input.stock like "TEST_*" };

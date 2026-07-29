@@ -1,0 +1,172 @@
+namespace A {
+  entity B = {
+    D?: __cedar::Bool,
+    I?: __cedar::Bool,
+    N?: __cedar::String,
+    Qw2nn1?: __cedar::Bool,
+    f?: __cedar::Bool,
+    h0?: __cedar::String,
+    iW12333?: __cedar::Bool,
+    m3?: __cedar::String,
+    r?: __cedar::Bool,
+    r3f333335cZgYlW1?: __cedar::Bool,
+    v?: __cedar::String,
+    vR?: __cedar::String
+  };
+
+  entity D tags __cedar::decimal;
+
+  entity I = {
+    N?: __cedar::String,
+    P?: __cedar::Bool,
+    _YlW1FnFnnw2nn?: __cedar::Bool,
+    @K333SRRReX0("")
+    @P2nn13("")
+    @f("")
+    @i4W1233("")
+    @r
+    @r3f333335cZgYlW1("")
+    @v("[")
+    g3: __cedar::Bool,
+    i4W1233?: __cedar::Bool,
+    m3?: __cedar::String,
+    r?: __cedar::Bool,
+    r33?: __cedar::Bool,
+    r33SRRReX0pRR?: __cedar::String
+  };
+
+  entity N = {
+    N?: __cedar::String,
+    P?: __cedar::Bool,
+    _YlW1Fnnw2nn13?: __cedar::Bool,
+    g123333?: {    },
+    g3?: __cedar::Bool,
+    i?: __cedar::Bool,
+    m3?: __cedar::String,
+    m33z0333SRRReXU?: __cedar::Bool,
+    r33?: __cedar::Bool,
+    v?: __cedar::String
+  };
+
+  @r
+  @r3z0333SRRRReX0("")
+  @v("[")
+  entity Qw2nn1 enum ["\n\n\n\n\n\n\n\n\n\n", ""];
+
+  @h0("")
+  @r
+  @v("[")
+  entity f enum ["\n\n\t\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nDebian \u{1}\u{f}", "", "yA", "", "\u{1}", "", "", "", "", "", " ", "\u{1}", "", "", "", "", "\u{1f}", "", "=?", "\u{3}", ""];
+
+  @r
+  @r3z0333SRRRRRR1("")
+  entity h0 enum ["\n\n\n\n\n\n\n\n\n\n\n\n\n\n", ""];
+
+  entity iW12333 = {
+    N?: __cedar::String,
+    P?: __cedar::Bool,
+    _YlW1Fnnw2nn13?: __cedar::Bool,
+    g123333?: {    },
+    g3?: __cedar::Bool,
+    i?: __cedar::Bool,
+    m3?: __cedar::String,
+    m33z0333SRRReXU?: __cedar::Bool,
+    r33?: __cedar::Bool,
+    v?: __cedar::String
+  };
+
+  @g033z0333SRRRRe("\03")
+  @r
+  @v("[")
+  entity m3 enum ["\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", ""];
+
+  entity r enum ["\n\n[", "", "", "B,"];
+
+  entity v = {
+    P?: __cedar::Bool,
+    _YlW1Fnnw2nn13?: __cedar::Bool,
+    g123333?: __cedar::Bool,
+    g3?: __cedar::Bool,
+    i?: __cedar::Bool,
+    r33?: __cedar::Bool,
+    r333333?: __cedar::String,
+    r3z0333SRRReX0p?: __cedar::String,
+    v?: __cedar::String
+  };
+
+  entity vR;
+
+  entity z = {
+    P?: __cedar::Bool,
+    _YlW1Fnnw2nn13?: __cedar::Bool,
+    g123333?: __cedar::Bool,
+    g3?: __cedar::Bool,
+    i?: __cedar::Bool,
+    r33?: __cedar::Bool,
+    r333333?: __cedar::String,
+    r3z0333SRRReX0s?: __cedar::String,
+    v?: __cedar::String
+  };
+
+  action "" in [A::Action::"\u{1f}", A::Action::"=?", A::Action::"\u{3}"] appliesTo {
+    principal: [v, h0, r, N, Qw2nn1, D, vR, z, B, f, I],
+    resource: [v, h0, iW12333, Qw2nn1, z, m3, I, r, D, vR, N],
+    context: {
+      N?: __cedar::String,
+      Qw2nn1?: __cedar::Bool,
+      f?: __cedar::Bool,
+      iW12333?: __cedar::Bool,
+      m3: __cedar::Bool,
+      r: {      },
+      @tgY3333333333333
+      r33SRRReX0pRR?: __cedar::String,
+      r3f333335cZgYlW1?: __cedar::Bool
+    }
+  };
+
+  action "\u{3}" appliesTo {
+    principal: [vR, Qw2nn1, B, f, m3, D, N, I],
+    resource: [v, N, m3, z, r, B, Qw2nn1, iW12333, h0, D, vR],
+    context: {
+      N?: __cedar::String,
+      Qw2nn1?: __cedar::String,
+      f?: __cedar::String,
+      iW12333?: __cedar::String,
+      m3?: __cedar::String,
+      r?: __cedar::String,
+      r333339?: __cedar::String,
+      r33SRRReXUpRR?: __cedar::String,
+      r3f333335cZgYlW1?: __cedar::String,
+      rSRR?: __cedar::Bool,
+      v?: __cedar::String,
+      y?: __cedar::Bool,
+      @i40pRR3("")
+      z: __cedar::Bool
+    }
+  };
+
+  action "\u{1f}" in [A::Action::"=?", A::Action::"\u{3}"] appliesTo {
+    principal: [vR, Qw2nn1, B, f, m3, D, N, I],
+    resource: [v, N, m3, z, r, B, Qw2nn1, iW12333, h0, D, vR],
+    context: {
+      N?: __cedar::Bool,
+      m3?: __cedar::Bool,
+      @K333SRRReX0("")
+      @P2nn13("")
+      @f("")
+      @i4W1233("")
+      @r
+      @r3f333335cZgYlW1("")
+      @v("[")
+      rSRR: __cedar::Bool,
+      v?: __cedar::Bool
+    }
+  };
+
+  action "=?" in [A::Action::"\u{3}"] appliesTo {
+    principal: [v, N, m3, z, r, B, Qw2nn1, iW12333, h0, D, vR],
+    resource: [v, z, f, B, Qw2nn1, m3, vR, D, h0, iW12333, r],
+    context: {}
+  };
+}
+

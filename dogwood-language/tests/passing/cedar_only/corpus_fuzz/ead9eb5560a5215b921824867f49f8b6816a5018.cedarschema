@@ -1,0 +1,21 @@
+namespace K {
+  entity r enum [""];
+
+  @A
+  @v("")
+  entity r3 tags Set<Set<Set<Set<__cedar::Long>>>>;
+
+  @_RRR("")
+  @r(")")
+  @v("")
+  entity v enum ["an ", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ")"];
+
+  entity w enum [""];
+
+  action "action" appliesTo {
+    principal: [v],
+    resource: [v],
+    context: {}
+  };
+}
+

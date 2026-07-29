@@ -1,0 +1,16 @@
+namespace i33 {
+  entity A00 enum [""];
+
+  entity ROz enum [""];
+
+  entity iOO enum [""];
+
+  entity r enum [""];
+
+  action "action" appliesTo {
+    principal: [r],
+    resource: [r],
+    context: {}
+  };
+}
+

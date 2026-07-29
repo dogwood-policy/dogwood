@@ -1,0 +1,10 @@
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    formerly within 5h Drupe::Action::"Login"::request{ input.server: context.input.server }
+    && previous within 1h Drupe::Action::"Heartbeat"::request{ input.server: context.input.server }
+    && (Drupe::Action::"Heartbeat"::request{ input.server: context.input.server } since within 1h Drupe::Action::"Transfer"::request{ input.user: _, input.amount: _ })
+};

@@ -1,0 +1,29 @@
+entity a = {
+  A?: {  },
+  E?: {  },
+  M?: {  },
+  _mSSS?: {  },
+  i?: {  },
+  i00?: {  },
+  iOO?: __cedar::ipaddr,
+  j?: {  },
+  @r
+  r?: {  },
+  r3?: {  },
+  @r33B3343KRT0000
+  r3343333l3333SSS: a,
+  ri33l?: {  },
+  rm3ukRcRpZ?: {  },
+  rm3ukucR30?: {  },
+  v?: {  },
+  v3?: {  },
+  w?: {  },
+  z?: {  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,15 @@
+entity a tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: {
+      "#########\0#################"?: __cedar::ipaddr,
+      "#############################u#####"?: __cedar::ipaddr,
+      "33/33333#############Y######\0\0A"?: __cedar::ipaddr,
+      ">3"?: __cedar::ipaddr
+    }
+  }
+};
+

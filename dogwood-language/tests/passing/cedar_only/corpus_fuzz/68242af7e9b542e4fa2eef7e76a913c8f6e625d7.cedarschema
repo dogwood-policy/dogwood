@@ -1,0 +1,16 @@
+@DOe0("")
+@is
+entity a = {
+  @is
+  @wuY7YuFojqQ1FqvsQ("(\0\u{1}")
+  i?: __cedar::Long,
+  @is
+  r: __cedar::String
+} tags __cedar::Long;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

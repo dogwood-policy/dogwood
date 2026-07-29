@@ -1,0 +1,94 @@
+entity o0v00 enum [""];
+
+entity r = {
+  KF?: {
+    ""?: Set<{
+      ""?: {      },
+      "\u{1}"?: {      },
+      "\u{1}\u{f}"?: {      },
+      "\u{1}\u{f}i"?: {      },
+      "\u{3}"?: {      },
+      "\u{3}ddddd\u{7}\0\0\0\0\0\0\0d\u{1d}@"?: {      },
+      "\u{3}dddddddddddddd\u{1d}@"?: {      },
+      "\u{e}"?: {      },
+      "\u{13}\u{13}\u{13}\u{13}:\u{b}\u{f}i"?: {      },
+      "\u{1d}\u{3}"?: {      },
+      "\u{1d}@["?: {      },
+      "\u{1d}@gf"?: {      },
+      " "?: {      },
+      "$"?: {      },
+      "$=\u{e}"?: {      },
+      "\'ggg\nggg"?: {      },
+      "*\0\0\0SSSSSSSSSSSS"?: __cedar::String,
+      "1\'ggg\ngfg"?: {      },
+      ":~"?: {      },
+      "=\u{e}"?: {      },
+      B?: {      },
+      "Debian \u{1}\u{f}"?: {      },
+      @B("i")
+      @B33344("\'")
+      @P("bian \u{1}\u{f}")
+      @PR2n21("")
+      @Pg("")
+      @Pn("yA")
+      @b77777777777777("")
+      @eKKKKKKKKKKnKKKK("SSSSS")
+      @i("")
+      @r("\u{1}\u{f}i")
+      @yA("fg")
+      @ye3333("")
+      "P "?: {      },
+      "["?: {      },
+      "[@"?: {      },
+      "[@["?: {      },
+      "[@[~*"?: {      },
+      "[w"?: {      },
+      "^"?: {      },
+      "an \u{1}\u{f}"?: {      },
+      ff?: {      },
+      g?: {      },
+      h?: {      },
+      "hSSSSSSS?:eSSSSSSSSSSSSSSSSSSSSSS\u{13}SSSSSSSSSSSSSSS"?: __cedar::String,
+      yA?: {      },
+      "~*"?: {      }
+    }>,
+    "\0"?: __cedar::String,
+    "\0\0"?: __cedar::String,
+    "\u{3}"?: __cedar::String,
+    "\u{3}\u{1d}w"?: __cedar::String,
+    "\u{3}dddddddddddddd\u{1d}@"?: __cedar::String,
+    "\u{e}"?: __cedar::String,
+    "\u{14}"?: __cedar::String,
+    "\u{1d}\u{3}"?: __cedar::String,
+    "\u{1d}\u{3}@["?: __cedar::String,
+    "\u{1d}\u{3}]"?: __cedar::String,
+    "\u{1d}@"?: __cedar::String,
+    "\u{1d}@["?: __cedar::String,
+    "\u{1d}@gf"?: __cedar::String,
+    "\u{1d}@gffd~"?: __cedar::String,
+    "\u{1d}@gffd~*"?: __cedar::String,
+    "$"?: __cedar::String,
+    "$?\u{e}"?: __cedar::String,
+    ":~"?: __cedar::String,
+    "=\u{e}"?: __cedar::String,
+    "N~\u{1f}"?: __cedar::String,
+    VV?: __cedar::String,
+    "["?: __cedar::String,
+    "[@"?: __cedar::String,
+    "[@["?: __cedar::String,
+    "[w"?: __cedar::String,
+    "]7"?: __cedar::String,
+    "^"?: __cedar::String,
+    ff?: __cedar::String,
+    qqqqqqqqqsqqqqq?: __cedar::String,
+    "z~"?: __cedar::String,
+    "\u{7f}"?: __cedar::String
+  }
+};
+
+action "action" appliesTo {
+  principal: [r],
+  resource: [r],
+  context: {}
+};
+

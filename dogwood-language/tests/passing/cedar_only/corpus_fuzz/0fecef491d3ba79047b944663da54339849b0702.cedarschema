@@ -1,0 +1,8 @@
+entity a enum ["        =   \u{19}\u{19}\u{19}\u{19}\u{19}\u{19}\u{19}\u{19}\u{19}\u{19}\u{19}\u{19}\u{19}\u{19}\u{19}     ", ""];
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

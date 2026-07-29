@@ -1,0 +1,18 @@
+entity BFf;
+
+entity Pf;
+
+entity annnnnnn;
+
+entity g3;
+
+entity l;
+
+entity n;
+
+action "action" appliesTo {
+  principal: [l, n, Pf, BFf, g3],
+  resource: [l, n, Pf, BFf, g3],
+  context: {}
+};
+

@@ -1,0 +1,12 @@
+namespace eR::j::F {
+  entity j0000000 enum [""];
+
+  entity w enum [""];
+
+  action "action" appliesTo {
+    principal: [w],
+    resource: [w],
+    context: {}
+  };
+}
+

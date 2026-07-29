@@ -1,0 +1,29 @@
+entity a tags __cedar::String;
+
+action "" in [Action::":p", Action::"Y\u{1d}\'V@", Action::"\u{e}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @A
+    v: __cedar::datetime
+  }
+};
+
+action "\u{e}" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action ":p" in [Action::"Y\u{1d}\'V@", Action::"\u{e}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "Y\u{1d}\'V@" in [Action::"\u{e}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

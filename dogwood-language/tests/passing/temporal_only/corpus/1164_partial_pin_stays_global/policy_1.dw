@@ -1,0 +1,15 @@
+// Same policy as 1155 (`previous within 1h Login`). The ONLY difference from
+// 1155 is the event schema: here the `callerPrincipal` pin is PARTIAL (on
+// `request` only), so it is not universal and partitioning is NOT active — the
+// leaf keeps global-trace semantics. On the shared trace 1155 permits (foreign
+// event excluded); this bundle must DENY (foreign event is the global
+// `previous`). The divergence is caused by the partial vs universal pin alone.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    previous within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

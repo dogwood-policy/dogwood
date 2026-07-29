@@ -1,0 +1,12 @@
+entity KF;
+
+entity Sze;
+
+entity r;
+
+action "action" appliesTo {
+  principal: [KF],
+  resource: [KF],
+  context: {}
+};
+

@@ -1,0 +1,9 @@
+// Temporal half: forbid reads without a same-user login in the last hour.
+forbid (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+unless temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

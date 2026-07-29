@@ -1,0 +1,12 @@
+entity K enum [""];
+
+entity u = {
+  A?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [u],
+  resource: [u],
+  context: {}
+};
+

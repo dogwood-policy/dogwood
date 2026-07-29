@@ -1,0 +1,17 @@
+@bIdddaaaaaaaaaa
+entity BFf enum [""];
+
+entity Pf;
+
+entity g3 enum [""];
+
+entity v;
+
+entity vRcz300033z;
+
+action "action" appliesTo {
+  principal: [Pf, vRcz300033z, g3],
+  resource: [Pf, vRcz300033z, g3],
+  context: {}
+};
+

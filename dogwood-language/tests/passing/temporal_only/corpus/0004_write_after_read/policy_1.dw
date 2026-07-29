@@ -1,0 +1,11 @@
+// Write is only permitted if the user has read the same document
+// within the last hour
+
+permit (
+    principal,
+    action == Drupe::Action::"Write",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Read"::request{ input.user: context.input.user, input.document: context.input.document }
+};

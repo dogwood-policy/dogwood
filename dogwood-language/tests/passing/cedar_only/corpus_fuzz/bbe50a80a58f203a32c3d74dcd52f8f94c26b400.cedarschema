@@ -1,0 +1,27 @@
+entity a;
+
+action "" in [Action::":p", Action::"%", Action::"\u{1d}", Action::"V@", Action::"\u{1b}\u{e}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    r?: __cedar::ipaddr
+  }
+};
+
+action "\u{1b}\u{e}";
+
+action "\u{1d}" in [Action::"V@", Action::"\u{1b}\u{e}"];
+
+action "%" in [Action::"\u{1d}", Action::"V@", Action::"\u{1b}\u{e}"];
+
+action ":p" in [Action::"%", Action::"\u{1d}", Action::"V@", Action::"\u{1b}\u{e}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: __cedar::String,
+    r?: __cedar::String
+  }
+};
+
+action "V@" in [Action::"\u{1b}\u{e}"];
+

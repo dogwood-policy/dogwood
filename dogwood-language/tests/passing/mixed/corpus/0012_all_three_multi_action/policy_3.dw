@@ -1,0 +1,9 @@
+// Permit Write when document matches ^[a-z_]+$ (guardrail only)
+permit (
+    principal,
+    action == Drupe::Action::"Write",
+    resource
+)
+when guardrails {
+    Strings::Matches(context.input.document, "^[a-z_]+$").matched == true
+};

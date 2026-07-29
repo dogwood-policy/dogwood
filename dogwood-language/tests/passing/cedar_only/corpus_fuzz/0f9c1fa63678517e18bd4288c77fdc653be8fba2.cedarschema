@@ -1,0 +1,100 @@
+@E33BBB1x_BBBB("")
+@S15c
+entity A000000xf12f3xf15 enum [""];
+
+entity B9333333333 enum [""];
+
+entity BxB enum [""];
+
+entity _YlW3Zx3319SSQ enum [""];
+
+entity dSSSSSS enum [""];
+
+entity f1 enum [""];
+
+@fBBh("")
+@fh("\u{f}h")
+@mSSJSSS("[[[[[[[[[[[[[[[_[[[[[[[\u{1} ")
+@r1G00000001W_3
+@rD3("\u{10}\0\0\0\0\0\0\0z")
+@z("z")
+entity fBBh enum [""];
+
+entity m0SSSSS enum [""];
+
+entity m1W_3f1 enum [""];
+
+entity mQSSS0S = {
+  L?: __cedar::String,
+  fB?: __cedar::String
+};
+
+entity mSSSJSS = {
+  A0000001W_3f1xBBB?: B9333333333,
+  @fB("\u{f}")
+  @p("")
+  @r("")
+  ff?: r,
+  r1G0000000xf12?: __cedar::String,
+  rB?: mSSSSSS,
+  rD3: __cedar::datetime
+};
+
+entity mSSSS1W enum [""];
+
+entity mSSSSSS enum [""];
+
+entity mSSSSSW enum [""];
+
+entity mSWSSSS enum [""];
+
+entity r enum [""];
+
+entity rB enum [""];
+
+entity rD3 enum ["z", "", "", "+", "\u{f}h", "\r", "\u{1}\u{10}\0\0\0\0\0\0\0\u{1} ", "", "h\u{1}z", "", "", "+", "", "h", "\r", "\u{1}\u{10}\0\0\0\0\0\0\0z"];
+
+entity z enum [""];
+
+entity z3D31G00000001W_ = {
+  @B9333333333("")
+  @L("[[Y[[[\0[[[[[[[R[[[[[[[[[[[[[[[[[[[_[[[[[[[\u{1} ")
+  @fB("\u{f}")
+  @p("")
+  @r("")
+  @z("")
+  rxf15cZgYl?: r
+};
+
+action "" in [Action::"````````````", Action::")", Action::"\u{1}z", Action::"\u{f}"] appliesTo {
+  principal: [m1W_3f1, mQSSS0S, mSSSS1W, BxB, _YlW3Zx3319SSQ, mSSSJSS, fBBh, A000000xf12f3xf15, B9333333333, rD3, m0SSSSS, mSWSSSS, f1, rB, z3D31G00000001W_, dSSSSSS, r],
+  resource: [rD3, r, BxB, mQSSS0S, f1, z, fBBh, A000000xf12f3xf15, mSSSS1W, mSWSSSS, m0SSSSS],
+  context: {}
+};
+
+action "\u{1}z" appliesTo {
+  principal: [rD3, r, BxB, mQSSS0S, f1, z, mSSSSSS, mSSSJSS, m0SSSSS, dSSSSSS, m1W_3f1],
+  resource: [rD3, mSWSSSS, BxB, mQSSS0S, f1, z, mSSSSSS, m0SSSSS, mSSSSSW, dSSSSSS, m1W_3f1],
+  context: {}
+};
+
+action "\u{f}" appliesTo {
+  principal: [rD3, r, BxB, mSWSSSS, f1, z, mSSSSSS, mSSSJSS, m0SSSSS, mSSSS1W, dSSSSSS],
+  resource: [fBBh, z3D31G00000001W_, BxB, mQSSS0S, rD3, z, mSSSSSS, mSSSJSS, m0SSSSS, dSSSSSS, m1W_3f1],
+  context: {
+    WjjPPPPPBBBXXX?: __cedar::ipaddr
+  }
+};
+
+action ")" appliesTo {
+  principal: [rD3, r, dSSSSSS, m0SSSSS, f1, z, mSSSSSS, mSSSJSS, m1W_3f1, B9333333333, mQSSS0S],
+  resource: [rD3, r, BxB, mQSSS0S, f1, z, mSSSSSS, mSSSJSS, m0SSSSS, dSSSSSS, m1W_3f1],
+  context: {}
+};
+
+action "````````````" in [Action::"\u{f}"] appliesTo {
+  principal: [m1W_3f1, mQSSS0S, mSSSS1W, BxB, _YlW3Zx3319SSQ, z, mSSSSSS, mSSSJSS, m0SSSSS, dSSSSSS, r, f1, A000000xf12f3xf15, z3D31G00000001W_, fBBh, rB, rD3],
+  resource: [m1W_3f1, mQSSS0S, mSSSS1W, BxB, _YlW3Zx3319SSQ, mSSSJSS, fBBh, A000000xf12f3xf15, B9333333333, rD3, m0SSSSS, mSWSSSS, f1, rB, z3D31G00000001W_, dSSSSSS, r],
+  context: {}
+};
+

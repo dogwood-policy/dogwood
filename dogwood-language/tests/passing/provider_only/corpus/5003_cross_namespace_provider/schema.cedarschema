@@ -1,0 +1,21 @@
+// TWO namespaces in one schema. The provider rule lives in Drupe; the
+// Billing namespace's action receives decision events too, and under
+// unconditional execution the provider is evaluated for those events as
+// well (its argument resolves to Null there) — the path the old
+// action-gate's namespace matching used to short-circuit.
+namespace Drupe {
+  entity OAuthUser;
+  entity Gateway;
+  action "Read" appliesTo {
+    principal: [OAuthUser], resource: [Gateway],
+    context: { input: { document: String } }
+  };
+}
+namespace Billing {
+  entity Account;
+  entity Ledger;
+  action "Charge" appliesTo {
+    principal: [Account], resource: [Ledger],
+    context: { input: { amount: Long } }
+  };
+}

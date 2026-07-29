@@ -1,0 +1,16 @@
+namespace A {
+  entity a enum ["\0\0\0\0"];
+
+  action "" in [A::Action::"ll", A::Action::"i"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      vp00000000000000?: __cedar::String
+    }
+  };
+
+  action "i";
+
+  action "ll" in [A::Action::"i"];
+}
+

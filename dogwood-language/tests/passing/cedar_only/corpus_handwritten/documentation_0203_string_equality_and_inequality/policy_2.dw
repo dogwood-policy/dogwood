@@ -1,0 +1,15 @@
+// Permit GetStockInfo only for an explicit allowlist of tickers.
+// New idea: combine string equalities with `||` to express
+// set-membership. Each disjunct compares the same input field
+// against a different literal.
+
+permit (
+    principal,
+    action == Drupe::Action::"GetStockInfo",
+    resource
+)
+when {
+    context.input.stock == "AMZN"
+    || context.input.stock == "MSFT"
+    || context.input.stock == "GOOG"
+};

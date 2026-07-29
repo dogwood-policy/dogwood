@@ -1,0 +1,12 @@
+// Permit Read if there has been any Login within the last hour.
+// Uses explicit wildcards for all Login input fields rather than empty
+// arg list. Should be semantically equivalent to Login{}.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: _, input.server: _ }
+};

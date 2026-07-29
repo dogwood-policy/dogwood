@@ -1,0 +1,18 @@
+// Cedar-macro rewrite of documentation_0204_string_like_wildcards.
+//
+// `starts_with_f(?s)` wraps a `like` pattern. The macro body
+// composes Cedar's `like` operator over the parameter — exercising
+// expansion through a non-trivial cedar primitive.
+
+def cedar starts_with_f(?s) {
+    ?s like "F*"
+};
+
+permit(
+    principal,
+    action == Drupe::Action::"GetStockInfo",
+    resource
+)
+when {
+    starts_with_f(context.input.stock)
+};

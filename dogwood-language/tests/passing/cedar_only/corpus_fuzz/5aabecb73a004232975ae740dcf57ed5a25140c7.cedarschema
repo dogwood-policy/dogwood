@@ -1,0 +1,22 @@
+namespace r::V::h::r {
+  entity a;
+
+  action "" in [r::V::h::r::Action::"VV", r::V::h::r::Action::"L0", r::V::h::r::Action::"QQ", r::V::h::r::Action::"\u{8}0[\u{1d}", r::V::h::r::Action::"V@", r::V::h::r::Action::"\u{1b}\u{e}e"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{8}0[\u{1d}" in [r::V::h::r::Action::"V@", r::V::h::r::Action::"\u{1b}\u{e}e"];
+
+  action "\u{1b}\u{e}e";
+
+  action "L0" in [r::V::h::r::Action::"QQ", r::V::h::r::Action::"\u{8}0[\u{1d}", r::V::h::r::Action::"V@", r::V::h::r::Action::"\u{1b}\u{e}e"];
+
+  action "QQ" in [r::V::h::r::Action::"\u{8}0[\u{1d}", r::V::h::r::Action::"V@", r::V::h::r::Action::"\u{1b}\u{e}e"];
+
+  action "V@" in [r::V::h::r::Action::"\u{1b}\u{e}e"];
+
+  action "VV" in [r::V::h::r::Action::"L0", r::V::h::r::Action::"QQ", r::V::h::r::Action::"\u{8}0[\u{1d}", r::V::h::r::Action::"V@", r::V::h::r::Action::"\u{1b}\u{e}e"];
+}
+

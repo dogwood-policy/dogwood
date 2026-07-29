@@ -1,0 +1,21 @@
+namespace r::r::j {
+  entity Cj enum ["", ""];
+
+  entity Q = {
+    Re33Fbbbr?: __cedar::ipaddr
+  };
+
+  entity i;
+
+  entity i33 enum ["\0"];
+
+  @R
+  entity r enum [""];
+
+  action "action" appliesTo {
+    principal: [r, Q, Cj, i33, i],
+    resource: [Q, i, Cj, i33, r],
+    context: {}
+  };
+}
+

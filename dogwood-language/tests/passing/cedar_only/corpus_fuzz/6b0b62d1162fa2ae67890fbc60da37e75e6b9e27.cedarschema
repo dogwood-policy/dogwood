@@ -1,0 +1,14 @@
+entity a tags __cedar::Long;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @xJ183
+    A: {
+      ""?: __cedar::datetime,
+      "\0\0"?: __cedar::datetime
+    }
+  }
+};
+

@@ -1,0 +1,7 @@
+permit(
+  principal in a::"",
+  action in [Action::"action"],
+  resource in a::""
+) when {
+  (true && ([619978162421038848, 619977887518949376].containsAll([[[[datetime("3598-03-19T14:14:08-1414"), (datetime("5962-11-09T00:00:42-0434")).offset(duration("1012762419733073422ms"))], [datetime("4925-09-01"), datetime("0000-01-01"), (datetime("0909-10-21T21:57:57.909Z")).offset(duration("-1012763519254400749d"))]], [[datetime("8316-09-06"), datetime("3598-09-15T14:14:14-1414")], [datetime("0042-11-31T10:08:08Z"), datetime("3598-03-15T14:14:14-1414")]]], {"\u{e}\u{e}\u{e}\u{e}\u{e}": [[[datetime("3598-09-01"), (datetime("5535-04-15T14:14:14-1414")).offset(duration("1009990736465231904m")), datetime("3598-03-15T14:14:14-1414")], [(datetime("5535-03-15T14:14:14-1414")).offset(duration("245911126048h")), (datetime("0909-10-21T13:57:57.909Z")).offset(duration("-1013043897192869357d")), datetime("2570-11-11T10:10:10-1010")]], [[(datetime("5962-11-09T00:00:42-0434")).offset(duration("-824633071083d723396719915630591h")), datetime("2570-11-11T10:00:15+0834")], [datetime("3598-03-07T14:14:14-1414"), datetime("9424-01-12T10:34:34Z")], [datetime("3598-03-15T14:14:14-1414"), datetime("3598-03-15T01:01:10+0015")]]]}["\u{e}\u{e}\u{e}\u{e}\u{e}"], {"\u{e}\u{e}\u{e}\u{e}": [[[datetime("3598-03-01T10:35:38-0834"), datetime("3598-03-15T14:14:14-1414")], [datetime("3598-03-15T14:14:14-1414"), (datetime("3581-01-08T00:00:00Z")).offset(duration("0ms"))]], []]}["\u{e}\u{e}\u{e}\u{e}"]]))) && false
+};

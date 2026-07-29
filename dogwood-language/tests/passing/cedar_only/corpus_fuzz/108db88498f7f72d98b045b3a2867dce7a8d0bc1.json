@@ -1,0 +1,447 @@
+{
+  "policies": "corpus-tests/108db88498f7f72d98b045b3a2867dce7a8d0bc1.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/108db88498f7f72d98b045b3a2867dce7a8d0bc1.entities.json",
+  "schema": "corpus-tests/108db88498f7f72d98b045b3a2867dce7a8d0bc1.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "a",
+        "id": "                            "
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "F": {
+          "\u0000": true,
+          "\u000e": true,
+          "\u001f": {},
+          "$": "-----------J",
+          "A\u0000\u0000": 3255307777724306130,
+          "A\u0000VV": {
+            "__entity": {
+              "type": "a",
+              "id": ""
+            }
+          }
+        },
+        "O": true,
+        "p": true
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "F": {
+          "\u0000": true,
+          "\u000e": true,
+          "\u001f": {},
+          "$": "-----",
+          "A\u0000\u0000": 11565,
+          "A\u0000VV": {
+            "__entity": {
+              "type": "a",
+              "id": "                            "
+            }
+          },
+          "oUUUUUUaU@                    \u0000": false
+        },
+        "O": false,
+        "p": false
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "a",
+        "id": "                            "
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "                            "
+      },
+      "context": {
+        "F": {
+          "": "",
+          "\u0000": false,
+          "\u0000\u0000": "",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000:^[": {
+            "__extn": {
+              "fn": "datetime",
+              "arg": "0000-01-01"
+            }
+          },
+          "\u0000\u0000  ": false,
+          "\u0000\u0007/": false,
+          "\u0001\u0000\u00009\u0015\u0015\u0015\u0015\u0015\u0015\u0015:\u0003": false,
+          "\u0003\u001d$w": false,
+          "\u0003[": false,
+          "\u0004": false,
+          "\u000e": false,
+          "\u001d": false,
+          "\u001d@[": false,
+          "\u001f": {},
+          "       ": false,
+          "                                      ": false,
+          "#": false,
+          "$": "",
+          ":~": false,
+          "@T": false,
+          "A\u0000\u0000": 0,
+          "A\u0000VV": {
+            "__entity": {
+              "type": "a",
+              "id": "                            "
+            }
+          },
+          "oUUUUUUaU@                    \u0000": false
+        },
+        "O": false,
+        "p": false
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "a",
+        "id": "                            "
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "                            "
+      },
+      "context": {
+        "F": {
+          "": "",
+          "\u0000": false,
+          "\u0000\u0000": "",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000:^[": {
+            "__extn": {
+              "fn": "datetime",
+              "arg": "0000-01-01"
+            }
+          },
+          "\u0000\u0000  ": false,
+          "\u0000\u0007/": false,
+          "\u0001\u0000\u00009\u0015\u0015\u0015\u0015\u0015\u0015\u0015:\u0003": false,
+          "\u0003\u001d$w": false,
+          "\u0003[": false,
+          "\u0004": false,
+          "\u000e": false,
+          "\u001d": false,
+          "\u001d@[": false,
+          "\u001f": {},
+          "       ": false,
+          "                                      ": false,
+          "#": false,
+          "$": "",
+          ":~": false,
+          "@T": false,
+          "A\u0000\u0000": 0,
+          "A\u0000VV": {
+            "__entity": {
+              "type": "a",
+              "id": "                            "
+            }
+          },
+          "oUUUUUUaU@                    \u0000": false
+        },
+        "O": false,
+        "p": false
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "a",
+        "id": "                            "
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "                            "
+      },
+      "context": {
+        "F": {
+          "": "",
+          "\u0000": false,
+          "\u0000\u0000": "",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000:^[": {
+            "__extn": {
+              "fn": "datetime",
+              "arg": "0000-01-01"
+            }
+          },
+          "\u0000\u0000  ": false,
+          "\u0000\u0007/": false,
+          "\u0001\u0000\u00009\u0015\u0015\u0015\u0015\u0015\u0015\u0015:\u0003": false,
+          "\u0003\u001d$w": false,
+          "\u0003[": false,
+          "\u0004": false,
+          "\u000e": false,
+          "\u001d": false,
+          "\u001d@[": false,
+          "\u001f": {},
+          "       ": false,
+          "                                      ": false,
+          "#": false,
+          "$": "",
+          ":~": false,
+          "@T": false,
+          "A\u0000\u0000": 0,
+          "A\u0000VV": {
+            "__entity": {
+              "type": "a",
+              "id": "                            "
+            }
+          },
+          "oUUUUUUaU@                    \u0000": false
+        },
+        "O": false,
+        "p": false
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "a",
+        "id": "                            "
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "                            "
+      },
+      "context": {
+        "F": {
+          "": "",
+          "\u0000": false,
+          "\u0000\u0000": "",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000:^[": {
+            "__extn": {
+              "fn": "datetime",
+              "arg": "0000-01-01"
+            }
+          },
+          "\u0000\u0000  ": false,
+          "\u0000\u0007/": false,
+          "\u0001\u0000\u00009\u0015\u0015\u0015\u0015\u0015\u0015\u0015:\u0003": false,
+          "\u0003\u001d$w": false,
+          "\u0003[": false,
+          "\u0004": false,
+          "\u000e": false,
+          "\u001d": false,
+          "\u001d@[": false,
+          "\u001f": {},
+          "       ": false,
+          "                                      ": false,
+          "#": false,
+          "$": "",
+          ":~": false,
+          "@T": false,
+          "A\u0000\u0000": 0,
+          "A\u0000VV": {
+            "__entity": {
+              "type": "a",
+              "id": "                            "
+            }
+          },
+          "oUUUUUUaU@                    \u0000": false
+        },
+        "O": false,
+        "p": false
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "a",
+        "id": "                            "
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "                            "
+      },
+      "context": {
+        "F": {
+          "": "",
+          "\u0000": false,
+          "\u0000\u0000": "",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000:^[": {
+            "__extn": {
+              "fn": "datetime",
+              "arg": "0000-01-01"
+            }
+          },
+          "\u0000\u0000  ": false,
+          "\u0000\u0007/": false,
+          "\u0001\u0000\u00009\u0015\u0015\u0015\u0015\u0015\u0015\u0015:\u0003": false,
+          "\u0003\u001d$w": false,
+          "\u0003[": false,
+          "\u0004": false,
+          "\u000e": false,
+          "\u001d": false,
+          "\u001d@[": false,
+          "\u001f": {},
+          "       ": false,
+          "                                      ": false,
+          "#": false,
+          "$": "",
+          ":~": false,
+          "@T": false,
+          "A\u0000\u0000": 0,
+          "A\u0000VV": {
+            "__entity": {
+              "type": "a",
+              "id": "                            "
+            }
+          },
+          "oUUUUUUaU@                    \u0000": false
+        },
+        "O": false,
+        "p": false
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "a",
+        "id": "                            "
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "                            "
+      },
+      "context": {
+        "F": {
+          "": "",
+          "\u0000": false,
+          "\u0000\u0000": "",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000:^[": {
+            "__extn": {
+              "fn": "datetime",
+              "arg": "0000-01-01"
+            }
+          },
+          "\u0000\u0000  ": false,
+          "\u0000\u0007/": false,
+          "\u0001\u0000\u00009\u0015\u0015\u0015\u0015\u0015\u0015\u0015:\u0003": false,
+          "\u0003\u001d$w": false,
+          "\u0003[": false,
+          "\u0004": false,
+          "\u000e": false,
+          "\u001d": false,
+          "\u001d@[": false,
+          "\u001f": {},
+          "       ": false,
+          "                                      ": false,
+          "#": false,
+          "$": "",
+          ":~": false,
+          "@T": false,
+          "A\u0000\u0000": 0,
+          "A\u0000VV": {
+            "__entity": {
+              "type": "a",
+              "id": "                            "
+            }
+          },
+          "oUUUUUUaU@                    \u0000": false
+        },
+        "O": false,
+        "p": false
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

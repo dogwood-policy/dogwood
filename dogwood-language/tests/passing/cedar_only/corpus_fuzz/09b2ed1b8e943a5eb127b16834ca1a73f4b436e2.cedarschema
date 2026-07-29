@@ -1,0 +1,20 @@
+entity a = {
+  @V("")
+  A: a,
+  wo: Set<{
+    @v("cision02")
+    ""?: a,
+    "\u{e}": a,
+    @C
+    "555556\0\0\u{f}33g02+\0"?: a,
+    "@@": __cedar::String
+  }>,
+  z?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

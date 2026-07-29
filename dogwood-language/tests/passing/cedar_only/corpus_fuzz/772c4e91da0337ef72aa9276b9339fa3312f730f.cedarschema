@@ -1,0 +1,14 @@
+entity d_;
+
+entity f = {
+  hXEA000wii0000000?: __cedar::String
+};
+
+entity r enum [""];
+
+action "action" appliesTo {
+  principal: [d_, r, f],
+  resource: [d_, r, f],
+  context: {}
+};
+

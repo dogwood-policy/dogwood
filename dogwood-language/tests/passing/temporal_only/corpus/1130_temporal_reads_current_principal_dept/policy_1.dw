@@ -1,0 +1,38 @@
+// A temporal formula reading a CURRENT-REQUEST principal ENTITY ATTRIBUTE
+// (`principal.dept`) — the capability added when `principal` / `resource`
+// became first-class temporal roots (Cedar-consistent, mirroring the pure-Cedar
+// `when { principal.dept }` and the provider-arg `principal.dept`).
+//
+// "Permit Read only if the SAME user logged in within the last hour AND the
+// current principal's department is `eng`." The `formerly … Login{ input.user:
+// context.input.user }` is the temporal correlation; `principal.dept == "eng"`
+// reads the current request's principal attribute from the entity store. Before
+// scope roots existed, a temporal formula had no way to read an entity
+// attribute at all.
+//
+// The attribute read is a tp-independent conjunct (a fixed current-request
+// value, like `context.input.x`), so — exactly as a `context.input.*`
+// comparison would — it sits INSIDE the monitoring scope alongside the
+// tp-dependent `formerly`, not as a bare top-level conjunct (which the
+// tp-dependence check rejects as "monitors nothing"). Wrapping both conjuncts
+// in a single parenthesized group under one `formerly`-bearing scope is the
+// idiom corpus case 0735 uses for `context.input.amount == a`.
+//
+// Positive/negative controls across traces:
+//   trace_1: prior Login by the same user, principal.dept == "eng" -> permit.
+//   trace_2: identical, but principal.dept == "sales" -> the attribute clause
+//            fails -> NOT permitted (isolates the attribute read).
+//   trace_3: principal.dept == "eng" but NO prior Login -> the temporal
+//            correlation fails -> NOT permitted (isolates the temporal half).
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h (
+        Drupe::Action::"Login"::request{ input.user: context.input.user }
+        && principal.dept == "eng"
+    )
+};

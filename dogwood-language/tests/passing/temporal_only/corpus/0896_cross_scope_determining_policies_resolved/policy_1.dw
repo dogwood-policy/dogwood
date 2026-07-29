@@ -1,0 +1,12 @@
+// Permit Transfer when a prior successful Transfer (resolved with success: true)
+// has occurred for this user within 1h.
+// At a Read timepoint the Transfer scope prevents this from being a determining
+// policy even though the resolved predicate body is still satisfied.
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Transfer"::response{ input.user: context.input.user, output.success: true }
+};

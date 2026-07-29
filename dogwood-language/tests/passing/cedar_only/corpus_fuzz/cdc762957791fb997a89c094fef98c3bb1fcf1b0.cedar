@@ -1,0 +1,8 @@
+@V0000("")
+forbid(
+  principal == a::"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0hh\0",
+  action == Action::"action",
+  resource == a::"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0hh\0"
+) when {
+  true && (!(((if false then (datetime("9048-05-21")) else (datetime("1028-05-05"))).toTime()) < (((datetime("1028-05-05")).offset(duration("119143629599610304d"))).toTime())))
+};

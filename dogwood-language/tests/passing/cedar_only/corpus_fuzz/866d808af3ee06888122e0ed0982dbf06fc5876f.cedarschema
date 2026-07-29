@@ -1,0 +1,61 @@
+namespace r::f::r {
+  entity D = {
+    A?: __cedar::Bool,
+    wo?: Set<{
+      ""?: {
+        ""?: __cedar::Bool,
+        "\0\0\0!@"?: __cedar::Bool,
+        "\u{2}\0\0\u{1}\0"?: __cedar::Bool,
+        "\n\0\0!@"?: __cedar::Bool,
+        "\u{e}"?: __cedar::Bool
+      },
+      @r2
+      @vR1133gppemoh0Z("")
+      "\u{e}"?: r::f::r::h0,
+      "33g02+\0"?: __cedar::Bool,
+      "@@"?: __cedar::Bool
+    }>,
+    z?: __cedar::String
+  };
+
+  entity I;
+
+  @A0000ppemoh0Z3("")
+  @C
+  entity N tags __cedar::duration;
+
+  entity h0;
+
+  entity m3;
+
+  entity v = {
+    A?: __cedar::Bool,
+    rNNN3333AeLBup?: __cedar::String,
+    wo?: __cedar::Bool,
+    z?: Set<{
+      ""?: {
+        ""?: __cedar::Bool,
+        "\0\0\0!@"?: __cedar::Bool,
+        "\u{2}\0\0\u{1}\0"?: __cedar::Bool,
+        "\n\0\0!@"?: __cedar::Bool,
+        "\u{e}"?: __cedar::Bool
+      },
+      @r2
+      @vR1133gppemoh0Z("")
+      "\u{e}"?: r::f::r::h0,
+      "33g02+\0"?: __cedar::Bool,
+      "@@"?: __cedar::Bool
+    }>
+  };
+
+  entity vR;
+
+  action "action" appliesTo {
+    principal: [N, D, vR, m3, h0, v, I],
+    resource: [N, D, vR, m3, h0, v, I],
+    context: {
+      sYYYYYYYYY000?: __cedar::String
+    }
+  };
+}
+

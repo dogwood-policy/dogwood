@@ -1,0 +1,20 @@
+namespace Drupe {
+  type ScanInput = {
+    message: String,
+    category: String
+  };
+
+  entity Gateway;
+
+  entity OAuthUser = {
+    id: String
+  } tags String;
+
+  action "Scan" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: ScanInput
+    }
+  };
+}

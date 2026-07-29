@@ -1,0 +1,21 @@
+entity a = {
+  M?: {  },
+  N?: {  },
+  XkRcRpZ343?: {  },
+  i00?: {  },
+  m?: {  },
+  m5oSx31?: {  },
+  r?: {  },
+  r3nln?: {  },
+  sn2R333j3333O0S?: {  },
+  v?: {  },
+  v3?: {  },
+  w?: Set<__cedar::String>
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

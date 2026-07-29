@@ -1,0 +1,16 @@
+entity a;
+
+action "" in [Action::"}}:", Action::"\u{e}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @O3cR0000000000000
+    M?: __cedar::datetime,
+    Tw?: __cedar::datetime
+  }
+};
+
+action "\u{e}";
+
+action "}}:" in [Action::"\u{e}"];
+

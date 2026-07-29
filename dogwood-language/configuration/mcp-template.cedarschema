@@ -1,0 +1,44 @@
+// Drupe default action schema template.
+//
+// Used as the base template for MCP-to-Cedar schema generation. The generator
+// layers one Cedar action per MCP tool on top of this stub, inheriting the
+// principal/resource types and system context.
+//
+// Customers with their own entity model should supply their own template via
+// `mcp_to_cedar_schema_with_template`.
+
+namespace Drupe {
+
+@mcp_principal("User")
+entity User;
+
+@mcp_resource("Gateway")
+entity Gateway;
+
+@mcp_context("system")
+type SystemContext = {
+    now: datetime
+};
+
+action Mcp appliesTo {
+    principal: [User],
+    resource: [Gateway],
+    context: {
+        system: SystemContext,
+        isOutput: Bool,
+        output?: {},
+    }
+};
+
+@mcp_action("CallTools")
+action CallTool in [Mcp] appliesTo {
+    principal: [User],
+    resource: [Gateway],
+    context: {
+        system: SystemContext,
+        isOutput: Bool,
+        output?: {},
+    }
+};
+
+}

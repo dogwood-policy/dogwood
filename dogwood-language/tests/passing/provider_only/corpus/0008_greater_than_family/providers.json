@@ -1,0 +1,18 @@
+{
+  "availableProviders": {
+    "Strings::DigitCount": {
+      "argumentTypes": [
+        { "paramType": "string" }
+      ],
+      "outputType": {
+        "paramType": "record",
+        "fields": { "count": { "paramType": "integer" } },
+        "required": ["count"]
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "digits.rhai"
+      }
+    }
+  }
+}

@@ -1,0 +1,35 @@
+entity a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    r?: {
+      ""?: __cedar::String,
+      "\u{1d}"?: {
+        ""?: __cedar::String,
+        "\0\0\0"?: __cedar::String,
+        "\u{3}\u{1d}w"?: __cedar::String,
+        "\u{e}"?: __cedar::String,
+        "\u{1d}"?: __cedar::String,
+        "\u{1d}\u{3}"?: __cedar::String,
+        "$"?: __cedar::String,
+        "=\u{e}"?: __cedar::String,
+        "???\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0["?: __cedar::String,
+        "N~\u{1f}"?: __cedar::String,
+        @A
+        @m33TuRa3900000
+        "V\0\0\0\0\0\0\0\0\0\0"?: a,
+        "V\0\0\0\0\0\0\0\0\0\0\0\0<\0\0\0\0\0\0\0": Set<__cedar::Long>,
+        @A0
+        "V\0\0\0\0\0\0\0\0\0\0\0\0<\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0": __cedar::Long,
+        "V@[\u{1d}"?: __cedar::String,
+        VV?: __cedar::String,
+        "["?: __cedar::String,
+        "[@["?: __cedar::String,
+        "z~"?: __cedar::String
+      }
+    }
+  }
+};
+

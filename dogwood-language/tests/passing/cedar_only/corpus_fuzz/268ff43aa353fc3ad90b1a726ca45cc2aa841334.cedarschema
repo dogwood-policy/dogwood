@@ -1,0 +1,9 @@
+entity JT;
+
+@GT
+action "action" appliesTo {
+  principal: [JT],
+  resource: [JT],
+  context: {}
+};
+

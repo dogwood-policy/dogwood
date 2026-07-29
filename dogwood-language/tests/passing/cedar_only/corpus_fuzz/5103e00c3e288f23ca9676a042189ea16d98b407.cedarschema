@@ -1,0 +1,8 @@
+entity a tags a;
+
+action "_a_:a" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

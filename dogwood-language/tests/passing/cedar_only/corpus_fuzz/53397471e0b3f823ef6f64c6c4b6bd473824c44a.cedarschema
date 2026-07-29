@@ -1,0 +1,13 @@
+@A
+@F("")
+@N("00Geb")
+@vR3E3TR
+@ye("g\0")
+entity a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

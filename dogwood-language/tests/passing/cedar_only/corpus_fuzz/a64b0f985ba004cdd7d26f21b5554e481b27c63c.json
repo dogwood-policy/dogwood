@@ -1,0 +1,802 @@
+{
+  "policies": "corpus-tests/a64b0f985ba004cdd7d26f21b5554e481b27c63c.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/a64b0f985ba004cdd7d26f21b5554e481b27c63c.entities.json",
+  "schema": "corpus-tests/a64b0f985ba004cdd7d26f21b5554e481b27c63c.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "D": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "I": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "N": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "f": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "h0": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "h4": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "m3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "p2": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "qoqqttttttt": "",
+        "r": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3333S3": "",
+        "v": "",
+        "vR": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "yqqPbop3333": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "z": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "D": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "I": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "N": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "f": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "h0": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "h4": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "m3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "p2": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "qoqqttttttt": "",
+        "r": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3333S3": "",
+        "v": "",
+        "vR": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "yqqPbop3333": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "z": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "D": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "I": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "N": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "f": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "h0": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "h4": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "m3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "p2": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "qoqqttttttt": "",
+        "r": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3333S3": "",
+        "v": "",
+        "vR": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "yqqPbop3333": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "z": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "D": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "I": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "N": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "f": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "h0": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "h4": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "m3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "p2": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "qoqqttttttt": "",
+        "r": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3333S3": "",
+        "v": "",
+        "vR": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "yqqPbop3333": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "z": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "D": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "I": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "N": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "f": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "h0": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "h4": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "m3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "p2": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "qoqqttttttt": "",
+        "r": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3333S3": "",
+        "v": "",
+        "vR": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "yqqPbop3333": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "z": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "D": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "I": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "N": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "f": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "h0": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "h4": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "m3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "p2": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "qoqqttttttt": "",
+        "r": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3333S3": "",
+        "v": "",
+        "vR": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "yqqPbop3333": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "z": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "D": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "I": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "N": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "f": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "h0": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "h4": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "m3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "p2": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "qoqqttttttt": "",
+        "r": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3333S3": "",
+        "v": "",
+        "vR": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "yqqPbop3333": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "z": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "D": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "I": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "N": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "f": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "h0": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "h4": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "m3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "p2": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "qoqqttttttt": "",
+        "r": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3333S3": "",
+        "v": "",
+        "vR": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "yqqPbop3333": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "z": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+entity r333000 enum ["\0c-"];
+
+action "i" appliesTo {
+  principal: [r333000],
+  resource: [r333000],
+  context: {}
+};
+

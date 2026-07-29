@@ -1,0 +1,12 @@
+namespace A {
+  entity a;
+
+  action "" in [A::Action::"@"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "@";
+}
+

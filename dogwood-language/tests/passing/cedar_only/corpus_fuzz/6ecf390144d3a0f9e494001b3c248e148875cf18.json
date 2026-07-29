@@ -1,0 +1,270 @@
+{
+  "policies": "corpus-tests/6ecf390144d3a0f9e494001b3c248e148875cf18.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/6ecf390144d3a0f9e494001b3c248e148875cf18.entities.json",
+  "schema": "corpus-tests/6ecf390144d3a0f9e494001b3c248e148875cf18.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "r::f::y04uq1233::lSRRR",
+        "id": ""
+      },
+      "action": {
+        "type": "r::f::y04uq1233::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "r::f::y04uq1233::D",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000~\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000!Cw3"
+      },
+      "context": {
+        "rERV": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "64.29.255.142/24"
+          }
+        },
+        "x": [
+          {
+            "": {
+              "__entity": {
+                "type": "r::f::y04uq1233::A",
+                "id": ""
+              }
+            },
+            "$=\u000e": "",
+            "B": "=\u000e"
+          }
+        ]
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "r::f::y04uq1233::I",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000Debian \u0000"
+      },
+      "action": {
+        "type": "r::f::y04uq1233::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "r::f::y04uq1233::D",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000~\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000!Cw3"
+      },
+      "context": {
+        "rERV": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "42ff:ffff:5b01:9999:9933:ff:ffff:ff32/25"
+          }
+        },
+        "x": [
+          {
+            "": {
+              "__entity": {
+                "type": "r::f::y04uq1233::A",
+                "id": ""
+              }
+            },
+            "\u0001[": "A3",
+            "$=\u000e": "vvvvvvvvvv",
+            "4d": "",
+            "B": "",
+            "[@": ""
+          },
+          {
+            "": {
+              "__entity": {
+                "type": "r::f::y04uq1233::A",
+                "id": ""
+              }
+            },
+            "\u0001[": "vvv"
+          }
+        ]
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "r::f::y04uq1233::D",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000~\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000!Cw3"
+      },
+      "action": {
+        "type": "r::f::y04uq1233::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "r::f::y04uq1233::lSRRR",
+        "id": ""
+      },
+      "context": {
+        "rERV": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "x": []
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "r::f::y04uq1233::D",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000~\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000!Cw3"
+      },
+      "action": {
+        "type": "r::f::y04uq1233::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "r::f::y04uq1233::lSRRR",
+        "id": ""
+      },
+      "context": {
+        "rERV": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "x": []
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "r::f::y04uq1233::D",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000~\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000!Cw3"
+      },
+      "action": {
+        "type": "r::f::y04uq1233::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "r::f::y04uq1233::lSRRR",
+        "id": ""
+      },
+      "context": {
+        "rERV": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "x": []
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "r::f::y04uq1233::D",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000~\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000!Cw3"
+      },
+      "action": {
+        "type": "r::f::y04uq1233::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "r::f::y04uq1233::lSRRR",
+        "id": ""
+      },
+      "context": {
+        "rERV": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "x": []
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "r::f::y04uq1233::D",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000~\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000!Cw3"
+      },
+      "action": {
+        "type": "r::f::y04uq1233::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "r::f::y04uq1233::lSRRR",
+        "id": ""
+      },
+      "context": {
+        "rERV": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "x": []
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "r::f::y04uq1233::D",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000~\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000!Cw3"
+      },
+      "action": {
+        "type": "r::f::y04uq1233::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "r::f::y04uq1233::lSRRR",
+        "id": ""
+      },
+      "context": {
+        "rERV": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "x": []
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}

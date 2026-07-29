@@ -1,0 +1,103 @@
+namespace A::A {
+  entity a;
+
+  @r("")
+  action "" in [A::A::Action::":", A::A::Action::"V", A::A::Action::"~", A::A::Action::"\u{e}", A::A::Action::"\u{3}", A::A::Action::"$", A::A::Action::"=\u{e}", A::A::Action::"[", A::A::Action::"\u{1d}@J<", A::A::Action::"r@]}}", A::A::Action::":~", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}", A::A::Action::"[@", A::A::Action::"$=\u{e}p"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{3}" in [A::A::Action::"$", A::A::Action::"=\u{e}", A::A::Action::"[", A::A::Action::"\u{1d}@J<", A::A::Action::"r@]}}", A::A::Action::":~", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}", A::A::Action::"[@", A::A::Action::"$=\u{e}p"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{e}" in [A::A::Action::"\u{3}", A::A::Action::"$", A::A::Action::"=\u{e}", A::A::Action::"[", A::A::Action::"\u{1d}@J<", A::A::Action::"r@]}}", A::A::Action::":~", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}", A::A::Action::"[@", A::A::Action::"$=\u{e}p"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{1d}\u{3}" in [A::A::Action::"[@", A::A::Action::"$=\u{e}p"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{1d}@J<" in [A::A::Action::"r@]}}", A::A::Action::":~", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}", A::A::Action::"[@", A::A::Action::"$=\u{e}p"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "$" in [A::A::Action::"=\u{e}", A::A::Action::"[", A::A::Action::"\u{1d}@J<", A::A::Action::"r@]}}", A::A::Action::":~", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}", A::A::Action::"[@", A::A::Action::"$=\u{e}p"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "$=\u{e}p" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      Hooo08oooooo?: Set<__cedar::Bool>
+    }
+  };
+
+  action ":" in [A::A::Action::"V", A::A::Action::"~", A::A::Action::"\u{e}", A::A::Action::"\u{3}", A::A::Action::"$", A::A::Action::"=\u{e}", A::A::Action::"[", A::A::Action::"\u{1d}@J<", A::A::Action::"r@]}}", A::A::Action::":~", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}", A::A::Action::"[@", A::A::Action::"$=\u{e}p"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action ":~" in [A::A::Action::"^", A::A::Action::"\u{1d}\u{3}", A::A::Action::"[@", A::A::Action::"$=\u{e}p"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "=\u{e}" in [A::A::Action::"[", A::A::Action::"\u{1d}@J<", A::A::Action::"r@]}}", A::A::Action::":~", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}", A::A::Action::"[@", A::A::Action::"$=\u{e}p"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "V" in [A::A::Action::"~", A::A::Action::"\u{e}", A::A::Action::"\u{3}", A::A::Action::"$", A::A::Action::"=\u{e}", A::A::Action::"[", A::A::Action::"\u{1d}@J<", A::A::Action::"r@]}}", A::A::Action::":~", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}", A::A::Action::"[@", A::A::Action::"$=\u{e}p"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "[" in [A::A::Action::"\u{1d}@J<", A::A::Action::"r@]}}", A::A::Action::":~", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}", A::A::Action::"[@", A::A::Action::"$=\u{e}p"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "[@" in [A::A::Action::"$=\u{e}p"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "^" in [A::A::Action::"\u{1d}\u{3}", A::A::Action::"[@", A::A::Action::"$=\u{e}p"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "r@]}}" in [A::A::Action::":~", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}", A::A::Action::"[@", A::A::Action::"$=\u{e}p"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "~" in [A::A::Action::"\u{e}", A::A::Action::"\u{3}", A::A::Action::"$", A::A::Action::"=\u{e}", A::A::Action::"[", A::A::Action::"\u{1d}@J<", A::A::Action::"r@]}}", A::A::Action::":~", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}", A::A::Action::"[@", A::A::Action::"$=\u{e}p"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

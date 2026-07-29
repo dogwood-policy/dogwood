@@ -1,0 +1,26 @@
+// Correlation on a NESTED reserved field (author-chosen hierarchy).
+//
+// The custom event schema (event.dwschema) injects `__drupe` as a
+// nested group with a `sessionid` member. A Read is permitted only if there
+// was formerly a Login in the SAME session — the past Login's
+// `__drupe.sessionid` must equal the current Read's, referenced via the
+// generic `context.__drupe.sessionid` path. This exercises a nested
+// injected/reserved field end to end (it is not request scope, so it is
+// reached by its own dotted path, unlike principal).
+//
+// Positive/negative control across two traces:
+//   trace_1: the prior Login shares the Read's session → permitted.
+//   trace_2: IDENTICAL except the prior Login is a different session → the
+//            correlation fails → NOT permitted.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{
+        input.user: context.input.user,
+        __drupe.sessionid: context.__drupe.sessionid
+    }
+};

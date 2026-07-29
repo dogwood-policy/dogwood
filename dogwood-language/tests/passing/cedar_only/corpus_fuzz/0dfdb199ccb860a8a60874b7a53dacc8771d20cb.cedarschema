@@ -1,0 +1,20 @@
+@L
+@tjjjjjjjjjjj("---")
+@w5
+@wS
+namespace w {
+  entity a enum ["\0", ""];
+
+  action "" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "-----------------" in [w::Action::""] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

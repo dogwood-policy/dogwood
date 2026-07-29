@@ -1,0 +1,7 @@
+// Cedar when clause: only permit Read when the document starts with "SAFE_"
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when { context.input.document like "SAFE_*" };

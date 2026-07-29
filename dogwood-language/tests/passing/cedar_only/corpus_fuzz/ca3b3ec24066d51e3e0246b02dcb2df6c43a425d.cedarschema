@@ -1,0 +1,10 @@
+entity a = {
+  R?: a
+} tags Set<a>;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

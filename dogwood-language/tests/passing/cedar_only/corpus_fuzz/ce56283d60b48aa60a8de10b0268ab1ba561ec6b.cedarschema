@@ -1,0 +1,11 @@
+entity a = {
+  L: Set<Set<Set<Set<__cedar::Long>>>>,
+  PR?: Set<Set<Set<__cedar::datetime>>>
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

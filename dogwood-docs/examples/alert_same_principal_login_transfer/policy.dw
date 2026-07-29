@@ -1,0 +1,17 @@
+// An entity-typed `exists` binder correlates on the request principal via the
+// reserved callerPrincipal field. Permit an Alert if the SAME principal both
+// logged in and transferred within the last hour. (The guide illustrates this
+// with Login+Deny; adapted here to Login+Transfer since no shipped schema
+// declares a Deny action.)
+@id("alert_same_principal_login_and_transfer")
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (pr: Drupe::OAuthUser). (
+        formerly within 1h Drupe::Action::"Login"::request{ callerPrincipal: pr }
+        && formerly within 1h Drupe::Action::"Transfer"::request{ callerPrincipal: pr }
+    )
+};

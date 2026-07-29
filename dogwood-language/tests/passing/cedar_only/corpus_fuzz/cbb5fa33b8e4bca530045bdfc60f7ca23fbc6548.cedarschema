@@ -1,0 +1,12 @@
+entity a;
+
+@Q1dcR90000000
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @A0
+    r: __cedar::datetime
+  }
+};
+

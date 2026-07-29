@@ -1,0 +1,18 @@
+namespace A::K {
+  entity a;
+
+  action "" in [A::K::Action::"VV", A::K::Action::":~"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{e}" in [A::K::Action::"                        "];
+
+  action "                        ";
+
+  action ":~" in [A::K::Action::"\u{e}", A::K::Action::"                        "];
+
+  action "VV" in [A::K::Action::"                        "];
+}
+

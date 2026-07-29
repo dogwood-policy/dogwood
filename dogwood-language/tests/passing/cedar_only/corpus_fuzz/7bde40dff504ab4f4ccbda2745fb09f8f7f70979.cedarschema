@@ -1,0 +1,18 @@
+entity A000000000 enum [""];
+
+entity BBB enum [""];
+
+entity K enum [""];
+
+entity fB enum [""];
+
+entity g_ enum [""];
+
+entity r33 enum [""];
+
+action "action" appliesTo {
+  principal: [g_],
+  resource: [g_],
+  context: {}
+};
+

@@ -1,0 +1,15 @@
+// Permit Read only when the requested document id is all-uppercase
+// letters, as decided by the `Strings::Matches` information provider
+// (a regex matcher, implemented in matches.rhai).
+//
+// The `when guardrails { … }` clause body is a provider invocation,
+// a projection into its output record (`.matched`), and a comparison.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Strings::Matches(context.input.document, "^[A-Z]+$").matched == true
+};

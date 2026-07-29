@@ -1,0 +1,18 @@
+namespace r::B000000 {
+  entity A enum [""];
+
+  entity M enum [""];
+
+  entity k enum [""];
+
+  entity r enum [""];
+
+  entity r3 enum [""];
+
+  action "action" appliesTo {
+    principal: [M],
+    resource: [M],
+    context: {}
+  };
+}
+

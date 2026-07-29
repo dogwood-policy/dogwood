@@ -1,0 +1,11 @@
+// Narrow the scope to a specific principal entity type using
+// `principal is Drupe::OAuthUser`. The rule fires only when
+// the request's principal is an OAuthUser; IAM-authenticated
+// callers and unauthenticated callers don't match this rule and
+// fall through to the default deny.
+
+permit (
+    principal is Drupe::OAuthUser,
+    action == Drupe::Action::"GetStockInfo",
+    resource
+);

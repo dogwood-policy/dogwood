@@ -1,0 +1,19 @@
+namespace r::r::z::E::hDjf {
+  entity a;
+
+  action "" in [r::r::z::E::hDjf::Action::"\u{1}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  @A0
+  action "\u{1}" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      Gddddd___503S?: r::r::z::E::hDjf::a
+    }
+  };
+}
+

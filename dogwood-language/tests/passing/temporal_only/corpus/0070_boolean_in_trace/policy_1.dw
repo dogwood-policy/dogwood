@@ -1,0 +1,8 @@
+permit (
+    principal,
+    action == Drupe::Action::"SetFlag",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

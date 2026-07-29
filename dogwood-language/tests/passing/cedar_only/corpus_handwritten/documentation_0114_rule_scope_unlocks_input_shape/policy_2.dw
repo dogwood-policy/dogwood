@@ -1,0 +1,15 @@
+// Same shape, different scope: the action is pinned to
+// GetStockInfo, so `context.input` is the GetStockInfo input
+// record, which declares `stock: String` (and no `shares`).
+// Referencing `context.input.stock` here is well-typed; a
+// reference to `context.input.shares` in this rule would fail
+// validation because GetStockInfo has no such field.
+
+permit (
+    principal,
+    action == Drupe::Action::"GetStockInfo",
+    resource
+)
+when {
+    context.input.stock == "AMZN"
+};

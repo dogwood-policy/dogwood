@@ -1,0 +1,14 @@
+namespace r {
+  entity A000000 enum [""];
+
+  entity r enum [""];
+
+  entity r333333 enum [""];
+
+  action "action" appliesTo {
+    principal: [r],
+    resource: [r],
+    context: {}
+  };
+}
+

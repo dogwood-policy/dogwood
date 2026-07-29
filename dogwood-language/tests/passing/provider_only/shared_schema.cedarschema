@@ -1,0 +1,34 @@
+// Shared schema for provider_only corpus, aligned with the canonical
+// drupe.cedarschema stub. Cases needing Org/Team hierarchies,
+// extra input fields, or non-standard actions keep their own override.
+
+namespace Drupe {
+
+  type ReadInput = {
+    document: String
+  };
+
+  // --- Guardrail finding types (aligned with canonical stub) ---
+
+  type ContentFilterFinding = { confidenceScore: decimal };
+  type PromptAttackFinding = { confidenceScore: decimal };
+  type SensitiveInfoFinding = { confidenceScore: decimal };
+
+  // --- Entities ---
+
+  entity Gateway;
+
+  entity OAuthUser = {
+    id: String
+  } tags String;
+
+  // --- Actions ---
+
+  action "Read" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: ReadInput
+    }
+  };
+}

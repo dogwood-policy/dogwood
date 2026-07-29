@@ -1,0 +1,13 @@
+namespace L::V::QN::n {
+  entity A = {
+    @V("")
+    h: L::V::QN::n::A
+  };
+
+  action "action" appliesTo {
+    principal: [A],
+    resource: [A],
+    context: {}
+  };
+}
+

@@ -1,0 +1,38 @@
+entity a;
+
+action "" in [Action::":p", Action::"&[", Action::"#", Action::"CCCCCCC\u{1d}:p", Action::"&[\u{1d}#", Action::"+w", Action::"V$*", Action::"\u{e}TV", Action::":", Action::"VV"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{e}TV" in [Action::":", Action::"VV"];
+
+action "#" in [Action::"CCCCCCC\u{1d}:p", Action::"&[\u{1d}#", Action::"+w", Action::"V$*", Action::"\u{e}TV", Action::":", Action::"VV"];
+
+action "&[" in [Action::"#", Action::"CCCCCCC\u{1d}:p", Action::"&[\u{1d}#", Action::"+w", Action::"V$*", Action::"\u{e}TV", Action::":", Action::"VV"];
+
+action "&[\u{1d}#" in [Action::"+w", Action::"V$*", Action::"\u{e}TV", Action::":", Action::"VV"];
+
+action "+w" in [Action::"V$*", Action::"\u{e}TV", Action::":", Action::"VV"];
+
+action ":" in [Action::"VV"];
+
+@A0000000000000000
+@r("CCCCCCCCCCC")
+@voZRZR333333333b3("")
+action ":p" in [Action::"&[", Action::"#", Action::"CCCCCCC\u{1d}:p", Action::"&[\u{1d}#", Action::"+w", Action::"V$*", Action::"\u{e}TV", Action::":", Action::"VV"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @F("")
+    w?: __cedar::ipaddr
+  }
+};
+
+action "CCCCCCC\u{1d}:p" in [Action::"&[\u{1d}#", Action::"+w", Action::"V$*", Action::"\u{e}TV", Action::":", Action::"VV"];
+
+action "V$*" in [Action::"\u{e}TV", Action::":", Action::"VV"];
+
+action "VV";
+

@@ -1,0 +1,10 @@
+namespace uG::A0::A::A::A::A::A::uG {
+  entity a enum [""];
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

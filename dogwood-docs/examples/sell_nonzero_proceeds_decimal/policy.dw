@@ -1,0 +1,4 @@
+// Decimal supports equality only (== / !=); guard the optional output first.
+@id("sell_nonzero_proceeds")
+permit ( principal, action == Drupe::Action::"SellShares", resource )
+when { context has output && context.output.proceeds != decimal("0.0") };

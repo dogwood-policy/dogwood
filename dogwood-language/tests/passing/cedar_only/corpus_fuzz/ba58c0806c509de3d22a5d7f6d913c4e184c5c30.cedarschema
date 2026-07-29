@@ -1,0 +1,12 @@
+entity a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    B: __cedar::decimal,
+    s?: Set<Set<Set<__cedar::decimal>>>,
+    vR: __cedar::Bool
+  }
+};
+

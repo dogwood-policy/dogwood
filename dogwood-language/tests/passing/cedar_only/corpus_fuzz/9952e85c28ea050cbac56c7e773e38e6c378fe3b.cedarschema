@@ -1,0 +1,12 @@
+@A000000000000
+entity a = {
+  @A
+  A: __cedar::Bool
+} tags __cedar::String;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

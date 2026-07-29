@@ -1,0 +1,10 @@
+namespace A000AIII333::r::r::r::Pg::A00000 {
+  entity r;
+
+  action "action" appliesTo {
+    principal: [r],
+    resource: [r],
+    context: {}
+  };
+}
+

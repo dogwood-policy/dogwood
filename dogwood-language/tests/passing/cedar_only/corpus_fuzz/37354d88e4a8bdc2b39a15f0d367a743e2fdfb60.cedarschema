@@ -1,0 +1,31 @@
+entity B;
+
+entity C;
+
+entity Mp33;
+
+entity r;
+
+entity r33333k enum ["on-"];
+
+entity r3p tags __cedar::datetime;
+
+entity rW000 = {
+  n?: __cedar::datetime,
+  r?: __cedar::datetime
+};
+
+entity u;
+
+action "" in [Action::"\u{12}"] appliesTo {
+  principal: [r3p, rW000, r33333k, r, u, Mp33, C],
+  resource: [r, C, r33333k, u, rW000, Mp33, r3p],
+  context: {}
+};
+
+action "\u{12}" appliesTo {
+  principal: [r3p, rW000, r33333k, B, u, Mp33, C],
+  resource: [r3p, rW000, r33333k, r, u, Mp33, C],
+  context: {}
+};
+

@@ -1,0 +1,13 @@
+// Edge: direct field injection P{}{ field: value } without a macro. Tests
+// field_injection event pattern. Injects session.id from context onto the
+// predicate to require same-session correlation. Uses raw injection syntax
+// rather than the macro wrapper tested in 1116.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }{ __drupe.session.id: context.__drupe.session.id }
+};

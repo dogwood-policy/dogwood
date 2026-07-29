@@ -1,0 +1,12 @@
+// Edge: predicate argument is an array literal [1, 2, 3]. Tests the
+// `array` term type in predicate args. The trace event must carry the
+// exact array value for the match to succeed.
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Transfer"::request{ input.amount: [1, 2, 3] }
+};

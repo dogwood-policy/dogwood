@@ -1,0 +1,57 @@
+namespace t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t {
+  entity B tags t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t::D;
+
+  entity D;
+
+  entity I;
+
+  entity N;
+
+  entity f;
+
+  entity h0;
+
+  entity m3;
+
+  entity qoqqPbop333 = {
+    r?: {    }
+  } tags __cedar::Long;
+
+  entity r;
+
+  entity r3;
+
+  entity ry333S3;
+
+  @A
+  entity v;
+
+  entity vR;
+
+  entity yyqPbop3333;
+
+  entity z;
+
+  @r
+  action "" in [t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t::Action::"\u{1}[", t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t::Action::"B"] appliesTo {
+    principal: [h0, N, r, vR, ry333S3, yyqPbop3333],
+    resource: [r],
+    context: {}
+  };
+
+  action "\u{1}[" in [t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t::Action::"B"] appliesTo {
+    principal: [m3, r3, ry333S3, qoqqPbop333, N, f, D, B, z, h0, vR, yyqPbop3333, I, v],
+    resource: [B, v, f, yyqPbop3333, N, h0, D, m3, z, qoqqPbop333, r, ry333S3, vR, r3, I],
+    context: {}
+  };
+
+  action "B" appliesTo {
+    principal: [B, f, h0, z, N, r3, ry333S3, m3, qoqqPbop333, yyqPbop3333, vR, D, I, v, r],
+    resource: [qoqqPbop333, v, N, D, I, h0, z, m3, f, r3, vR, ry333S3, yyqPbop3333, B],
+    context: {
+      A?: __cedar::String,
+      bo?: __cedar::String
+    }
+  };
+}
+

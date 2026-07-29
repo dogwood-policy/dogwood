@@ -1,0 +1,12 @@
+entity A00070RRwx3RSIII enum ["...."];
+
+entity h;
+
+entity r;
+
+action "action" appliesTo {
+  principal: [h],
+  resource: [r],
+  context: {}
+};
+

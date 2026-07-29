@@ -1,0 +1,18 @@
+entity a;
+
+action "" in [Action::":", Action::"\u{e}", Action::"V", Action::"e ", Action::"$"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{e}" in [Action::"V", Action::"e ", Action::"$"];
+
+action "$";
+
+action ":" in [Action::"\u{e}", Action::"V", Action::"e ", Action::"$"];
+
+action "V" in [Action::"e ", Action::"$"];
+
+action "e " in [Action::"$"];
+

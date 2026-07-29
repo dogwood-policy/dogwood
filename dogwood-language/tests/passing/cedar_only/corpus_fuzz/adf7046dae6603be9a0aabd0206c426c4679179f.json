@@ -1,0 +1,188 @@
+{
+  "policies": "corpus-tests/adf7046dae6603be9a0aabd0206c426c4679179f.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/adf7046dae6603be9a0aabd0206c426c4679179f.entities.json",
+  "schema": "corpus-tests/adf7046dae6603be9a0aabd0206c426c4679179f.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": false,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000Debian \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000B"
+      },
+      "action": {
+        "type": "Action",
+        "id": ":;"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000Debian \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000B"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000Debian \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000B"
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000Debian \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000B"
+      },
+      "context": {
+        "r": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff/126"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000Debian \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000B"
+      },
+      "action": {
+        "type": "Action",
+        "id": "V\u001d"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000Debian \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000B"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000Debian \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000B"
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000Debian \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000B"
+      },
+      "context": {
+        "r": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "bbbb:bbbb:bbbb:bbbb:bbbb:bbbb:bbbb:bbbb/58"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000Debian \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000B"
+      },
+      "action": {
+        "type": "Action",
+        "id": "V\u001d"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000Debian \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000B"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000Debian \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000B"
+      },
+      "action": {
+        "type": "Action",
+        "id": "V\u001d"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000Debian \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000B"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000Debian \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000B"
+      },
+      "action": {
+        "type": "Action",
+        "id": ":;"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000Debian \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000B"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000Debian \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000B"
+      },
+      "action": {
+        "type": "Action",
+        "id": ":;"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000Debian \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000B"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}

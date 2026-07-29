@@ -1,0 +1,27 @@
+entity a;
+
+action "" in [Action::":", Action::"\u{e}", Action::"`", Action::"[", Action::"@", Action::"V", Action::" ", Action::"d"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @vS000000000000
+    r: __cedar::datetime
+  }
+};
+
+action "\u{e}" in [Action::"`", Action::"[", Action::"@", Action::"V", Action::" ", Action::"d"];
+
+action " " in [Action::"d"];
+
+action ":" in [Action::"\u{e}", Action::"`", Action::"[", Action::"@", Action::"V", Action::" ", Action::"d"];
+
+action "@" in [Action::"V", Action::" ", Action::"d"];
+
+action "V" in [Action::" ", Action::"d"];
+
+action "[" in [Action::"@", Action::"V", Action::" ", Action::"d"];
+
+action "`" in [Action::"[", Action::"@", Action::"V", Action::" ", Action::"d"];
+
+action "d";
+

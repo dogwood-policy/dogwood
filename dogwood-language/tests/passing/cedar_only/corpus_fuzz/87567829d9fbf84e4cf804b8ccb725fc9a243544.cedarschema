@@ -1,0 +1,12 @@
+entity a;
+
+@d("")
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    D: a,
+    d: __cedar::duration
+  }
+};
+

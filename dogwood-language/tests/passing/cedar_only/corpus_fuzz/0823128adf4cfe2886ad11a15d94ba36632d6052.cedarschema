@@ -1,0 +1,17 @@
+namespace iNN {
+  entity A tags __cedar::String;
+
+  action "action" appliesTo {
+    principal: [A],
+    resource: [A],
+    context: {
+      @v3ERRST1("")
+      @xd("f")
+      F: iNN::A,
+      m: iNN::A,
+      n?: __cedar::String,
+      r?: __cedar::String
+    }
+  };
+}
+

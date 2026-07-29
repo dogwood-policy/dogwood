@@ -1,0 +1,39 @@
+// The built-in default macro library (see `dogwood_language::DEFAULT_MACROS`).
+//
+// A `SchemaBuilder` with no explicit `macros_str` uses this file. Its macro
+// definitions are merged into every policy set at lowering time, so a policy
+// can call them without re-declaring them. A `def` in the policy source
+// itself takes precedence over a same-named default (the policy's definition
+// wins), so nothing here can shadow or conflict with a policy's own macros.
+//
+// This file is embedded into the crate at build time via `include_str!`, so
+// these macros are available to every caller regardless of their working
+// directory — there is no runtime file lookup and no dependency on where the
+// package is built or used from. Supply your own file via
+// `SchemaBuilder::macros_str` to replace this default library entirely.
+//
+// The definitions below are Dogwood's small standard library of temporal
+// aggregation macros.
+
+// Counts the timepoints within window `?w` at which condition `?s` held.
+def temporal count_within(?w, ?s) {
+    count for ($t: Timepoint). where (formerly within ?w (?s && tp($t)))
+};
+
+// Sums the numeric value `?a` over occurrences of `?body` within window `?w`.
+def temporal sum_within(?a, ?w, ?body) {
+    sum ?a for (?a: Long), ($t: Timepoint). where (formerly within ?w (?body && tp($t)))
+};
+
+// Counts the distinct key values `?k` (a String) for which `?s` held within
+// window `?w`.
+def temporal count_distinct_within(?k, ?w, ?s) {
+    count for (?k: String). where (formerly within ?w ?s)
+};
+
+// A "let"-style binder: names an aggregate result `?n` and uses it in the
+// predicate `?B`, letting an aggregate (e.g. `count_within(...)`) be compared
+// or thresholded via `?A == ?n`.
+def temporal bind(?n, ?A, ?B) {
+    exists (?n: Long). (?A == ?n && ?B)
+};

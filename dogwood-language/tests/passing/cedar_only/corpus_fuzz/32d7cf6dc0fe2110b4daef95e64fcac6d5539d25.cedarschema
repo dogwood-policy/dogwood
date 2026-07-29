@@ -1,0 +1,71 @@
+entity a tags __cedar::String;
+
+action "" in [Action::":~", Action::"\u{1d}@[", Action::"\u{3}\u{1d}w", Action::"$", Action::"\u{1d}\u{14}", Action::"@", Action::"$=\u{e}", Action::"[", Action::"\u{3}dd\u{e}", Action::"\u{3}dddd"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @Y("")
+    @r("")
+    @r3("")
+    @rPPPPPeRw
+    @v
+    @y33bbPPPP("\u{19}\u{19}\u{19}\u{19}\u{19}\u{19}\u{19}\u{19}")
+    D3S1S3T1eddb0: __cedar::String,
+    vVR3T3RRRRS33bb?: __cedar::decimal
+  }
+};
+
+action "\u{3}\u{1d}w" in [Action::"$", Action::"\u{1d}\u{14}", Action::"@", Action::"$=\u{e}", Action::"[", Action::"\u{3}dd\u{e}", Action::"\u{3}dddd"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{3}dd\u{e}" in [Action::"\u{3}dddd"];
+
+action "\u{3}dddd";
+
+action "\u{1d}\u{14}" in [Action::"@", Action::"$=\u{e}", Action::"[", Action::"\u{3}dd\u{e}", Action::"\u{3}dddd"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1d}@[" in [Action::"\u{3}\u{1d}w", Action::"$", Action::"\u{1d}\u{14}", Action::"@", Action::"$=\u{e}", Action::"[", Action::"\u{3}dd\u{e}", Action::"\u{3}dddd"];
+
+action "$" in [Action::"\u{1d}\u{14}", Action::"@", Action::"$=\u{e}", Action::"[", Action::"\u{3}dd\u{e}", Action::"\u{3}dddd"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @rze
+    kQQ3333: __cedar::Long,
+    r?: __cedar::String
+  }
+};
+
+@HeXeee33333("")
+@r("")
+@r333("")
+@r333333333("")
+@rNEbh333333db03
+@v("")
+@v3T3RRRRS3("dddd")
+@vRRRR("")
+@w("")
+@z("")
+action "$=\u{e}" in [Action::"[", Action::"\u{3}dd\u{e}", Action::"\u{3}dddd"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action ":~" in [Action::"\u{1d}@[", Action::"\u{3}\u{1d}w", Action::"$", Action::"\u{1d}\u{14}", Action::"@", Action::"$=\u{e}", Action::"[", Action::"\u{3}dd\u{e}", Action::"\u{3}dddd"];
+
+action "@" in [Action::"$=\u{e}", Action::"[", Action::"\u{3}dd\u{e}", Action::"\u{3}dddd"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "[" in [Action::"\u{3}dd\u{e}", Action::"\u{3}dddd"];
+

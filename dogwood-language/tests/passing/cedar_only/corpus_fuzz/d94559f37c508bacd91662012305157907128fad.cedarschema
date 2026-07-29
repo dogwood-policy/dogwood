@@ -1,0 +1,30 @@
+entity a;
+
+action "" in [Action::":", Action::"\u{1}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @F33RR1RRTSRR0000
+    @v
+    A: Set<Set<Set<Set<__cedar::Long>>>>,
+    M03: Set<Set<Set<Set<__cedar::Long>>>>,
+    @x203("\0[")
+    d?: __cedar::String,
+    @AS
+    @B("")
+    @v("")
+    @wRR
+    @x("\0")
+    @x203("\0[")
+    r: Set<Set<Set<Set<__cedar::Long>>>>,
+    @AS
+    @v("A\0")
+    @x203("\0[")
+    x: Set<Set<Set<Set<__cedar::Long>>>>
+  }
+};
+
+action "\u{1}";
+
+action ":" in [Action::"\u{1}"];
+

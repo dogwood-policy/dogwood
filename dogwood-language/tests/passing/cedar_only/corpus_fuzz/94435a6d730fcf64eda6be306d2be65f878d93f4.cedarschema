@@ -1,0 +1,18 @@
+entity N enum [""];
+
+entity V enum [""];
+
+entity m3 enum [""];
+
+entity v = {
+  A?: __cedar::String
+};
+
+entity vR;
+
+action "action" appliesTo {
+  principal: [vR],
+  resource: [vR],
+  context: {}
+};
+

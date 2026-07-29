@@ -1,0 +1,23 @@
+entity a;
+
+action "" in [Action::":", Action::"e"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @A
+    r: Set<__cedar::Long>
+  }
+};
+
+action ":" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "e" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

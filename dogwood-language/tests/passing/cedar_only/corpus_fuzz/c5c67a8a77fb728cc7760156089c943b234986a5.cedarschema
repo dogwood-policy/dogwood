@@ -1,0 +1,11 @@
+@g0aF14133("\0\0*")
+entity a = {
+  B?: Set<__cedar::duration>
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

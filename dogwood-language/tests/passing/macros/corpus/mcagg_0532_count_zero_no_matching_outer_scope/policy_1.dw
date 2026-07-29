@@ -1,0 +1,11 @@
+def temporal let_(?n, ?A, ?B) {
+    exists (?n: Long). (?A == ?n && ?B)
+};
+
+forbid (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    let_(total, sum a for (a: Long). where Drupe::Action::"Transfer"::request{ input.user: _, input.amount: a }, total == 0)};

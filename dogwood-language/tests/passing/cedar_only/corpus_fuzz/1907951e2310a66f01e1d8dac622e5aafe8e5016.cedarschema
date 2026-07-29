@@ -1,0 +1,46 @@
+entity a;
+
+action "" in [Action::":", Action::"\u{e}", Action::"ir", Action::"d", Action::"[da", Action::"[", Action::"\u{3}DD\u{4}DDKD"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A0?: __cedar::String,
+    C?: __cedar::decimal
+  }
+};
+
+action "\u{3}DD\u{4}DDKD";
+
+action "\u{e}" in [Action::"ir", Action::"d", Action::"[da", Action::"[", Action::"\u{3}DD\u{4}DDKD"];
+
+action ":" in [Action::"\u{e}", Action::"ir", Action::"d", Action::"[da", Action::"[", Action::"\u{3}DD\u{4}DDKD"];
+
+action "[" in [Action::"\u{3}DD\u{4}DDKD"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @r("\0")
+    @xJJJ
+    O55555OOOOlcb?: __cedar::datetime
+  }
+};
+
+action "[da" in [Action::"[", Action::"\u{3}DD\u{4}DDKD"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @P
+    A?: __cedar::datetime
+  }
+};
+
+action "d" in [Action::"[da", Action::"[", Action::"\u{3}DD\u{4}DDKD"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    P4?: __cedar::String
+  }
+};
+
+action "ir" in [Action::"d", Action::"[da", Action::"[", Action::"\u{3}DD\u{4}DDKD"];
+

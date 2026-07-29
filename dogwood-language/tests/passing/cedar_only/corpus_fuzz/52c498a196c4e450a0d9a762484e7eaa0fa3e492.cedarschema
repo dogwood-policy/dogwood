@@ -1,0 +1,23 @@
+entity B enum [""];
+
+entity BxB enum [""];
+
+entity Q_ enum [""];
+
+@A000000000
+entity g_ = {
+  nXXX?: __cedar::ipaddr
+} tags rD3;
+
+entity nBBB enum [""];
+
+entity rB enum [""];
+
+entity rD3 enum [""];
+
+action "action" appliesTo {
+  principal: [g_],
+  resource: [g_],
+  context: {}
+};
+

@@ -1,0 +1,23 @@
+// A Read is permitted if there was formerly a Login. The policy predicate
+// does NOT mention `callerPrincipal` — but the event schema PINS it to
+// `principal` (see event.dwschema), so the pin forces the past Login
+// to share the current Read's principal. The correlation is enforced even
+// though the policy never wrote it — a directly-written predicate cannot
+// bypass a pin.
+//
+// Positive/negative control across two traces:
+//   trace_1: the prior Login is by the SAME principal as the Read → the
+//            pinned `callerPrincipal` correlation holds → permitted.
+//   trace_2: IDENTICAL except the prior Login is by a DIFFERENT principal →
+//            the injected pin forces a mismatch → NOT permitted.
+// Without the pin, trace_2 would permit (a Login exists); the pin is what
+// excludes the cross-principal match.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

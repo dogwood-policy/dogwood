@@ -1,0 +1,15 @@
+entity a = {
+  r?: {
+    ""?: {    },
+    "\0"?: {    },
+    "\u{2}"?: {    },
+    "---\u{1c}"?: {    }
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

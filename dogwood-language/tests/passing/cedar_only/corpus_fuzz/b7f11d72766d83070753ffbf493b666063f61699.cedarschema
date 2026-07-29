@@ -1,0 +1,19 @@
+entity a tags Set<Set<{
+  ""?: {  },
+  "\0\0   !@"?: {  },
+  "\0\0   !@\0": a,
+  "\0\0VV"?: {  },
+  "\0   \0\0\0r2"?: __cedar::Bool,
+  @A
+  "\u{1b}\r\0\0\0\0\0\0\0$$$$$"?: a,
+  "  "?: __cedar::Bool,
+  "$$$$$": {  }
+}>>;
+
+@r33A33p3KOOSOOO("")
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

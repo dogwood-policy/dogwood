@@ -1,0 +1,14 @@
+// Permit SellShares unless the requested trade is unusually large.
+// `unless { B }` is exactly the negation of `when { B }`: it
+// excludes requests for which B holds. Here, every SellShares
+// request is permitted except those asking to sell more than
+// 10000 shares.
+
+permit (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+)
+unless {
+    context.input.shares > 10000
+};

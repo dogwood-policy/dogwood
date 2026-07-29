@@ -1,0 +1,18 @@
+// Per-stock SellShares thresholds, expressed inline with an
+// `if/then/else` expression. Selling AMZN is capped at 10 shares;
+// every other ticker is capped at 1000.
+//
+// New idea: an `if cond then a else b` expression can be used
+// anywhere a value is expected inside a Cedar body. Both branches
+// must produce the same type — here both are Bool.
+
+permit (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+)
+when {
+    if context.input.stock == "AMZN"
+    then context.input.shares <= 10
+    else context.input.shares <= 1000
+};

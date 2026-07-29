@@ -1,0 +1,18 @@
+entity a;
+
+@A00000
+@w
+action "" in [Action::":&&&&&&&&&&+&&&&&\'&", Action::"aaaaaaaaaaaaaaaaaaaaV", Action::":&&&&&&&&&&&&&&&&&", Action::"aaaaa"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action ":&&&&&&&&&&&&&&&&&" in [Action::"aaaaa"];
+
+action ":&&&&&&&&&&+&&&&&\'&" in [Action::"aaaaaaaaaaaaaaaaaaaaV", Action::":&&&&&&&&&&&&&&&&&", Action::"aaaaa"];
+
+action "aaaaa";
+
+action "aaaaaaaaaaaaaaaaaaaaV" in [Action::":&&&&&&&&&&&&&&&&&", Action::"aaaaa"];
+

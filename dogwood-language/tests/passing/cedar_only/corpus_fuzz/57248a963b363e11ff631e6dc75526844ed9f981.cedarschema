@@ -1,0 +1,23 @@
+entity a;
+
+@n
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "[&:\u{1d}" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    r333383SSSSSSS: {    }
+  }
+};
+
+action "p" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

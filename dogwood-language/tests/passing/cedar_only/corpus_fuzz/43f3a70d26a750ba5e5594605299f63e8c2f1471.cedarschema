@@ -1,0 +1,36 @@
+entity a = {
+  A?: {  },
+  B0083?: {  },
+  E?: {  },
+  @r
+  i?: {  },
+  i00?: {  },
+  @K
+  @hXXXrr33333333433("")
+  @iOO("B")
+  @r("")
+  @r333l("")
+  @ri33l("#")
+  @w("3#")
+  i33?: __cedar::ipaddr,
+  @r
+  j: __cedar::ipaddr,
+  r?: __cedar::Bool,
+  r3?: {  },
+  r333l?: __cedar::Bool,
+  ri33l?: {  },
+  rm3ukRcRpZ?: {  },
+  rm3ukucR30?: {  },
+  v?: {  },
+  v3?: {  },
+  w?: {  },
+  wS?: __cedar::Bool,
+  z?: {  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,21 @@
+entity BFf enum ["aaaa", "aaaaaaa\n\0\0\0^^^_^^^^^^^^^^^"];
+
+entity Pf enum ["\0\0"];
+
+entity g3 enum ["", "", "", "", "", "", "\u{16}\0\0\u{8}\0", "", "", "", ""];
+
+@r("")
+entity v enum ["", "", "\u{15}", "", "", ""];
+
+@sYaYYYYYYYA00
+entity vtttttttttt enum [""];
+
+@pVVVVVVVVV
+entity wmNNtttttttttRc;
+
+action "action" appliesTo {
+  principal: [g3],
+  resource: [vtttttttttt, wmNNtttttttttRc, Pf, BFf, g3],
+  context: {}
+};
+

@@ -1,0 +1,12 @@
+// Permit Read only for short document ids, as measured by the
+// `Strings::Length` information provider (implemented in length.rhai).
+// The provider output is an integer compared with a plain `<` operator.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Strings::Length(context.input.document).length < 5
+};

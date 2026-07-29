@@ -1,0 +1,27 @@
+entity a;
+
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1d}" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "%" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+@wS
+action "0:p" in [Action::"%", Action::"\u{1d}", Action::""] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

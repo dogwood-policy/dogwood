@@ -1,0 +1,41 @@
+entity a tags __cedar::String;
+
+action "" in [Action::":~", Action::"\u{1d}@[", Action::"\u{3}", Action::"\u{e}", Action::"^", Action::"ffd~", Action::"\u{1d}\u{3}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{3}" in [Action::"\u{e}", Action::"^", Action::"ffd~", Action::"\u{1d}\u{3}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{e}" in [Action::"^", Action::"ffd~", Action::"\u{1d}\u{3}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    vbbbbb0000000000?: __cedar::String
+  }
+};
+
+action "\u{1d}\u{3}";
+
+@m("ebi ai")
+action "\u{1d}@[" in [Action::"\u{3}", Action::"\u{e}", Action::"^", Action::"ffd~", Action::"\u{1d}\u{3}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action ":~" in [Action::"\u{1d}@[", Action::"\u{3}", Action::"\u{e}", Action::"^", Action::"ffd~", Action::"\u{1d}\u{3}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "^" in [Action::"ffd~", Action::"\u{1d}\u{3}"];
+
+action "ffd~" in [Action::"\u{1d}\u{3}"];
+

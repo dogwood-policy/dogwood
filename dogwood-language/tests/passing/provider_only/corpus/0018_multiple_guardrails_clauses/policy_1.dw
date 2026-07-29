@@ -1,0 +1,23 @@
+// Permit Read only when TWO independent regex guardrails agree the document
+// is safe: it must match an allowed-charset pattern (lowercase letters and
+// digits only) AND contain no digits at all. Each check lives in its own
+// `when guardrails { … }` clause; like multiple Cedar `when` clauses, they
+// are conjoined — the rule fires iff both hold. The two checks are genuinely
+// independent: the charset check rejects uppercase / punctuation, while the
+// digit check rejects digits that the charset check alone would allow.
+//
+// This is the runnable, regex-backed analog of the reference
+// `documentation_0406_multiple_guardrail_clauses`, which carries two
+// `when guardrails` clauses over two different classifiers.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Strings::Matches(context.input.document, "^[a-z0-9]+$").matched == true
+}
+when guardrails {
+    Strings::DigitCount(context.input.document).count == 0
+};

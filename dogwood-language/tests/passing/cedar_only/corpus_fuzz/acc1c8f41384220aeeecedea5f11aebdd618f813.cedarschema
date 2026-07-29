@@ -1,0 +1,16 @@
+namespace g::g::r {
+  entity A00000000000 enum [""];
+
+  entity g enum [""];
+
+  entity r enum [""];
+
+  entity z enum [""];
+
+  action "action" appliesTo {
+    principal: [g],
+    resource: [g],
+    context: {}
+  };
+}
+

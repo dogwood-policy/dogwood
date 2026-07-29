@@ -1,0 +1,17 @@
+// Forbid large SellShares requests, except for AMZN.
+// New idea: a single rule may carry both `when` and `unless`
+// clauses. The rule fires only when every `when` body holds AND
+// no `unless` body holds. Here the forbid denies sales of more
+// than 100 shares, but carves out an exception for AMZN.
+
+forbid (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+)
+when {
+    context.input.shares > 100
+}
+unless {
+    context.input.stock == "AMZN"
+};

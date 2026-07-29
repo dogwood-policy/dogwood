@@ -1,0 +1,14 @@
+entity a tags a;
+
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "______*_________________" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,226 @@
+{
+  "policies": "corpus-tests/3808ef4e30eeaff0e5ff83341a779eefa011952a.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/3808ef4e30eeaff0e5ff83341a779eefa011952a.entities.json",
+  "schema": "corpus-tests/3808ef4e30eeaff0e5ff83341a779eefa011952a.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "A::a",
+        "id": "2"
+      },
+      "action": {
+        "type": "A::Action",
+        "id": "cision"
+      },
+      "resource": {
+        "type": "A::a",
+        "id": "2"
+      },
+      "context": {
+        "T2spocoooo": {
+          "__entity": {
+            "type": "A::a",
+            "id": "2"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "A::a",
+        "id": "2"
+      },
+      "action": {
+        "type": "A::Action",
+        "id": "cision"
+      },
+      "resource": {
+        "type": "A::a",
+        "id": "2"
+      },
+      "context": {
+        "T2spocoooo": {
+          "__entity": {
+            "type": "A::a",
+            "id": "2"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "A::a",
+        "id": "2"
+      },
+      "action": {
+        "type": "A::Action",
+        "id": "cision"
+      },
+      "resource": {
+        "type": "A::a",
+        "id": "2"
+      },
+      "context": {
+        "T2spocoooo": {
+          "__entity": {
+            "type": "A::a",
+            "id": "2"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "A::a",
+        "id": "2"
+      },
+      "action": {
+        "type": "A::Action",
+        "id": "cision"
+      },
+      "resource": {
+        "type": "A::a",
+        "id": "2"
+      },
+      "context": {
+        "T2spocoooo": {
+          "__entity": {
+            "type": "A::a",
+            "id": "2"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "A::a",
+        "id": "2"
+      },
+      "action": {
+        "type": "A::Action",
+        "id": "cision"
+      },
+      "resource": {
+        "type": "A::a",
+        "id": "2"
+      },
+      "context": {
+        "T2spocoooo": {
+          "__entity": {
+            "type": "A::a",
+            "id": "2"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "A::a",
+        "id": "2"
+      },
+      "action": {
+        "type": "A::Action",
+        "id": "cision"
+      },
+      "resource": {
+        "type": "A::a",
+        "id": "2"
+      },
+      "context": {
+        "T2spocoooo": {
+          "__entity": {
+            "type": "A::a",
+            "id": "2"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "A::a",
+        "id": "2"
+      },
+      "action": {
+        "type": "A::Action",
+        "id": "cision"
+      },
+      "resource": {
+        "type": "A::a",
+        "id": "2"
+      },
+      "context": {
+        "T2spocoooo": {
+          "__entity": {
+            "type": "A::a",
+            "id": "2"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "A::a",
+        "id": "2"
+      },
+      "action": {
+        "type": "A::Action",
+        "id": "cision"
+      },
+      "resource": {
+        "type": "A::a",
+        "id": "2"
+      },
+      "context": {
+        "T2spocoooo": {
+          "__entity": {
+            "type": "A::a",
+            "id": "2"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}

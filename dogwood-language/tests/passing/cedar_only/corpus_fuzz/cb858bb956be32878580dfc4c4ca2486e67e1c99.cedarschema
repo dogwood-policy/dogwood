@@ -1,0 +1,8 @@
+entity J999033iii enum [""];
+
+action "action" appliesTo {
+  principal: [J999033iii],
+  resource: [J999033iii],
+  context: {}
+};
+

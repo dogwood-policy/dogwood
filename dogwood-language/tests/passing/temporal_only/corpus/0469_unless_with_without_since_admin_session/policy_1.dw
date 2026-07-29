@@ -1,0 +1,8 @@
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+unless temporal {
+    !Drupe::Action::"AdminLogout"::request{ input.user: context.input.user } since within 24h Drupe::Action::"AdminLogin"::request{ input.user: context.input.user }
+};

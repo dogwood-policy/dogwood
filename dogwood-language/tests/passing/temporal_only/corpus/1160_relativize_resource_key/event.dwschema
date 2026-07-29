@@ -1,0 +1,25 @@
+// Universal symmetric pin on `callerResource` (both event kinds) — the
+// partition key is the request RESOURCE, not the principal. This is the mirror
+// of the principal-keyed cases (1155–1159): it exercises the reserved
+// `callerResource ↔ resource` scope-alias arm of `is_symmetric` / pin
+// injection / the μ-guard, which the principal cases never touch.
+//
+// `callerPrincipal` is deliberately left UNPINNED, so the only thing
+// confining evaluation to "mine" is the resource pin. The traces hold the
+// principal constant (alice) and vary only the resource, so a bug that keyed
+// on principal instead of resource would treat every event as mine.
+
+decision event <A>::request {
+    ...inputs(A),
+    callerPrincipal: principalType(A),
+    pin callerResource: resourceType(A) = resource,
+    requestId:       String,
+}
+
+event <A>::response {
+    ...inputs(A),
+    ...outputs(A),
+    callerPrincipal: principalType(A),
+    pin callerResource: resourceType(A) = resource,
+    requestId:       String,
+}

@@ -1,0 +1,14 @@
+entity a;
+
+action "" in [Action::"\u{4}5**", Action::"9", Action::"\u{1}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1}";
+
+action "\u{4}5**" in [Action::"9", Action::"\u{1}"];
+
+action "9" in [Action::"\u{1}"];
+

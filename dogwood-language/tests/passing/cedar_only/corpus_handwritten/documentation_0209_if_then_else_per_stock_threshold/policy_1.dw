@@ -1,0 +1,16 @@
+// Permit SellShares with a per-stock cap on `shares`.
+// New idea: an `if/then/else` expression on the right-hand side
+// of a comparison, returning a Long threshold that depends on
+// which stock is being sold.
+
+permit (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+)
+when {
+    context.input.shares <=
+        (if context.input.stock == "AMZN" then 10
+         else if context.input.stock == "MSFT" then 50
+         else 1000)
+};

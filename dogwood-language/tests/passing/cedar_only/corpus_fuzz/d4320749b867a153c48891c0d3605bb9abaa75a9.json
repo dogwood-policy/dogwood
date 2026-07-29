@@ -1,0 +1,186 @@
+{
+  "policies": "corpus-tests/d4320749b867a153c48891c0d3605bb9abaa75a9.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/d4320749b867a153c48891c0d3605bb9abaa75a9.entities.json",
+  "schema": "corpus-tests/d4320749b867a153c48891c0d3605bb9abaa75a9.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "G6666l6::G666666::G666666::G66l666::G66666X::AXXDXXX::G666666::AXXXXXX",
+        "id": ""
+      },
+      "action": {
+        "type": "G6666l6::G666666::G666666::G66l666::G66666X::AXXDXXX::G666666::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "G6666l6::G666666::G666666::G66l666::G66666X::AXXDXXX::G666666::AXXXXXX",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "G6666l6::G666666::G666666::G66l666::G66666X::AXXDXXX::G666666::AXXXXXX",
+        "id": ""
+      },
+      "action": {
+        "type": "G6666l6::G666666::G666666::G66l666::G66666X::AXXDXXX::G666666::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "G6666l6::G666666::G666666::G66l666::G66666X::AXXDXXX::G666666::AXXXXXX",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "G6666l6::G666666::G666666::G66l666::G66666X::AXXDXXX::G666666::AXXXXXX",
+        "id": ""
+      },
+      "action": {
+        "type": "G6666l6::G666666::G666666::G66l666::G66666X::AXXDXXX::G666666::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "G6666l6::G666666::G666666::G66l666::G66666X::AXXDXXX::G666666::AXXXXXX",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "G6666l6::G666666::G666666::G66l666::G66666X::AXXDXXX::G666666::AXXXXXX",
+        "id": ""
+      },
+      "action": {
+        "type": "G6666l6::G666666::G666666::G66l666::G66666X::AXXDXXX::G666666::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "G6666l6::G666666::G666666::G66l666::G66666X::AXXDXXX::G666666::AXXXXXX",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "G6666l6::G666666::G666666::G66l666::G66666X::AXXDXXX::G666666::AXXXXXX",
+        "id": ""
+      },
+      "action": {
+        "type": "G6666l6::G666666::G666666::G66l666::G66666X::AXXDXXX::G666666::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "G6666l6::G666666::G666666::G66l666::G66666X::AXXDXXX::G666666::AXXXXXX",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "G6666l6::G666666::G666666::G66l666::G66666X::AXXDXXX::G666666::AXXXXXX",
+        "id": ""
+      },
+      "action": {
+        "type": "G6666l6::G666666::G666666::G66l666::G66666X::AXXDXXX::G666666::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "G6666l6::G666666::G666666::G66l666::G66666X::AXXDXXX::G666666::AXXXXXX",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "G6666l6::G666666::G666666::G66l666::G66666X::AXXDXXX::G666666::AXXXXXX",
+        "id": ""
+      },
+      "action": {
+        "type": "G6666l6::G666666::G666666::G66l666::G66666X::AXXDXXX::G666666::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "G6666l6::G666666::G666666::G66l666::G66666X::AXXDXXX::G666666::AXXXXXX",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "G6666l6::G666666::G666666::G66l666::G66666X::AXXDXXX::G666666::AXXXXXX",
+        "id": ""
+      },
+      "action": {
+        "type": "G6666l6::G666666::G666666::G66l666::G66666X::AXXDXXX::G666666::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "G6666l6::G666666::G666666::G66l666::G66666X::AXXDXXX::G666666::AXXXXXX",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

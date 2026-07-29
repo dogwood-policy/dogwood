@@ -1,0 +1,31 @@
+entity a = {
+  A: {
+    ""?: {    },
+    "\u{1}\n\u{f}VV\n\ne?\0:\u{f}ee~"?: {    },
+    "\u{3}\u{1d}@"?: {    },
+    "\u{3}\u{1d}w"?: {    },
+    "\u{e}"?: {    },
+    "\u{1d}\u{3}"?: {    },
+    "\u{1d}@["?: {    },
+    "\u{1d}@gf"?: {    },
+    "$"?: {    },
+    ":~": a,
+    "=\u{e}"?: {    },
+    "N\0\u{14}"?: {    },
+    "N~\u{1f}"?: {    },
+    "["?: {    },
+    "[@["?: {    },
+    "qqqqq\0\0!"?: {    },
+    "z~"?: {    }
+  }
+} tags Set<__cedar::Bool>;
+
+action "N" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @aQYf000000
+    aQQ?: __cedar::ipaddr
+  }
+};
+

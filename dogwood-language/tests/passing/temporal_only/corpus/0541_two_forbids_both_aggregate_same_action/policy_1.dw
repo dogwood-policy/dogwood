@@ -1,0 +1,22 @@
+forbid (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    exists (n: Long). ((count for (t: Timepoint). where (Drupe::Action::"Transfer"::request{ input.user: context.input.user, input.amount: _ } && tp(t))) == n && n >= 2)};
+forbid (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    exists (s: Long). ((sum a for (a: Long). where Drupe::Action::"Transfer"::request{ input.user: context.input.user, input.amount: a }) == s && s > 200)};
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

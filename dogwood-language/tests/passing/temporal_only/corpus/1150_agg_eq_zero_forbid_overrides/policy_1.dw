@@ -1,0 +1,22 @@
+// Edge: (count for ...) == 0 with both permit and forbid. Proves that
+// forbid correctly fires when count==0, overriding the permit.
+// At tp0: count=0, both permit and forbid fire → forbid overrides → false (deny).
+// At tp2: count=1, neither fires (1!=0) → false (deny, no permit).
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    (count for (t: Timepoint). where (formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.server } && tp(t))) == 0
+};
+
+forbid (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    (count for (t: Timepoint). where (formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.server } && tp(t))) == 0
+};

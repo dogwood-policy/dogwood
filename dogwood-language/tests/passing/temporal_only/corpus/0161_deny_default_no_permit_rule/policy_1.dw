@@ -1,0 +1,9 @@
+// Only Write is permitted; Read has no permit rule and must be denied
+permit (
+    principal,
+    action == Drupe::Action::"Write",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

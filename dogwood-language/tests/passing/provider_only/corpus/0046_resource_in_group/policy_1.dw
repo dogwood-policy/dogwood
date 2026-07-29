@@ -1,0 +1,11 @@
+// Scope: resource in Org (group membership).
+// Only resources that are members of the "acme" org are accessible.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource in Drupe::Org::"acme"
+)
+when guardrails {
+    Strings::Matches(context.input.document, "^[A-Z]+$").matched == true
+};

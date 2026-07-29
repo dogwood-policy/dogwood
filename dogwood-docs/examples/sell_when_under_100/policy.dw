@@ -1,0 +1,6 @@
+// A `when` clause must hold for the rule to fire: only sells under 100 shares.
+@id("sell_under_100")
+permit ( principal, action == Drupe::Action::"SellShares", resource )
+when {
+    context.input.shares < 100
+};

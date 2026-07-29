@@ -1,0 +1,83 @@
+[
+  {
+    "name": "SellShares",
+    "description": "Sell `shares` shares of `stock`. Returns the proceeds in USD.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "stock": {
+          "type": "string",
+          "description": "Ticker symbol, e.g. \"AMZN\""
+        },
+        "shares": {
+          "type": "integer",
+          "description": "Number of shares to sell"
+        }
+      },
+      "required": ["stock", "shares"]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "proceeds": {
+          "type": "number",
+          "format": "decimal",
+          "description": "Total proceeds in USD"
+        }
+      },
+      "required": ["proceeds"]
+    }
+  },
+  {
+    "name": "ApproveSale",
+    "description": "Request approval to sell `shares` shares of `stock`. Returns whether the sale is approved.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "stock": {
+          "type": "string",
+          "description": "Ticker symbol"
+        },
+        "shares": {
+          "type": "integer",
+          "description": "Number of shares the sale would cover"
+        }
+      },
+      "required": ["stock", "shares"]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "approved": {
+          "type": "boolean",
+          "description": "true if the sale was approved"
+        }
+      },
+      "required": ["approved"]
+    }
+  },
+  {
+    "name": "GetStockInfo",
+    "description": "Look up reference information for a ticker. Returns a free-form description.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "stock": {
+          "type": "string",
+          "description": "Ticker symbol"
+        }
+      },
+      "required": ["stock"]
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "info": {
+          "type": "string",
+          "description": "Free-form information about the stock"
+        }
+      },
+      "required": ["info"]
+    }
+  }
+]

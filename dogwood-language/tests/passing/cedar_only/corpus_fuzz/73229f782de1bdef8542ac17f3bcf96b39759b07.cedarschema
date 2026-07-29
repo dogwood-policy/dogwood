@@ -1,0 +1,12 @@
+@F("")
+@FcRR0000000000000
+@s000JRwR3ERRl
+@vR3T1RSNRcM33a3("")
+entity a tags __cedar::datetime;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

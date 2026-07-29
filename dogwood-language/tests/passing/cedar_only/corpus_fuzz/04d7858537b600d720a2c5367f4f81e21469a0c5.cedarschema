@@ -1,0 +1,8 @@
+entity a enum ["y\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\u{8}\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"];
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

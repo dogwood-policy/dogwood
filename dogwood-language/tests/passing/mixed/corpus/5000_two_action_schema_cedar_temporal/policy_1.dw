@@ -1,0 +1,7 @@
+// Cedar half of the mix: permit reads of SAFE_-prefixed documents only.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when { context.input.document like "SAFE_*" };

@@ -1,0 +1,41 @@
+// Relativization / partition-safety, `count == 0` (the EMPTY-own-set edge).
+//
+// A Read is permitted iff THIS principal has ZERO of its own Logins in the last
+// hour ("never logged in"). The event schema pins `callerPrincipal`
+// universally, so the count ranges over this principal's own events only. This
+// is the inverse of 1157 (which pushes a principal OVER a threshold): here the
+// key-local set is EMPTY, and a foreign key's events must not push the count
+// OFF zero. The empty-own-set path in the relativized count encoding is only
+// reached in this shape.
+//
+// The count body does not correlate on user (`Login{ input.user: _ }`), so the
+// pin is the only thing confining the count. Two pairs, each with/without the
+// foreign events:
+//
+//   PERMIT pair — alice has NO own Login; a foreign principal's Logins must not
+//   count:
+//     trace_1: BOB Login, BOB Login, alice Read.
+//     trace_2:                       alice Read.
+//   Correct (key-local): alice's own count = 0 → n == 0 → PERMIT in both. Under
+//   (incorrect) global semantics trace_1 would count bob's two logins
+//   (n == 2 ≠ 0) → DENY, diverging from trace_2.
+//
+//   DENY pair — alice HAS an own Login, so her count is not zero; the foreign
+//   login is inert:
+//     trace_3: alice Login, BOB Login, alice Read.
+//     trace_4: alice Login,            alice Read.
+//   Correct: alice's own count = 1 → n == 0 false → DENY in both. Confirms the
+//   count DOES see alice's own event (is not stuck at 0), not vacuously permit.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    exists (n: Long). (
+        (count for (t: Timepoint). where (
+            formerly within 1h (Drupe::Action::"Login"::request{ input.user: _ } && tp(t))
+        )) == n && n == 0
+    )
+};

@@ -1,0 +1,23 @@
+// Same PINNED schema as case 1117: `callerPrincipal` is pinned to the
+// decision request's principal on every predicate. Here the policy writes the
+// pinned field with EXACTLY the pin's value (`callerPrincipal:
+// principal`). The pin is still injected unconditionally, so the
+// predicate carries the field twice — but both copies equality-check against
+// the same request value, so the appended pin is a redundant no-op. This is
+// the "agree → no-op" half of the documented double-refinement behavior: the
+// verdicts are identical to case 1117, where the policy wrote nothing.
+
+decision event <A>::request {
+    ...inputs(A),
+    pin callerPrincipal: principalType(A) = principal,
+    callerResource:  resourceType(A),
+    requestId:       String,
+}
+
+event <A>::response {
+    ...inputs(A),
+    ...outputs(A),
+    pin callerPrincipal: principalType(A) = principal,
+    callerResource:  resourceType(A),
+    requestId:       String,
+}

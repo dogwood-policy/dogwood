@@ -1,0 +1,12 @@
+namespace ye::ye {
+  entity A enum [""];
+
+  entity ye enum [""];
+
+  action "action" appliesTo {
+    principal: [ye],
+    resource: [ye],
+    context: {}
+  };
+}
+

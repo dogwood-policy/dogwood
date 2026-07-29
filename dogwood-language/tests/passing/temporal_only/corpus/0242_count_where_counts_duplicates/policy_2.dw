@@ -1,0 +1,9 @@
+
+forbid (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    exists (n: Long). ((count for (t: Timepoint). where
+        (formerly within 1h (Drupe::Action::"Read"::request{ input.user: context.input.user, input.document: _ } && tp(t)))) == n && n >= 2)};

@@ -1,0 +1,35 @@
+namespace Drupe {
+  type ApiVersionInput = {
+    major: Long,
+    minor: Long,
+    patch: Long
+  };
+
+  type ApiVersionOutput = {  };
+
+  type SystemContext = {
+    now: datetime
+  };
+
+  entity Gateway;
+
+  entity IamEntity = {
+    id: String
+  };
+
+  entity OAuthUser = {
+    id: String
+  } tags String;
+
+  entity UnauthenticatedUser;
+
+  action "CallApi" appliesTo {
+    principal: [OAuthUser, IamEntity, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      input: ApiVersionInput,
+      output?: ApiVersionOutput,
+      system: SystemContext
+    }
+  };
+}

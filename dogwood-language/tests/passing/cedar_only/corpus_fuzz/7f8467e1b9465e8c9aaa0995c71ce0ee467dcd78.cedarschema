@@ -1,0 +1,17 @@
+entity a tags __cedar::String;
+
+action "" in [Action::":p"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    h?: __cedar::String,
+    m?: {
+      ""?: {
+        ""?: __cedar::String
+      }
+    }
+  }
+};
+
+action ":p";
+

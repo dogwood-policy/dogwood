@@ -1,0 +1,28 @@
+{
+  "availableProviders": {
+    "Text::Analyze": {
+      "argumentTypes": [
+        { "paramType": "string" }
+      ],
+      "outputType": {
+        "paramType": "record",
+        "fields": { "raw": { "paramType": "integer" } },
+        "required": ["raw"]
+      },
+      "availableMethods": {
+        "normalize": {
+          "argumentTypes": [],
+          "outputType": { "paramType": "integer" }
+        },
+        "clamp": {
+          "argumentTypes": [],
+          "outputType": { "paramType": "integer" }
+        }
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "analyze.rhai"
+      }
+    }
+  }
+}

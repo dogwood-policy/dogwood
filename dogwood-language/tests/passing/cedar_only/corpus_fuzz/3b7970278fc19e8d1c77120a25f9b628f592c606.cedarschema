@@ -1,0 +1,17 @@
+entity a;
+
+action "" in [Action::"<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    bRRRRRRRRRR?: __cedar::String,
+    bRRRRRRRRyy?: __cedar::String
+  }
+};
+
+action "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

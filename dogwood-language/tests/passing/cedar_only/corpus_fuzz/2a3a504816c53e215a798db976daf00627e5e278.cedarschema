@@ -1,0 +1,71 @@
+entity A0033333333333;
+
+entity j;
+
+entity jr;
+
+entity r;
+
+action "" in [Action::"@gffd~", Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"$=\u{e}", Action::"[", Action::"\u{3}dddd\u{e}", Action::"\u{3}ddddddd", Action::"-~", Action::"d", Action::"\u{1d}@[", Action::"\u{3}\u{1d}w", Action::"$#?", Action::"#######"] appliesTo {
+  principal: [j, jr, A0033333333333],
+  resource: [j, jr, A0033333333333],
+  context: {}
+};
+
+action "\u{3}\u{1d}w" in [Action::"$#?", Action::"#######"];
+
+action "\u{3}dddd\u{e}" in [Action::"\u{3}ddddddd", Action::"-~", Action::"d", Action::"\u{1d}@[", Action::"\u{3}\u{1d}w", Action::"$#?", Action::"#######"];
+
+action "\u{3}ddddddd" in [Action::"-~", Action::"d", Action::"\u{1d}@[", Action::"\u{3}\u{1d}w", Action::"$#?", Action::"#######"];
+
+action "\u{e}" in [Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"$=\u{e}", Action::"[", Action::"\u{3}dddd\u{e}", Action::"\u{3}ddddddd", Action::"-~", Action::"d", Action::"\u{1d}@[", Action::"\u{3}\u{1d}w", Action::"$#?", Action::"#######"] appliesTo {
+  principal: [j, jr, A0033333333333],
+  resource: [j, jr, A0033333333333],
+  context: {}
+};
+
+action "\u{1d}\u{3}" in [Action::"[@", Action::"$=\u{e}", Action::"[", Action::"\u{3}dddd\u{e}", Action::"\u{3}ddddddd", Action::"-~", Action::"d", Action::"\u{1d}@[", Action::"\u{3}\u{1d}w", Action::"$#?", Action::"#######"] appliesTo {
+  principal: [A0033333333333],
+  resource: [j, A0033333333333, r],
+  context: {}
+};
+
+action "\u{1d}@[" in [Action::"\u{3}\u{1d}w", Action::"$#?", Action::"#######"];
+
+action "#######";
+
+action "$#?" in [Action::"#######"];
+
+action "$=\u{e}" in [Action::"[", Action::"\u{3}dddd\u{e}", Action::"\u{3}ddddddd", Action::"-~", Action::"d", Action::"\u{1d}@[", Action::"\u{3}\u{1d}w", Action::"$#?", Action::"#######"];
+
+action "-~" in [Action::"d", Action::"\u{1d}@[", Action::"\u{3}\u{1d}w", Action::"$#?", Action::"#######"];
+
+action "@gffd~" in [Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"$=\u{e}", Action::"[", Action::"\u{3}dddd\u{e}", Action::"\u{3}ddddddd", Action::"-~", Action::"d", Action::"\u{1d}@[", Action::"\u{3}\u{1d}w", Action::"$#?", Action::"#######"] appliesTo {
+  principal: [j, jr, r],
+  resource: [j, jr, A0033333333333],
+  context: {}
+};
+
+action "[" in [Action::"\u{3}dddd\u{e}", Action::"\u{3}ddddddd", Action::"-~", Action::"d", Action::"\u{1d}@[", Action::"\u{3}\u{1d}w", Action::"$#?", Action::"#######"];
+
+action "[@" in [Action::"$=\u{e}", Action::"[", Action::"\u{3}dddd\u{e}", Action::"\u{3}ddddddd", Action::"-~", Action::"d", Action::"\u{1d}@[", Action::"\u{3}\u{1d}w", Action::"$#?", Action::"#######"] appliesTo {
+  principal: [jr, j, r],
+  resource: [jr, j, r],
+  context: {
+    A0?: __cedar::String
+  }
+};
+
+action "^" in [Action::"\u{1d}\u{3}", Action::"[@", Action::"$=\u{e}", Action::"[", Action::"\u{3}dddd\u{e}", Action::"\u{3}ddddddd", Action::"-~", Action::"d", Action::"\u{1d}@[", Action::"\u{3}\u{1d}w", Action::"$#?", Action::"#######"] appliesTo {
+  principal: [jr, j, A0033333333333, r],
+  resource: [j, jr, A0033333333333],
+  context: {
+    DZ?: __cedar::Bool,
+    jZ?: __cedar::Bool,
+    jr?: __cedar::Bool,
+    k?: __cedar::Bool
+  }
+};
+
+action "d" in [Action::"\u{1d}@[", Action::"\u{3}\u{1d}w", Action::"$#?", Action::"#######"];
+

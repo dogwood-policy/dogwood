@@ -1,0 +1,24 @@
+entity a;
+
+action "" in [Action::"z~", Action::"N~", Action::"\u{e}", Action::"[", Action::"\u{3}\u{1d}@", Action::"$", Action::"\u{14}", Action::"De"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{3}\u{1d}@" in [Action::"$", Action::"\u{14}", Action::"De"];
+
+action "\u{e}" in [Action::"[", Action::"\u{3}\u{1d}@", Action::"$", Action::"\u{14}", Action::"De"];
+
+action "\u{14}" in [Action::"De"];
+
+action "$" in [Action::"\u{14}", Action::"De"];
+
+action "De";
+
+action "N~" in [Action::"\u{e}", Action::"[", Action::"\u{3}\u{1d}@", Action::"$", Action::"\u{14}", Action::"De"];
+
+action "[" in [Action::"\u{3}\u{1d}@", Action::"$", Action::"\u{14}", Action::"De"];
+
+action "z~" in [Action::"N~", Action::"\u{e}", Action::"[", Action::"\u{3}\u{1d}@", Action::"$", Action::"\u{14}", Action::"De"];
+

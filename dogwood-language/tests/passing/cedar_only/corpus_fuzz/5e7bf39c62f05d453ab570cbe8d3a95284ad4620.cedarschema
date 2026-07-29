@@ -1,0 +1,32 @@
+namespace r::f::r {
+  entity D enum [""];
+
+  entity F enum [""];
+
+  entity I enum [""];
+
+  entity M00000000 enum [""];
+
+  entity N enum [""];
+
+  entity h0 enum [""];
+
+  entity m3 enum [""];
+
+  entity r enum [""];
+
+  entity r3 enum [""];
+
+  entity v enum [""];
+
+  entity vR enum [""];
+
+  entity w2 enum [""];
+
+  action "action" appliesTo {
+    principal: [I],
+    resource: [I],
+    context: {}
+  };
+}
+

@@ -1,0 +1,7 @@
+// Datetime supports the full ordered set, so a time window is direct.
+@id("sell_in_2025_window")
+permit ( principal, action == Drupe::Action::"SellShares", resource )
+when {
+    context.system.now >= datetime("2025-01-01T00:00:00Z")
+    && context.system.now <  datetime("2026-01-01T00:00:00Z")
+};

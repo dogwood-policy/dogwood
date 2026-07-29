@@ -1,0 +1,34 @@
+{
+  "availableProviders": {
+    "Content::Classify": {
+      "argumentTypes": [
+        { "paramType": "string" }
+      ],
+      "outputType": {
+        "paramType": "record",
+        "fields": {
+          "violence": { "paramType": "integer" },
+          "malicious": { "paramType": "integer" }
+        },
+        "required": ["violence", "malicious"]
+      },
+      "availableMethods": {
+        "classify": {
+          "argumentTypes": [],
+          "outputType": {
+            "paramType": "record",
+            "fields": {
+              "violence": { "paramType": "integer" },
+              "malicious": { "paramType": "integer" }
+            },
+            "required": ["violence", "malicious"]
+          }
+        }
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "classify.rhai"
+      }
+    }
+  }
+}

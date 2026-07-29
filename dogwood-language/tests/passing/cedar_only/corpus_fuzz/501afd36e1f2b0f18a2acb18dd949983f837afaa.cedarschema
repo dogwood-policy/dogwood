@@ -1,0 +1,13 @@
+entity a tags {
+  ""?: Set<{
+    ""?: Set<__cedar::Long>,
+    "\u{c}"?: __cedar::String
+  }>
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

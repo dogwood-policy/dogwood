@@ -1,0 +1,25 @@
+entity A enum [""];
+
+entity g;
+
+entity j55r00u3 enum [""];
+
+entity p;
+
+entity r;
+
+entity v enum [""];
+
+entity vRR = {
+  A?: __cedar::String,
+  r?: __cedar::String
+};
+
+entity ye;
+
+action "action" appliesTo {
+  principal: [g],
+  resource: [g],
+  context: {}
+};
+

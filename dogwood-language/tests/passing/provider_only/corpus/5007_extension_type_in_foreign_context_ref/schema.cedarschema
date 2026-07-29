@@ -1,0 +1,16 @@
+// A foreign namespace's referenced context carries a bare extension-type
+// field (`amount: decimal`), and the ACTION's namespace declares a
+// same-named common type (legal — shadowing a builtin is only a warning).
+// Inlining must keep `decimal` meaning the builtin, not the local record.
+namespace Shared {
+  type Ctx = { input: { document: String }, amount: decimal };
+}
+namespace Drupe {
+  type decimal = { foo: Long };
+  entity OAuthUser;
+  entity Gateway;
+  action "Read" appliesTo {
+    principal: [OAuthUser], resource: [Gateway],
+    context: Shared::Ctx
+  };
+}

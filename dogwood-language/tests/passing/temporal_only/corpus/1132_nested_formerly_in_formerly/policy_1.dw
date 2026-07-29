@@ -1,0 +1,13 @@
+// Edge: formerly within 2h (A && formerly within 30m (B)). The inner
+// window (30m) is much smaller than the outer (2h). Tests nested_formerly.
+// Event B happens at t=0, event A at t=2000s (33min later — outside inner
+// window), so the nested formerly fails despite both being inside outer.
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    formerly within 2h (Drupe::Action::"Transfer"::request{ input.user: context.input.server } && formerly within 30m Drupe::Action::"Login"::request{ input.user: context.input.server })
+};

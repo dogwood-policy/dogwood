@@ -1,0 +1,12 @@
+entity a = {
+  vw?: {
+    "\n": __cedar::ipaddr
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

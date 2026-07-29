@@ -1,0 +1,20 @@
+entity Blf;
+
+entity Hf enum [""];
+
+entity T317f33_4HH334 enum ["\u{2}"];
+
+entity Y4542491W33f;
+
+entity g3;
+
+entity l enum ["\0\u{7f}#"];
+
+entity n tags {};
+
+action "action" appliesTo {
+  principal: [n, l, T317f33_4HH334, g3, Hf, Y4542491W33f, Blf],
+  resource: [T317f33_4HH334, Blf, n, g3, Hf, l, Y4542491W33f],
+  context: {}
+};
+

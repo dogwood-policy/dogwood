@@ -1,0 +1,186 @@
+{
+  "policies": "corpus-tests/58f128458adbd08cae0e4542df92915b94767e33.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/58f128458adbd08cae0e4542df92915b94767e33.entities.json",
+  "schema": "corpus-tests/58f128458adbd08cae0e4542df92915b94767e33.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "A0000000::lbYw::a",
+        "id": ""
+      },
+      "action": {
+        "type": "A0000000::lbYw::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A0000000::lbYw::a",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "A0000000::lbYw::a",
+        "id": ""
+      },
+      "action": {
+        "type": "A0000000::lbYw::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A0000000::lbYw::a",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "A0000000::lbYw::a",
+        "id": ""
+      },
+      "action": {
+        "type": "A0000000::lbYw::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A0000000::lbYw::a",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "A0000000::lbYw::a",
+        "id": ""
+      },
+      "action": {
+        "type": "A0000000::lbYw::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A0000000::lbYw::a",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "A0000000::lbYw::a",
+        "id": ""
+      },
+      "action": {
+        "type": "A0000000::lbYw::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A0000000::lbYw::a",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "A0000000::lbYw::a",
+        "id": ""
+      },
+      "action": {
+        "type": "A0000000::lbYw::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A0000000::lbYw::a",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "A0000000::lbYw::a",
+        "id": ""
+      },
+      "action": {
+        "type": "A0000000::lbYw::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A0000000::lbYw::a",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "A0000000::lbYw::a",
+        "id": ""
+      },
+      "action": {
+        "type": "A0000000::lbYw::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A0000000::lbYw::a",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

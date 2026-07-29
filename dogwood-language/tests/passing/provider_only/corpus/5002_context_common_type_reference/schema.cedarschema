@@ -1,0 +1,18 @@
+// An action UNRELATED to any provider rule (Audit) declares its context AS
+// A COMMON-TYPE REFERENCE (`context: AuditCtx`). Because hoisted provider
+// fields are grafted onto EVERY action's context, the grafting pass must
+// resolve and inline the reference rather than rejecting the schema.
+namespace Drupe {
+  entity OAuthUser;
+  entity Gateway;
+  type ReadInput = { document: String };
+  type AuditCtx = { input: { reason: String } };
+  action "Read" appliesTo {
+    principal: [OAuthUser], resource: [Gateway],
+    context: { input: ReadInput }
+  };
+  action "Audit" appliesTo {
+    principal: [OAuthUser], resource: [Gateway],
+    context: AuditCtx
+  };
+}

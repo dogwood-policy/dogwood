@@ -1,0 +1,11 @@
+entity a = {
+  QqA: __cedar::duration,
+  q: __cedar::duration
+} tags __cedar::ipaddr;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

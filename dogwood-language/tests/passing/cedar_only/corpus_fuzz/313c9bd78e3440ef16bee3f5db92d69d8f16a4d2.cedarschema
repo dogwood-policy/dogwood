@@ -1,0 +1,47 @@
+@h
+entity a = {
+  A: a,
+  @F
+  @Q
+  @UV3ERRS3000("???j????????????????????\u{3}\u{1d}@")
+  @rKR("qqqqqqq\0\0\0")
+  h?: __cedar::String,
+  r3N1S: __cedar::ipaddr
+};
+
+action "" in [Action::":~", Action::"\u{1d}@[", Action::"\u{3}\u{1d}w", Action::"$", Action::"=XX\u{e}", Action::"\u{1d}", Action::"????????????????\u{3}\u{1d}@", Action::"\u{14}", Action::":pVV", Action::"\u{3}\u{1d}wz", Action::"=\u{e}", Action::"\u{3}", Action::"[@[", Action::"Debian \u{1}\u{f}", Action::"yA"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{3}" in [Action::"[@[", Action::"Debian \u{1}\u{f}", Action::"yA"];
+
+action "\u{3}\u{1d}w" in [Action::"$", Action::"=XX\u{e}", Action::"\u{1d}", Action::"????????????????\u{3}\u{1d}@", Action::"\u{14}", Action::":pVV", Action::"\u{3}\u{1d}wz", Action::"=\u{e}", Action::"\u{3}", Action::"[@[", Action::"Debian \u{1}\u{f}", Action::"yA"];
+
+action "\u{3}\u{1d}wz" in [Action::"=\u{e}", Action::"\u{3}", Action::"[@[", Action::"Debian \u{1}\u{f}", Action::"yA"];
+
+action "\u{14}" in [Action::":pVV", Action::"\u{3}\u{1d}wz", Action::"=\u{e}", Action::"\u{3}", Action::"[@[", Action::"Debian \u{1}\u{f}", Action::"yA"];
+
+action "\u{1d}" in [Action::"????????????????\u{3}\u{1d}@", Action::"\u{14}", Action::":pVV", Action::"\u{3}\u{1d}wz", Action::"=\u{e}", Action::"\u{3}", Action::"[@[", Action::"Debian \u{1}\u{f}", Action::"yA"];
+
+action "\u{1d}@[" in [Action::"\u{3}\u{1d}w", Action::"$", Action::"=XX\u{e}", Action::"\u{1d}", Action::"????????????????\u{3}\u{1d}@", Action::"\u{14}", Action::":pVV", Action::"\u{3}\u{1d}wz", Action::"=\u{e}", Action::"\u{3}", Action::"[@[", Action::"Debian \u{1}\u{f}", Action::"yA"];
+
+action "$" in [Action::"=XX\u{e}", Action::"\u{1d}", Action::"????????????????\u{3}\u{1d}@", Action::"\u{14}", Action::":pVV", Action::"\u{3}\u{1d}wz", Action::"=\u{e}", Action::"\u{3}", Action::"[@[", Action::"Debian \u{1}\u{f}", Action::"yA"];
+
+action ":pVV" in [Action::"\u{3}\u{1d}wz", Action::"=\u{e}", Action::"\u{3}", Action::"[@[", Action::"Debian \u{1}\u{f}", Action::"yA"];
+
+action ":~" in [Action::"\u{1d}@[", Action::"\u{3}\u{1d}w", Action::"$", Action::"=XX\u{e}", Action::"\u{1d}", Action::"????????????????\u{3}\u{1d}@", Action::"\u{14}", Action::":pVV", Action::"\u{3}\u{1d}wz", Action::"=\u{e}", Action::"\u{3}", Action::"[@[", Action::"Debian \u{1}\u{f}", Action::"yA"];
+
+action "=\u{e}" in [Action::"\u{3}", Action::"[@[", Action::"Debian \u{1}\u{f}", Action::"yA"];
+
+action "=XX\u{e}" in [Action::"\u{1d}", Action::"????????????????\u{3}\u{1d}@", Action::"\u{14}", Action::":pVV", Action::"\u{3}\u{1d}wz", Action::"=\u{e}", Action::"\u{3}", Action::"[@[", Action::"Debian \u{1}\u{f}", Action::"yA"];
+
+action "????????????????\u{3}\u{1d}@" in [Action::"\u{14}", Action::":pVV", Action::"\u{3}\u{1d}wz", Action::"=\u{e}", Action::"\u{3}", Action::"[@[", Action::"Debian \u{1}\u{f}", Action::"yA"];
+
+action "Debian \u{1}\u{f}" in [Action::"yA"];
+
+action "[@[" in [Action::"Debian \u{1}\u{f}", Action::"yA"];
+
+action "yA";
+

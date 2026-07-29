@@ -1,0 +1,29 @@
+entity a = {
+  A?: {  },
+  AcRq?: {  },
+  B0083?: {  },
+  E?: {  },
+  @K("#")
+  @wSSSS
+  M: {  },
+  i?: {  },
+  i00?: {  },
+  iOO?: {  },
+  j?: {  },
+  r?: {  },
+  r33RpZ343333l333?: {  },
+  ri33l?: {  },
+  rm3ukRcRpZ?: {  },
+  v3?: {  },
+  w?: {  },
+  wS?: {  },
+  xdV33?: {  },
+  z?: {  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

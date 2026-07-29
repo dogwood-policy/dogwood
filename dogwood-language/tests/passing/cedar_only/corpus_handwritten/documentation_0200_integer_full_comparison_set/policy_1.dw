@@ -1,0 +1,16 @@
+// Permit SellShares when the requested trade is in a normal range:
+// at least 1 share, at most 1000 shares, and not the unlucky 777.
+// This rule exercises three of the integer comparison operators
+// (`>=`, `<=`, `!=`) on `context.input.shares` in a single `when`
+// body.
+
+permit (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+)
+when {
+    context.input.shares >= 1
+    && context.input.shares <= 1000
+    && context.input.shares != 777
+};

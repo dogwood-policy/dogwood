@@ -1,0 +1,7 @@
+// Reads of the specific bucket b1 (the action's OTHER resource type) are
+// unconditionally permitted.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource == Drupe::Bucket::"b1"
+);

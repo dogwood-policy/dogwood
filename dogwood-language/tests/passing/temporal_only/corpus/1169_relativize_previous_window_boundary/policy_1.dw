@@ -1,0 +1,25 @@
+// Relativization / partition-safety, `previous` — WINDOW BOUNDARY straddle.
+//
+// `rewrite_previous` measures the window with `formerly[0,W]` (a CLOSED window:
+// the native `in_window` is `0 <= delta <= W`). This bundle straddles that
+// boundary with the decision point exactly W and exactly W+1 seconds after the
+// most-recent-mine Login, isolating the `<= W` edge under a pin. A foreign
+// event sits interior to the window in both traces (so the anti-join runs and
+// the window is measured from the decision point, not hop-by-hop).
+//
+// W = 1h = 3600s.
+//   trace_1 (ALLOW): alice Login @0, bob Transfer @1800 (foreign), alice Read
+//   @3600. The Login is delta=3600 = W before the Read → IN the closed window →
+//   most-recent mine is a Login within W → ALLOW.
+//
+//   trace_2 (DENY): identical but the Read is at @3601 → the Login is delta=3601
+//   > W → OUT of window → no in-window mine Login → DENY.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    previous within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

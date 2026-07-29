@@ -1,0 +1,19 @@
+// Permit Read only when the requesting principal's `dept` attribute is "eng",
+// as decided by the `Access::ByDept` information provider.
+//
+// This case's focus is the `.log` `entities(...)` envelope shape rather than a
+// new resolution path: the envelope carries **two** entities — the principal
+// with attributes (`{ dept: "eng" }`, read by the provider) and the resource
+// with **empty attributes** (`{}`). The empty-attrs form makes an entity
+// *present* in the store without supplying attributes; here it is the resource
+// (which a scope entity would otherwise be auto-added bare), exercising the
+// build path where a scope uid is caller-supplied rather than synthesized.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Access::ByDept(principal.dept).allowed == true
+};

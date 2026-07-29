@@ -1,0 +1,194 @@
+{
+  "policies": "corpus-tests/dd6b0c202d5fd206ff0035ae985aa75e35b95e65.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/dd6b0c202d5fd206ff0035ae985aa75e35b95e65.entities.json",
+  "schema": "corpus-tests/dd6b0c202d5fd206ff0035ae985aa75e35b95e65.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "t",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "5555"
+      },
+      "resource": {
+        "type": "t",
+        "id": ""
+      },
+      "context": {
+        "wmm": {}
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "t",
+        "id": "@@@@@@@@@@@\u0002\u0000\u0003\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0000\u0003\u001dN\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": "5555"
+      },
+      "resource": {
+        "type": "t",
+        "id": ""
+      },
+      "context": {
+        "wmm": {}
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "t",
+        "id": "@@@@@@@@@@@\u0002\u0000\u0003\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0000\u0003\u001dN\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": "5555"
+      },
+      "resource": {
+        "type": "t",
+        "id": ""
+      },
+      "context": {
+        "wmm": {}
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "t",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "5555"
+      },
+      "resource": {
+        "type": "t",
+        "id": "@@@@@@@@@@@\u0002\u0000\u0003\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0000\u0003\u001dN\u0000"
+      },
+      "context": {
+        "wmm": {}
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "t",
+        "id": "@@@@@@@@@@@\u0002\u0000\u0003\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0000\u0003\u001dN\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": "5555"
+      },
+      "resource": {
+        "type": "t",
+        "id": "@@@@@@@@@@@\u0002\u0000\u0003\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0000\u0003\u001dN\u0000"
+      },
+      "context": {
+        "wmm": {}
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "t",
+        "id": "@@@@@@@@@@@\u0002\u0000\u0003\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0000\u0003\u001dN\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": "5555"
+      },
+      "resource": {
+        "type": "t",
+        "id": ""
+      },
+      "context": {
+        "wmm": {}
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "t",
+        "id": "@@@@@@@@@@@\u0002\u0000\u0003\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0000\u0003\u001dN\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": "5555"
+      },
+      "resource": {
+        "type": "t",
+        "id": "@@@@@@@@@@@\u0002\u0000\u0003\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0000\u0003\u001dN\u0000"
+      },
+      "context": {
+        "wmm": {}
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "t",
+        "id": "@@@@@@@@@@@\u0002\u0000\u0003\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0000\u0003\u001dN\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": "5555"
+      },
+      "resource": {
+        "type": "t",
+        "id": "@@@@@@@@@@@\u0002\u0000\u0003\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0002\u0000\u0003\u001dN\u0000"
+      },
+      "context": {
+        "wmm": {}
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Write"::request{ input.user: context.input.user } && Drupe::Action::"Read"::request{ input.user: context.input.user } since within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

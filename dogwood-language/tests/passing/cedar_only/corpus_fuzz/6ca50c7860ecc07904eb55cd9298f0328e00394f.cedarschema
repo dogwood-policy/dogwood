@@ -1,0 +1,34 @@
+entity a;
+
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1}\u{1}" in [Action::"z~", Action::"N~\u{1f}", Action::"\u{e}", Action::""] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{e}" in [Action::""] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "N~\u{1f}" in [Action::"\u{e}", Action::""] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "z~" in [Action::"N~\u{1f}", Action::"\u{e}", Action::""] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    Ho5cDDDDDDxD?: __cedar::Bool
+  }
+};
+

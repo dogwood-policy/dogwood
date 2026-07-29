@@ -1,0 +1,18 @@
+// Companion to 0271 (which uses `formerly within`). Probes whether the
+// "omitted predicate fields are wildcarded" rule is honored under
+// `previous within`, which goes through a different translation path
+// in the DSQL backend.
+//
+// `Login` has fields `(server, user)`, but the predicate only mentions
+// `user`. The runtime must match the prior Login regardless of which
+// `server` it used. Read is permitted only if the same user logged in
+// at the immediately preceding time point (within 1 hour).
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    previous within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

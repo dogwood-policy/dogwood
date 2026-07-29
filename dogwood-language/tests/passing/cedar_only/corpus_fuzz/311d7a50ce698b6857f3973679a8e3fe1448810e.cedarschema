@@ -1,0 +1,19 @@
+entity a = {
+  z?: {
+    ""?: {    },
+    "\0\0"?: {    },
+    "\0\0\0hh"?: {    },
+    "\tV"?: {    },
+    "!\u{3}h::DebiaV6"?: {    },
+    "#sour\0\0\0\0\0ce\u{2}"?: {    },
+    A?: {    },
+    U?: {    }
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

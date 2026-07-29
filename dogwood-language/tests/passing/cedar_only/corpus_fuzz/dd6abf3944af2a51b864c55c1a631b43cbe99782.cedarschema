@@ -1,0 +1,12 @@
+entity a;
+
+action "" in [Action::"\u{f}", Action::"@"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{f}" in [Action::"@"];
+
+action "@";
+

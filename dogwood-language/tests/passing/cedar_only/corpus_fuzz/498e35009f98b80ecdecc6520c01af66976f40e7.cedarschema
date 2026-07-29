@@ -1,0 +1,13 @@
+@I
+entity a;
+
+action "" in [Action::"Q", Action::"QQQ"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "Q" in [Action::"QQQ"];
+
+action "QQQ";
+

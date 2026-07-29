@@ -1,0 +1,15 @@
+entity a tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: {
+      ""?: __cedar::Bool,
+      "336"?: __cedar::Bool,
+      "36"?: {      },
+      A?: __cedar::Bool
+    }
+  }
+};
+

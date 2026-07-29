@@ -1,0 +1,24 @@
+entity a tags __cedar::datetime;
+
+@B
+@D3S1S3T1eddb0("\u{e}")
+@EW0SRRRRRR1ER
+@F
+@LRRR000
+@LS33VRRT2RRa3("@[")
+@d("")
+@duRa("=\u{e}")
+@rzE("")
+@v("")
+@v3T33S1Ra0
+@w
+action "" in [Action::":~Ct$", Action::"\u{1d}@["] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1d}@[";
+
+action ":~Ct$" in [Action::"\u{1d}@["];
+

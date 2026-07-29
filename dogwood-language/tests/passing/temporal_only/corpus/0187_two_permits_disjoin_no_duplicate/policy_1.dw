@@ -1,0 +1,11 @@
+// Two permits that both fire under identical conditions. The monitor
+// must emit a single verdict per tp, not one per matching permit.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

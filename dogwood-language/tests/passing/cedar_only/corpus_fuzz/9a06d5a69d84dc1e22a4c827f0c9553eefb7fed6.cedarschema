@@ -1,0 +1,13 @@
+entity a = {
+  @A0
+  @Ve
+  @bo("")
+  A: a
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

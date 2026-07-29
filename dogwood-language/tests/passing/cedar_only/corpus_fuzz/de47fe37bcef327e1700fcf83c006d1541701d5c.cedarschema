@@ -1,0 +1,8 @@
+entity A tags Set<Set<{}>>;
+
+action "action" appliesTo {
+  principal: [A],
+  resource: [A],
+  context: {}
+};
+

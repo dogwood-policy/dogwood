@@ -1,0 +1,6 @@
+{
+  "name": "dogwood",
+  "description": "Dogwood policy authoring tools for Claude Code. Bundles the autoformalize-policies skill, which turns a natural-language authorization requirement into a validated Dogwood (.dw) policy and checks it with the `dogwood` CLI.",
+  "version": "1.0.0",
+  "skills": "./.claude/skills/"
+}

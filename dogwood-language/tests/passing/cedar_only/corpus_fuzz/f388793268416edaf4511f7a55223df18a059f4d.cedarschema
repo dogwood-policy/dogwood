@@ -1,0 +1,12 @@
+namespace g::g::r {
+  entity L0 enum [""];
+
+  entity g enum [""];
+
+  action "action" appliesTo {
+    principal: [g],
+    resource: [g],
+    context: {}
+  };
+}
+

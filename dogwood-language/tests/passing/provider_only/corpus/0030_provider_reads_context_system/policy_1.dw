@@ -1,0 +1,13 @@
+// Permit Read only during business hours, where the current hour is read from
+// a NON-`input` request-context group (`context.system.hour`) and passed to the
+// `Time::WithinHours` provider. Proves provider `context.<path>` args resolve
+// against the request context record, not the logged temporal record.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Time::WithinHours(context.system.hour).ok == true
+};

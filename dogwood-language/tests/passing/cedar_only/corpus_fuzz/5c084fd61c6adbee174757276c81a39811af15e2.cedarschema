@@ -1,0 +1,26 @@
+entity a = {
+  A?: __cedar::duration,
+  E?: __cedar::datetime,
+  _: __cedar::Long,
+  i?: __cedar::String,
+  i00?: __cedar::datetime,
+  @H7777777("")
+  j?: a,
+  @kQQQQ("YYYYYYYYYY]YYYYYYYYY")
+  @r("")
+  r: __cedar::ipaddr,
+  r3?: __cedar::decimal,
+  rbcRS33654?: __cedar::Bool,
+  rm3ukucR30: __cedar::Long,
+  @r2l575Rar
+  v?: a,
+  w?: a,
+  z?: {  }
+} tags __cedar::Long;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

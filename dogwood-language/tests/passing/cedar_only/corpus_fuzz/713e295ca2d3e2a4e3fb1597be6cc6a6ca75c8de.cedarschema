@@ -1,0 +1,36 @@
+entity a = {
+  z?: {
+    ""?: __cedar::String,
+    "\0\0"?: __cedar::String,
+    "\u{1d}\u{3}"?: __cedar::String,
+    "\u{1d}$w"?: __cedar::String,
+    "$"?: __cedar::String,
+    ":~"?: __cedar::String,
+    "=\u{e}"?: __cedar::String,
+    "["?: __cedar::String,
+    "[@T\u{1d}@["?: __cedar::String,
+    hh?: {
+      ""?: __cedar::String,
+      "\u{3}dd&33330Fdddddddd+dd\u{1d}@\n,"?: __cedar::String,
+      "\u{e}"?: __cedar::String,
+      "\u{1d}\u{3}"?: {
+        ""?: __cedar::String,
+        ")))))))))))))))))))))))))))))}"?: __cedar::String,
+        h?: __cedar::String,
+        "}"?: __cedar::String
+      },
+      "\u{1d}@gffd~"?: __cedar::datetime,
+      ":~$*\u{e}"?: __cedar::String,
+      "["?: __cedar::String,
+      "[@"?: __cedar::String,
+      "^"?: __cedar::String
+    }
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

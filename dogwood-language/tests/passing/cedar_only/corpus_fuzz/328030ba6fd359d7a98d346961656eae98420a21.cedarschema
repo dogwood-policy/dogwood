@@ -1,0 +1,17 @@
+namespace r::r::r::r::r::r::r::rR {
+  entity A enum [""];
+
+  entity f;
+
+  @A
+  entity r;
+
+  entity r3x0y enum ["", ""];
+
+  action "action" appliesTo {
+    principal: [f],
+    resource: [f],
+    context: {}
+  };
+}
+

@@ -1,0 +1,155 @@
+entity a tags __cedar::String;
+
+action "" in [Action::":~", Action::"\u{1d}@[", Action::"\u{3}\u{1d}$w", Action::"$", Action::"=\u{e}", Action::"\u{1d}", Action::"\u{3}[", Action::"@T", Action::"\u{1d}@gf\u{e}fd", Action::"~", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"5~$"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{3}\u{1d}$w" in [Action::"$", Action::"=\u{e}", Action::"\u{1d}", Action::"\u{3}[", Action::"@T", Action::"\u{1d}@gf\u{e}fd", Action::"~", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"5~$"];
+
+action "\u{3}[" in [Action::"@T", Action::"\u{1d}@gf\u{e}fd", Action::"~", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"5~$"];
+
+action "\u{1d}" in [Action::"\u{3}[", Action::"@T", Action::"\u{1d}@gf\u{e}fd", Action::"~", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"5~$"];
+
+action "\u{1d}\u{3}" in [Action::"[@", Action::"5~$"];
+
+action "\u{1d}@[" in [Action::"\u{3}\u{1d}$w", Action::"$", Action::"=\u{e}", Action::"\u{1d}", Action::"\u{3}[", Action::"@T", Action::"\u{1d}@gf\u{e}fd", Action::"~", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"5~$"];
+
+action "\u{1d}@gf\u{e}fd" in [Action::"~", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"5~$"];
+
+action "$" in [Action::"=\u{e}", Action::"\u{1d}", Action::"\u{3}[", Action::"@T", Action::"\u{1d}@gf\u{e}fd", Action::"~", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"5~$"];
+
+action "5~$";
+
+action ":~" in [Action::"\u{1d}@[", Action::"\u{3}\u{1d}$w", Action::"$", Action::"=\u{e}", Action::"\u{1d}", Action::"\u{3}[", Action::"@T", Action::"\u{1d}@gf\u{e}fd", Action::"~", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"5~$"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: __cedar::String,
+    D3S1SW044kVOO?: __cedar::String,
+    H?: __cedar::duration,
+    LS33TuRp3zERR?: __cedar::String,
+    M?: {    },
+    VLLLL?: __cedar::String,
+    XcRcRiZ343?: {    },
+    iO000000O33?: {    },
+    j?: {
+      ""?: {      },
+      "\u{3}\u{1d}$w"?: {      },
+      "\u{3}["?: __cedar::String,
+      "\u{1d}"?: __cedar::String,
+      "$"?: __cedar::duration,
+      ":~"?: {      },
+      @DkkPP00R(":~")
+      @LS33TauRa3zER("")
+      @m31L("\u{1d}@gf")
+      "=\u{e}": {
+        @A
+        @vbpp
+        "": Set<Set<__cedar::Long>>,
+        "\u{3}\u{1d}$w"?: {
+          ""?: {          },
+          "\u{3}\u{1d}$w"?: {          },
+          "\u{3}["?: {          },
+          @kXXXzOOO
+          "\u{18}\u{18}\u{18}[@\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}X\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}FmmmmmmXX\0\0": {          },
+          "\u{1d}"?: {          },
+          "\u{1d}\u{3}"?: {          },
+          "\u{1d}@["?: {          },
+          "\u{1d}@gf\u{e}fd"?: {          },
+          "$"?: {          },
+          ":~"?: {          },
+          "=\u{e}"?: {          },
+          "@T"?: {          },
+          "^"?: {          },
+          "~"?: {          }
+        },
+        "\u{3}["?: {        },
+        "\u{3}vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"?: {        },
+        "\u{1d}"?: {        },
+        "\u{1d}@["?: {
+          ""?: {          },
+          "\0\u{7}/"?: {          },
+          "\u{1}\0\0\u{15}X\u{18}\u{18}\u{18}decisi\u{15}n"?: {          },
+          "\u{4}"?: {          },
+          "#"?: {          },
+          ",#"?: {          },
+          @YRg4("")
+          @hD1w
+          e?: __cedar::datetime
+        },
+        "\u{1d}@gf\u{e}fd"?: {        },
+        "$"?: {        },
+        "5~$\u{16}"?: {        },
+        @iO000000O33("o")
+        @r
+        @r333l("#")
+        @w("3#")
+        ":~": __cedar::Bool,
+        @YOS1OOOO
+        "=\u{e}"?: {        },
+        "@\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}8\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}X\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}FmmmmmmXX\0\0": __cedar::Bool,
+        "@T"?: {        },
+        "[@"?: {        },
+        "^"?: {        },
+        "~"?: {        }
+      },
+      "@\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}X\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}FmmmmmmXX\0\0"?: {
+        ""?: {        },
+        "\u{1d}\u{3}"?: {        },
+        @YOOOOOOO
+        "\u{1d}@gf\u{e}fd"?: __cedar::Bool,
+        "5~$"?: {        },
+        "[@"?: {        },
+        "^"?: {        },
+        "~"?: {        }
+      },
+      "@["?: {      }
+    },
+    m?: {    },
+    q?: {    },
+    r?: __cedar::String,
+    r333l?: {
+      ""?: {      },
+      "\u{1d}\u{3}"?: {      },
+      @B
+      @j("")
+      "\u{1d}@gf\u{e}fd": {
+        "": a,
+        e: a
+      },
+      "5~$"?: {      },
+      @iO000000O33("o")
+      @r
+      @r333l("#")
+      @vRS33bbpppzp000
+      @w("3#")
+      "@T"?: __cedar::Bool,
+      "[@"?: {      },
+      @E("\u{3}")
+      @F03T1S33T("")
+      @LSW044k
+      @r("\u{e}")
+      "^": __cedar::duration,
+      @VLLLG("")
+      @r("S")
+      "~": __cedar::Long
+    },
+    rj3333333KQTRRlw0?: __cedar::String,
+    v3?: {    },
+    vbpp?: {    },
+    z000uaRcRpZ?: {    }
+  }
+};
+
+action "=\u{e}" in [Action::"\u{1d}", Action::"\u{3}[", Action::"@T", Action::"\u{1d}@gf\u{e}fd", Action::"~", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"5~$"];
+
+action "@T" in [Action::"\u{1d}@gf\u{e}fd", Action::"~", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"5~$"];
+
+action "[@" in [Action::"5~$"];
+
+action "^" in [Action::"\u{1d}\u{3}", Action::"[@", Action::"5~$"];
+
+action "~" in [Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"5~$"];
+

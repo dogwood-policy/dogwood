@@ -1,0 +1,10 @@
+@T__00lW
+@T______
+entity a tags Set<a>;
+
+action "95" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

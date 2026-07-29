@@ -1,0 +1,33 @@
+entity a = {
+  A?: __cedar::String,
+  wo?: Set<{
+    @L
+    @q("3g02+\0")
+    ""?: a,
+    "\u{e}": a,
+    "33g02+\0"?: {
+      @C
+      "": a,
+      "\0\0\0!@": a,
+      "\u{2}\0\0\u{1}\0"?: __cedar::Long,
+      "\n\0\0!@": __cedar::String,
+      @L
+      @q("\0\0\0\0\0\0\033g02+\0")
+      "\u{e}"?: a,
+      "33g02+\0"?: __cedar::String,
+      @C
+      "@333g02+\0\0\0\0\0\0!@"?: a,
+      "@@"?: __cedar::Long
+    },
+    @C
+    "@@": a
+  }>,
+  z?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

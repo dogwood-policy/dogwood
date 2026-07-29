@@ -1,0 +1,16 @@
+entity a = {
+  B3?: __cedar::String,
+  C?: __cedar::String,
+  M?: __cedar::String,
+  r?: __cedar::String,
+  r33333333?: __cedar::String,
+  r333333333333333?: __cedar::String,
+  rN33?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

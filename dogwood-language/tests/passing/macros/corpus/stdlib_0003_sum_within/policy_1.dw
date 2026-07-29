@@ -1,0 +1,16 @@
+// stdlib `sum_within`: sum a bound value column over matching events in a
+// window. The summed value `a` is bound from the predicate the caller passes.
+// Permit an Alert when the total transferred by any user exceeds 200 within
+// the last hour.
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (total: Long). (
+        (sum_within(a, 1h, Drupe::Action::"Transfer"::request{ input.user: _, input.amount: a })) == total
+        && total > 200
+    )
+};

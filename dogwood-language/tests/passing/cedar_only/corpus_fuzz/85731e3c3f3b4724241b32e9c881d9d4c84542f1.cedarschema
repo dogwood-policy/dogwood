@@ -1,0 +1,35 @@
+entity a = {
+  @A
+  @J("")
+  @T("")
+  @U33o0Y3WWWW("")
+  @r("")
+  @r33("")
+  @t("-----")
+  @xTT("")
+  @z("333333333")
+  @zpM0rIoppMMppp333("")
+  r: {
+    @J("")
+    @U33o0Y3WWWW("")
+    @r("")
+    @r33333333("")
+    @t("-----")
+    @tjjjjVjjjij3("")
+    @w
+    @z("333333333")
+    @zpM0rIoppMMppp333("")
+    "": __cedar::String,
+    @r
+    @r3331333333333333("")
+    @tjjjjjVjjjij("")
+    "\0": __cedar::datetime
+  }
+} tags a;
+
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

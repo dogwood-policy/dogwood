@@ -1,0 +1,12 @@
+@B
+entity a enum [""];
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @m("[\0\0\0")
+    A?: Set<__cedar::decimal>
+  }
+};
+

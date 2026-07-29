@@ -1,0 +1,30 @@
+entity BxB = {
+  rX?: __cedar::ipaddr
+};
+
+entity g_ = {
+  fB?: __cedar::ipaddr,
+  wlbYrBBB1x_?: __cedar::ipaddr
+} tags __cedar::String;
+
+entity nx_B;
+
+entity r1x_RwR3ERS1MR = {
+  A?: __cedar::String,
+  K?: __cedar::String
+};
+
+entity rB;
+
+entity rD3 = {
+  @A("")
+  @rX
+  BxB?: __cedar::ipaddr
+};
+
+action "action" appliesTo {
+  principal: [g_],
+  resource: [g_],
+  context: {}
+};
+

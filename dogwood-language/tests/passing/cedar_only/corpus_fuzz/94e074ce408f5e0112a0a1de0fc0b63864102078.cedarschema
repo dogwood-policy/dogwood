@@ -1,0 +1,21 @@
+entity a;
+
+action "" in [Action::":", Action::"\u{e}", Action::"ipa"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{e}" in [Action::"ipa"];
+
+action ":" in [Action::"\u{e}", Action::"ipa"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    dC3o?: a,
+    m: __cedar::datetime
+  }
+};
+
+action "ipa";
+

@@ -1,0 +1,15 @@
+// Probes whether DSQL anti-joins correctly when the middle
+// conjunct of a chained `&&` in an unless block yields no
+// rows. Permit Write should fire because the unless predicate
+// is false (Login on server "s2" never occurs).
+
+permit (
+    principal,
+    action == Drupe::Action::"Write",
+    resource
+)
+unless temporal {
+    formerly within 1h Drupe::Action::"Read"::request{ input.user: context.input.user, input.document: context.input.document }
+    && formerly within 1h Drupe::Action::"Login"::request{ input.server: "s2", input.user: context.input.user }
+    && previous within 1h Drupe::Action::"Read"::request{ input.user: context.input.user, input.document: context.input.document }
+};

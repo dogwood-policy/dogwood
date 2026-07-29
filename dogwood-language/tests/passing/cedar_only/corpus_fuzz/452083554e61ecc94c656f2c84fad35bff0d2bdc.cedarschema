@@ -1,0 +1,42 @@
+entity a tags __cedar::String;
+
+action "" in [Action::":~", Action::"\u{3}", Action::"\u{e}", Action::"ff^", Action::"d~", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"$", Action::"[", Action::"ebi ai"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{3}" in [Action::"\u{e}", Action::"ff^", Action::"d~", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"$", Action::"[", Action::"ebi ai"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{e}" in [Action::"ff^", Action::"d~", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"$", Action::"[", Action::"ebi ai"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1d}\u{3}" in [Action::"[@", Action::"$", Action::"[", Action::"ebi ai"];
+
+action "$" in [Action::"[", Action::"ebi ai"];
+
+action ":~" in [Action::"\u{3}", Action::"\u{e}", Action::"ff^", Action::"d~", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"$", Action::"[", Action::"ebi ai"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "[" in [Action::"ebi ai"];
+
+action "[@" in [Action::"$", Action::"[", Action::"ebi ai"];
+
+action "^" in [Action::"\u{1d}\u{3}", Action::"[@", Action::"$", Action::"[", Action::"ebi ai"];
+
+action "d~" in [Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"$", Action::"[", Action::"ebi ai"];
+
+action "ebi ai";
+
+action "ff^" in [Action::"d~", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"$", Action::"[", Action::"ebi ai"];
+

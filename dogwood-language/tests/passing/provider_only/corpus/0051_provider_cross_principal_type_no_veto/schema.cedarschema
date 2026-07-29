@@ -1,0 +1,19 @@
+// An action with multiple PRINCIPAL types where only one type declares the
+// attribute a provider consumes: Read applies to [OAuthUser, ServiceBot],
+// and only OAuthUser has `dept`. The provider rule narrows to OAuthUser in
+// its scope head, so ServiceBot requests are outside its applicability.
+namespace Drupe {
+  entity OAuthUser = {
+    dept: String
+  };
+  entity ServiceBot;
+  entity Gateway;
+  type ReadInput = {
+    document: String
+  };
+  action "Read" appliesTo {
+    principal: [OAuthUser, ServiceBot],
+    resource: [Gateway],
+    context: { input: ReadInput }
+  };
+}

@@ -1,0 +1,19 @@
+// Bare temporal-condition macro called directly inside `temporal { … }`.
+// Exercises the `ConditionKind::Call` resolution path — no `let r =
+// … in BODY` wrapper, no aggregation; the macro's body splices in
+// where the call sits.
+//
+// Macro-form rewrite of 0004_write_after_read.
+
+def temporal recently_read(?u, ?d) {
+    formerly within 1h Drupe::Action::"Read"::request{ input.user: ?u, input.document: ?d }
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Write",
+    resource
+)
+when temporal {
+    recently_read(context.input.user, context.input.document)
+};

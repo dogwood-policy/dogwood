@@ -1,0 +1,13 @@
+// Edge: context.input.amount > 100 inside formerly. Tests context_vs_literal
+// comparison operand type. Decision action is Alert (different from the
+// formerly target Transfer). Binds amount into predicate then compares.
+// At tp1 alert's context carries amount=200 from the prior Transfer.
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    formerly within 1h (Drupe::Action::"Transfer"::request{ input.user: context.input.server, input.amount: context.input.level } && context.input.level > 100)
+};

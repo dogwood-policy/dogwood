@@ -1,0 +1,13 @@
+entity a = {
+  A?: {
+    "D\u{1}\u{1}\u{1}\u{1}\u{1}\u{1}\u{1}\u{1}\u{1}\u{1}\u{1}\u{1}\u{1}\u{1}ebian 3\0Gz"?: __cedar::String,
+    "ebian A"?: __cedar::String
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

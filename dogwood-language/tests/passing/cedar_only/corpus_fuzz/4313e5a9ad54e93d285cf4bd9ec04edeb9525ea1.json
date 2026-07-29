@@ -1,0 +1,386 @@
+{
+  "policies": "corpus-tests/4313e5a9ad54e93d285cf4bd9ec04edeb9525ea1.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/4313e5a9ad54e93d285cf4bd9ec04edeb9525ea1.entities.json",
+  "schema": "corpus-tests/4313e5a9ad54e93d285cf4bd9ec04edeb9525ea1.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "": {
+            "__entity": {
+              "type": "a",
+              "id": ""
+            }
+          },
+          "\u0000\u0000": "",
+          "\u0001": "",
+          "\u0003\u001dw": "",
+          "\u0003d": "",
+          "\u001d@[": "",
+          "$": "",
+          "$=\u000e": 0,
+          ":~": "",
+          "=\u000e": "",
+          "@": false,
+          "M": "",
+          "[": "",
+          "d": "",
+          "dddd\u0000": "",
+          "ebian '\u0000\u0000\u0000ran\u0001\u0000\u001d\u0003": "",
+          "n\u0001\u0000\u001d\u0003": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "": {
+            "__entity": {
+              "type": "a",
+              "id": ""
+            }
+          },
+          "\u0000\u0000": "",
+          "\u0001": "",
+          "\u0003\u001dw": "",
+          "\u0003d": "",
+          "\u001d@[": "",
+          "$": "",
+          "$=\u000e": 0,
+          ":~": "",
+          "=\u000e": "",
+          "@": false,
+          "M": "",
+          "[": "",
+          "d": "",
+          "dddd\u0000": "",
+          "ebian '\u0000\u0000\u0000ran\u0001\u0000\u001d\u0003": "",
+          "n\u0001\u0000\u001d\u0003": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "": {
+            "__entity": {
+              "type": "a",
+              "id": ""
+            }
+          },
+          "\u0000\u0000": "",
+          "\u0001": "",
+          "\u0003\u001dw": "",
+          "\u0003d": "",
+          "\u001d@[": "",
+          "$": "",
+          "$=\u000e": 0,
+          ":~": "",
+          "=\u000e": "",
+          "@": false,
+          "M": "",
+          "[": "",
+          "d": "",
+          "dddd\u0000": "",
+          "ebian '\u0000\u0000\u0000ran\u0001\u0000\u001d\u0003": "",
+          "n\u0001\u0000\u001d\u0003": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "": {
+            "__entity": {
+              "type": "a",
+              "id": ""
+            }
+          },
+          "\u0000\u0000": "",
+          "\u0001": "",
+          "\u0003\u001dw": "",
+          "\u0003d": "",
+          "\u001d@[": "",
+          "$": "",
+          "$=\u000e": 0,
+          ":~": "",
+          "=\u000e": "",
+          "@": false,
+          "M": "",
+          "[": "",
+          "d": "",
+          "dddd\u0000": "",
+          "ebian '\u0000\u0000\u0000ran\u0001\u0000\u001d\u0003": "",
+          "n\u0001\u0000\u001d\u0003": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "": {
+            "__entity": {
+              "type": "a",
+              "id": ""
+            }
+          },
+          "\u0000\u0000": "",
+          "\u0001": "",
+          "\u0003\u001dw": "",
+          "\u0003d": "",
+          "\u001d@[": "",
+          "$": "",
+          "$=\u000e": 0,
+          ":~": "",
+          "=\u000e": "",
+          "@": false,
+          "M": "",
+          "[": "",
+          "d": "",
+          "dddd\u0000": "",
+          "ebian '\u0000\u0000\u0000ran\u0001\u0000\u001d\u0003": "",
+          "n\u0001\u0000\u001d\u0003": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "": {
+            "__entity": {
+              "type": "a",
+              "id": ""
+            }
+          },
+          "\u0000\u0000": "",
+          "\u0001": "",
+          "\u0003\u001dw": "",
+          "\u0003d": "",
+          "\u001d@[": "",
+          "$": "",
+          "$=\u000e": 0,
+          ":~": "",
+          "=\u000e": "",
+          "@": false,
+          "M": "",
+          "[": "",
+          "d": "",
+          "dddd\u0000": "",
+          "ebian '\u0000\u0000\u0000ran\u0001\u0000\u001d\u0003": "",
+          "n\u0001\u0000\u001d\u0003": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "": {
+            "__entity": {
+              "type": "a",
+              "id": ""
+            }
+          },
+          "\u0000\u0000": "",
+          "\u0001": "",
+          "\u0003\u001dw": "",
+          "\u0003d": "",
+          "\u001d@[": "",
+          "$": "",
+          "$=\u000e": 0,
+          ":~": "",
+          "=\u000e": "",
+          "@": false,
+          "M": "",
+          "[": "",
+          "d": "",
+          "dddd\u0000": "",
+          "ebian '\u0000\u0000\u0000ran\u0001\u0000\u001d\u0003": "",
+          "n\u0001\u0000\u001d\u0003": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "": {
+            "__entity": {
+              "type": "a",
+              "id": ""
+            }
+          },
+          "\u0000\u0000": "",
+          "\u0001": "",
+          "\u0003\u001dw": "",
+          "\u0003d": "",
+          "\u001d@[": "",
+          "$": "",
+          "$=\u000e": 0,
+          ":~": "",
+          "=\u000e": "",
+          "@": false,
+          "M": "",
+          "[": "",
+          "d": "",
+          "dddd\u0000": "",
+          "ebian '\u0000\u0000\u0000ran\u0001\u0000\u001d\u0003": "",
+          "n\u0001\u0000\u001d\u0003": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+// Relativization / partition-safety, `previous`, with THREE keys interleaved.
+//
+// All prior partition tests use two principals (one "mine", one "foreign").
+// This exercises the `previous` anti-join ("nothing of mine strictly between
+// the anchor and now") when TWO DISTINCT foreign principals are interspersed
+// between alice's own events — the case that distinguishes "exclude every
+// foreign key" from a bug that only excludes the nearest foreign key or
+// collapses all foreigns into one.
+//
+// Differential pair for alice's Read at @4:
+//   trace_1: alice Login, BOB Transfer, CAROL Transfer, alice Read.
+//   trace_2: alice Login,                               alice Read.
+// Under key-local semantics both bob and carol are excluded, so alice's
+// previous own event is the Login in BOTH traces -> PERMIT. Under global
+// semantics -- or a bug that excludes only one foreign key -- carol's
+// Transfer @3 is the immediately-preceding event (not a Login) -> deny,
+// diverging from trace_2. Both foreign events are non-Login on purpose, so a
+// naive global `previous` denies (making the discriminator sharp).
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    previous within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

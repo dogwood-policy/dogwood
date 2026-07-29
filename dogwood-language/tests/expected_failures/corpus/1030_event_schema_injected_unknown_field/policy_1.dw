@@ -1,0 +1,18 @@
+// Field injection is subject to the SAME names-only event-schema
+// validation as a hand-written field (design D8). Here a macro injects a
+// field `input.bogus` onto its Login-predicate argument. `bogus` is NOT
+// declared on Login::request (LoginInput has only server + user), so after
+// the injection folds the predicate carries an undeclared field and event
+// schema validation must reject it — exactly as if it had been typed
+// directly. The base predicate uses the correctly-declared `input.user`,
+// so the ONLY undeclared field is the injected one. Injection forces a
+// *declared* field to a value; it cannot invent a field.
+
+def temporal recently(?w, ?s) {
+    formerly within ?w (?s{ input.bogus: 1 })
+};
+
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    recently(1h, Drupe::Action::"Login"::request{ input.user: context.input.user })
+};

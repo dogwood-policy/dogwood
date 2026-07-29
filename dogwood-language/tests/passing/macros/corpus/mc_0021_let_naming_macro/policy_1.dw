@@ -1,0 +1,23 @@
+// `let_` naming macro: recovers `let`-style ergonomics after `let` was
+// removed from the grammar (exists/let design §8.1). `let_(?n, ?A, ?B)`
+// expands to `exists (?n: Long). (?A == ?n && ?B)` — `?n` is used in BOTH
+// binder position (the `exists` declaration) and term position (`== ?n`);
+// `?A` is an aggregate term passed as a macro argument. This works with no
+// special macro plumbing because an aggregate is an ordinary term: a raw
+// `count for … where φ` at the call site parses as a `CallArg::Term`.
+//
+// This mirrors mc_0004 (exactly one Login in the window) but drives it
+// through `let_`, so the verdict MUST match mc_0004's (`@2: true`) —
+// proving the naming macro is verdict-equivalent to the raw-`exists` form.
+
+def temporal let_(?n, ?A, ?B) {
+    exists (?n: Long). (?A == ?n && ?B)
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    let_(n, count for (t: Timepoint). where (formerly within 1h (Drupe::Action::"Login"::request{ input.user: _, input.server: context.input.server } && tp(t))), n == 1)};

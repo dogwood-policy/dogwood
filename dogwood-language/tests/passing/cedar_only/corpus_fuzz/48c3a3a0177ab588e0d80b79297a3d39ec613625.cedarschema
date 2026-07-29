@@ -1,0 +1,10 @@
+entity a enum [""];
+
+action "\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}" in [Action::"6$$$"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "6$$$";
+

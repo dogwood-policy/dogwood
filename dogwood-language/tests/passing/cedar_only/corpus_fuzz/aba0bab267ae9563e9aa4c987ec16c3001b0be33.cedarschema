@@ -1,0 +1,16 @@
+entity a;
+
+action "" in [Action::"\u{c}", Action::"@", Action::"S"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    F?: __cedar::ipaddr
+  }
+};
+
+action "\u{c}" in [Action::"@", Action::"S"];
+
+action "@" in [Action::"S"];
+
+action "S";
+

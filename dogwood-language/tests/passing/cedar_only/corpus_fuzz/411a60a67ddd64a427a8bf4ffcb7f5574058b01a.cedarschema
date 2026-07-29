@@ -1,0 +1,47 @@
+entity a tags __cedar::String;
+
+action "" in [Action::"\u{1d}@[", Action::"=\u{e}", Action::"\u{1d}", Action::"\u{3}[", Action::"@T", Action::"\u{1d}@gf\u{e}fd", Action::"~", Action::"^", Action::"\u{1d}\u{3}", Action::"[@"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{3}\u{1d}$w" in [Action::"\u{1d}@gf\u{e}fd", Action::"~", Action::"[@", Action::"["];
+
+action "\u{3}[" in [Action::"@T", Action::"~", Action::"[@", Action::"Debian \u{e}", Action::"["];
+
+action "\u{1d}" in [Action::"@T", Action::"Debian \u{e}", Action::"["];
+
+action "\u{1d}\u{3}" in [Action::"Debian \u{e}"];
+
+action "\u{1d}@[" in [Action::"\u{3}\u{1d}$w", Action::"@T", Action::"^", Action::"Debian \u{e}"];
+
+action "\u{1d}@gf\u{e}fd" in [Action::"^"];
+
+action "$" in [Action::"=\u{e}", Action::"\u{1d}", Action::"\u{3}[", Action::"\u{1d}@gf\u{e}fd", Action::"^"];
+
+action ":~" in [Action::"\u{1d}", Action::"\u{3}[", Action::"@T", Action::"\u{1d}@gf\u{e}fd", Action::"\u{1d}\u{3}", Action::"[@"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    YOOOOOOO?: {    }
+  }
+};
+
+action "=\u{e}" in [Action::"@T", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"Debian \u{e}", Action::"["];
+
+action "@T" in [Action::"\u{1d}@gf\u{e}fd"];
+
+action "Debian \u{e}";
+
+action "[";
+
+action "[@";
+
+action "^";
+
+@YdOOOS1OOOOOOO
+@_YlWllllllllll("")
+@vlllllllllllll("")
+action "~";
+

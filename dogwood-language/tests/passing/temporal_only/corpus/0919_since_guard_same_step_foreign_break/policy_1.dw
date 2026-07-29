@@ -1,0 +1,31 @@
+// Same-step guard compensation with an ANCHOR-SHARED correlation var — the
+// classical (non-GuardRel) sibling of the 0904 family's same-step gap.
+//
+// `Heartbeat{server: x} since Login{server: x}` requires an UNBROKEN
+// per-server heartbeat streak since that server's login. The DSQL backend's
+// guard streak is correctly keyed per server, but its SAME-STEP compensation
+// (the streak-extend CTE's write is snapshot-invisible, so "the guard fires
+// NOW" is checked with an inline EXISTS over the current batch) tested only
+// the guard's predicate SHAPE — not that the event's `server` matches the
+// anchor row being validated.
+//
+// @30 is the trap: server s1's streak is alive through @20, and a heartbeat
+// fires at @30 — but for server s2. The unconstrained EXISTS wrongly extends
+// s1's streak → over-PERMIT; the interpreter denies (s1's streak broke at
+// @30, and s2 has no Login anchor). @10/@20 are the over-constraint
+// controls: a MATCHING same-step heartbeat must keep permitting.
+//
+// Interpreter is the oracle (see expected_1.out). Found by independent
+// review of the temporal-compiler same-step guard compensation.
+permit (
+    principal,
+    action == Drupe::Action::"Heartbeat",
+    resource
+)
+when temporal {
+    exists (x: String). (
+        Drupe::Action::"Heartbeat"::request{ input.server: x }
+        since within 1h
+        Drupe::Action::"Login"::request{ input.server: x }
+    )
+};

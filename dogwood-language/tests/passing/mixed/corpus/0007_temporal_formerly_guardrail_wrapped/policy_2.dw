@@ -1,0 +1,9 @@
+// Forbid Write when the document starts with RESTRICTED (guardrail check)
+forbid (
+    principal,
+    action == Drupe::Action::"Write",
+    resource
+)
+when guardrails {
+    Strings::Matches(context.input.document, "^RESTRICTED").matched == true
+};

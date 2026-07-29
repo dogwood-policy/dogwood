@@ -1,0 +1,30 @@
+entity a = {
+  A: Set<__cedar::ipaddr>,
+  T?: __cedar::String,
+  T______?: __cedar::String,
+  T_____i?: __cedar::String,
+  @d
+  @d33S1Razw0("\u{1d}@[")
+  @m
+  @rEVu("")
+  @rRaY3zERRT
+  @x
+  U23T1S33?: a,
+  d?: __cedar::String,
+  m?: __cedar::String,
+  @d
+  @m
+  @m333EVuTRVYRaY("=\u{e}")
+  @x
+  n: __cedar::ipaddr,
+  @m("ebi a")
+  @v3T33S1Raz
+  vVV3u_____z____?: a
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

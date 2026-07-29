@@ -1,0 +1,17 @@
+// Macro-form rewrite of 0858_count_lt_threshold.
+//
+// Permit Read only when fewer than 3 Logins by the same user have
+// occurred in the last hour. The four trace/expected pairs probe
+// boundary behavior (0, 1, 2, 3 prior logins).
+
+def temporal count_formerly(?w, ?s) {
+    count for ($t: Timepoint). where (formerly within ?w (?s && tp($t)))
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    exists (n: Long). ((count_formerly(1h, Drupe::Action::"Login"::request{ input.user: context.input.user })) == n && n < 3)};

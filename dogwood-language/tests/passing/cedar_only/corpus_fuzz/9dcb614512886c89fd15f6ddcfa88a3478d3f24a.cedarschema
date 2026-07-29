@@ -1,0 +1,12 @@
+entity PR = {
+  F?: {
+    "\n"?: Set<__cedar::String>
+  }
+};
+
+action "action" appliesTo {
+  principal: [PR],
+  resource: [PR],
+  context: {}
+};
+

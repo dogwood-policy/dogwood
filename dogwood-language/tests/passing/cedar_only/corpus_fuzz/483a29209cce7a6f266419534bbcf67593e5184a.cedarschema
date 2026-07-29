@@ -1,0 +1,31 @@
+entity T;
+
+entity r;
+
+entity t tags __cedar::String;
+
+@shEg0w
+entity xTT;
+
+entity xui;
+
+action "" in [Action::"g", Action::"yA", Action::"\u{1}", Action::"P ", Action::"hSSSSSSS", Action::"SSSSSSSS", Action::"SSS"] appliesTo {
+  principal: [r],
+  resource: [r],
+  context: {}
+};
+
+action "\u{1}" in [Action::"P ", Action::"hSSSSSSS", Action::"SSSSSSSS", Action::"SSS"];
+
+action "P " in [Action::"hSSSSSSS", Action::"SSSSSSSS", Action::"SSS"];
+
+action "SSS";
+
+action "SSSSSSSS" in [Action::"SSS"];
+
+action "g" in [Action::"yA", Action::"\u{1}", Action::"P ", Action::"hSSSSSSS", Action::"SSSSSSSS", Action::"SSS"];
+
+action "hSSSSSSS" in [Action::"SSSSSSSS", Action::"SSS"];
+
+action "yA" in [Action::"\u{1}", Action::"P ", Action::"hSSSSSSS", Action::"SSSSSSSS", Action::"SSS"];
+

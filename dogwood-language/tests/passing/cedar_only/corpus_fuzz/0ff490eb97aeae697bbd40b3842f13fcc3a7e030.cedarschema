@@ -1,0 +1,12 @@
+namespace w {
+  entity A00 enum [""];
+
+  entity iOz enum [""];
+
+  action "action" appliesTo {
+    principal: [iOz],
+    resource: [iOz],
+    context: {}
+  };
+}
+

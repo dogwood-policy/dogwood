@@ -1,0 +1,71 @@
+entity a = {
+  A?: {
+    "": {    },
+    "\0"?: __cedar::Long,
+    "\0\0"?: {    },
+    @iO000000O33("o")
+    @r
+    @r333l("#")
+    @vRS33bbpppzp000
+    @w("3#")
+    "\u{1}\n\u{f}VV\n\ne?\0:\u{f}ee~"?: __cedar::Bool,
+    "\u{3}\u{1d}$w"?: {    },
+    "\u{3}\u{1d}@"?: {    },
+    "\u{3}["?: {    },
+    "\u{3}gf"?: {    },
+    "\u{e}"?: {    },
+    "\u{14}"?: {    },
+    "\u{1d}"?: {    },
+    "\u{1d}\u{3}"?: __cedar::String,
+    "\u{1d}@["?: {
+      ""?: {      },
+      "\0\u{7}/"?: {      },
+      "\u{1}\0\0\u{15}\u{15}\u{15}\u{15}\u{15}\u{15}\u{15}\u{15}\u{10}"?: {      },
+      "\u{4}"?: {      },
+      "#"?: {      },
+      ",#"?: {      },
+      S?: {      },
+      @E("\u{3}")
+      @F03T1S33T("")
+      @L03FPV3
+      @g044kVO
+      @m("\u{3}\u{1d}@~\u{1f}")
+      @r("\u{e}")
+      @vRS33T1Ra3KRooo("qqqqqqqqqqqq")
+      e: __cedar::duration
+    },
+    "\u{1d}@[=\u{e}"?: __cedar::datetime,
+    "\u{1d}@gf"?: {    },
+    "\u{1d}@gf\u{e}fd"?: {    },
+    "$g\u{1}\0\0\0\0\0\0"?: {    },
+    "$qqqqq"?: {    },
+    "5~$"?: __cedar::String,
+    ":~"?: {    },
+    "=\u{e}"?: {    },
+    "@T"?: {    },
+    "N~\u{1f}"?: {    },
+    "["?: {    },
+    "[@"?: __cedar::String,
+    "^"?: __cedar::String,
+    "qqqqq\0\0!"?: {    },
+    @DkkkPP00("")
+    @LS33TauRa3zER("")
+    @US1RazjE("")
+    @UaX
+    @m31L("\u{1d}@gf\u{e}fd")
+    @vVR3T33S
+    zVV?: {    },
+    "z~": {    },
+    "~"?: {
+      ""?: {      },
+      "\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}"?: {      }
+    }
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

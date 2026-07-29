@@ -1,0 +1,19 @@
+// The decision action's context is declared AS A COMMON-TYPE REFERENCE
+// (`context: ReadCtx`), not an inline record — a legal Cedar spelling the
+// grafting passes must resolve and inline when hoisting temporal fields.
+namespace Drupe {
+    entity OAuthUser;
+    entity Gateway;
+    type LoginInput = { user: String };
+    type ReadCtx = { input: { document: String, user: String } };
+    action Login appliesTo {
+        principal: [OAuthUser],
+        resource: [Gateway],
+        context: { input: LoginInput }
+    };
+    action Read appliesTo {
+        principal: [OAuthUser],
+        resource: [Gateway],
+        context: ReadCtx
+    };
+}

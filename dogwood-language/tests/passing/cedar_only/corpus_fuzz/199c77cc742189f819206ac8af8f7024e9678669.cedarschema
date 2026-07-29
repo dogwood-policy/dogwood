@@ -1,0 +1,32 @@
+entity a tags __cedar::String;
+
+action "" in [Action::":", Action::"?", Action::"l[", Action::"=\u{e}", Action::"[@[", Action::"[@", Action::"$\u{18}\u{18}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1d}\u{3}" in [Action::"[@[", Action::"\u{1d}@", Action::"ffd~", Action::"^", Action::"Debian \u{1d}\u{3}", Action::"[@", Action::"$\u{18}\u{18}"];
+
+action "\u{1d}@" in [Action::"ffd~", Action::"^", Action::"Debian \u{1d}\u{3}", Action::"[@", Action::"$\u{18}\u{18}"];
+
+action "$\u{18}\u{18}";
+
+action ":" in [Action::"?", Action::"l[", Action::"=\u{e}", Action::"\u{1d}\u{3}", Action::"[@[", Action::"\u{1d}@", Action::"ffd~", Action::"^", Action::"Debian \u{1d}\u{3}", Action::"[@", Action::"$\u{18}\u{18}"];
+
+action "=\u{e}" in [Action::"\u{1d}\u{3}", Action::"[@[", Action::"\u{1d}@", Action::"ffd~", Action::"^", Action::"Debian \u{1d}\u{3}", Action::"[@", Action::"$\u{18}\u{18}"];
+
+action "?" in [Action::"l[", Action::"=\u{e}", Action::"\u{1d}\u{3}", Action::"[@[", Action::"\u{1d}@", Action::"ffd~", Action::"^", Action::"Debian \u{1d}\u{3}", Action::"[@", Action::"$\u{18}\u{18}"];
+
+action "Debian \u{1d}\u{3}" in [Action::"[@", Action::"$\u{18}\u{18}"];
+
+action "[@" in [Action::"$\u{18}\u{18}"];
+
+action "[@[" in [Action::"\u{1d}@", Action::"ffd~", Action::"^", Action::"Debian \u{1d}\u{3}", Action::"[@", Action::"$\u{18}\u{18}"];
+
+action "^" in [Action::"Debian \u{1d}\u{3}", Action::"[@", Action::"$\u{18}\u{18}"];
+
+action "ffd~" in [Action::"^", Action::"Debian \u{1d}\u{3}", Action::"[@", Action::"$\u{18}\u{18}"];
+
+action "l[" in [Action::"=\u{e}", Action::"\u{1d}\u{3}", Action::"[@[", Action::"\u{1d}@", Action::"ffd~", Action::"^", Action::"Debian \u{1d}\u{3}", Action::"[@", Action::"$\u{18}\u{18}"];
+

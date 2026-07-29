@@ -1,0 +1,36 @@
+@J("")
+@JW3333333("")
+@g("")
+@r("")
+@r33333I033f("")
+@xT3("")
+@xTT("")
+entity a = {
+  @A
+  @J("")
+  @r("")
+  @xT3("")
+  @xTT("")
+  r: __cedar::Long
+} tags a;
+
+action "" in [Action::"Debian "] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    J?: __cedar::String,
+    JWW333333?: __cedar::String,
+    _?: __cedar::String,
+    r?: __cedar::String,
+    @A
+    @J("")
+    @r("")
+    @xT3("")
+    @xTT("")
+    v: __cedar::Long,
+    z?: __cedar::String
+  }
+};
+
+action "Debian ";
+

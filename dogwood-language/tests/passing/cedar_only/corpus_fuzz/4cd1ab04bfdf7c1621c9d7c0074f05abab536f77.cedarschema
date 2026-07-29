@@ -1,0 +1,18 @@
+entity A tags __cedar::decimal;
+
+entity g enum [""];
+
+entity gMM = {
+  A?: __cedar::String,
+  AXXDXXX?: __cedar::String,
+  AXXXXXX?: __cedar::String,
+  G66v60y?: __cedar::String,
+  v1m00h3?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [A],
+  resource: [A],
+  context: {}
+};
+

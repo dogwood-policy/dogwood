@@ -1,0 +1,16 @@
+entity B enum [""];
+
+entity E enum [""];
+
+entity I enum [""];
+
+entity r = {
+  A?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [r],
+  resource: [r],
+  context: {}
+};
+

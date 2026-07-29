@@ -1,0 +1,85 @@
+entity a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    r?: {
+      "": Set<Set<a>>,
+      @F
+      @L3("\0\0\0")
+      @LS("")
+      @v("")
+      "\0": Set<a>,
+      "\0\0": __cedar::ipaddr,
+      "\u{3}\u{1d}wDebian ": __cedar::ipaddr,
+      "\u{3}ddddddffd~\u{1d}"?: __cedar::String,
+      "\u{1d}"?: {
+        ""?: Set<Set<__cedar::Long>>,
+        "\u{1d}"?: __cedar::String,
+        "V@"?: Set<Set<__cedar::Long>>
+      },
+      @h
+      "\u{1d}\u{3}\u{e}="?: __cedar::ipaddr,
+      @LS33TuRa3zERR("\u{3}")
+      @LS3T1ed
+      "\u{1d}@["?: Set<Set<__cedar::datetime>>,
+      "$": Set<{
+        ""?: __cedar::String,
+        @LST3N13Q0
+        "\0": __cedar::ipaddr,
+        "\0\0": Set<__cedar::Long>,
+        @X0q
+        @s("")
+        "\u{3}\u{1d}w": Set<__cedar::Long>,
+        @X0q
+        @s("")
+        "\u{e}": Set<__cedar::Long>,
+        "\u{1d}\u{3}": Set<__cedar::Long>,
+        "\u{1d}@[": Set<__cedar::Long>,
+        "\u{1d}@gffd~": Set<__cedar::Long>,
+        "!\u{3}"?: __cedar::String,
+        @d
+        @vR3S
+        @x
+        "$": Set<__cedar::Long>,
+        "$\u{e}=": __cedar::ipaddr,
+        @LS3T1ed
+        @m33TuLrRa3zERR("\u{3}")
+        "$=\u{e}": __cedar::ipaddr,
+        ":pVV"?: __cedar::Bool,
+        @A("")
+        @r("\0\u{1d}")
+        ":~": __cedar::Bool,
+        @LST3N13Q0
+        @m("\u{3}ddddddffd~\u{1d}")
+        @v3X33S1RaE("")
+        "=\u{e}"?: a,
+        "@": Set<__cedar::Long>,
+        "[": __cedar::ipaddr,
+        @F
+        @L3("\0\0\0")
+        "[@": __cedar::Long,
+        @A("")
+        @r("\0\u{1d}")
+        "[@[": __cedar::Bool,
+        @vR33
+        "^": Set<__cedar::Long>,
+        "{"?: a
+      }>,
+      ":pVV"?: __cedar::Long,
+      ":~"?: a,
+      @m
+      "=\u{e}": Set<a>,
+      @r("")
+      "?\0\0\0"?: Set<a>,
+      @r("\0\u{1d}")
+      "V@": __cedar::String,
+      @A
+      @LS33TuRa3zERR("\u{3}")
+      @LbcaS3T
+      "["?: Set<Set<__cedar::datetime>>
+    }
+  }
+};
+

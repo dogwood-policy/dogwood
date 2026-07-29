@@ -1,0 +1,49 @@
+entity a = {
+  A?: {
+    ""?: __cedar::String,
+    @va3KRooooo00oQ
+    "\u{1}\n\u{f}VV\n\ne?\0:\u{f}ee~": a,
+    "\u{3}\u{1d}w"?: __cedar::ipaddr,
+    "\u{e}"?: __cedar::String,
+    "\u{1d}@["?: Set<__cedar::ipaddr>,
+    "\u{1d}@gf"?: __cedar::String,
+    "\u{1d}RoM30"?: __cedar::String,
+    "$"?: __cedar::ipaddr,
+    "=\u{e}"?: Set<{
+      ""?: __cedar::ipaddr,
+      "\u{3}\u{1d}@"?: __cedar::String,
+      "\u{e}"?: __cedar::String,
+      "\u{14}"?: __cedar::String,
+      "\u{1a}"?: __cedar::String,
+      "\u{1a}\u{1a}\u{1a}"?: __cedar::String,
+      "\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}"?: __cedar::String,
+      "\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}"?: __cedar::String,
+      "\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1d}w"?: __cedar::String,
+      "\u{1d}\u{3}"?: __cedar::String,
+      "\u{1d}@["?: __cedar::String,
+      "\u{1d}@gf"?: __cedar::String,
+      "$"?: __cedar::String,
+      "$=-\u{e}"?: __cedar::String,
+      ":~"?: __cedar::String,
+      "=\u{e}"?: __cedar::String,
+      "N~\u{1f}"?: __cedar::String,
+      "["?: __cedar::String,
+      "[@"?: __cedar::String,
+      "[@["?: __cedar::String,
+      "an \u{1a}"?: __cedar::String,
+      o?: __cedar::String,
+      "qqqqq\0\0!"?: __cedar::String,
+      "z~"?: __cedar::String
+    }>,
+    "N~\u{1f}"?: __cedar::String,
+    "[\0\0"?: __cedar::String,
+    "z~"?: __cedar::String
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

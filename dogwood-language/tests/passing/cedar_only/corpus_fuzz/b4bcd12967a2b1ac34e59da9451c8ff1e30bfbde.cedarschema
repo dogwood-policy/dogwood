@@ -1,0 +1,12 @@
+namespace vRwwoooooooooooo::rT1epsL {
+  entity P;
+
+  entity bo;
+
+  action "action" appliesTo {
+    principal: [bo],
+    resource: [bo],
+    context: {}
+  };
+}
+

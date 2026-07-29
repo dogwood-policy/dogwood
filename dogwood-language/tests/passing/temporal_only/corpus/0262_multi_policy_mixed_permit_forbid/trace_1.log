@@ -1,0 +1,3 @@
+@0 scope(principal: OAuthUser::"alice", resource: Gateway::"gw1") request_context(input: { user: "alice" }) Drupe::Action::"Login"::request(input: { user: "alice" }, callerPrincipal: OAuthUser::"alice", callerResource: Gateway::"gw1", requestId: "u1")
+@1 scope(principal: OAuthUser::"alice", resource: Gateway::"gw1") Drupe::Action::"Login"::response(input: { user: "alice" }, output: { result: true }, callerPrincipal: OAuthUser::"alice", callerResource: Gateway::"gw1", requestId: "u1")
+@1800 scope(principal: OAuthUser::"alice", resource: Gateway::"gw1") request_context(input: { user: "alice" }) Drupe::Action::"Read"::request(input: { user: "alice" }, callerPrincipal: OAuthUser::"alice", callerResource: Gateway::"gw1", requestId: "u2")

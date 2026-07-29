@@ -1,0 +1,24 @@
+@K("")
+@R
+@T3333333333C33("")
+@T3333z3b33zzzz("")
+@c("")
+@l("")
+@r("")
+@r33("")
+@v("")
+@x("")
+entity a enum [""];
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    E?: __cedar::String,
+    c?: __cedar::String,
+    n?: __cedar::String,
+    r?: __cedar::String,
+    v?: __cedar::String
+  }
+};
+

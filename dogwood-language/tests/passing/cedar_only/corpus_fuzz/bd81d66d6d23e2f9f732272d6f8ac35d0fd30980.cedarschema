@@ -1,0 +1,20 @@
+namespace A::A {
+  entity a;
+
+  action "" in [A::A::Action::"mmmmmmmmmmmmmmmmmmmmmmmm", A::A::Action::"mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm", A::A::Action::"mmmmmmmm", A::A::Action::"mmm", A::A::Action::"m"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "m";
+
+  action "mmm" in [A::A::Action::"m"];
+
+  action "mmmmmmmm" in [A::A::Action::"mmm", A::A::Action::"m"];
+
+  action "mmmmmmmmmmmmmmmmmmmmmmmm" in [A::A::Action::"mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm", A::A::Action::"mmmmmmmm", A::A::Action::"mmm", A::A::Action::"m"];
+
+  action "mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm" in [A::A::Action::"mmmmmmmm", A::A::Action::"mmm", A::A::Action::"m"];
+}
+

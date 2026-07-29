@@ -1,0 +1,12 @@
+namespace r::r::V::r {
+  entity Diee enum [""];
+
+  entity r enum [""];
+
+  action "action" appliesTo {
+    principal: [r],
+    resource: [r],
+    context: {}
+  };
+}
+

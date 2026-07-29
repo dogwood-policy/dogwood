@@ -1,0 +1,15 @@
+// Permit a Write only if THIS resource (same type AND id) was Read by the
+// same user within the hour. The discriminating trace point writes to
+// Bucket::"r1" when only Gateway::"r1" was read: an implementation
+// comparing resources by id string would wrongly permit it.
+permit (
+    principal,
+    action == Drupe::Action::"Write",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Read"::request{
+        input.user: context.input.user,
+        callerResource: resource
+    }
+};

@@ -1,0 +1,27 @@
+entity a;
+
+@r
+action "" in [Action::"\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}Strin\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}", Action::":\u{b}", Action::"~Debian \u{e}", Action::"[", Action::"\u{3}\u{1d}@", Action::":p", Action::"%[\u{1d}", Action::"V@", Action::"\u{1b}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{3}\u{1d}@" in [Action::":p", Action::"%[\u{1d}", Action::"V@", Action::"\u{1b}"];
+
+action "\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}Strin\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}" in [Action::":\u{b}", Action::"~Debian \u{e}", Action::"[", Action::"\u{3}\u{1d}@", Action::":p", Action::"%[\u{1d}", Action::"V@", Action::"\u{1b}"];
+
+action "\u{1b}";
+
+action "%[\u{1d}" in [Action::"V@", Action::"\u{1b}"];
+
+action ":\u{b}" in [Action::"~Debian \u{e}", Action::"[", Action::"\u{3}\u{1d}@", Action::":p", Action::"%[\u{1d}", Action::"V@", Action::"\u{1b}"];
+
+action ":p" in [Action::"%[\u{1d}", Action::"V@", Action::"\u{1b}"];
+
+action "V@" in [Action::"\u{1b}"];
+
+action "[" in [Action::"\u{3}\u{1d}@", Action::":p", Action::"%[\u{1d}", Action::"V@", Action::"\u{1b}"];
+
+action "~Debian \u{e}" in [Action::"[", Action::"\u{3}\u{1d}@", Action::":p", Action::"%[\u{1d}", Action::"V@", Action::"\u{1b}"];
+

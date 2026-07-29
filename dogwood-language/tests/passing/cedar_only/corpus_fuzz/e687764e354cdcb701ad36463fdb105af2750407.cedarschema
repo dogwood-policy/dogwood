@@ -1,0 +1,9 @@
+@O______("}}}}}}}}}}}}}}}}}}}}}}}}}}}} \0\0n \0rA95")
+entity a tags Set<a>;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

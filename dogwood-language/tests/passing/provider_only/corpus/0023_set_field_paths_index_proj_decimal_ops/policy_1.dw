@@ -1,0 +1,22 @@
+// Permit Scan only when the sensitivity score for the requested category
+// is acceptable: .lessThanOrEqual(decimal("0.8")) AND the score must also
+// be .greaterThan(decimal("0.0")) (non-zero, meaning it was actually scored).
+//
+// The provider takes a set-of-field-paths argument ([context.input.message])
+// and uses index projection ["scored"] on the result (no trailing .field).
+//
+// Gaps covered:
+//   - set_of_field_paths argument ([context.input.message])
+//   - index_projection (["scored"] alone, no .field after)
+//   - lessThanOrEqual decimal comparison
+//   - greaterThan decimal comparison
+
+permit (
+    principal,
+    action == Drupe::Action::"Scan",
+    resource
+)
+when guardrails {
+    Sensitivity::Analyze([context.input.message], context.input.category)["scored"].lessThanOrEqual(decimal("0.8"))
+    && Sensitivity::Analyze([context.input.message], context.input.category)["scored"].greaterThan(decimal("0.0"))
+};

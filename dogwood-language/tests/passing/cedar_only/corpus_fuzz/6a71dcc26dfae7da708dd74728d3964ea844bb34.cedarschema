@@ -1,0 +1,13 @@
+entity a = {
+  A?: {
+    "\u{3}\u{1d}N"?: {    },
+    h?: {    }
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

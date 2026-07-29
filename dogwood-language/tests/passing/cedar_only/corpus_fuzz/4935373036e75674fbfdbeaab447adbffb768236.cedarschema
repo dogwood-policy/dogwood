@@ -1,0 +1,38 @@
+entity O;
+
+action "" in [Action::"\u{e}~\u{e}", Action::"^", Action::"[)\u{3}-Debian ---Ai-yc-----", Action::"S"] appliesTo {
+  principal: [O],
+  resource: [O],
+  context: {}
+};
+
+action "\u{1}Xn" in [Action::"\u{e}~\u{e}", Action::"^", Action::"[)\u{3}-Debian ---Ai-yc-----"] appliesTo {
+  principal: [O],
+  resource: [O],
+  context: {}
+};
+
+action "\u{e}~\u{e}" in [Action::"^", Action::"[)\u{3}-Debian ---Ai-yc-----", Action::"S"] appliesTo {
+  principal: [O],
+  resource: [O],
+  context: {}
+};
+
+action "S" appliesTo {
+  principal: [O],
+  resource: [O],
+  context: {}
+};
+
+action "[)\u{3}-Debian ---Ai-yc-----" appliesTo {
+  principal: [O],
+  resource: [O],
+  context: {}
+};
+
+action "^" appliesTo {
+  principal: [O],
+  resource: [O],
+  context: {}
+};
+

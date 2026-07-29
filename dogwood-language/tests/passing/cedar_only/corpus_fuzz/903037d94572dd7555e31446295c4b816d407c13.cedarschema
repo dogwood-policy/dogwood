@@ -1,0 +1,26 @@
+namespace r::r::r::r {
+  @A
+  @F
+  @J("")
+  @JWWW0WWWW("")
+  @L3("\0\0\0")
+  @LS("")
+  @Qdedddd0
+  @V("")
+  @_qqqqqqqqqqqqq("ss&[\u{1d}")
+  @p("")
+  @r("")
+  @r3("")
+  entity A = {
+    @AK
+    @LK("trin")
+    GRRcST3L: __cedar::Long
+  } tags __cedar::String;
+
+  action "action" appliesTo {
+    principal: [A],
+    resource: [A],
+    context: {}
+  };
+}
+

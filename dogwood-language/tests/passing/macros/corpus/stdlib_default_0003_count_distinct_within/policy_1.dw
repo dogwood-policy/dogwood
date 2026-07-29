@@ -1,0 +1,23 @@
+// Confirms `count_distinct_within` is loaded from the DEFAULT macro library.
+//
+// This case ships NO `macros.dw`, so the harness omits `macros_str` and the
+// ServiceSchema falls back to `DEFAULT_MACROS`. The policy calls
+// `count_distinct_within` without declaring it anywhere, so it can only parse
+// and replay correctly if the built-in stdlib supplies that macro by default.
+// Verdict-equivalent to `stdlib_0004_count_distinct_within`, which loads the
+// same macro explicitly via its own `macros.dw`. The key is a `for`-binder with
+// no timepoint, so equal values across timepoints deduplicate. Permit an Alert
+// when more than two DISTINCT users logged in to the server within the last
+// hour.
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (d: Long). (
+        (count_distinct_within(u, 1h, Drupe::Action::"Login"::request{ input.user: u, input.server: context.input.server })) == d
+        && d > 2
+    )
+};

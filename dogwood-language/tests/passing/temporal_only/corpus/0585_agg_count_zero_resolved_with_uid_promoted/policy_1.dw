@@ -1,0 +1,7 @@
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    exists (n: Long). ((count for (t: Timepoint). where (Drupe::Action::"Login"::response{ input.user: context.input.user, input.server: _, output.result: _ } && tp(t))) == n && n == 0)};

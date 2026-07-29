@@ -1,0 +1,67 @@
+namespace Drupe {
+  type LoginInput = {
+    user: String,
+    __cedar_flag: String
+  };
+
+  type LoginOutput = {  };
+
+  type ReadInput = {
+    document: String,
+    user: String
+  };
+
+  type ReadOutput = {  };
+
+  type SystemContext = {
+    now: datetime
+  };
+
+  entity Gateway;
+
+  entity IamEntity = {
+    id: String
+  };
+
+  entity OAuthUser = {
+    id: String
+  } tags String;
+
+  entity UnauthenticatedUser;
+
+  action "CallTool" in [Action::"Mcp"] appliesTo {
+    principal: [OAuthUser, IamEntity, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      system: SystemContext
+    }
+  };
+
+  action "Login" in [Action::"CallTool"] appliesTo {
+    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      input: LoginInput,
+      output?: LoginOutput,
+      system: SystemContext
+    }
+  };
+
+  action "Mcp" appliesTo {
+    principal: [OAuthUser, IamEntity, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      system: SystemContext
+    }
+  };
+
+  action "Read" in [Action::"CallTool"] appliesTo {
+    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      input: ReadInput,
+      output?: ReadOutput,
+      system: SystemContext
+    }
+  };
+}

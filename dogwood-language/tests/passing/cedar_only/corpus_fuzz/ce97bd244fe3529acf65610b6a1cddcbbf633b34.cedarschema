@@ -1,0 +1,10 @@
+entity QzBbcrcpkglBe000 enum [""];
+
+entity p enum [""];
+
+action "action" appliesTo {
+  principal: [p],
+  resource: [p],
+  context: {}
+};
+

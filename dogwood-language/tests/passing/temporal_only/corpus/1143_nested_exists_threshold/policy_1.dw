@@ -1,0 +1,13 @@
+// General `exists` with NESTING: a user who logged in AND made a transfer
+// over 100 — the inner existential (over the transfer amount `a`) is scoped
+// by the outer user `u`, and combines a predicate-field restrictor with a
+// comparison filter. A broken inner scope (letting another user's large
+// transfer satisfy the threshold) would wrongly permit.
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (u: String). (formerly within 1h Drupe::Action::"Login"::request{ input.user: u } && exists (a: Long). (formerly within 1h Drupe::Action::"Transfer"::request{ input.user: u, input.amount: a } && a > 100))};

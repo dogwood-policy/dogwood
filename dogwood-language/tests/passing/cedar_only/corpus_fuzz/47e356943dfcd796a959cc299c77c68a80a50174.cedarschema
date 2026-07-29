@@ -1,0 +1,12 @@
+entity r;
+
+action "action" appliesTo {
+  principal: [r],
+  resource: [r],
+  context: {
+    @A3("--------------\u{3}\0\0\0\0\0\0\0\0\u{1}\0\0\0\u{5}\0\0\0V\u{2}\u{2}\n")
+    @U("\0")
+    s__: __cedar::String
+  }
+};
+

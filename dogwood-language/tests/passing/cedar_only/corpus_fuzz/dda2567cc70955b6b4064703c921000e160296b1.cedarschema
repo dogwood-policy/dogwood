@@ -1,0 +1,10 @@
+namespace r::r::m4S33::o {
+  entity K;
+
+  action "action" appliesTo {
+    principal: [K],
+    resource: [K],
+    context: {}
+  };
+}
+

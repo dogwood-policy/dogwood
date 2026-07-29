@@ -1,0 +1,9 @@
+// Provider rule #2, scoped to Post: all-uppercase messages only.
+permit (
+    principal,
+    action == Drupe::Action::"Post",
+    resource
+)
+when guardrails {
+    Strings::Matches(context.input.message, "^[A-Z]+$").matched == true
+};

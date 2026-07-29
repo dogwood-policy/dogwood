@@ -1,0 +1,7 @@
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (n: Long). ((count for (t: Timepoint). where (Drupe::Action::"Heartbeat"::request{ input.server: context.input.server } && tp(t))) == n && n == 0)};

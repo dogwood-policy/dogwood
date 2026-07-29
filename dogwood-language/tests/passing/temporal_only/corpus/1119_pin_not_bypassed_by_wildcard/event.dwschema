@@ -1,0 +1,21 @@
+// Same PINNED schema as case 1117: `callerPrincipal` is pinned to the
+// decision request's principal on every predicate. The difference is the
+// policy (policy_1.dw), which DELIBERATELY tries to bypass the pin by writing
+// `callerPrincipal: _` (a wildcard that matches any principal). The pin is
+// still injected unconditionally, so the wildcard cannot relax it: the past
+// Login is forced to share the current Read's principal regardless.
+
+decision event <A>::request {
+    ...inputs(A),
+    pin callerPrincipal: principalType(A) = principal,
+    callerResource:  resourceType(A),
+    requestId:       String,
+}
+
+event <A>::response {
+    ...inputs(A),
+    ...outputs(A),
+    pin callerPrincipal: principalType(A) = principal,
+    callerResource:  resourceType(A),
+    requestId:       String,
+}

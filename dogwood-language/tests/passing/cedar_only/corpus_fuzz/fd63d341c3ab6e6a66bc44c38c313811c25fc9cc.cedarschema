@@ -1,0 +1,14 @@
+entity d_;
+
+entity f;
+
+entity r;
+
+action "" in [Action::"{{"] appliesTo {
+  principal: [r],
+  resource: [r, d_, f],
+  context: {}
+};
+
+action "{{";
+

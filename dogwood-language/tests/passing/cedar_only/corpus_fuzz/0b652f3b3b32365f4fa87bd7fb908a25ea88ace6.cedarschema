@@ -1,0 +1,14 @@
+namespace Kxx0R {
+  entity A00000 enum [""];
+
+  entity r enum [""];
+
+  entity vRRRR3HaR enum [""];
+
+  action "action" appliesTo {
+    principal: [vRRRR3HaR],
+    resource: [vRRRR3HaR],
+    context: {}
+  };
+}
+

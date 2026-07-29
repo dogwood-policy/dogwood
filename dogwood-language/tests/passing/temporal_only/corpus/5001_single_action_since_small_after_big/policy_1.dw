@@ -1,0 +1,24 @@
+// Single-action schema, `since` flavor: with only one action, both arms of
+// a `since` must be field-refinements of the SAME action. "Permit a
+// transfer only if every transfer since the last big one (amount 100) was
+// small (amount 1)." Per the guide's semantics, `left since within W right`
+// holds iff some anchor j in the window has `right`, and `left` holds at
+// every k in [j+1, i] — reflexively true at the anchor itself (empty range).
+//
+// Trace (all alice): big(@0), small(@10), small(@20), medium(@30), small(@40).
+// tp0: anchor j=0 (amount 100), [j+1, 0] empty        -> true
+// tp1: anchor j=0, left holds at tp1                  -> true
+// tp2: anchor j=0, left holds at tp1..tp2             -> true
+// tp3: left fails at tp3 (amount 5); no other anchor  -> false
+// tp4: left fails at tp3 in [1, 4]; no other anchor   -> false
+
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    Drupe::Action::"Transfer"::request{ input.amount: 1 }
+    since within 1h
+    Drupe::Action::"Transfer"::request{ input.amount: 100 }
+};

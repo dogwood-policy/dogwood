@@ -1,0 +1,12 @@
+entity r = {
+  @_W("")
+  @zW("")
+  sf1?: r
+};
+
+action "action" appliesTo {
+  principal: [r],
+  resource: [r],
+  context: {}
+};
+

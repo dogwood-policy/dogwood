@@ -1,0 +1,10 @@
+// Guardrail forbid: block Write when document matches SENSITIVE pattern
+// Cedar forbid ALWAYS overrides permit, even when temporal permit is satisfied
+forbid (
+    principal,
+    action == Drupe::Action::"Write",
+    resource
+)
+when guardrails {
+    Strings::Matches(context.input.document, "SENSITIVE").matched == true
+};

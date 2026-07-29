@@ -1,0 +1,21 @@
+// Permit Read when both:
+//   1. The confidence score is >= 0.3 (.greaterThanOrEqual)
+//   2. The approval flag is directly true (boolean_direct, no == true)
+//
+// The provider takes a mixed set argument: ["ALLOW", context.input.tag]
+// combining a literal string with a field-path reference.
+//
+// Gaps covered:
+//   - set_mixed argument (["ALLOW", context.input.tag])
+//   - greaterThanOrEqual decimal comparison
+//   - boolean_direct (provider field used as bare boolean)
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Policy::Check(context.input.document, ["ALLOW", context.input.tag]).confidence.greaterThanOrEqual(decimal("0.3"))
+    && Policy::Check(context.input.document, ["ALLOW", context.input.tag]).approved
+};

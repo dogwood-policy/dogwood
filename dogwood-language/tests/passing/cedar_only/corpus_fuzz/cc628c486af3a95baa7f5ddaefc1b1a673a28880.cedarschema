@@ -1,0 +1,36 @@
+@A
+@A0
+@tjjjjjjjjjjj("")
+@w5
+@wS
+@wj("----------------")
+entity a = {
+  @d
+  @m("")
+  @r
+  r: {
+    @L
+    @tjjjjjjjjjjj("")
+    @wS
+    @wSS
+    "": a,
+    @L
+    @tjjjjjjjjjjj("--")
+    @wS
+    "\0": {
+      ""?: a,
+      @M("")
+      @vK3330W0v3Rwce
+      "----"?: __cedar::String,
+      @r
+      "-----------"?: {      }
+    }
+  }
+} tags __cedar::String;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

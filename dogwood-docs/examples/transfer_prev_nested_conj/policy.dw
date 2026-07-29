@@ -1,0 +1,15 @@
+// `previous`'s body is an atom, so a conjunction must be parenthesized. Permit
+// a Transfer only if the immediately preceding event (within 2h) was a Login
+// by the same user AND to server "s1".
+@id("transfer_after_prev_login_s1")
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    previous within 2h (
+        Drupe::Action::"Login"::request{ input.user: context.input.user }
+        && Drupe::Action::"Login"::request{ input.server: "s1" }
+    )
+};

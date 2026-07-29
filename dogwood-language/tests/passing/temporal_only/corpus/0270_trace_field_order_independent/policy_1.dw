@@ -1,0 +1,21 @@
+// Logout permitted if the same user logged in within the last hour.
+// `Login.server` is omitted from the predicate, so the runtime should
+// treat it as unconstrained — the documented "omitted fields are
+// implicitly wildcarded" rule. The trace deliberately writes
+// `Login` / `Logout` arguments in `(user, server)` order while the
+// schema's `LoginInput` / `LogoutInput` records both alphabetize to
+// `(server, user)`. A driver that zips schema-ordered field names
+// against trace-ordered values misaligns the two and causes the
+// SINCE state to remember Login's row with `server` and `user`
+// swapped, which then fails to join against the rule's
+// `context.input.user`. The case asserts a `permit` verdict at the
+// Logout time-point.
+
+permit (
+    principal,
+    action == Drupe::Action::"Logout",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

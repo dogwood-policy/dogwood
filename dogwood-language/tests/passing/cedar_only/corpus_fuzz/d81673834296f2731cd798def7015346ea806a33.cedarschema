@@ -1,0 +1,13 @@
+entity a tags {
+  ""?: __cedar::String,
+  q?: __cedar::String,
+  "q\u{16}\0\0\0\0\0\0\0\0\0\0\0qqqqqqqqqqqqqqq"?: __cedar::String,
+  qqq?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

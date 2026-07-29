@@ -1,0 +1,48 @@
+entity a tags __cedar::String;
+
+action "" in [Action::":~", Action::"\u{1d}@[", Action::"\u{3}\u{1d}$w", Action::"$", Action::"=\u{e}", Action::"\u{1d}\u{3}", Action::"[@", Action::"5~$"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{3}\u{1d}$w" in [Action::"$", Action::"=\u{e}", Action::"\u{1d}\u{3}", Action::"[@", Action::"5~$"];
+
+action "\u{1d}\u{3}" in [Action::"[@", Action::"5~$"];
+
+action "\u{1d}@[" in [Action::"\u{3}\u{1d}$w", Action::"$", Action::"=\u{e}", Action::"\u{1d}\u{3}", Action::"[@", Action::"5~$"];
+
+action "$" in [Action::"=\u{e}", Action::"\u{1d}\u{3}", Action::"[@", Action::"5~$"];
+
+action "5~$";
+
+action ":~" in [Action::"\u{1d}@[", Action::"\u{3}\u{1d}$w", Action::"$", Action::"=\u{e}", Action::"\u{1d}\u{3}", Action::"[@", Action::"5~$"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: __cedar::String,
+    D3S1SW044kVOO?: __cedar::String,
+    H?: __cedar::String,
+    LS33TuRp3zERR?: __cedar::String,
+    M?: __cedar::String,
+    VLLLL?: __cedar::String,
+    XcRcoiZ343?: __cedar::String,
+    g?: {    },
+    iO000000O33?: __cedar::String,
+    j?: __cedar::String,
+    m?: {    },
+    q?: __cedar::String,
+    r?: __cedar::String,
+    r333l?: __cedar::String,
+    rj3333333KQTRRlw0?: __cedar::String,
+    v3?: __cedar::String,
+    vbpp?: {    },
+    w: Set<Set<__cedar::Long>>,
+    z000uaRmMMM?: {    }
+  }
+};
+
+action "=\u{e}" in [Action::"\u{1d}\u{3}", Action::"[@", Action::"5~$"];
+
+action "[@" in [Action::"5~$"];
+

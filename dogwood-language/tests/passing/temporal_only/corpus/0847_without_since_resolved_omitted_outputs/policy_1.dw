@@ -1,0 +1,9 @@
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    !(Drupe::Action::"Compute"::response{ input.user: context.input.user, output.result: 200 })
+    since within 1h Drupe::Action::"Sync"::request{ input.user: context.input.user }
+};

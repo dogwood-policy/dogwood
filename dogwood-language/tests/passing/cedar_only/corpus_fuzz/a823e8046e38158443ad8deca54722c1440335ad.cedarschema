@@ -1,0 +1,14 @@
+namespace r::r::r {
+  entity A enum [""];
+
+  entity K enum [""];
+
+  entity q enum [""];
+
+  action "action" appliesTo {
+    principal: [K],
+    resource: [K],
+    context: {}
+  };
+}
+

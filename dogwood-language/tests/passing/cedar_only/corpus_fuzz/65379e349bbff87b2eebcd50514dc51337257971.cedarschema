@@ -1,0 +1,13 @@
+entity a tags Set<Set<{
+  @A000
+  "\u{1b}\u{e}": __cedar::Long
+}>>;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: a
+  }
+};
+

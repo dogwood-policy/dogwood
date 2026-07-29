@@ -1,0 +1,12 @@
+namespace Hff {
+  entity a;
+
+  action "" in [Hff::Action::"|"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "|";
+}
+

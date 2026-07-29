@@ -1,0 +1,13 @@
+// OAuthUser reads permit only when the user's department name is short.
+// Under unconditional provider execution this provider ALSO runs on
+// ServiceBot reads (where `principal.dept` resolves to Null and the
+// defensive script returns its sentinel); the rule's `principal is
+// OAuthUser` scope head means Cedar never lets it fire there.
+permit (
+    principal is Drupe::OAuthUser,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Strings::Length(principal.dept).length < 6
+};

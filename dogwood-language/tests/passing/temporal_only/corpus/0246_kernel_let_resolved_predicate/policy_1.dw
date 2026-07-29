@@ -1,0 +1,11 @@
+// Read permitted only if the user had a successful login at the
+// immediately preceding time point.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    previous within 1h Drupe::Action::"Login"::response{ input.user: context.input.user, output.result: true }
+};

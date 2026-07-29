@@ -1,0 +1,10 @@
+entity T enum ["\u{f}\u{f}"];
+
+entity r enum ["\0\0\0"];
+
+action "action" appliesTo {
+  principal: [r],
+  resource: [r],
+  context: {}
+};
+

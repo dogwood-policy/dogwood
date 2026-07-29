@@ -1,0 +1,18 @@
+entity A enum [""];
+
+entity A2;
+
+entity m3 enum [""];
+
+entity r tags __cedar::datetime;
+
+entity v enum [""];
+
+entity vR tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [vR],
+  resource: [vR],
+  context: {}
+};
+

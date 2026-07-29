@@ -1,0 +1,12 @@
+namespace L {
+  entity Krrrrrrrrrrrrrr;
+
+  entity k;
+
+  action "action" appliesTo {
+    principal: [k],
+    resource: [k],
+    context: {}
+  };
+}
+

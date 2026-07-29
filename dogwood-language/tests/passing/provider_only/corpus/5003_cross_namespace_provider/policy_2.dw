@@ -1,0 +1,7 @@
+// The Billing namespace is governed by its own plain policy; its verdicts
+// must be untouched by the Drupe provider evaluating on its events.
+permit (
+    principal,
+    action == Billing::Action::"Charge",
+    resource
+);

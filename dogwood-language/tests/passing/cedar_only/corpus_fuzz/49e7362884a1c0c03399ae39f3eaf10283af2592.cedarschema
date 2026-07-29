@@ -1,0 +1,27 @@
+@P555Oe("")
+@m5c
+@mfff5cZgXWWWz5cZg("D")
+@r
+entity a = {
+  x55?: __cedar::datetime
+};
+
+action "" in [Action::"ح\u{5}DDDD"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "ح\u{5}DDDD" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    P5455?: {
+      @P55
+      "": __cedar::String,
+      @x55
+      "ح\u{5}DDDD"?: __cedar::String
+    }
+  }
+};
+

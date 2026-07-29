@@ -1,0 +1,15 @@
+entity BBB;
+
+entity P;
+
+entity fB;
+
+entity g_;
+
+@A000000000
+action "action" appliesTo {
+  principal: [P, g_, BBB, fB],
+  resource: [P],
+  context: {}
+};
+

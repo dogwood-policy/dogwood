@@ -1,0 +1,10 @@
+entity KF tags __cedar::datetime;
+
+entity j;
+
+action "action" appliesTo {
+  principal: [KF],
+  resource: [KF],
+  context: {}
+};
+

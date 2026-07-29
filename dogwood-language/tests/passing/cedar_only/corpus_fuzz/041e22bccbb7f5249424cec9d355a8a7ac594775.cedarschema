@@ -1,0 +1,18 @@
+entity a;
+
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    FnRRTTTTTTTTT?: __cedar::Bool
+  }
+};
+
+action ":p" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    EW3huRNag3ENN?: a
+  }
+};
+

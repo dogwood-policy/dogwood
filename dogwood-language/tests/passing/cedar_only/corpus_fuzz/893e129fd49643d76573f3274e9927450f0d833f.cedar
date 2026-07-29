@@ -1,0 +1,37 @@
+@A("")
+@A00GGGGGGGGG("")
+@Iccc__Y("bi")
+@K("")
+@P("")
+@P00RRwR("\u{e}")
+@P3ERJST("")
+@Pc2cccc("")
+@Pc3ERJS("@")
+@PcT1RSN("e ")
+@PcYWd000cPgYW("")
+@PccVccc("")
+@Pcccccc("")
+@Pcceb00("")
+@Pccebmm("")
+@_YWc("")
+@bc("")
+@gd000cPgYWacc("")
+@gd000cPgYWccc("")
+@hRcW33ccccXccc("")
+@hccWd00("")
+@hcccccc("")
+@mT1Rcccccc("")
+@n__00000000000("")
+@n__eYBZg_____3("")
+@nk_ccccccccc33("")
+@r("")
+@uG("")
+@v3ERJST1("")
+@ybmmmaH("")
+permit(
+  principal == a::"\0\0\0\0\0**",
+  action == Action::"action",
+  resource == a::"\0\0\0\0\0**"
+) when {
+  ((true && (resource in resource)) && (resource in resource)) && (resource in a::"\0\0\0\0\0**")
+};

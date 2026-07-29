@@ -1,0 +1,18 @@
+namespace nJJJJ300000::A::r::r::r::r::r {
+  entity A31Z3h2WWWWWW;
+
+  entity YXBuX;
+
+  action "" in [nJJJJ300000::A::r::r::r::r::r::Action::"\u{1}", nJJJJ300000::A::r::r::r::r::r::Action::"\u{3}"] appliesTo {
+    principal: [A31Z3h2WWWWWW, YXBuX],
+    resource: [YXBuX, A31Z3h2WWWWWW],
+    context: {
+      A000000000000000?: __cedar::String
+    }
+  };
+
+  action "\u{1}" in [nJJJJ300000::A::r::r::r::r::r::Action::"\u{3}"];
+
+  action "\u{3}";
+}
+

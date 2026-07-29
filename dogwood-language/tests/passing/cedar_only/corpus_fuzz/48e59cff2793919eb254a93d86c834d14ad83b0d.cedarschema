@@ -1,0 +1,12 @@
+entity a;
+
+@G("")
+@L3("")
+@r("")
+@w
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

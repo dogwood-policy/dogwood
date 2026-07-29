@@ -1,0 +1,19 @@
+entity a;
+
+@L000000Y0YYYY
+action "" in [Action::"&"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @m
+    @r("?")
+    t?: __cedar::String
+  }
+};
+
+action "&" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

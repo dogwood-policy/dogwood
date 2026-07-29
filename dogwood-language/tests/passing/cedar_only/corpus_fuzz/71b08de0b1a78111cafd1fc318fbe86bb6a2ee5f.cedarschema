@@ -1,0 +1,13 @@
+entity a tags {
+  ""?: __cedar::Bool,
+  "                           "?: __cedar::Bool,
+  wnnnnnnn?: __cedar::String,
+  "wwwwwwwwwHyyy5yyywwwwwwwwwwDebian wwwwwwwwwwwwww"?: __cedar::Bool
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

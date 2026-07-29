@@ -1,0 +1,7 @@
+forbid(
+  principal in w::a::"",
+  action in [w::Action::"action",w::Action::"action"],
+  resource in w::a::""
+) when {
+  (true && ((!(!false)) || (!((ip("::57:d02f:2f2f:2f2f")).isLoopback())))) && false
+};

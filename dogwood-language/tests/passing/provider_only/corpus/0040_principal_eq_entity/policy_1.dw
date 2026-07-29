@@ -1,0 +1,11 @@
+// Scope: principal == specific entity.
+// Only alice can read, and only if the document matches.
+
+permit (
+    principal == Drupe::OAuthUser::"alice",
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Strings::Matches(context.input.document, "^[A-Z]+$").matched == true
+};

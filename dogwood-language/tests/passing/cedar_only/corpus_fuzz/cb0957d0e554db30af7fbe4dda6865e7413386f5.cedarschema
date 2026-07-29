@@ -1,0 +1,16 @@
+entity a = {
+  dC3N?: {
+    @rcRR000R
+    "\0"?: Set<Set<{    }>>,
+    @rcRR0000
+    ":p"?: Set<Set<{    }>>
+  },
+  m?: __cedar::Long
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

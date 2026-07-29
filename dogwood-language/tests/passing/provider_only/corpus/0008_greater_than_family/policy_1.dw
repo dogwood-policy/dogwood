@@ -1,0 +1,19 @@
+// Forbid Read when the document contains 2 or more digits, as counted by
+// the `Strings::DigitCount` provider (regex host function). Shows the
+// `>=` operator form on an integer output, and the provider inside a
+// `forbid` rule (the effect is orthogonal to the guardrail dialect).
+
+forbid (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Strings::DigitCount(context.input.document).count >= 2
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+);

@@ -1,0 +1,18 @@
+// A Transfer is permitted iff its amount is under 100 AND the same user
+// logged in within the last 30 minutes. The `&&` conjoins a native Cedar
+// comparison with a `temporal { … }` monitor *in the same expression* —
+// the composition the pre-Slice-1 (whole-clause-marker) surface could
+// not express. cedarify hoists the temporal conjunct to a
+// `context.__temporal_0` boolean and leaves the `amount < 100` comparison
+// as native Cedar.
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when {
+    context.input.amount < 100
+    && temporal {
+        formerly within 30m Drupe::Action::"Login"::request{ input.user: context.input.user }
+    }
+};

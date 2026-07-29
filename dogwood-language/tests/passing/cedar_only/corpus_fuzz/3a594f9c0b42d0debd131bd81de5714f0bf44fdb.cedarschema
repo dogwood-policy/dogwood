@@ -1,0 +1,66 @@
+entity a = {
+  @L33ERwR3
+  @sFFF
+  @v("\\^[")
+  D?: {
+    @sFFF
+    @v3ERRjTV("")
+    "": __cedar::String,
+    "\u{3}": {
+      ""?: {
+        ""?: {        },
+        @g("")
+        @vNTwFFFFFFTjTVS33("")
+        "\u{3}": a,
+        "\u{18}@"?: {        }
+      },
+      @sFFF
+      @sRwR("^[")
+      "\u{3}"?: {
+        "\u{18}@VU": {        }
+      },
+      "\u{18}@"?: {      }
+    },
+    "\u{18}@"?: {    },
+    "-\\^["?: {
+      @nVSg2zhaDk
+      "": {
+        "\u{18}@VUUUUUU\u{5}"?: {        },
+        ":": Set<__cedar::Long>,
+        V: Set<__cedar::Long>,
+        @LNMMMNg2
+        e?: {        }
+      },
+      "\u{3}"?: {      }
+    }
+  },
+  t?: {
+    ""?: __cedar::String,
+    "\u{3}"?: {
+      ""?: {
+        ""?: __cedar::String,
+        "\u{3}"?: a,
+        "\u{18}@"?: {        }
+      },
+      @sFFF
+      @sRwR("^[")
+      "\u{3}"?: {
+        "\u{18}@VU": {        }
+      },
+      "\u{18}@"?: {      }
+    },
+    "\u{18}@"?: {    },
+    "-\\^["?: __cedar::String
+  },
+  @L33ERwR3
+  @sFFF
+  @v("\\^[")
+  v3ERRjTV?: {  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

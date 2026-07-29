@@ -1,0 +1,17 @@
+// The `tp(t)` binder binds `t` to each visited timepoint, letting the
+// aggregation range over distinct timepoints. With NO temporal wrapper on the
+// body, the count sees only same-timepoint events. Permit an Alert if at least
+// one Login to this server occurred at the current timepoint.
+@id("alert_login_current_tp")
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (n: Long). (
+        (count for (t: Timepoint). where (
+            Drupe::Action::"Login"::request{ input.user: _, input.server: context.input.server } && tp(t)
+        )) == n && n > 0
+    )
+};

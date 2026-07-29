@@ -1,0 +1,16 @@
+namespace A {
+  entity a = {
+    A?: __cedar::String,
+    J?: __cedar::String,
+    r?: __cedar::String,
+    r333333331WWW?: __cedar::datetime,
+    z?: __cedar::String
+  };
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

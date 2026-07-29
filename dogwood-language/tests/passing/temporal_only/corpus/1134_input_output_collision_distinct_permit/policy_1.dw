@@ -1,0 +1,34 @@
+// Companion to 1112: an input field and an output field that share the name
+// `verdict` are DISTINCT fields (`input.verdict` / `output.verdict`), matched
+// here by DISTINCT literals that BOTH hold in the event, in a PERMITTING
+// policy — pinning that two same-named collided slots are never treated as a
+// contradiction.
+//
+// This is the failure the current compiler exhibits: `field_slot_name` strips
+// the `input.`/`output.` prefix, collapsing both into one `verdict` slot; RC4's
+// duplicate-slot accumulation then emits `Eq("approve", "published")` — a
+// contradiction — so the leaf is unsatisfiable and NEVER permits, even though
+// the event genuinely carries input.verdict="approve" AND output.verdict=
+// "published". The interpreter matches the two nested paths independently and
+// permits. (Contrast 1112, which matches on a mismatch; here both constraints
+// are simultaneously satisfiable and the correct verdict is PERMIT.)
+//
+// A Publish is permitted only if there was formerly a Review resolution whose
+// requested verdict was "approve" AND whose recorded system verdict was
+// "published".
+//
+// Controls:
+//   trace_1: Review input.verdict="approve", output.verdict="published"
+//            (both hold, distinct) -> Publish PERMITTED.
+//   trace_2: Review input.verdict="approve", output.verdict="rejected"
+//            (output.verdict differs) -> the output.verdict:"published"
+//            constraint fails -> NOT permitted.
+permit (
+    principal,
+    action == Drupe::Action::"Publish",
+    resource
+)
+when temporal {
+    formerly within 1h
+        Drupe::Action::"Review"::response{ input.verdict: "approve", output.verdict: "published" }
+};

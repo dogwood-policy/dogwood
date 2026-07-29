@@ -1,0 +1,12 @@
+@b0
+@bo("")
+@d1("")
+@r("")
+entity a enum [""];
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

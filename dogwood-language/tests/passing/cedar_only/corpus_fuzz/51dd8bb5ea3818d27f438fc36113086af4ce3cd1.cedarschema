@@ -1,0 +1,11 @@
+entity a tags __cedar::Long;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    _2QQQQQ?: __cedar::ipaddr,
+    _leU___00lW0p?: __cedar::ipaddr
+  }
+};
+

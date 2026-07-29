@@ -1,0 +1,18 @@
+namespace j1 {
+  entity a tags __cedar::String;
+
+  action "\u{5}\u{f}" in [j1::Action::"@", j1::Action::";", j1::Action::":"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      A?: j1::a
+    }
+  };
+
+  action ":";
+
+  action ";" in [j1::Action::":"];
+
+  action "@" in [j1::Action::";", j1::Action::":"];
+}
+

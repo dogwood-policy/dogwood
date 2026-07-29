@@ -1,0 +1,25 @@
+entity a tags __cedar::datetime;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    ARRw03c6Sa33ERRT?: __cedar::String,
+    m?: __cedar::String,
+    s?: {
+      ""?: __cedar::String,
+      "\u{3}\u{1d}w"?: __cedar::String,
+      "\u{e}"?: __cedar::String,
+      "\u{19}\u{1d}"?: __cedar::String,
+      "\u{1d}@["?: __cedar::String,
+      "\u{1d}@fd~"?: __cedar::String,
+      "\u{1d}@gff*~"?: __cedar::String,
+      "$"?: __cedar::String,
+      "8#"?: __cedar::String,
+      "=\u{e}"?: __cedar::String,
+      "[=["?: __cedar::String,
+      "^"?: __cedar::String
+    }
+  }
+};
+

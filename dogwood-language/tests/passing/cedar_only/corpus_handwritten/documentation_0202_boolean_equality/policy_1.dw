@@ -1,0 +1,10 @@
+// Permit ApproveSale only when the resolved approval is explicitly true.
+// New idea: comparing a Bool field with `== true` for readability.
+permit (
+    principal,
+    action == Drupe::Action::"ApproveSale",
+    resource
+)
+when {
+    if context has output then context.output.approved == true else false
+};

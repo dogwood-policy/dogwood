@@ -1,0 +1,14 @@
+namespace jz {
+  entity a tags __cedar::String;
+
+  action "\u{1}\u{f}" in [jz::Action::"@>>>>>>>>>>>>>>>>>>>>>>>"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      A?: __cedar::String
+    }
+  };
+
+  action "@>>>>>>>>>>>>>>>>>>>>>>>";
+}
+

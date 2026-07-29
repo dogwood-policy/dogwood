@@ -1,0 +1,31 @@
+namespace Drupe {
+  type ServerInput = {
+    server: String
+  };
+
+  type ServerOutput = {  };
+
+  entity Gateway;
+
+  entity OAuthUser = {
+    id: String
+  };
+
+  action "Login" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: ServerInput,
+      output?: ServerOutput
+    }
+  };
+
+  action "Heartbeat" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: ServerInput,
+      output?: ServerOutput
+    }
+  };
+}

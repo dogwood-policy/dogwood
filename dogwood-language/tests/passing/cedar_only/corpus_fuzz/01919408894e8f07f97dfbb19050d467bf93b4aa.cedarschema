@@ -1,0 +1,16 @@
+namespace A::A::A::R::R::r::r::R::H {
+  entity A enum [""];
+
+  entity P enum [""];
+
+  entity PJ3 enum [""];
+
+  entity r enum [""];
+
+  action "action" appliesTo {
+    principal: [PJ3],
+    resource: [PJ3],
+    context: {}
+  };
+}
+

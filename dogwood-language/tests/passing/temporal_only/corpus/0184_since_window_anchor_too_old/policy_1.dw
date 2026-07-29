@@ -1,0 +1,11 @@
+// Fires iff a Heartbeat has occurred continuously since a Login
+// anchor that happened within the last 30 seconds.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    Drupe::Action::"Heartbeat"::request{ input.user: context.input.user } since within 30s Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

@@ -1,0 +1,12 @@
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    (Drupe::Action::"Transfer"::request{ input.user: context.input.user }
+        && context.input.amount >= 10
+        && context.input.amount < 100)
+    since within 1h
+    Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

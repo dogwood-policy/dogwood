@@ -1,0 +1,14 @@
+@w("")
+@w00000000000000
+entity a = {
+  @B
+  @r
+  r: a
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,20 @@
+// BUG REPRO (decimal summand): the aggregation summand must be a `Long`. Here
+// `sum s` adds together `s`, bound to the decimal field `input.score`. Dogwood
+// arithmetic operates only on `Long` values, not decimals — matching Cedar,
+// whose +, -, * operate only on Long and offer no decimal arithmetic. Summing
+// decimals is also silently divergent between the two backends: the in-memory
+// interpreter drops decimal rows entirely (its `sum_column` keeps only
+// `as_int()` values and returns an i64), while the SQL compiler sums them as
+// NUMERIC — so the same policy yields different results per engine.
+//
+// The summand's type was never checked, so this validated cleanly. It should
+// be rejected by the temporal type-checker.
+//
+// Expected: rejected at `validate`.
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    exists (n: Long). (
+        (sum s for (s: decimal). where (Drupe::Action::"Charge"::request{ input.score: s })) == n
+        && n > 0
+    )
+};

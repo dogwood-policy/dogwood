@@ -1,0 +1,8 @@
+entity a enum ["\0\0\0\0\0******", "", "\u{4}5***9\0", "x\0\0\0D\0::IIIIIII**xx******", "", "\u{4}5***9", "xxxxxxxxx\u{4}*\u{4}[4xxxxx****x\u{4}*\u{4}", "", "\u{4}5***9", "xx[4Cxxxxxxx\u{4}*\u{4}[4C\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}", "\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}", "\u{1b}\u{1b}", ""];
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

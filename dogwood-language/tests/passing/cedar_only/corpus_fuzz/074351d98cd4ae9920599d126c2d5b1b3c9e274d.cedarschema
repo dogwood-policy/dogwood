@@ -1,0 +1,18 @@
+namespace r::f::r {
+  entity D;
+
+  entity I;
+
+  entity Kq;
+
+  entity vR;
+
+  action "5" appliesTo {
+    principal: [vR, D, I],
+    resource: [vR, D],
+    context: {
+      ImpgcppmZgleD?: __cedar::Bool
+    }
+  };
+}
+

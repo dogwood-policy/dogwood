@@ -1,0 +1,7 @@
+// `action in [ ... ]`: match any of the listed actions.
+@id("sell_or_approve")
+permit (
+    principal,
+    action in [Drupe::Action::"SellShares", Drupe::Action::"ApproveSale"],
+    resource
+);

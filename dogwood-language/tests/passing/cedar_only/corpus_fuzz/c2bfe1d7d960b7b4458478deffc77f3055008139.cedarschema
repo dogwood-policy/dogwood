@@ -1,0 +1,14 @@
+entity C enum [""];
+
+entity r enum [""];
+
+entity r000000 enum [""];
+
+entity r33333k enum [""];
+
+action "action" appliesTo {
+  principal: [r33333k],
+  resource: [r33333k],
+  context: {}
+};
+

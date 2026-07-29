@@ -1,0 +1,13 @@
+entity a tags Set<Set<{
+  @A
+  @r("")
+  "\0\0   !@\0"?: Set<__cedar::Long>,
+  "$$~"?: a
+}>>;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

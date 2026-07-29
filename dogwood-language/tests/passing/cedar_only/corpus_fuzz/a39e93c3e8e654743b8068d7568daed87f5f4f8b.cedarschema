@@ -1,0 +1,17 @@
+entity a tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: {
+      ""?: {      },
+      "\u{1}xxxxxxxx4"?: __cedar::String,
+      @UrggWva1vv
+      "\u{14}5**"?: {      },
+      "******"?: {      },
+      "9"?: __cedar::String
+    }
+  }
+};
+

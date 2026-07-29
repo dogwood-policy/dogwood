@@ -1,0 +1,12 @@
+namespace L::G::r::v::v::r {
+  entity A0000000000000000 enum [""];
+
+  entity v enum [""];
+
+  action "action" appliesTo {
+    principal: [v],
+    resource: [v],
+    context: {}
+  };
+}
+

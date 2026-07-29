@@ -1,0 +1,20 @@
+entity Ljjjjjj enum ["\0", "", "----------------", ""];
+
+entity g3 tags __cedar::String;
+
+entity r enum ["--", ""];
+
+@r
+entity t tags __cedar::String;
+
+@A
+entity wS tags __cedar::String;
+
+action "action" appliesTo {
+  principal: [Ljjjjjj, t, g3, wS, r],
+  resource: [g3],
+  context: {
+    B?: __cedar::String
+  }
+};
+

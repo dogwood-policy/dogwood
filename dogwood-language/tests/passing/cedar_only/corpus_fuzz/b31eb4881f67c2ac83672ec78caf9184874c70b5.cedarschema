@@ -1,0 +1,12 @@
+@A
+@g
+entity mIIIIII tags mIIIIII;
+
+entity r tags r;
+
+action "action" appliesTo {
+  principal: [r],
+  resource: [r],
+  context: {}
+};
+

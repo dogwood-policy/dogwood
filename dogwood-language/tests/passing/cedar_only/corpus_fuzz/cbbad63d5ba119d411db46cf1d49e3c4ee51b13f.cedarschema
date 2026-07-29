@@ -1,0 +1,9 @@
+entity a tags __cedar::Bool;
+
+@r
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

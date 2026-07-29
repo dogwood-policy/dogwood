@@ -1,0 +1,22 @@
+entity BFf;
+
+entity Pf enum [""];
+
+entity g3;
+
+@sYaYYYYYYYA00
+entity r enum [""];
+
+entity saYA000VVVVVV;
+
+entity v enum ["\0\0"];
+
+@r("")
+entity vRcz3333333 enum ["", "", "\u{15}", "", "", ""];
+
+action "action" appliesTo {
+  principal: [saYA000VVVVVV, vRcz3333333, v, Pf, BFf, g3],
+  resource: [saYA000VVVVVV, vRcz3333333, v, Pf, BFf, g3, r],
+  context: {}
+};
+

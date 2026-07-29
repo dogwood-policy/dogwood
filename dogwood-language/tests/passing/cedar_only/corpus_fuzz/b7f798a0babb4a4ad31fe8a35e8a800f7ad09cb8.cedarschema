@@ -1,0 +1,14 @@
+entity a = {
+  A?: {
+    @A
+    @z
+    "33": Set<Set<Set<__cedar::Long>>>
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

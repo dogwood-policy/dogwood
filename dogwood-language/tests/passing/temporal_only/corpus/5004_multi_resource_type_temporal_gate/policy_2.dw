@@ -1,0 +1,7 @@
+// Bucket reads need no login. Identical Read events therefore split
+// verdicts by resource type alone.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource is Drupe::Bucket
+);

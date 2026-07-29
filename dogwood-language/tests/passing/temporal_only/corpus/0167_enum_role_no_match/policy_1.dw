@@ -1,0 +1,11 @@
+// Access permitted only if the requesting user was granted "admin"
+// in the past hour. `Grant.user` is a string field, so we correlate
+// it to the rule's input.user rather than to the principal entity.
+permit (
+    principal,
+    action == Drupe::Action::"Access",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Grant"::request{ input.user: context.input.user, input.role: Drupe::Grant_Input_role::"admin" }
+};

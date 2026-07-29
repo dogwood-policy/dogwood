@@ -1,0 +1,26 @@
+namespace A::A {
+  entity a;
+
+  action "" in [A::A::Action::"\u{1}<", A::A::Action::"r@", A::A::Action::"@", A::A::Action::"}}}", A::A::Action::"}", A::A::Action::"B\'}}}}}}}}}}}", A::A::Action::"}}}}}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      T___000?: __cedar::String
+    }
+  };
+
+  action "\u{1}<" in [A::A::Action::"r@", A::A::Action::"@", A::A::Action::"}}}", A::A::Action::"}", A::A::Action::"B\'}}}}}}}}}}}", A::A::Action::"}}}}}"];
+
+  action "@" in [A::A::Action::"}}}", A::A::Action::"}", A::A::Action::"B\'}}}}}}}}}}}", A::A::Action::"}}}}}"];
+
+  action "B\'}}}}}}}}}}}" in [A::A::Action::"}}}}}"];
+
+  action "r@" in [A::A::Action::"@", A::A::Action::"}}}", A::A::Action::"}", A::A::Action::"B\'}}}}}}}}}}}", A::A::Action::"}}}}}"];
+
+  action "}" in [A::A::Action::"B\'}}}}}}}}}}}", A::A::Action::"}}}}}"];
+
+  action "}}}" in [A::A::Action::"}", A::A::Action::"B\'}}}}}}}}}}}", A::A::Action::"}}}}}"];
+
+  action "}}}}}";
+}
+

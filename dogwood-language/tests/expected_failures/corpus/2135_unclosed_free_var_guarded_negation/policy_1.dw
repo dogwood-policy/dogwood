@@ -1,0 +1,18 @@
+// UNSOUNDNESS repro (U3b): the "A but not B" idiom over a FREE variable with
+// no `exists` binder. The checker accepts it (the `formerly Login` conjunct
+// restricts `u`, the guarded negation follows its restrictor), but the
+// top-level boolean evaluator discards the `formerly`'s bindings: the
+// negation's `u` is independently re-quantified (`¬∃u. Logout`), so ANYONE's
+// logout cancels EVERYONE's session — and with bindings dropped the whole
+// conjunction evaluates false even when it should hold (alice logged in and
+// never out; bob's logout must not matter). The exists-wrapped form evaluates
+// correctly; the free-variable form must therefore be rejected, not silently
+// mis-evaluated.
+//
+// Expected: rejected at parse-time binding checks — temporal leaves must be
+// closed; wrap the variable: `exists (u: String). (…)`.
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: u }
+    && !(formerly within 1h Drupe::Action::"Logout"::request{ input.user: u })
+};

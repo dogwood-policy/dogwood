@@ -1,0 +1,5 @@
+// Two `when` clauses are conjoined: both must hold (small AND AMZN).
+@id("sell_small_amzn")
+permit( principal, action == Drupe::Action::"SellShares", resource )
+when { context.input.shares < 100 }
+when { context.input.stock == "AMZN" };

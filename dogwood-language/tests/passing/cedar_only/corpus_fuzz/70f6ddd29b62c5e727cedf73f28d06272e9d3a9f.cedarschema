@@ -1,0 +1,15 @@
+entity a;
+
+@A
+@A000000D("")
+@P("bian ")
+@h("")
+@hDDD("")
+@pDDDDDD("")
+@r("")
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

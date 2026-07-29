@@ -1,0 +1,4 @@
+// Shareable macro library, attached to a schema via --macros. This `def`
+// definition is merged into every policy set lowered against the schema, so
+// policies can call `is_small` without redeclaring it.
+def cedar is_small(?n) { ?n < 100 };

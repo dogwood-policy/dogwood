@@ -1,0 +1,12 @@
+entity a = {
+  L: Set<Set<Set<a>>>,
+  @A00000000
+  PR: Set<Set<Set<a>>>
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

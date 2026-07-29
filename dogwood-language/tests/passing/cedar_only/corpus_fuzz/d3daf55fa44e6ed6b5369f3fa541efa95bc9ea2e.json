@@ -1,0 +1,325 @@
+{
+  "policies": "corpus-tests/d3daf55fa44e6ed6b5369f3fa541efa95bc9ea2e.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/d3daf55fa44e6ed6b5369f3fa541efa95bc9ea2e.entities.json",
+  "schema": "corpus-tests/d3daf55fa44e6ed6b5369f3fa541efa95bc9ea2e.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "a",
+        "id": "\u000e="
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u000e="
+      },
+      "context": {
+        "r": {
+          "": "\u001d",
+          "\u0000\u0000": "@[\u001d",
+          "\u0003\u001dwDebian ": "@",
+          "\u001d": "\u0000\u0000\u0000",
+          "!\u0003": "p",
+          ":pVV": "\u0000\u001d",
+          ":~": {
+            "__entity": {
+              "type": "a",
+              "id": "\u000e="
+            }
+          },
+          "[@": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "a",
+        "id": "\u000e="
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u000e="
+      },
+      "context": {
+        "r": {
+          "": "ian ",
+          "\u0000\u0000": "",
+          "\u001d\u0003": "",
+          "!\u0003": "^",
+          ":pVV": "ebian @[3",
+          ":~": {
+            "__entity": {
+              "type": "a",
+              "id": "\u000e="
+            }
+          },
+          "=\u000e": "@",
+          "[@": "\u0000\u0000"
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "a",
+        "id": "\u000e="
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u000e="
+      },
+      "context": {
+        "r": {
+          "": "VV",
+          "\u0000\u0000": "",
+          "\u0003\u001dwDebian ": "\u0000",
+          "\u001d\u0003": "@[\u001d",
+          "!\u0003": "@",
+          ":pVV": "\u0000\u0000",
+          ":~": {
+            "__entity": {
+              "type": "a",
+              "id": "\u000e="
+            }
+          },
+          "?\u0000\u0000\u0000": "pVV",
+          "[@": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "a",
+        "id": "\u000e="
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u000e="
+      },
+      "context": {
+        "r": {
+          "\u0000\u0000": "~",
+          "\u000e": "~",
+          "\u001d@[": "[",
+          ":~": {
+            "__entity": {
+              "type": "a",
+              "id": "\u000e="
+            }
+          },
+          "=\u000e": "$",
+          "[@": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "a",
+        "id": "\u000e="
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0003"
+      },
+      "context": {
+        "r": {
+          "\u0000\u0000": "[",
+          "\u000e": "",
+          "\u001d\u0003": "fd~",
+          "!\u0003": "",
+          "$\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000": "",
+          ":~": {
+            "__entity": {
+              "type": "a",
+              "id": "\u000e="
+            }
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "a",
+        "id": "\u000e="
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u000e="
+      },
+      "context": {
+        "r": {
+          "\u0000": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "\u0000\u0000": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000#",
+          "\u001d\u0003": "hJ]i!",
+          "\u001d@[": "",
+          "!\u0003": "\u0001\u0000h\n\n\u0000\u0000\u0000\u0000\u0000",
+          "$": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "$\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000@",
+          ":~": {
+            "__entity": {
+              "type": "a",
+              "id": "\u000e="
+            }
+          },
+          "[@": "",
+          "^": "J"
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "a",
+        "id": "\u000e="
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u000e="
+      },
+      "context": {
+        "r": {
+          "": "JJJJJ",
+          "\u0000": "",
+          "\u001d": "\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          ":~": {
+            "__entity": {
+              "type": "a",
+              "id": "\u000e="
+            }
+          },
+          "=\u000e": "",
+          "?\u0000\u0000\u0000": "",
+          "V@": "",
+          "[@": "",
+          "^": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "a",
+        "id": "\u000e="
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u000e="
+      },
+      "context": {
+        "r": {
+          "": "",
+          "\u0000": "",
+          "\u0000\u0000": "",
+          "\u0000\u001d@gffd~": "",
+          "\u0003\u001dwDebian ": "",
+          "\u000e": "",
+          "\u001d": "",
+          "\u001d\u0003": "",
+          "\u001d@[": "",
+          "!\u0003": "",
+          "$": "",
+          "$\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000": "",
+          ":pVV": "",
+          ":~": {
+            "__entity": {
+              "type": "a",
+              "id": "\u000e="
+            }
+          },
+          "=\u000e": "",
+          "?\u0000\u0000\u0000": "",
+          "V@": "",
+          "[@": "",
+          "^": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

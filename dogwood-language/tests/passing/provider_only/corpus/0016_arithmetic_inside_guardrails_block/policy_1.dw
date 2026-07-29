@@ -1,0 +1,24 @@
+// Arithmetic on a provider output INSIDE a `guardrails { … }` block.
+//
+// This is the shape the old closed `guardrails { … }` grammar could not
+// express: it admitted only a boolean combination of provider atoms with a
+// bare comparison, so `count + 1 <= 3` (arithmetic on the output) was a
+// parse error inside the block — it worked only in an unwrapped `when { … }`
+// (see case 0010). After the provider-path unification a `guardrails { … }`
+// block IS a full Cedar expression, so arithmetic, `&&` with a plain Cedar
+// condition, etc. all compose here exactly as in a bare `when { … }`.
+//
+// Same policy as 0010, but wrapped in a `guardrails { … }` block to prove
+// the wrapped form now has the unwrapped form's full expressiveness. Permit
+// Read when the request is flagged trusted AND the document has at most two
+// digits (`digitCount + 1 <= 3`).
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    context.input.trusted == true
+    && Strings::DigitCount(context.input.document).count + 1 <= 3
+};

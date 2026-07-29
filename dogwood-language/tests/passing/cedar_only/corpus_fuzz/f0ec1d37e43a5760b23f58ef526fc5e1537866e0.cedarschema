@@ -1,0 +1,27 @@
+@vNTwwR3c333zERRS0
+namespace A::A {
+  entity a;
+
+  action "" in [A::A::Action::"VV", A::A::Action::":~", A::A::Action::"\u{e}", A::A::Action::"                                             "] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{e}" in [A::A::Action::"                                             "] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "                                             ";
+
+  action ":~" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "VV" in [A::A::Action::":~", A::A::Action::"\u{e}", A::A::Action::"                                             "];
+}
+

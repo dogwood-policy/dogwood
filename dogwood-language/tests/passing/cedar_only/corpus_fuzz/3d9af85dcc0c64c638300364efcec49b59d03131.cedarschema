@@ -1,0 +1,10 @@
+namespace r3::r::r::r {
+  entity A00000 enum [""];
+
+  action "action" appliesTo {
+    principal: [A00000],
+    resource: [A00000],
+    context: {}
+  };
+}
+

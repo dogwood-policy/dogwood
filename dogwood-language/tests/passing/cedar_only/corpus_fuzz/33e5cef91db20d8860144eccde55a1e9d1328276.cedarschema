@@ -1,0 +1,21 @@
+entity a tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: {
+      @v
+      "": Set<Set<Set<__cedar::Long>>>,
+      "\0\0\0333/333336"?: {
+        "33"?: __cedar::ipaddr
+      },
+      "\0\0\0A"?: __cedar::ipaddr,
+      "####### \'\0\0"?: __cedar::String,
+      "#u#####"?: __cedar::String,
+      "3"?: __cedar::datetime,
+      A: a
+    }
+  }
+};
+

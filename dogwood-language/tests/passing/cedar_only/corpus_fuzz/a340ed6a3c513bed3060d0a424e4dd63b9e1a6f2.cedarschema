@@ -1,0 +1,21 @@
+entity G enum [""];
+
+entity m3 enum [""];
+
+entity r tags __cedar::Bool;
+
+entity u2a enum [""];
+
+@A00000000
+entity v;
+
+entity x;
+
+entity yc;
+
+action "action" appliesTo {
+  principal: [yc],
+  resource: [yc],
+  context: {}
+};
+

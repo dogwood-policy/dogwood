@@ -1,0 +1,8 @@
+permit (
+    principal,
+    action == Drupe::Action::"Access",
+    resource
+)
+when temporal {
+    formerly within 1h (Drupe::Action::"Lookup"::response{ input.user: context.input.user, output.assigned_role: Drupe::Lookup_Output_assigned_role::"admin" })
+};

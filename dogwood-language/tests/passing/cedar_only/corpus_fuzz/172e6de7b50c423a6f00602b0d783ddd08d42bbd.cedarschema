@@ -1,0 +1,10 @@
+namespace r::r::h::r {
+  entity a;
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

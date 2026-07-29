@@ -1,0 +1,29 @@
+entity A0033333333333 = {
+  D?: {
+    ""?: __cedar::String,
+    "\u{3}dddddddddddddd@dd\u{1d}d"?: __cedar::String,
+    "#"?: __cedar::String,
+    "##"?: __cedar::String,
+    "#####\0####"?: __cedar::String,
+    "######"?: __cedar::String,
+    "#####w"?: __cedar::String,
+    "$"?: __cedar::String,
+    "$########"?: __cedar::String,
+    ":~"?: __cedar::String,
+    "@"?: __cedar::String,
+    "["?: __cedar::String,
+    "[\u{3}\u{1d}w\u{1d}@"?: __cedar::String
+  },
+  vVR3T33S1RazERR?: __cedar::String
+};
+
+entity A0033S1S3T1edd enum [""];
+
+entity r enum [""];
+
+action "action" appliesTo {
+  principal: [A0033333333333],
+  resource: [A0033333333333],
+  context: {}
+};
+

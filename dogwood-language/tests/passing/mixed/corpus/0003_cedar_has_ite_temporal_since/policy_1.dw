@@ -1,0 +1,7 @@
+// Permit Approve - uses Cedar `has` and if-then-else
+permit (
+    principal,
+    action == Drupe::Action::"Approve",
+    resource
+)
+when { if context has output then context.output.result == true else true };

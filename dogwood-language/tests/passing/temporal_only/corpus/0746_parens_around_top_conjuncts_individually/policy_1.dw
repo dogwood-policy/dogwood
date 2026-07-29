@@ -1,0 +1,17 @@
+// L3: every top-level conjunct individually parenthesized in a 4-way
+// chain. Wrapping each conjunct in its own parens — (A) && (B) && (C) &&
+// (D) — should be a no-op vs. bare conjuncts. Probe whether the
+// parser/lowerer distinguishes parenthesized atoms from bare atoms
+// during normalization.
+
+permit (
+    principal,
+    action == Drupe::Action::"Write",
+    resource
+)
+when temporal {
+    (formerly within 24h Drupe::Action::"Login"::request{ input.user: context.input.user })
+    && (formerly within 24h Drupe::Action::"Read"::request{ input.user: context.input.user, input.document: context.input.document })
+    && (previous within 1h Drupe::Action::"Read"::request{ input.user: context.input.user, input.document: context.input.document })
+    && (Drupe::Action::"Read"::request{ input.user: context.input.user, input.document: context.input.document } since within 24h Drupe::Action::"Login"::request{ input.user: context.input.user })
+};

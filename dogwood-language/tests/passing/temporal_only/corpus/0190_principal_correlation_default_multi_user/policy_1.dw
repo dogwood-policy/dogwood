@@ -1,0 +1,17 @@
+// No explicit `from` on Login. By default, `Drupe::Action::"Login"{...}` correlates
+// with the current request's principal. alice has logged in; bob has
+// not — only alice's Read should fire.
+//
+// Note that `context.input.user` in the Login arg is the READ's context.input.user
+// (a String), which happens to match the alice / bob strings. The
+// default correlation is on the ENTITY principal, not on context.input.user,
+// so this tests the entity-level match.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

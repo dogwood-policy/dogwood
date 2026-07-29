@@ -1,0 +1,15 @@
+entity r tags __cedar::String;
+
+action "" in [Action::":~"] appliesTo {
+  principal: [r],
+  resource: [r],
+  context: {
+    LS33TuRa3zERR: r,
+    @A
+    @LS3T3ER
+    rS1R: Set<Set<__cedar::duration>>
+  }
+};
+
+action ":~";
+

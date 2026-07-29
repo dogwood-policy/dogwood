@@ -1,0 +1,25 @@
+// The ORIGINAL policy of passing case 1121 (now
+// `1121_pin_not_bypassed_by_fresh_binder`): an attempt to bypass the event
+// schema's principal pin by binding the pinned field to a FREE variable
+// (`callerPrincipal: p`) used nowhere else, so the author's own constraint
+// is vacuous — "a Login by anyone".
+//
+// Post-closedness, this shape never reaches pin injection at all: a temporal
+// leaf with a free variable is rejected at parse time, schema-independently
+// (so the harness's unpinned fixture event schema is irrelevant — the
+// rejection precedes event-schema derivation). The bypass attempt that
+// remains *expressible* is the exists-bound variant, which the passing case
+// keeps under test: the fresh binder still binds-but-never-constrains, and
+// the injected pin still forces the past Login to share the current
+// request's principal.
+//
+// Expected: rejected at parse-time binding checks — temporal leaves must be
+// closed.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user, callerPrincipal: p }
+};

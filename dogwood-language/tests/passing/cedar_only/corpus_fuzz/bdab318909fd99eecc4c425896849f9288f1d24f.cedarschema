@@ -1,0 +1,8 @@
+entity w enum ["\'anA \0\0"];
+
+action "action" appliesTo {
+  principal: [w],
+  resource: [w],
+  context: {}
+};
+

@@ -1,0 +1,30 @@
+namespace h::E00AIII3w {
+  entity a;
+
+  action "" in [h::E00AIII3w::Action::":V", h::E00AIII3w::Action::"[", h::E00AIII3w::Action::"\u{1d}@J?<!<", h::E00AIII3w::Action::"r@", h::E00AIII3w::Action::"}}", h::E00AIII3w::Action::":~", h::E00AIII3w::Action::"\u{e}", h::E00AIII3w::Action::"^", h::E00AIII3w::Action::"\u{1d}\u{3}", h::E00AIII3w::Action::"[@"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{e}" in [h::E00AIII3w::Action::"^", h::E00AIII3w::Action::"\u{1d}\u{3}", h::E00AIII3w::Action::"[@"];
+
+  action "\u{1d}\u{3}" in [h::E00AIII3w::Action::"[@"];
+
+  action "\u{1d}@J?<!<" in [h::E00AIII3w::Action::"r@", h::E00AIII3w::Action::"}}", h::E00AIII3w::Action::":~", h::E00AIII3w::Action::"\u{e}", h::E00AIII3w::Action::"^", h::E00AIII3w::Action::"\u{1d}\u{3}", h::E00AIII3w::Action::"[@"];
+
+  action ":V" in [h::E00AIII3w::Action::"[", h::E00AIII3w::Action::"\u{1d}@J?<!<", h::E00AIII3w::Action::"r@", h::E00AIII3w::Action::"}}", h::E00AIII3w::Action::":~", h::E00AIII3w::Action::"\u{e}", h::E00AIII3w::Action::"^", h::E00AIII3w::Action::"\u{1d}\u{3}", h::E00AIII3w::Action::"[@"];
+
+  action ":~" in [h::E00AIII3w::Action::"\u{e}", h::E00AIII3w::Action::"^", h::E00AIII3w::Action::"\u{1d}\u{3}", h::E00AIII3w::Action::"[@"];
+
+  action "[" in [h::E00AIII3w::Action::"\u{1d}@J?<!<", h::E00AIII3w::Action::"r@", h::E00AIII3w::Action::"}}", h::E00AIII3w::Action::":~", h::E00AIII3w::Action::"\u{e}", h::E00AIII3w::Action::"^", h::E00AIII3w::Action::"\u{1d}\u{3}", h::E00AIII3w::Action::"[@"];
+
+  action "[@";
+
+  action "^" in [h::E00AIII3w::Action::"\u{1d}\u{3}", h::E00AIII3w::Action::"[@"];
+
+  action "r@" in [h::E00AIII3w::Action::"}}", h::E00AIII3w::Action::":~", h::E00AIII3w::Action::"\u{e}", h::E00AIII3w::Action::"^", h::E00AIII3w::Action::"\u{1d}\u{3}", h::E00AIII3w::Action::"[@"];
+
+  action "}}" in [h::E00AIII3w::Action::":~", h::E00AIII3w::Action::"\u{e}", h::E00AIII3w::Action::"^", h::E00AIII3w::Action::"\u{1d}\u{3}", h::E00AIII3w::Action::"[@"];
+}
+

@@ -1,0 +1,17 @@
+entity a tags Set<Set<{
+  ""?: {  },
+  "\0"?: {  },
+  "\0\0  @s\0j"?: {  },
+  "Pc%Zg"?: {  },
+  U?: {  },
+  j: {  },
+  "zzԙ"?: {  },
+  "~\u{17}"?: {  }
+}>>;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

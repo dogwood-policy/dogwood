@@ -1,0 +1,26 @@
+entity E = {
+  @Q
+  @r
+  E: __cedar::ipaddr,
+  @r
+  iO3: vZ3333333p33OO,
+  @Fj00000000
+  r: vZ3333333p33OO,
+  r3lRZR333j3?: z,
+  @K
+  @r("")
+  z: vZ3333333p33OO
+};
+
+entity r enum [""];
+
+entity vZ3333333p33OO enum [""];
+
+entity z enum ["Wo", "oB"];
+
+action "action" appliesTo {
+  principal: [z],
+  resource: [z],
+  context: {}
+};
+

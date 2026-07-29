@@ -1,0 +1,17 @@
+// Occurrence-counting via `count where`. Permit reading only on the
+// user's first 3 read requests within the last hour (rate limit by
+// occurrence). The count is over distinct *tps* at which a Read by
+// the current user has fired — repeated reads of the same document
+// count separately. Compare to case 131, which uses `count d where
+// Read(...,document: d)` and counts distinct *documents*; that gives
+// the same answer here only because the trace uses 4 distinct
+// documents.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

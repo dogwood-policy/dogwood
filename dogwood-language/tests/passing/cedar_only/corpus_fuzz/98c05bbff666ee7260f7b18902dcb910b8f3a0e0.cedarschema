@@ -1,0 +1,16 @@
+entity a tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: {
+      "": {      },
+      "3"?: {
+        ss: Set<Set<__cedar::Long>>,
+        sss: Set<__cedar::Long>
+      }
+    }
+  }
+};
+

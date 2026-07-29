@@ -1,0 +1,8 @@
+entity a;
+
+action "ddr" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

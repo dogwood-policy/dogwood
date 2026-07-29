@@ -1,0 +1,458 @@
+{
+  "policies": "corpus-tests/3652aa1c98d55945db345023e8c544aee2b56d5a.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/3652aa1c98d55945db345023e8c544aee2b56d5a.entities.json",
+  "schema": "corpus-tests/3652aa1c98d55945db345023e8c544aee2b56d5a.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "wR",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "wR",
+        "id": ""
+      },
+      "context": {
+        "B": {
+          "": {
+            "__extn": {
+              "fn": "datetime",
+              "arg": "0000-01-01"
+            }
+          },
+          "\u0001[": {
+            "__entity": {
+              "type": "wR",
+              "id": ""
+            }
+          },
+          "1": {
+            "__entity": {
+              "type": "wR",
+              "id": ""
+            }
+          }
+        },
+        "r": {
+          "__entity": {
+            "type": "wR",
+            "id": ""
+          }
+        },
+        "v": [],
+        "x": {
+          "__entity": {
+            "type": "wR",
+            "id": ""
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "wR",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "wR",
+        "id": ""
+      },
+      "context": {
+        "B": {
+          "": {
+            "__extn": {
+              "fn": "datetime",
+              "arg": "0000-01-01"
+            }
+          },
+          "\u0001[": {
+            "__entity": {
+              "type": "wR",
+              "id": ""
+            }
+          },
+          "1": {
+            "__entity": {
+              "type": "wR",
+              "id": ""
+            }
+          }
+        },
+        "r": {
+          "__entity": {
+            "type": "wR",
+            "id": ""
+          }
+        },
+        "v": [],
+        "x": {
+          "__entity": {
+            "type": "wR",
+            "id": ""
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "wR",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "wR",
+        "id": ""
+      },
+      "context": {
+        "B": {
+          "": {
+            "__extn": {
+              "fn": "datetime",
+              "arg": "0000-01-01"
+            }
+          },
+          "\u0001[": {
+            "__entity": {
+              "type": "wR",
+              "id": ""
+            }
+          },
+          "1": {
+            "__entity": {
+              "type": "wR",
+              "id": ""
+            }
+          }
+        },
+        "r": {
+          "__entity": {
+            "type": "wR",
+            "id": ""
+          }
+        },
+        "v": [],
+        "x": {
+          "__entity": {
+            "type": "wR",
+            "id": ""
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "wR",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "wR",
+        "id": ""
+      },
+      "context": {
+        "B": {
+          "": {
+            "__extn": {
+              "fn": "datetime",
+              "arg": "0000-01-01"
+            }
+          },
+          "\u0001[": {
+            "__entity": {
+              "type": "wR",
+              "id": ""
+            }
+          },
+          "1": {
+            "__entity": {
+              "type": "wR",
+              "id": ""
+            }
+          }
+        },
+        "r": {
+          "__entity": {
+            "type": "wR",
+            "id": ""
+          }
+        },
+        "v": [],
+        "x": {
+          "__entity": {
+            "type": "wR",
+            "id": ""
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "wR",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "wR",
+        "id": ""
+      },
+      "context": {
+        "B": {
+          "": {
+            "__extn": {
+              "fn": "datetime",
+              "arg": "0000-01-01"
+            }
+          },
+          "\u0001[": {
+            "__entity": {
+              "type": "wR",
+              "id": ""
+            }
+          },
+          "1": {
+            "__entity": {
+              "type": "wR",
+              "id": ""
+            }
+          }
+        },
+        "r": {
+          "__entity": {
+            "type": "wR",
+            "id": ""
+          }
+        },
+        "v": [],
+        "x": {
+          "__entity": {
+            "type": "wR",
+            "id": ""
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "wR",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "wR",
+        "id": ""
+      },
+      "context": {
+        "B": {
+          "": {
+            "__extn": {
+              "fn": "datetime",
+              "arg": "0000-01-01"
+            }
+          },
+          "\u0001[": {
+            "__entity": {
+              "type": "wR",
+              "id": ""
+            }
+          },
+          "1": {
+            "__entity": {
+              "type": "wR",
+              "id": ""
+            }
+          }
+        },
+        "r": {
+          "__entity": {
+            "type": "wR",
+            "id": ""
+          }
+        },
+        "v": [],
+        "x": {
+          "__entity": {
+            "type": "wR",
+            "id": ""
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "wR",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "wR",
+        "id": ""
+      },
+      "context": {
+        "B": {
+          "": {
+            "__extn": {
+              "fn": "datetime",
+              "arg": "0000-01-01"
+            }
+          },
+          "\u0001[": {
+            "__entity": {
+              "type": "wR",
+              "id": ""
+            }
+          },
+          "1": {
+            "__entity": {
+              "type": "wR",
+              "id": ""
+            }
+          }
+        },
+        "r": {
+          "__entity": {
+            "type": "wR",
+            "id": ""
+          }
+        },
+        "v": [],
+        "x": {
+          "__entity": {
+            "type": "wR",
+            "id": ""
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "wR",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "wR",
+        "id": ""
+      },
+      "context": {
+        "B": {
+          "": {
+            "__extn": {
+              "fn": "datetime",
+              "arg": "0000-01-01"
+            }
+          },
+          "\u0001[": {
+            "__entity": {
+              "type": "wR",
+              "id": ""
+            }
+          },
+          "1": {
+            "__entity": {
+              "type": "wR",
+              "id": ""
+            }
+          }
+        },
+        "r": {
+          "__entity": {
+            "type": "wR",
+            "id": ""
+          }
+        },
+        "v": [],
+        "x": {
+          "__entity": {
+            "type": "wR",
+            "id": ""
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

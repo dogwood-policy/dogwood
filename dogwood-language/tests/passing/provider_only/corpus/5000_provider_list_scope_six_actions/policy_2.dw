@@ -1,0 +1,9 @@
+// The other three actions are permitted WITHOUT the guardrail. Ping has
+// the same DocInput as the guarded actions — a long document on a Ping
+// must still be permitted, proving the guardrail binds by action scope,
+// not by field presence.
+permit (
+    principal,
+    action in [Drupe::Action::"Ping", Drupe::Action::"Login", Drupe::Action::"Alert"],
+    resource
+);

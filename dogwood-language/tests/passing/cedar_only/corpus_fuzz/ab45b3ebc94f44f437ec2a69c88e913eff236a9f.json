@@ -1,0 +1,522 @@
+{
+  "policies": "corpus-tests/ab45b3ebc94f44f437ec2a69c88e913eff236a9f.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/ab45b3ebc94f44f437ec2a69c88e913eff236a9f.entities.json",
+  "schema": "corpus-tests/ab45b3ebc94f44f437ec2a69c88e913eff236a9f.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "D": "",
+        "EWERRS33bbbbb": "",
+        "HU30K333V33333V3": "",
+        "HUUUUUUUUUUUUUUU": "",
+        "HUUUUUUUUUUeX4uq": "",
+        "I": "",
+        "K337SRRReX0": "",
+        "LRaz5cZ": "",
+        "_YlWbbbbbbbbbb": "",
+        "f": "",
+        "h0": "",
+        "h4": "",
+        "lb33": "",
+        "lbUb": "",
+        "lbb5": "",
+        "lbbb": "",
+        "lbbf": "",
+        "lbbx": "",
+        "m3": "",
+        "p2": "",
+        "qohhhhhhhhh": "",
+        "r": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "r3": "",
+        "r3333S3": "",
+        "rSRR": "",
+        "rU3UUUUUUUUUUUUUU": "",
+        "rUUUUUUUUUUUUfUU": "",
+        "rhhhhCmhhh": "",
+        "rhhhhhhhhh": "",
+        "rhhhhqqqq3": "",
+        "v": "",
+        "vR": "",
+        "vRz0": "",
+        "yrsPbop3333": "",
+        "z": "",
+        "zpbbbbbbbbbbb": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "D": "",
+        "EWERRS33bbbbb": "",
+        "HU30K333V33333V3": "",
+        "HUUUUUUUUUUUUUUU": "",
+        "HUUUUUUUUUUeX4uq": "",
+        "I": "",
+        "K337SRRReX0": "",
+        "LRaz5cZ": "",
+        "_YlWbbbbbbbbbb": "",
+        "f": "",
+        "h0": "",
+        "h4": "",
+        "lb33": "",
+        "lbUb": "",
+        "lbb5": "",
+        "lbbb": "",
+        "lbbf": "",
+        "lbbx": "",
+        "m3": "",
+        "p2": "",
+        "qohhhhhhhhh": "",
+        "r": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "r3": "",
+        "r3333S3": "",
+        "rSRR": "",
+        "rU3UUUUUUUUUUUUUU": "",
+        "rUUUUUUUUUUUUfUU": "",
+        "rhhhhCmhhh": "",
+        "rhhhhhhhhh": "",
+        "rhhhhqqqq3": "",
+        "v": "",
+        "vR": "",
+        "vRz0": "",
+        "yrsPbop3333": "",
+        "z": "",
+        "zpbbbbbbbbbbb": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "D": "",
+        "EWERRS33bbbbb": "",
+        "HU30K333V33333V3": "",
+        "HUUUUUUUUUUUUUUU": "",
+        "HUUUUUUUUUUeX4uq": "",
+        "I": "",
+        "K337SRRReX0": "",
+        "LRaz5cZ": "",
+        "_YlWbbbbbbbbbb": "",
+        "f": "",
+        "h0": "",
+        "h4": "",
+        "lb33": "",
+        "lbUb": "",
+        "lbb5": "",
+        "lbbb": "",
+        "lbbf": "",
+        "lbbx": "",
+        "m3": "",
+        "p2": "",
+        "qohhhhhhhhh": "",
+        "r": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "r3": "",
+        "r3333S3": "",
+        "rSRR": "",
+        "rU3UUUUUUUUUUUUUU": "",
+        "rUUUUUUUUUUUUfUU": "",
+        "rhhhhCmhhh": "",
+        "rhhhhhhhhh": "",
+        "rhhhhqqqq3": "",
+        "v": "",
+        "vR": "",
+        "vRz0": "",
+        "yrsPbop3333": "",
+        "z": "",
+        "zpbbbbbbbbbbb": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "D": "",
+        "EWERRS33bbbbb": "",
+        "HU30K333V33333V3": "",
+        "HUUUUUUUUUUUUUUU": "",
+        "HUUUUUUUUUUeX4uq": "",
+        "I": "",
+        "K337SRRReX0": "",
+        "LRaz5cZ": "",
+        "_YlWbbbbbbbbbb": "",
+        "f": "",
+        "h0": "",
+        "h4": "",
+        "lb33": "",
+        "lbUb": "",
+        "lbb5": "",
+        "lbbb": "",
+        "lbbf": "",
+        "lbbx": "",
+        "m3": "",
+        "p2": "",
+        "qohhhhhhhhh": "",
+        "r": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "r3": "",
+        "r3333S3": "",
+        "rSRR": "",
+        "rU3UUUUUUUUUUUUUU": "",
+        "rUUUUUUUUUUUUfUU": "",
+        "rhhhhCmhhh": "",
+        "rhhhhhhhhh": "",
+        "rhhhhqqqq3": "",
+        "v": "",
+        "vR": "",
+        "vRz0": "",
+        "yrsPbop3333": "",
+        "z": "",
+        "zpbbbbbbbbbbb": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "D": "",
+        "EWERRS33bbbbb": "",
+        "HU30K333V33333V3": "",
+        "HUUUUUUUUUUUUUUU": "",
+        "HUUUUUUUUUUeX4uq": "",
+        "I": "",
+        "K337SRRReX0": "",
+        "LRaz5cZ": "",
+        "_YlWbbbbbbbbbb": "",
+        "f": "",
+        "h0": "",
+        "h4": "",
+        "lb33": "",
+        "lbUb": "",
+        "lbb5": "",
+        "lbbb": "",
+        "lbbf": "",
+        "lbbx": "",
+        "m3": "",
+        "p2": "",
+        "qohhhhhhhhh": "",
+        "r": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "r3": "",
+        "r3333S3": "",
+        "rSRR": "",
+        "rU3UUUUUUUUUUUUUU": "",
+        "rUUUUUUUUUUUUfUU": "",
+        "rhhhhCmhhh": "",
+        "rhhhhhhhhh": "",
+        "rhhhhqqqq3": "",
+        "v": "",
+        "vR": "",
+        "vRz0": "",
+        "yrsPbop3333": "",
+        "z": "",
+        "zpbbbbbbbbbbb": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "D": "",
+        "EWERRS33bbbbb": "",
+        "HU30K333V33333V3": "",
+        "HUUUUUUUUUUUUUUU": "",
+        "HUUUUUUUUUUeX4uq": "",
+        "I": "",
+        "K337SRRReX0": "",
+        "LRaz5cZ": "",
+        "_YlWbbbbbbbbbb": "",
+        "f": "",
+        "h0": "",
+        "h4": "",
+        "lb33": "",
+        "lbUb": "",
+        "lbb5": "",
+        "lbbb": "",
+        "lbbf": "",
+        "lbbx": "",
+        "m3": "",
+        "p2": "",
+        "qohhhhhhhhh": "",
+        "r": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "r3": "",
+        "r3333S3": "",
+        "rSRR": "",
+        "rU3UUUUUUUUUUUUUU": "",
+        "rUUUUUUUUUUUUfUU": "",
+        "rhhhhCmhhh": "",
+        "rhhhhhhhhh": "",
+        "rhhhhqqqq3": "",
+        "v": "",
+        "vR": "",
+        "vRz0": "",
+        "yrsPbop3333": "",
+        "z": "",
+        "zpbbbbbbbbbbb": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "D": "",
+        "EWERRS33bbbbb": "",
+        "HU30K333V33333V3": "",
+        "HUUUUUUUUUUUUUUU": "",
+        "HUUUUUUUUUUeX4uq": "",
+        "I": "",
+        "K337SRRReX0": "",
+        "LRaz5cZ": "",
+        "_YlWbbbbbbbbbb": "",
+        "f": "",
+        "h0": "",
+        "h4": "",
+        "lb33": "",
+        "lbUb": "",
+        "lbb5": "",
+        "lbbb": "",
+        "lbbf": "",
+        "lbbx": "",
+        "m3": "",
+        "p2": "",
+        "qohhhhhhhhh": "",
+        "r": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "r3": "",
+        "r3333S3": "",
+        "rSRR": "",
+        "rU3UUUUUUUUUUUUUU": "",
+        "rUUUUUUUUUUUUfUU": "",
+        "rhhhhCmhhh": "",
+        "rhhhhhhhhh": "",
+        "rhhhhqqqq3": "",
+        "v": "",
+        "vR": "",
+        "vRz0": "",
+        "yrsPbop3333": "",
+        "z": "",
+        "zpbbbbbbbbbbb": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "D": "",
+        "EWERRS33bbbbb": "",
+        "HU30K333V33333V3": "",
+        "HUUUUUUUUUUUUUUU": "",
+        "HUUUUUUUUUUeX4uq": "",
+        "I": "",
+        "K337SRRReX0": "",
+        "LRaz5cZ": "",
+        "_YlWbbbbbbbbbb": "",
+        "f": "",
+        "h0": "",
+        "h4": "",
+        "lb33": "",
+        "lbUb": "",
+        "lbb5": "",
+        "lbbb": "",
+        "lbbf": "",
+        "lbbx": "",
+        "m3": "",
+        "p2": "",
+        "qohhhhhhhhh": "",
+        "r": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "r3": "",
+        "r3333S3": "",
+        "rSRR": "",
+        "rU3UUUUUUUUUUUUUU": "",
+        "rUUUUUUUUUUUUfUU": "",
+        "rhhhhCmhhh": "",
+        "rhhhhhhhhh": "",
+        "rhhhhqqqq3": "",
+        "v": "",
+        "vR": "",
+        "vRz0": "",
+        "yrsPbop3333": "",
+        "z": "",
+        "zpbbbbbbbbbbb": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

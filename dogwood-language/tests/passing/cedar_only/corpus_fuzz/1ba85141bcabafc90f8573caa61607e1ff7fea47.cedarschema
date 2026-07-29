@@ -1,0 +1,32 @@
+entity a tags __cedar::String;
+
+@A
+@_5cZER("[")
+action "" in [Action::":~", Action::"\u{1d}@[", Action::"\u{3}", Action::"\u{e}", Action::"^", Action::"ffd~", Action::"\u{1e}", Action::"\u{1d}\u{3}", Action::"[@", Action::"$=\u{e}", Action::"ebi ai"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{3}" in [Action::"\u{e}", Action::"^", Action::"ffd~", Action::"\u{1e}", Action::"\u{1d}\u{3}", Action::"[@", Action::"$=\u{e}", Action::"ebi ai"];
+
+action "\u{e}" in [Action::"^", Action::"ffd~", Action::"\u{1e}", Action::"\u{1d}\u{3}", Action::"[@", Action::"$=\u{e}", Action::"ebi ai"];
+
+action "\u{1d}\u{3}" in [Action::"[@", Action::"$=\u{e}", Action::"ebi ai"];
+
+action "\u{1d}@[" in [Action::"\u{3}", Action::"\u{e}", Action::"^", Action::"ffd~", Action::"\u{1e}", Action::"\u{1d}\u{3}", Action::"[@", Action::"$=\u{e}", Action::"ebi ai"];
+
+action "\u{1e}" in [Action::"\u{1d}\u{3}", Action::"[@", Action::"$=\u{e}", Action::"ebi ai"];
+
+action "$=\u{e}" in [Action::"ebi ai"];
+
+action ":~" in [Action::"\u{1d}@[", Action::"\u{3}", Action::"\u{e}", Action::"^", Action::"ffd~", Action::"\u{1e}", Action::"\u{1d}\u{3}", Action::"[@", Action::"$=\u{e}", Action::"ebi ai"];
+
+action "[@" in [Action::"$=\u{e}", Action::"ebi ai"];
+
+action "^" in [Action::"ffd~", Action::"\u{1e}", Action::"\u{1d}\u{3}", Action::"[@", Action::"$=\u{e}", Action::"ebi ai"];
+
+action "ebi ai";
+
+action "ffd~" in [Action::"\u{1e}", Action::"\u{1d}\u{3}", Action::"[@", Action::"$=\u{e}", Action::"ebi ai"];
+

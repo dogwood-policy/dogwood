@@ -1,0 +1,11 @@
+// Bare `Drupe::Action::"Login"{...}` matches a Login request that has NOT been denied.
+// An in-flight request (request emitted, no resolution yet) qualifies.
+
+permit (
+    principal,
+    action == Drupe::Action::"Logout",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

@@ -1,0 +1,11 @@
+// Match a concrete integer output: Read permitted only when a
+// prior Score returned exactly 42.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Score"::response{ input.user: context.input.user, output.points: 42 }
+};

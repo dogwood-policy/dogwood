@@ -1,0 +1,14 @@
+entity a = {
+  @A
+  A000?: a,
+  @m
+  @r("**6")
+  z: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,33 @@
+// Session-pinned event schema.
+//
+// Pins on sessionId instead of callerPrincipal. Temporal predicates see
+// only events within the same session — a different session's events are
+// invisible even if they share a principal.
+//
+// Use this when session isolation matters more than principal isolation
+// (e.g. a user may have concurrent sessions with independent histories).
+
+decision event <A>::request {
+    ...inputs(A),
+    callerPrincipal:   principalType(A),
+    callerResource:    resourceType(A),
+    requestId:         String,
+    pin sessionId:     String = context.sessionId,
+}
+
+event <A>::response {
+    ...inputs(A),
+    ...outputs(A),
+    callerPrincipal:   principalType(A),
+    callerResource:    resourceType(A),
+    requestId:         String,
+    pin sessionId:     String = context.sessionId,
+}
+
+event <A>::error {
+    ...inputs(A),
+    callerPrincipal:   principalType(A),
+    callerResource:    resourceType(A),
+    requestId:         String,
+    pin sessionId:     String = context.sessionId,
+}

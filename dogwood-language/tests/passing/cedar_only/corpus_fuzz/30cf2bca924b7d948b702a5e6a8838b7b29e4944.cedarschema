@@ -1,0 +1,14 @@
+entity a;
+
+action "" in [Action::"[&:v7v~vvvvvvvvvvvvvvvvvv"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "[&:v7v~vvvvvvvvvvvvvvvvvv" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

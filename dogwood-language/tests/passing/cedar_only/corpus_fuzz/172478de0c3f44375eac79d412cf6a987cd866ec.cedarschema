@@ -1,0 +1,10 @@
+namespace gM::f {
+  entity A enum ["\0\0"];
+
+  action "action" appliesTo {
+    principal: [A],
+    resource: [A],
+    context: {}
+  };
+}
+

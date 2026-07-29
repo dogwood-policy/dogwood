@@ -1,0 +1,11 @@
+// Permit Read only when the document matches ^[A-Z]+$ (guardrail)
+// AND the user is alice (Cedar when clause)
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Strings::Matches(context.input.document, "^[A-Z]+$").matched == true
+}
+when { context.input.user == "alice" };

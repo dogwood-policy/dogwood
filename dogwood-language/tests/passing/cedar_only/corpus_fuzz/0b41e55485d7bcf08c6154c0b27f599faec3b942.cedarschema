@@ -1,0 +1,15 @@
+entity a = {
+  gWQWWW0000000000?: __cedar::String,
+  gWWWWWWWWWWW3?: __cedar::String,
+  r?: __cedar::String,
+  @gWQWWW0000000000
+  @r("yyyyyyyy")
+  r33: a
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

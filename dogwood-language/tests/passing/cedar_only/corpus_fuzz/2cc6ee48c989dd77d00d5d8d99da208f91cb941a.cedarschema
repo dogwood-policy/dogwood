@@ -1,0 +1,57 @@
+entity a = {
+  A?: {
+    ""?: __cedar::String,
+    "\0"?: {
+      ""?: __cedar::String,
+      "\0"?: __cedar::String,
+      "\u{3}dd\u{7}\u{1d}d"?: __cedar::String,
+      "\u{e}"?: __cedar::String,
+      "\u{14}"?: __cedar::String,
+      "\u{1d}"?: __cedar::String,
+      "\u{1d}@"?: __cedar::String,
+      "\u{1d}@gffd~*"?: __cedar::String,
+      "\u{1d}@gv"?: __cedar::String,
+      "$"?: __cedar::String,
+      "$=\u{e}"?: __cedar::String,
+      "@["?: __cedar::String,
+      "N~\u{1f}"?: __cedar::String,
+      VV?: __cedar::String,
+      "["?: __cedar::String,
+      "[@"?: __cedar::String,
+      "^"?: __cedar::String,
+      qqq?: __cedar::String,
+      qqqqqsqqqqq?: __cedar::String,
+      "z~"?: __cedar::String,
+      "\u{7f}"?: __cedar::String
+    },
+    "\0\0"?: __cedar::String,
+    "\u{1}\n\u{f}VV"?: __cedar::Bool,
+    "\u{3}\u{1d}w"?: __cedar::String,
+    "\u{8}\0"?: __cedar::String,
+    "\u{e}"?: __cedar::String,
+    "\u{14}"?: __cedar::String,
+    "\u{1d}@["?: __cedar::String,
+    "\u{1d}@gf"?: __cedar::String,
+    "\u{1d}Debian @"?: __cedar::String,
+    "$"?: __cedar::String,
+    ":~"?: __cedar::String,
+    "=\u{e}"?: __cedar::String,
+    "=\u{e}mf"?: __cedar::String,
+    "N~\u{1f}"?: __cedar::String,
+    VV?: __cedar::String,
+    "["?: __cedar::String,
+    "[@["?: __cedar::String,
+    ff?: __cedar::String,
+    "o\0"?: __cedar::String,
+    qqqqqqqqqsqqqqq?: __cedar::String,
+    "z~"?: __cedar::String,
+    "\u{7f}"?: __cedar::String
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,31 @@
+// Test fixture: the request/response event schema WITHOUT pins.
+//
+// Tests that predate the pinned default use global-trace semantics
+// (cross-principal matching). This fixture preserves that behavior.
+// New tests that want per-principal isolation should supply their own
+// pinned event.dwschema or use the default (which is pinned).
+
+decision event <A>::request {
+    ...inputs(A),
+    callerPrincipal:   principalType(A),
+    callerResource:    resourceType(A),
+    requestId:         String,
+    sessionId:         String,
+}
+
+event <A>::response {
+    ...inputs(A),
+    ...outputs(A),
+    callerPrincipal:   principalType(A),
+    callerResource:    resourceType(A),
+    requestId:         String,
+    sessionId:         String,
+}
+
+event <A>::error {
+    ...inputs(A),
+    callerPrincipal:   principalType(A),
+    callerResource:    resourceType(A),
+    requestId:         String,
+    sessionId:         String,
+}

@@ -1,0 +1,25 @@
+// This event schema raises the temporal look-back cap from the 24h default to
+// 30 days with a `max_window` directive. Without it, the policy's
+// `formerly within 7d` would be a validation error (7d > the 24h default);
+// with the cap raised to 30d, a 7d window is well within bounds.
+//
+// The directive must come first, before any event declaration. The event
+// kinds are the conventional request/resolution convention (the default
+// shape), spelled out here only because supplying any `--event-schema` opts
+// out of the built-in default.
+max_window = 30d
+
+decision event <A>::request {
+    ...inputs(A),
+    callerPrincipal: principalType(A),
+    callerResource:  resourceType(A),
+    requestId:       String,
+}
+
+event <A>::response {
+    ...inputs(A),
+    ...outputs(A),
+    callerPrincipal: principalType(A),
+    callerResource:  resourceType(A),
+    requestId:       String,
+}

@@ -1,0 +1,304 @@
+// =============================================================================
+// Temporal sub-language grammar (pest)
+// =============================================================================
+//
+// This grammar parses the BODY of a `temporal { ... }` marker block —
+// a temporal condition, not a full policy. The entry rule is
+// `condition_entry`. It is a self-contained reimplementation of the
+// Dogwood temporal condition language (past-only operators, predicate
+// and resolved-predicate matches, comparisons, and aggregations); it
+// does not depend on the legacy temporal-frontend crate.
+
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+COMMENT    = _{ "//" ~ (!("\n" | "\r") ~ ANY)* }
+
+// ── Lexical ────────────────────────────────────────────────────────
+ident   = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
+// Integers may be negative (a leading `-`).
+integer = @{ "-"? ~ ASCII_DIGIT+ }
+string  = @{ "\"" ~ ( "\\" ~ ANY | (!"\"" ~ !"\\" ~ ANY) )* ~ "\"" }
+
+kw_true  = @{ "true"  ~ !(ASCII_ALPHANUMERIC | "_") }
+kw_false = @{ "false" ~ !(ASCII_ALPHANUMERIC | "_") }
+
+// Macro sigils.
+//
+//   ?p — value parameter reference (the call-site argument is spliced
+//        literally; a param used in binder position is checked to be a
+//        single identifier at expansion time).
+//   $t — fresh-binder reference (introduced by the macro definition,
+//        replaced with a gensym at every expansion).
+//
+// The fresh-binder sigil uses `$` (not `!`) so it can never be confused
+// with the negation operator `!`: `$` is not used anywhere else in the
+// surface syntax, so a `$`-prefixed name is unambiguous in every position.
+//
+// These tokens are accepted everywhere a regular identifier or binder
+// can go (term position, binder list, `tp` argument, `sum`'s bound var).
+// They are legal *only* inside a macro body; outside a macro body the
+// well-formedness pass rejects them.
+param_ref  = @{ "?" ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
+binder_ref = @{ "$" ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
+
+// A position that names a binder: either a concrete identifier or a
+// macro sigil (`?p` for a binder-position param, `$t` for an introduced
+// fresh binder).
+binder_slot = { param_ref | binder_ref | ident }
+
+// ── Entry ──────────────────────────────────────────────────────────
+condition_entry = { SOI ~ condition ~ EOI }
+// Macro-body entries: a `def temporal foo(...)` body is either an
+// aggregation expression (the `sum`/`count` value, without the
+// surrounding `let r = … in BODY` scaffold) or a condition. The
+// `agg_expr` form is tried first because `let_agg`/`let_agg_tp` start
+// with `sum`/`count`, which `condition` does not.
+temporal_macro_body_entry = { SOI ~ (agg_expr | condition) ~ EOI }
+
+// ── Condition structure (mirrors the proven temporal grammar) ──────
+//
+// `&&` is the loosest operator. A `conjunct_or_since` is an optionally
+// `since`-suffixed `conjunct`; a `conjunct` may be prefixed with one or
+// more `!` negations. Negation binds tighter than `since` and `&&`, so
+// `!a since within W b` negates only `a` (the `since` left operand) and
+// `!a && b` negates only `a`.
+condition         = { conjunct_or_since ~ ("&&" ~ conjunct_or_since)* }
+conjunct_or_since = { neg_conjunct ~ ("since" ~ within ~ atom)? }
+// A conjunct with zero or more leading `!` negations. Each `!` wraps the
+// rest in a `Not`; an even count cancels out (double negation), matching
+// both the boolean and the relational (anti-join) semantics.
+//
+// `bang` is a *named* rule (not an inline literal) so the parser counts
+// the `!`s by counting `bang` parse-tree children — robust against
+// whitespace OR a line comment appearing between consecutive `!`s (the
+// rule is non-atomic, so pest allows trivia there). A `!` that happens to
+// sit inside such a comment is consumed by the silent COMMENT rule and
+// never becomes a `bang` node, so it can never be miscounted.
+//
+// The negation operator `!` is unrelated to the fresh-binder sigil `$t`:
+// they use distinct characters and never overlap, so no positional
+// disambiguation is needed between them.
+neg_conjunct      = { bang* ~ conjunct }
+bang              = { "!" }
+// `tp_op` and `exists_op` must precede `call` so their keywords (`tp`,
+// `exists`) win — otherwise `tp(t)` would parse as a `call` named "tp".
+// `refinable` covers a predicate or a `?p` condition-sigil, optionally
+// followed by trailing field-injection blocks (see `refinable`).
+//
+// `comparison` precedes `parenthesized` so a *parenthesized aggregate
+// operand* `(count …) == n` is recognized as a comparison rather than the
+// `( … )` being eaten as a parenthesized condition (which would strand the
+// `== n`). This is safe: `comparison` commits only when it finds
+// `cmp_operand cmp_op cmp_operand`, so a genuine parenthesized condition
+// `(A && B)` — whose content is not an aggregate/term followed by a
+// comparison operator — fails the `comparison` attempt and falls through
+// to `parenthesized`.
+conjunct          = { comparison | parenthesized | temporal_op | exists_op | tp_op | call | refinable }
+
+// A macro sigil standing for an entire condition (the macro expander
+// will splice the call-site argument's condition AST in place). Only
+// legal inside a macro body. A `$t` binder reference is NOT a condition
+// (a bare name is not a condition); binder references live only in binder
+// and term positions.
+sigil_cond = { param_ref }
+
+// A predicate-valued atom optionally carrying trailing field-injection
+// blocks: `P::kind{ a: 1 }{ b: 2 }` or `?s{ status: "approved" }`. Each
+// trailing `field_block` injects its named args onto the base predicate
+// (append = conjoin). Zero blocks means the atom is just the bare
+// predicate / condition-sigil (the parser returns it unchanged, so this
+// rule is transparent to everything that existed before field injection).
+//
+// This is unambiguous because a `predicate` ends in `"}"` and a
+// `sigil_cond` ends in an identifier tail — a following `"{"` can only be
+// a `field_block`, never the start of another conjunct or term (no `term`
+// or conjunct alternative begins with `{`).
+refinable   = { (predicate | sigil_cond) ~ field_block* }
+field_block = { "{" ~ named_arg_list? ~ "}" }
+
+parenthesized = { "(" ~ condition ~ ")" }
+
+// `tp(t)` — binds `t` to the timepoint currently being evaluated. Used
+// inside an aggregation body (under a temporal scan) so the aggregation
+// domain can range over distinct timepoints. The `(` after `tp`
+// disambiguates from a bare identifier `tp` used as a term. The
+// argument is a binder slot: a concrete identifier or a macro sigil
+// (`?p` / `$t`).
+tp_op = { "tp" ~ "(" ~ binder_slot ~ ")" }
+
+// `exists (x: T). φ` — the sole binder. `exists` is a binding form and
+// extends its scope maximally to the right: the body is a full
+// `condition`, so `exists (x: T). φ && ψ` binds `x` over `φ && ψ`. To stop
+// the scope early, parenthesize (`(exists (x: T). φ) && ψ`). The typed
+// binder reuses the same `(x: T)` construct as a `for`-list element.
+exists_op = { "exists" ~ typed_binder ~ "." ~ condition }
+
+// Past-only temporal operators; `within` is mandatory.
+temporal_op = { once_op | previous_op }
+once_op     = { "formerly" ~ within ~ atom }
+previous_op = { "previous" ~ within ~ atom }
+
+atom = {
+    "(" ~ condition ~ ")"
+  | tp_op
+  | call
+  | refinable
+  | comparison
+}
+
+// ── Predicates ─────────────────────────────────────────────────────
+// Leading-ident-plus-tail form so the greedy `*` does not consume the
+// final `::` that belongs to the action string (pest repetition is
+// possessive). Matches e.g. `MyApp::Action::"Login"`.
+qualified_action = { ident ~ ("::" ~ ident)* ~ "::" ~ string }
+
+// A predicate names an event kind explicitly as a trailing `::ident`
+// segment after the quoted action id, e.g.
+// `MyApp::Action::"Login"::request{ … }`. The kind is mandatory; the
+// quoted-string anchor makes the segment unambiguous (the `::ident` after
+// the closing `"` is the kind, distinct from the namespace `::`s before
+// it). Event kinds are author-defined, not a fixed set — `request` /
+// `resolution` are merely the conventional ones.
+predicate     = { qualified_action ~ "::" ~ event_kind ~ "{" ~ named_arg_list? ~ "}" }
+event_kind    = { ident }
+
+named_arg_list = { named_arg ~ ("," ~ named_arg)* }
+// A field name is a dotted path: a bare field (`user`) or a path into a
+// nested group (`input.user`, `output.result`). This mirrors how the
+// request side is addressed (`context.input.user`) — an event's spliced
+// input/output fields nest under the `input` / `output` groups.
+named_arg      = { field_path ~ ":" ~ term }
+field_path     = { ident ~ ("." ~ ident)* }
+
+// ── Comparison ─────────────────────────────────────────────────────
+//
+// Both operands are `term`s. An aggregate is a `term` (see the `term`
+// rule), so `0 < count for … where φ` and `(count …) == n` are ordinary
+// comparisons; the "aggregate only as a comparison operand" rule (§3.1) is
+// enforced by validation, not the grammar. Parenthesizing the aggregate on
+// the LEFT of `== n` fences off the `== n` from its greedy `where` body
+// (design §3.2) — the `term` rule admits a parenthesized aggregate.
+comparison = { term ~ cmp_op ~ term }
+cmp_op     = { "<=" | ">=" | "!=" | "==" | "<" | ">" }
+
+// ── Aggregation ────────────────────────────────────────────────────
+//
+// The aggregation domain is named explicitly by a mandatory `for
+// <binders>.` clause — the set of variables whose satisfying assignments
+// of the `where` condition are collected, deduplicated, and aggregated.
+//
+// An aggregate is a numeric *term*, admitted only as a comparison operand
+// (`cmp_operand`). It replaces the deleted `let r = <agg> in BODY`
+// scaffold: `let n = A in n > 0` is now written
+// `exists (n: Long). ((A) == n && n > 0)`. The aggregate's greedy `where`
+// body means `0 < count for (t: Timepoint). where φ` needs no parens
+// (aggregate rightmost), while `(count …) == n` must parenthesize the
+// aggregate to fence off `== n` (design §3.2).
+//
+// The bare aggregation value (separable so a temporal macro body can be
+// just the value, spliced into a comparison operand at call sites). A
+// `call` is admitted last so a macro that produces an agg-expression can
+// fill this slot; the `sum`/`count` keywords come first so they win over a
+// bare-identifier call.
+agg_expr   = { sum_expr | count_expr | call }
+sum_expr   = { "sum" ~ binder_slot ~ for_binders ~ "where" ~ condition }
+count_expr = { "count" ~ for_binders ~ "where" ~ condition }
+
+// `for (v1: T1), (v2: T2), ..., (vn: Tn).` — the explicit aggregation
+// domain (typed binders). Each element is a *declaration site*, so it
+// carries a mandatory type annotation; the trailing `.` terminates the
+// list (and separates it from `where`). The `sum X` bound-var reference
+// and `tp(X)` variable are *uses* of a `for`-declared binder, so they
+// remain bare `binder_slot`s.
+for_binders = { "for" ~ typed_binder ~ ("," ~ typed_binder)* ~ "." }
+
+// A typed binder `(x: T)` — a binder slot paired with its type. The slot
+// may be a concrete identifier or a macro sigil (`?p` / `$t`); the type
+// is `Timepoint` or a qualified concrete/entity type.
+typed_binder = { "(" ~ binder_slot ~ ":" ~ type_expr ~ ")" }
+type_expr    = { ident ~ ("::" ~ ident)* }
+
+// ── Windows ────────────────────────────────────────────────────────
+//
+// `within <n> <unit>` — and, inside a macro body, `within ?w` where `?w`
+// is a parameter reference that the macro expander resolves against the
+// call-site's `within <n> <unit>` argument. The `within_payload` rule
+// covers both shapes; outside a macro body the sigil form is rejected
+// by the expander.
+within         = { "within" ~ within_payload }
+within_payload = { param_ref | (integer ~ time_unit) }
+time_unit      = { "s" | "m" | "h" | "d" }
+
+// ── Macro calls ────────────────────────────────────────────────────
+//
+// A macro is invoked by name with a list of arguments. Each argument may
+// be a window interval, a temporal condition, or a term — the parser tags
+// whichever parsed and the expansion pass checks each arg-tag against the
+// parameter's usage in the macro body. (A binder-position param expects a
+// single-identifier term; a condition-position param expects a condition;
+// a window param expects an interval.)
+//
+// A window argument is a bare `interval_lit` (`1h`, `30m`), NOT a
+// `within <n> <unit>` clause: the `within` keyword belongs to the
+// temporal operators (`formerly within …`), so the macro *body* writes
+// `within ?w` and the call site supplies just the interval `?w` names.
+// `interval_lit` is tried first so `1h` is taken as an interval; a bare
+// integer with no time unit (e.g. `5`) fails it and falls through to a
+// `term`.
+call          = { ident ~ "(" ~ call_arg_list? ~ ")" }
+call_arg_list = { call_arg ~ ("," ~ call_arg)* }
+call_arg      = { interval_lit | condition | term }
+interval_lit  = { integer ~ time_unit }
+
+// ── Terms ──────────────────────────────────────────────────────────
+//
+// Macro sigils are admitted as terms so a macro body may use `?p` /
+// `$t` anywhere a normal identifier would appear (e.g. as a predicate
+// argument value, comparison operand, etc.).
+//
+// An aggregate (`sum`/`count`) is a term (design §3.1); the
+// comparison-operand-only rule is enforced by validation, not here.
+// Ordering is load-bearing:
+//   * `entity` and `decimal_lit` precede `agg_expr` because `agg_expr`
+//     includes `call = ident "(" … ")"`, which would otherwise mis-grab
+//     `decimal("1.5")` as a call named `decimal` (and an `Ns::"x"` head as
+//     a call). Both are matched first, so aggregates never see them.
+//   * `paren_agg` is a parenthesized aggregate — the §3.2 fencing form
+//     `(count …) == n`. Nothing else in `term` starts with `(`, so it is
+//     unambiguous; a parenthesized *condition* `(A && B)` is not an
+//     aggregate, so `paren_agg` fails and the enclosing `comparison`
+//     falls through to `parenthesized` at the conjunct level.
+//   * `agg_expr` precedes `ident` so a bare `count`/`sum` keyword wins
+//     over being read as an identifier.
+term = {
+    entity
+  | decimal_lit
+  | paren_agg
+  | agg_expr
+  | integer
+  | string
+  | kw_true | kw_false
+  | array
+  | context_field
+  | scope_field
+  | wildcard
+  | param_ref
+  | binder_ref
+  | ident
+}
+paren_agg = { "(" ~ agg_expr ~ ")" }
+
+entity        = { ident ~ ("::" ~ ident)* ~ "::" ~ string }
+decimal_lit   = { "decimal" ~ "(" ~ string ~ ")" }
+array         = { "[" ~ (term ~ ("," ~ term)*)? ~ "]" }
+context_field = { "context" ~ ("." ~ ident)+ }
+// `principal` / `resource` — the request scope *entities* (Cedar's
+// `principal` / `resource` variables), distinct from the `context` record.
+// A bare root is the entity itself (identity); an attribute tail
+// (`principal.dept`) reads the entity's attribute — the same surface a pure
+// Cedar `when { principal.dept }` and a provider arg `principal.dept` use, so
+// the three agree. `scope_root` is a contextual keyword: the `!(alnum|_)`
+// lookahead means an identifier merely *starting* with `principal`
+// (`principalId`) is an ordinary variable, not a scope root.
+scope_field   = { scope_root ~ ("." ~ ident)* }
+scope_root    = @{ ("principal" | "resource") ~ !(ASCII_ALPHANUMERIC | "_") }
+wildcard      = { "*" }

@@ -1,0 +1,394 @@
+{
+  "policies": "corpus-tests/f9d376bf73aae1eec337bbd05d87c0f6a0d95ecd.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/f9d376bf73aae1eec337bbd05d87c0f6a0d95ecd.entities.json",
+  "schema": "corpus-tests/f9d376bf73aae1eec337bbd05d87c0f6a0d95ecd.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "D": "",
+        "I": "",
+        "cbbbbbbbbbbbbb": "",
+        "f": "",
+        "h0": "",
+        "h4": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "jbbb": "",
+        "lbDm": "",
+        "lbbb": "",
+        "lbw4": "",
+        "m3": "",
+        "p2": {
+          "__extn": {
+            "fn": "duration",
+            "arg": "0ms"
+          }
+        },
+        "r": "",
+        "v": "",
+        "vR": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "D": "",
+        "I": "",
+        "cbbbbbbbbbbbbb": "",
+        "f": "",
+        "h0": "",
+        "h4": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "jbbb": "",
+        "lbDm": "",
+        "lbbb": "",
+        "lbw4": "",
+        "m3": "",
+        "p2": {
+          "__extn": {
+            "fn": "duration",
+            "arg": "0ms"
+          }
+        },
+        "r": "",
+        "v": "",
+        "vR": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "D": "",
+        "I": "",
+        "cbbbbbbbbbbbbb": "",
+        "f": "",
+        "h0": "",
+        "h4": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "jbbb": "",
+        "lbDm": "",
+        "lbbb": "",
+        "lbw4": "",
+        "m3": "",
+        "p2": {
+          "__extn": {
+            "fn": "duration",
+            "arg": "0ms"
+          }
+        },
+        "r": "",
+        "v": "",
+        "vR": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "D": "",
+        "I": "",
+        "cbbbbbbbbbbbbb": "",
+        "f": "",
+        "h0": "",
+        "h4": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "jbbb": "",
+        "lbDm": "",
+        "lbbb": "",
+        "lbw4": "",
+        "m3": "",
+        "p2": {
+          "__extn": {
+            "fn": "duration",
+            "arg": "0ms"
+          }
+        },
+        "r": "",
+        "v": "",
+        "vR": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "D": "",
+        "I": "",
+        "cbbbbbbbbbbbbb": "",
+        "f": "",
+        "h0": "",
+        "h4": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "jbbb": "",
+        "lbDm": "",
+        "lbbb": "",
+        "lbw4": "",
+        "m3": "",
+        "p2": {
+          "__extn": {
+            "fn": "duration",
+            "arg": "0ms"
+          }
+        },
+        "r": "",
+        "v": "",
+        "vR": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "D": "",
+        "I": "",
+        "cbbbbbbbbbbbbb": "",
+        "f": "",
+        "h0": "",
+        "h4": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "jbbb": "",
+        "lbDm": "",
+        "lbbb": "",
+        "lbw4": "",
+        "m3": "",
+        "p2": {
+          "__extn": {
+            "fn": "duration",
+            "arg": "0ms"
+          }
+        },
+        "r": "",
+        "v": "",
+        "vR": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "D": "",
+        "I": "",
+        "cbbbbbbbbbbbbb": "",
+        "f": "",
+        "h0": "",
+        "h4": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "jbbb": "",
+        "lbDm": "",
+        "lbbb": "",
+        "lbw4": "",
+        "m3": "",
+        "p2": {
+          "__extn": {
+            "fn": "duration",
+            "arg": "0ms"
+          }
+        },
+        "r": "",
+        "v": "",
+        "vR": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "D": "",
+        "I": "",
+        "cbbbbbbbbbbbbb": "",
+        "f": "",
+        "h0": "",
+        "h4": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "jbbb": "",
+        "lbDm": "",
+        "lbbb": "",
+        "lbw4": "",
+        "m3": "",
+        "p2": {
+          "__extn": {
+            "fn": "duration",
+            "arg": "0ms"
+          }
+        },
+        "r": "",
+        "v": "",
+        "vR": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

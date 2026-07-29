@@ -1,0 +1,104 @@
+namespace A::A {
+  entity a;
+
+  action "" in [A::A::Action::"V:", A::A::Action::"V", A::A::Action::"~"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{3}" in [A::A::Action::"w\u{1d}[", A::A::Action::"$", A::A::Action::"=\u{e}", A::A::Action::"3[", A::A::Action::"\u{1d}@Je8a\u{7}a8<", A::A::Action::"r@", A::A::Action::"}}", A::A::Action::":~", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}"];
+
+  action "\u{e}" in [A::A::Action::"\u{3}", A::A::Action::"w\u{1d}[", A::A::Action::"$", A::A::Action::"=\u{e}", A::A::Action::"3[", A::A::Action::"\u{1d}@Je8a\u{7}a8<", A::A::Action::"r@", A::A::Action::"}}", A::A::Action::":~", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{1d}\u{3}" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  @L
+  action "\u{1d}@Je8a\u{7}a8<" in [A::A::Action::"r@", A::A::Action::"}}", A::A::Action::":~", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      l?: __cedar::Bool
+    }
+  };
+
+  action "$" in [A::A::Action::"=\u{e}", A::A::Action::"3[", A::A::Action::"\u{1d}@Je8a\u{7}a8<", A::A::Action::"r@", A::A::Action::"}}", A::A::Action::":~", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "3[" in [A::A::Action::"\u{1d}@Je8a\u{7}a8<", A::A::Action::"r@", A::A::Action::"}}", A::A::Action::":~", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action ":~" in [A::A::Action::"^", A::A::Action::"\u{1d}\u{3}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      Daaaaaa777?: __cedar::String
+    }
+  };
+
+  action "=\u{e}" in [A::A::Action::"3[", A::A::Action::"\u{1d}@Je8a\u{7}a8<", A::A::Action::"r@", A::A::Action::"}}", A::A::Action::":~", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "V" in [A::A::Action::"~", A::A::Action::"\u{e}", A::A::Action::"\u{3}", A::A::Action::"w\u{1d}[", A::A::Action::"$", A::A::Action::"=\u{e}", A::A::Action::"3[", A::A::Action::"\u{1d}@Je8a\u{7}a8<", A::A::Action::"r@", A::A::Action::":~", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "V:" in [A::A::Action::"\u{e}", A::A::Action::"\u{3}", A::A::Action::"w\u{1d}[", A::A::Action::"$", A::A::Action::"=\u{e}", A::A::Action::"3[", A::A::Action::"\u{1d}@Je8a\u{7}a8<", A::A::Action::"r@", A::A::Action::"}}", A::A::Action::":~", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      @l
+      Daaaaoaaaa: __cedar::Bool
+    }
+  };
+
+  action "^" in [A::A::Action::"\u{1d}\u{3}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "r@" in [A::A::Action::"}}", A::A::Action::":~", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "w\u{1d}[" in [A::A::Action::"$", A::A::Action::"=\u{e}", A::A::Action::"3[", A::A::Action::"\u{1d}@Je8a\u{7}a8<", A::A::Action::"r@", A::A::Action::"}}", A::A::Action::":~", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "}}" in [A::A::Action::":~", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "~" in [A::A::Action::"\u{e}", A::A::Action::"\u{3}", A::A::Action::"w\u{1d}[", A::A::Action::"$", A::A::Action::"=\u{e}", A::A::Action::"3[", A::A::Action::"\u{1d}@Je8a\u{7}a8<", A::A::Action::"r@", A::A::Action::"}}", A::A::Action::":~", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

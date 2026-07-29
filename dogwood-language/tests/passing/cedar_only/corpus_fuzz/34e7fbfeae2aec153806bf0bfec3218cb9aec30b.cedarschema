@@ -1,0 +1,18 @@
+entity a tags a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    F?: {    },
+    @A
+    @DOsm0
+    @IgKqe3733EC1RRK
+    O?: Set<Set<__cedar::String>>,
+    p?: Set<{
+      "": __cedar::Bool,
+      F?: Set<Set<__cedar::Long>>
+    }>
+  }
+};
+

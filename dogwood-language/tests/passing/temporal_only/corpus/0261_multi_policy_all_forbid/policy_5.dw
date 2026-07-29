@@ -1,0 +1,8 @@
+forbid (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 5h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

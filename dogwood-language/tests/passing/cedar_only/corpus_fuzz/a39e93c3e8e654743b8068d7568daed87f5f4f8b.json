@@ -1,0 +1,230 @@
+{
+  "policies": "corpus-tests/a39e93c3e8e654743b8068d7568daed87f5f4f8b.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/a39e93c3e8e654743b8068d7568daed87f5f4f8b.entities.json",
+  "schema": "corpus-tests/a39e93c3e8e654743b8068d7568daed87f5f4f8b.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": false,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "a",
+        "id": "3"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "3"
+      },
+      "context": {
+        "A": {
+          "": {}
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "a",
+        "id": "3"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "3"
+      },
+      "context": {
+        "A": {
+          "": {},
+          "\u0001xxxxxxxx4": "/Ct33r",
+          "\u00145**": {},
+          "******": {},
+          "9": "/Ct33r"
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "a",
+        "id": "3"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "3"
+      },
+      "context": {
+        "A": {
+          "": {},
+          "\u0001xxxxxxxx4": "/Ct33r",
+          "\u00145**": {},
+          "******": {},
+          "9": "/Ct33r"
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "a",
+        "id": "3"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "3"
+      },
+      "context": {
+        "A": {
+          "": {},
+          "\u0001xxxxxxxx4": "/Ct33r",
+          "\u00145**": {},
+          "******": {},
+          "9": "/Ct33r"
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "a",
+        "id": "3"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "3"
+      },
+      "context": {
+        "A": {
+          "": {},
+          "\u0001xxxxxxxx4": "/Ct33r",
+          "\u00145**": {},
+          "******": {},
+          "9": "/Ct33r"
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "a",
+        "id": "3"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "3"
+      },
+      "context": {
+        "A": {
+          "": {},
+          "\u0001xxxxxxxx4": "/Ct33r",
+          "\u00145**": {},
+          "******": {},
+          "9": "/Ct33r"
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "a",
+        "id": "3"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "3"
+      },
+      "context": {
+        "A": {
+          "": {},
+          "\u0001xxxxxxxx4": "/Ct33r",
+          "\u00145**": {},
+          "******": {},
+          "9": "/Ct33r"
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "a",
+        "id": "3"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "3"
+      },
+      "context": {
+        "A": {
+          "": {},
+          "\u0001xxxxxxxx4": "/Ct33r",
+          "\u00145**": {},
+          "******": {},
+          "9": "/Ct33r"
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}

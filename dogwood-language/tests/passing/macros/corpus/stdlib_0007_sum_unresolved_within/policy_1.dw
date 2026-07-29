@@ -1,0 +1,18 @@
+// stdlib `sum_unresolved_within` (schema-conditional): sum the amounts of
+// Transfer requests within the window whose `requestId` has no matching
+// resolution. The amount field is injected by the CALLER onto the request
+// predicate (`input.amount: a`), so the macro is not tied to a fixed field
+// name. Permit an Alert when the total pending (unresolved) transfer amount
+// exceeds 100 within the last hour.
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (total: Long). (
+        (sum_unresolved_within(a, 1h, Drupe::Action::"Transfer"::request{ input.amount: a }, Drupe::Action::"Transfer"::response{})) == total
+        && total > 100
+    )
+};

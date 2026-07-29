@@ -1,0 +1,18 @@
+entity a = {
+  @A("SSSSSSSSSSSSSSSSSSSSSSSSSSSS!!!!!")
+  @hXX00000000000000
+  @r("")
+  z: {
+    @h("!!!!!!!!!!!!!!!!!!!\u{17}!!!!!!!!!!\u{1}\0\0")
+    @r("")
+    "": __cedar::Long,
+    "h;"?: __cedar::Long
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

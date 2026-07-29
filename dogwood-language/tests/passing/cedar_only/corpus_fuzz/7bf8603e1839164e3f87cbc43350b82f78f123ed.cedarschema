@@ -1,0 +1,21 @@
+entity a;
+
+action "" in [Action::":p", Action::"]]]]]]]]]]]]]]]]]]]]"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action ":p" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+@GYr0
+action "]]]]]]]]]]]]]]]]]]]]" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

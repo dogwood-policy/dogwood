@@ -1,0 +1,13 @@
+entity a tags {
+  ""?: __cedar::Bool,
+  "t/i\u{1}\nddddddddddd\u{1d}A"?: __cedar::Bool
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    nTAAAAAAAAA?: __cedar::String
+  }
+};
+

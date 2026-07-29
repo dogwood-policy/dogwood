@@ -1,0 +1,22 @@
+// A Read is permitted if there was formerly a Login. This policy writes the
+// pinned field with EXACTLY the value the schema pins it to
+// (`callerPrincipal: principal`). The pin is still injected, so the
+// predicate constrains `callerPrincipal` twice against the same request
+// value — a redundant no-op. The verdicts match case 1117 (which wrote
+// nothing), demonstrating that an agreeing hand-written field neither relaxes
+// nor tightens the pin.
+//
+// Positive/negative control across two traces:
+//   trace_1: the prior Login is by the SAME principal as the Read → permitted.
+//   trace_2: IDENTICAL except the prior Login is by a DIFFERENT principal →
+//            the correlation (whether from the author's copy or the pin's)
+//            forces a mismatch → NOT permitted.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user, callerPrincipal: principal }
+};

@@ -1,0 +1,22 @@
+entity a;
+
+action "" in [Action::":", Action::"\u{e}", Action::"ip", Action::"Bii2q3ddr", Action::"[", Action::"\u{2}\u{1d}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    r00000000000?: __cedar::String
+  }
+};
+
+action "\u{2}\u{1d}";
+
+action "\u{e}" in [Action::"ip", Action::"Bii2q3ddr", Action::"[", Action::"\u{2}\u{1d}"];
+
+action ":" in [Action::"\u{e}", Action::"ip", Action::"Bii2q3ddr", Action::"[", Action::"\u{2}\u{1d}"];
+
+action "Bii2q3ddr" in [Action::"[", Action::"\u{2}\u{1d}"];
+
+action "[" in [Action::"\u{2}\u{1d}"];
+
+action "ip" in [Action::"Bii2q3ddr", Action::"[", Action::"\u{2}\u{1d}"];
+

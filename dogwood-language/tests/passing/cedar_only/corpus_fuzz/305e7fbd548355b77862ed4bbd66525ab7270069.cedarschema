@@ -1,0 +1,34 @@
+entity a tags __cedar::String;
+
+action "" in [Action::":~", Action::"\u{1d}@[", Action::"\u{3}\u{1d}$w", Action::"$", Action::"=\u{e}", Action::"\u{1d}", Action::"\u{3}[", Action::"@T", Action::"oU ", Action::"                                 ", Action::"\u{8}\u{1d}@gf\u{e}fd", Action::"UUUUUaU@                  U    ", Action::"                                      "] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{3}\u{1d}$w" in [Action::"$", Action::"=\u{e}", Action::"\u{1d}", Action::"\u{3}[", Action::"@T", Action::"oU ", Action::"                                 ", Action::"\u{8}\u{1d}@gf\u{e}fd", Action::"UUUUUaU@                  U    ", Action::"                                      "];
+
+action "\u{3}[" in [Action::"@T", Action::"oU ", Action::"                                 ", Action::"\u{8}\u{1d}@gf\u{e}fd", Action::"UUUUUaU@                  U    ", Action::"                                      "];
+
+action "\u{8}\u{1d}@gf\u{e}fd" in [Action::"UUUUUaU@                  U    ", Action::"                                      "];
+
+action "\u{1d}" in [Action::"\u{3}[", Action::"@T", Action::"oU ", Action::"                                 ", Action::"\u{8}\u{1d}@gf\u{e}fd", Action::"UUUUUaU@                  U    ", Action::"                                      "];
+
+action "\u{1d}@[" in [Action::"\u{3}\u{1d}$w", Action::"$", Action::"=\u{e}", Action::"\u{1d}", Action::"\u{3}[", Action::"@T", Action::"oU ", Action::"                                 ", Action::"\u{8}\u{1d}@gf\u{e}fd", Action::"UUUUUaU@                  U    ", Action::"                                      "];
+
+action "                                 " in [Action::"\u{8}\u{1d}@gf\u{e}fd", Action::"UUUUUaU@                  U    ", Action::"                                      "];
+
+action "                                      ";
+
+action "$" in [Action::"=\u{e}", Action::"\u{1d}", Action::"\u{3}[", Action::"@T", Action::"oU ", Action::"                                 ", Action::"\u{8}\u{1d}@gf\u{e}fd", Action::"UUUUUaU@                  U    ", Action::"                                      "];
+
+action ":~" in [Action::"\u{1d}@[", Action::"\u{3}\u{1d}$w", Action::"$", Action::"=\u{e}", Action::"\u{1d}", Action::"\u{3}[", Action::"@T", Action::"oU ", Action::"                                 ", Action::"\u{8}\u{1d}@gf\u{e}fd", Action::"UUUUUaU@                  U    ", Action::"                                      "];
+
+action "=\u{e}" in [Action::"\u{1d}", Action::"\u{3}[", Action::"@T", Action::"oU ", Action::"                                 ", Action::"\u{8}\u{1d}@gf\u{e}fd", Action::"UUUUUaU@                  U    ", Action::"                                      "];
+
+action "@T" in [Action::"oU ", Action::"                                 ", Action::"\u{8}\u{1d}@gf\u{e}fd", Action::"UUUUUaU@                  U    ", Action::"                                      "];
+
+action "UUUUUaU@                  U    " in [Action::"                                      "];
+
+action "oU " in [Action::"                                 ", Action::"\u{8}\u{1d}@gf\u{e}fd", Action::"UUUUUaU@                  U    ", Action::"                                      "];
+

@@ -1,0 +1,12 @@
+entity a tags __cedar::duration;
+
+action "" in [Action::"det", Action::"rm"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "det" in [Action::"rm"];
+
+action "rm";
+

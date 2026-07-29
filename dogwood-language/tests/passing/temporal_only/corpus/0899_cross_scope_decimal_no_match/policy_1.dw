@@ -1,0 +1,13 @@
+// Permit Transfer when the user previously made a Transfer of exactly
+// decimal("2.50") that resolved (any output). The decimal literal filter
+// on an input field means only that specific amount satisfies the body.
+// At a Read timepoint the Transfer scope prevents this from being a
+// determining policy even though the resolved predicate body is still satisfied.
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Transfer"::response{ input.user: context.input.user, input.amount: decimal("2.50") }
+};

@@ -1,0 +1,28 @@
+entity a;
+
+action "" in [Action::"p", Action::"&\u{7}\u{1d}\u{3}", Action::"?"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "&\u{7}\u{1d}\u{3}" in [Action::"?"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "?" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "p" in [Action::"&\u{7}\u{1d}\u{3}", Action::"?"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    sYYYY40YYYYVV?: {    }
+  }
+};
+

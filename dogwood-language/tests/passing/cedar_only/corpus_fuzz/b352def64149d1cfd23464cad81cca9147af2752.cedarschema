@@ -1,0 +1,12 @@
+entity N;
+
+entity UA tags UA;
+
+entity r;
+
+action "" appliesTo {
+  principal: [r, UA],
+  resource: [r, UA],
+  context: {}
+};
+

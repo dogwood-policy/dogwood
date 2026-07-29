@@ -1,0 +1,9 @@
+// Two `def cedar` macros composed with `&&` in one `when` clause.
+// Both are defined in the macro library (macros.dw); each is called
+// with a different argument shape (Long, String).
+@id("sell_eligible_unblocked")
+permit (principal, action == Drupe::Action::"SellShares", resource)
+when {
+    is_eligible(context.input.shares, context.input.stock)
+    && is_not_blocked(context.input.stock)
+};

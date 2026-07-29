@@ -1,0 +1,23 @@
+entity BFf;
+
+entity K000VVVVVVVVV;
+
+@_YlWzzzzzC5555("\u{5}\u{5}")
+entity Pf;
+
+entity g3;
+
+entity r enum [""];
+
+entity r333zzzYYYYaYYYYY enum ["\u{2}"];
+
+entity v enum [""];
+
+entity vRcz3000333 enum [""];
+
+action "action" appliesTo {
+  principal: [K000VVVVVVVVV, v, r, r333zzzYYYYaYYYYY, vRcz3000333, Pf, g3, BFf],
+  resource: [vRcz3000333, v, Pf, g3, r333zzzYYYYaYYYYY, BFf, r, K000VVVVVVVVV],
+  context: {}
+};
+

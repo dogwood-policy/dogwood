@@ -1,0 +1,14 @@
+entity BFf enum ["h", "\u{1}"];
+
+entity e;
+
+entity g3;
+
+entity pf enum [""];
+
+action "action" appliesTo {
+  principal: [g3],
+  resource: [g3],
+  context: {}
+};
+

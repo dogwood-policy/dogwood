@@ -1,0 +1,15 @@
+entity a = {
+  F: Set<__cedar::String>
+} tags Set<{
+  "\u{3}ED\u{4}"?: Set<a>,
+  @j7777777("")
+  "["?: a,
+  "d&"?: a
+}>;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

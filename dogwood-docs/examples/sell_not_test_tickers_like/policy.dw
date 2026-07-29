@@ -1,0 +1,4 @@
+// Denylist idiom: reject a family of test tickers with `like` under `unless`.
+@id("sell_not_test_tickers")
+permit ( principal, action == Drupe::Action::"SellShares", resource )
+unless { context.input.stock like "TEST_*" };

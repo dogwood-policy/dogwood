@@ -1,0 +1,27 @@
+// A permit and a forbid over the same predicate (Login) but with
+// different windows. Models a realistic "broad allow with narrow
+// freshness exclusion" pattern: Read is generally allowed for 2h
+// post-login, but the first 30m are blocked (e.g., to wait for
+// post-login session setup to settle).
+//
+// Both rules reference the same predicate, so per-rule sub-plan
+// state cannot be safely shared across them — each must keep its
+// own `Since` state under its own `pol{j}:opN` SQL prefix.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 2h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};
+
+forbid (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 30m Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

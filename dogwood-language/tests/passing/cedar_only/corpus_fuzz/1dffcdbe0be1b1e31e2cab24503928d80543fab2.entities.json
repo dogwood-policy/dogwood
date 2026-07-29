@@ -1,0 +1,54 @@
+[
+  {
+    "uid": {
+      "type": "a",
+      "id": "33"
+    },
+    "attrs": {},
+    "parents": [],
+    "tags": {
+      "": [
+        {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        {
+          "__extn": {
+            "fn": "ip",
+            "arg": "255.255.255.255/24"
+          }
+        },
+        {
+          "__extn": {
+            "fn": "ip",
+            "arg": "e01:9960:ebff:ffff:ffff:ffff:ffff:ffff/0"
+          }
+        }
+      ],
+      "dec": [
+        {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        {
+          "__extn": {
+            "fn": "ip",
+            "arg": "ffff:ff33:33ff:41ff:206e:6169:6265:4436/126"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "uid": {
+      "type": "Action",
+      "id": "action"
+    },
+    "attrs": {},
+    "parents": []
+  }
+]

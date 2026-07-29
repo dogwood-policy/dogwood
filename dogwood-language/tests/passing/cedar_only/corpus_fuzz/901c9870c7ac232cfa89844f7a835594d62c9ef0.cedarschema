@@ -1,0 +1,18 @@
+entity B enum [""];
+
+entity B4 tags __cedar::decimal;
+
+entity P = {
+  Qnw2nn1333444554?: __cedar::Long
+} tags r33;
+
+entity r tags r;
+
+entity r33 tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [B4],
+  resource: [B4],
+  context: {}
+};
+

@@ -1,0 +1,218 @@
+{
+  "policies": "corpus-tests/7ccc167647f9d63412e12c18d36faa6f2d36aef8.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/7ccc167647f9d63412e12c18d36faa6f2d36aef8.entities.json",
+  "schema": "corpus-tests/7ccc167647f9d63412e12c18d36faa6f2d36aef8.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "A::f",
+        "id": ""
+      },
+      "action": {
+        "type": "A::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A::m3",
+        "id": "\u0003"
+      },
+      "context": {
+        "N": "",
+        "h0": true,
+        "m3": "\t\u0001 ",
+        "v": true,
+        "vR": true
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "A::f",
+        "id": ""
+      },
+      "action": {
+        "type": "A::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A::m3",
+        "id": "\u0003"
+      },
+      "context": {
+        "N": "D",
+        "h0": true,
+        "m3": "",
+        "v": true,
+        "vR": true
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "A::D",
+        "id": ""
+      },
+      "action": {
+        "type": "A::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A::I",
+        "id": ""
+      },
+      "context": {
+        "N": " \u0001\u000f",
+        "h0": true,
+        "m3": "",
+        "v": true,
+        "vR": true
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "A::h0",
+        "id": ""
+      },
+      "action": {
+        "type": "A::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A::h0",
+        "id": ""
+      },
+      "context": {
+        "N": "",
+        "h0": true,
+        "m3": "",
+        "v": true,
+        "vR": true
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "A::m3",
+        "id": "\u0003"
+      },
+      "action": {
+        "type": "A::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A::Qw2nn1",
+        "id": ""
+      },
+      "context": {
+        "N": "",
+        "h0": true,
+        "m3": "3",
+        "v": true,
+        "vR": true
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "A::vR",
+        "id": "\u001f"
+      },
+      "action": {
+        "type": "A::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A::z",
+        "id": ""
+      },
+      "context": {
+        "N": "",
+        "h0": true,
+        "m3": "B",
+        "v": false,
+        "vR": false
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "A::vR",
+        "id": "\u001f"
+      },
+      "action": {
+        "type": "A::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A::h0",
+        "id": ""
+      },
+      "context": {
+        "N": "",
+        "h0": true,
+        "m3": "h",
+        "v": true,
+        "vR": true
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "A::f",
+        "id": ""
+      },
+      "action": {
+        "type": "A::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A::m3",
+        "id": "\u0003"
+      },
+      "context": {
+        "N": "e",
+        "h0": false,
+        "m3": "ian ",
+        "v": true,
+        "vR": true
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+permit (principal, action == App::Action::"Read", resource) when guardrails {
+  Risk::Score(context.input.document).intOnly() == true
+};

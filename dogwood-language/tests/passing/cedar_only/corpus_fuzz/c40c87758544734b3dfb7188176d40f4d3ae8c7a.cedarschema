@@ -1,0 +1,18 @@
+entity a;
+
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "~" in [Action::""] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    D: a,
+    @ES1S0006azERRS3e
+    v: Set<__cedar::duration>
+  }
+};
+

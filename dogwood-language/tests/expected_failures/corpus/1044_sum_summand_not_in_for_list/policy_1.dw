@@ -1,0 +1,27 @@
+// BUG REPRO (summand not in the `for` list): the summand of a `sum` — the
+// variable whose values are added together — must be one of the aggregation's
+// own `for` binders. Here `sum a` sums `a`, which is bound by the enclosing
+// `exists (a: Long)` (a predicate-field binding) and is NOT in the `for` list
+// `(u: Timepoint)`.
+//
+// This is a correctness trap, not just a well-formedness nit: `eval_agg_expr`
+// projects the match relation onto the `for_vars` columns and *then* sums the
+// summand's column. A summand outside `for_vars` has no column in the projected
+// relation, so `sum_column` finds nothing and silently returns 0 — the policy
+// validates cleanly and then computes a wrong (always-zero) sum at runtime.
+//
+// `a` IS a `Long` (so the summand-type check passes) and IS bound in scope (so
+// the free-variable check passes); the only thing wrong is that it is not a
+// `for` binder. This must be rejected by the aggregation `for`-domain check.
+//
+// Expected: rejected at `validate` (parse-time binding check).
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    exists (a: Long). (
+        Drupe::Action::"Charge"::request{ input.amount: a }
+        && exists (n: Long). (
+            (sum a for (u: Timepoint). where (Drupe::Action::"Charge"::request{} && tp(u))) == n
+            && n > 0
+        )
+    )
+};

@@ -1,0 +1,32 @@
+namespace h {
+  entity a tags __cedar::String;
+
+  action "" in [h::Action::"[:~", h::Action::"@\u{1d}", h::Action::"\u{3}\u{1d}w", h::Action::"$", h::Action::"=\u{e}", h::Action::"K", h::Action::"\u{3}", h::Action::"=", h::Action::"\u{1d}\u{3}", h::Action::"lT0[@[", h::Action::"\u{1d}@"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{3}" in [h::Action::"=", h::Action::"\u{1d}\u{3}", h::Action::"lT0[@[", h::Action::"\u{1d}@"];
+
+  action "\u{3}\u{1d}w" in [h::Action::"$", h::Action::"=\u{e}", h::Action::"K", h::Action::"\u{3}", h::Action::"=", h::Action::"\u{1d}\u{3}", h::Action::"lT0[@[", h::Action::"\u{1d}@"];
+
+  action "\u{1d}\u{3}" in [h::Action::"lT0[@[", h::Action::"\u{1d}@"];
+
+  action "\u{1d}@";
+
+  action "$" in [h::Action::"=\u{e}", h::Action::"K", h::Action::"\u{3}", h::Action::"=", h::Action::"\u{1d}\u{3}", h::Action::"lT0[@[", h::Action::"\u{1d}@"];
+
+  action "=" in [h::Action::"\u{1d}\u{3}", h::Action::"lT0[@[", h::Action::"\u{1d}@"];
+
+  action "=\u{e}" in [h::Action::"K", h::Action::"\u{3}", h::Action::"=", h::Action::"\u{1d}\u{3}", h::Action::"lT0[@[", h::Action::"\u{1d}@"];
+
+  action "@\u{1d}" in [h::Action::"\u{3}\u{1d}w", h::Action::"$", h::Action::"=\u{e}", h::Action::"K", h::Action::"\u{3}", h::Action::"=", h::Action::"\u{1d}\u{3}", h::Action::"lT0[@[", h::Action::"\u{1d}@"];
+
+  action "K" in [h::Action::"\u{3}", h::Action::"=", h::Action::"\u{1d}\u{3}", h::Action::"lT0[@[", h::Action::"\u{1d}@"];
+
+  action "[:~" in [h::Action::"@\u{1d}", h::Action::"\u{3}\u{1d}w", h::Action::"$", h::Action::"=\u{e}", h::Action::"K", h::Action::"\u{3}", h::Action::"=", h::Action::"\u{1d}\u{3}", h::Action::"lT0[@[", h::Action::"\u{1d}@"];
+
+  action "lT0[@[" in [h::Action::"\u{1d}@"];
+}
+

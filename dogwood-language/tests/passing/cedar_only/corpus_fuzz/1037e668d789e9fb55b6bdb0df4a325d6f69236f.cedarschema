@@ -1,0 +1,13 @@
+entity a tags Set<Set<{
+  ""?: __cedar::Bool,
+  "\0\0( "?: __cedar::Bool,
+  "\0\0VV"?: __cedar::Bool,
+  "\u{1b}\u{5}\0duration$$$"?: __cedar::Bool
+}>>;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

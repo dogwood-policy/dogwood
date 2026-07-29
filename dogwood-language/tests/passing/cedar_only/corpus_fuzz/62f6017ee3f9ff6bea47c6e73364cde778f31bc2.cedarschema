@@ -1,0 +1,87 @@
+entity a tags __cedar::String;
+
+action "" in [Action::";~", Action::"\u{1d}[\u{1d}", Action::"[@", Action::"$=\u{e}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    r?: __cedar::String
+  }
+};
+
+action "\u{e}" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1d}\u{3}" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1d}@gffd~" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1d}[\u{1d}" in [Action::"@\u{3}w", Action::"=\u{e}", Action::"\u{1d}\u{3}", Action::"\u{1d}@gffd~", Action::"^"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "$" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "$=" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+@yffff000b
+action "$=\u{e}" in [Action::"$="] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action ";~" in [Action::"@\u{3}w", Action::"$", Action::"[@["];
+
+action "=\u{e}" in [Action::"$="] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "@\u{3}w" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    SffR3337fK?: __cedar::Bool
+  }
+};
+
+action "[@" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "[@[" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "^" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

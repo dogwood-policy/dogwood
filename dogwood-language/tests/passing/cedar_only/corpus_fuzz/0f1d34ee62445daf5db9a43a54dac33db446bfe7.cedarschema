@@ -1,0 +1,14 @@
+entity a = {
+  @M33("")
+  @q("")
+  @r("")
+  @r3333333333300000
+  A0?: __cedar::datetime
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,12 @@
+namespace r::r33::r::r {
+  entity A0000000000000 enum [""];
+
+  entity j enum [""];
+
+  action "action" appliesTo {
+    principal: [j],
+    resource: [j],
+    context: {}
+  };
+}
+

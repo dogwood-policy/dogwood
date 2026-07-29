@@ -1,0 +1,14 @@
+entity Z enum [""];
+
+entity g3 enum [""];
+
+entity sF3 enum [""];
+
+entity w0000000000000000 enum [""];
+
+action "action" appliesTo {
+  principal: [g3],
+  resource: [g3],
+  context: {}
+};
+

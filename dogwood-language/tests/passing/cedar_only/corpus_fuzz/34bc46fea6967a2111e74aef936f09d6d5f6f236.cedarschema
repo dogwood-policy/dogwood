@@ -1,0 +1,18 @@
+entity O enum [""];
+
+entity TL0000000000 enum [""];
+
+entity qI33 enum [""];
+
+entity r enum [""];
+
+entity rl3KM2 enum [""];
+
+entity v enum [""];
+
+action "action" appliesTo {
+  principal: [v],
+  resource: [v],
+  context: {}
+};
+

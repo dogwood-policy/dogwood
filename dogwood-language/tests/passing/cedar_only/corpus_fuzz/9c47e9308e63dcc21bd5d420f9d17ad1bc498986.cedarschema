@@ -1,0 +1,14 @@
+entity a enum [""];
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @o00000000000000
+    A?: __cedar::Bool,
+    L?: __cedar::Bool,
+    q?: __cedar::Bool,
+    r?: __cedar::Bool
+  }
+};
+

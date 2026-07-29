@@ -1,0 +1,18 @@
+namespace g::UAA219 {
+  entity A enum [""];
+
+  entity fB enum [""];
+
+  entity fF enum [""];
+
+  entity r enum [""];
+
+  entity z enum ["", "", "?"];
+
+  action "action" appliesTo {
+    principal: [z],
+    resource: [z],
+    context: {}
+  };
+}
+

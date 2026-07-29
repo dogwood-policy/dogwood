@@ -1,0 +1,21 @@
+@d
+entity d enum ["\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"];
+
+entity d_ enum ["\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"];
+
+entity f = {
+  d_?: __cedar::datetime
+};
+
+entity r enum ["\0\0\0\0"];
+
+entity r3;
+
+entity ye;
+
+action "action" appliesTo {
+  principal: [r, f, ye],
+  resource: [r, r3, f],
+  context: {}
+};
+

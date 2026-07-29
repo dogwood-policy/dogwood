@@ -1,0 +1,16 @@
+entity a;
+
+action "\u{1}\u{f}" in [Action::"\u{5}", Action::"S", Action::":"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: __cedar::String
+  }
+};
+
+action "\u{5}" in [Action::"S", Action::":"];
+
+action ":";
+
+action "S" in [Action::":"];
+

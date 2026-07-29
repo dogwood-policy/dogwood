@@ -1,0 +1,35 @@
+entity a;
+
+@L
+@rcR33NR3("")
+action "" in [Action::":", Action::"ff", Action::"[", Action::"\u{3}\u{1d}", Action::"f", Action::"d"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{3}\u{1d}" in [Action::"f", Action::"d"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action ":" in [Action::"ff", Action::"[", Action::"\u{3}\u{1d}", Action::"f", Action::"d"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "[" in [Action::"\u{3}\u{1d}", Action::"f", Action::"d"];
+
+action "d";
+
+action "f" in [Action::"d"];
+
+@A
+action "ff" in [Action::"[", Action::"\u{3}\u{1d}", Action::"f", Action::"d"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,33 @@
+// A Read is permitted if there was formerly a Login. Like case 1119, this
+// policy writes the pinned field — but as a FRESH BINDER,
+// `callerPrincipal: p` (bound by an `exists`, as leaf closedness
+// requires), that appears nowhere else in the rule. A variable used only
+// here binds but never constrains, so on its own it accepts a Login by ANY
+// principal (a bypass of the schema's principal pin, in the same spirit as
+// the 1119 wildcard but via a variable rather than `_`). (The pre-closedness
+// variant of this bypass — a genuinely FREE `p` — never reaches pin
+// injection anymore: it is rejected at parse; see expected_failures case
+// 2136_pin_bypass_free_variable_rejected.)
+//
+// Because the pin is injected unconditionally, the predicate constrains
+// `callerPrincipal` twice: the author's exists-bound variable `p` (binds
+// anything) AND the pin's `principal` (the current request's principal). The
+// variable adds nothing; the pin still forces the past Login to share the
+// Read's principal. A hand-written field can only NARROW a pin, never relax
+// it — so this bypass attempt has no effect.
+//
+// Positive/negative control across two traces (identical to 1117's/1119's,
+// proving the variable changed nothing):
+//   trace_1: the prior Login is by the SAME principal as the Read → permitted.
+//   trace_2: IDENTICAL except the prior Login is by a DIFFERENT principal →
+//            the injected pin forces a mismatch → NOT permitted.
+// If the variable had bypassed the pin, trace_2 would wrongly permit.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    exists (p: Drupe::OAuthUser). formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user, callerPrincipal: p }
+};

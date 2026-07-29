@@ -1,0 +1,12 @@
+namespace QI00dppp::ID000pppppppn::Ippppppppp100::M {
+  entity a enum [""];
+
+  action "" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      M?: __cedar::datetime
+    }
+  };
+}
+

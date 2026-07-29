@@ -1,0 +1,12 @@
+namespace v {
+  entity U3S1LT1S;
+
+  entity d1AA enum [""];
+
+  action "bian " appliesTo {
+    principal: [U3S1LT1S],
+    resource: [U3S1LT1S],
+    context: {}
+  };
+}
+

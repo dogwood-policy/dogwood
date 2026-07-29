@@ -1,0 +1,12 @@
+entity a = {
+  @L("")
+  @LYY
+  A?: a
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

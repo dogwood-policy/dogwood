@@ -1,0 +1,20 @@
+entity Blf enum ["", "", "", "", "", "\u{1f}"];
+
+entity Hf enum [""];
+
+entity Y45424a44402;
+
+entity g3;
+
+entity l;
+
+entity n;
+
+action "" appliesTo {
+  principal: [Hf, l, n, Y45424a44402, Blf],
+  resource: [n, Hf, l],
+  context: {
+    A?: __cedar::String
+  }
+};
+

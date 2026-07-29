@@ -1,0 +1,25 @@
+namespace r::r::j {
+  entity A0 enum [""];
+
+  @A
+  entity N7cc;
+
+  @r("")
+  entity i enum ["", "\0\0\0"];
+
+  @Re330mmnt
+  entity i33 = {
+    Ab000: __cedar::String
+  } tags __cedar::duration;
+
+  @A
+  @r("")
+  entity r enum ["\0", "\0\0\0"];
+
+  action "action" appliesTo {
+    principal: [r],
+    resource: [r],
+    context: {}
+  };
+}
+

@@ -1,0 +1,9 @@
+@A("")
+@CZZZZZZZZ("")
+permit(
+  principal,
+  action == Action::"action",
+  resource == a::""
+) when {
+  true && (CZZZZZZZZ::CZZZZZZZZ::CZ0ccR03Z::CZZZZZZZZ::nZxZZZZZ::CZZZZZZZZ::CZZZZZZZZ::CZZZZZZZZ::CZZZZZZZZ::"" in CZZZZZZZZ::CZZZZZZZZ::CZZZZZZZZ::CZNxZZZZZ::CZZZZZZZZ::CZZZZZZZZ::CZZZZZ333::r::CZZZZZZZZ::"")
+};

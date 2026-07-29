@@ -1,0 +1,20 @@
+namespace r::A::rg::r {
+  entity F;
+
+  entity r0 = {
+    mXXXXXXXXXXXXX5?: __cedar::Bool
+  };
+
+  action "" appliesTo {
+    principal: [r0],
+    resource: [F, r0],
+    context: {}
+  };
+
+  action "V" appliesTo {
+    principal: [F, r0],
+    resource: [F, r0],
+    context: {}
+  };
+}
+

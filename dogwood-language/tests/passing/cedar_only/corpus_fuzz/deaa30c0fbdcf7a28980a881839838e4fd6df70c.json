@@ -1,0 +1,505 @@
+{
+  "policies": "corpus-tests/deaa30c0fbdcf7a28980a881839838e4fd6df70c.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/deaa30c0fbdcf7a28980a881839838e4fd6df70c.entities.json",
+  "schema": "corpus-tests/deaa30c0fbdcf7a28980a881839838e4fd6df70c.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+      },
+      "context": {
+        "r": {
+          "": [],
+          "\u0000": {
+            "__entity": {
+              "type": "a",
+              "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+            }
+          },
+          "\u0000\u0000": "\u0000[",
+          "\u001d": {
+            "__extn": {
+              "fn": "ip",
+              "arg": "178.255.29.126"
+            }
+          },
+          "\u001d\u0003": 0,
+          "\u001d@[": "",
+          "$": "",
+          ":pVV": "",
+          ":~": "",
+          "=\u000e": [],
+          "?\u0000\u0000\u0000": {
+            "__entity": {
+              "type": "a",
+              "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+            }
+          },
+          "@[": {
+            "__extn": {
+              "fn": "ip",
+              "arg": "0.0.0.0"
+            }
+          },
+          "V@": {
+            "__extn": {
+              "fn": "ip",
+              "arg": "0.0.0.0"
+            }
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+      },
+      "context": {
+        "r": {
+          "": [],
+          "\u0000": {
+            "__entity": {
+              "type": "a",
+              "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+            }
+          },
+          "\u0000\u0000": "",
+          "\u0003\u001dw": "",
+          "\u001d": {
+            "__extn": {
+              "fn": "ip",
+              "arg": "0.0.0.0"
+            }
+          },
+          "\u001d\u0003": 0,
+          "\u001d@[": "",
+          "$": "",
+          ":pVV": "",
+          ":~": "",
+          "=\u000e": [],
+          "?\u0000\u0000\u0000": {
+            "__entity": {
+              "type": "a",
+              "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+            }
+          },
+          "@[": {
+            "__extn": {
+              "fn": "ip",
+              "arg": "0.0.0.0"
+            }
+          },
+          "V@": {
+            "__extn": {
+              "fn": "ip",
+              "arg": "0.0.0.0"
+            }
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+      },
+      "context": {
+        "r": {
+          "": [],
+          "\u0000": {
+            "__entity": {
+              "type": "a",
+              "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+            }
+          },
+          "\u0000\u0000": "",
+          "\u0003\u001dw": "",
+          "\u001d": {
+            "__extn": {
+              "fn": "ip",
+              "arg": "0.0.0.0"
+            }
+          },
+          "\u001d\u0003": 0,
+          "\u001d@[": "",
+          "$": "",
+          ":pVV": "",
+          ":~": "",
+          "=\u000e": [],
+          "?\u0000\u0000\u0000": {
+            "__entity": {
+              "type": "a",
+              "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+            }
+          },
+          "@[": {
+            "__extn": {
+              "fn": "ip",
+              "arg": "0.0.0.0"
+            }
+          },
+          "V@": {
+            "__extn": {
+              "fn": "ip",
+              "arg": "0.0.0.0"
+            }
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+      },
+      "context": {
+        "r": {
+          "": [],
+          "\u0000": {
+            "__entity": {
+              "type": "a",
+              "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+            }
+          },
+          "\u0000\u0000": "",
+          "\u0003\u001dw": "",
+          "\u001d": {
+            "__extn": {
+              "fn": "ip",
+              "arg": "0.0.0.0"
+            }
+          },
+          "\u001d\u0003": 0,
+          "\u001d@[": "",
+          "$": "",
+          ":pVV": "",
+          ":~": "",
+          "=\u000e": [],
+          "?\u0000\u0000\u0000": {
+            "__entity": {
+              "type": "a",
+              "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+            }
+          },
+          "@[": {
+            "__extn": {
+              "fn": "ip",
+              "arg": "0.0.0.0"
+            }
+          },
+          "V@": {
+            "__extn": {
+              "fn": "ip",
+              "arg": "0.0.0.0"
+            }
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+      },
+      "context": {
+        "r": {
+          "": [],
+          "\u0000": {
+            "__entity": {
+              "type": "a",
+              "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+            }
+          },
+          "\u0000\u0000": "",
+          "\u0003\u001dw": "",
+          "\u001d": {
+            "__extn": {
+              "fn": "ip",
+              "arg": "0.0.0.0"
+            }
+          },
+          "\u001d\u0003": 0,
+          "\u001d@[": "",
+          "$": "",
+          ":pVV": "",
+          ":~": "",
+          "=\u000e": [],
+          "?\u0000\u0000\u0000": {
+            "__entity": {
+              "type": "a",
+              "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+            }
+          },
+          "@[": {
+            "__extn": {
+              "fn": "ip",
+              "arg": "0.0.0.0"
+            }
+          },
+          "V@": {
+            "__extn": {
+              "fn": "ip",
+              "arg": "0.0.0.0"
+            }
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+      },
+      "context": {
+        "r": {
+          "": [],
+          "\u0000": {
+            "__entity": {
+              "type": "a",
+              "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+            }
+          },
+          "\u0000\u0000": "",
+          "\u0003\u001dw": "",
+          "\u001d": {
+            "__extn": {
+              "fn": "ip",
+              "arg": "0.0.0.0"
+            }
+          },
+          "\u001d\u0003": 0,
+          "\u001d@[": "",
+          "$": "",
+          ":pVV": "",
+          ":~": "",
+          "=\u000e": [],
+          "?\u0000\u0000\u0000": {
+            "__entity": {
+              "type": "a",
+              "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+            }
+          },
+          "@[": {
+            "__extn": {
+              "fn": "ip",
+              "arg": "0.0.0.0"
+            }
+          },
+          "V@": {
+            "__extn": {
+              "fn": "ip",
+              "arg": "0.0.0.0"
+            }
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+      },
+      "context": {
+        "r": {
+          "": [],
+          "\u0000": {
+            "__entity": {
+              "type": "a",
+              "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+            }
+          },
+          "\u0000\u0000": "",
+          "\u0003\u001dw": "",
+          "\u001d": {
+            "__extn": {
+              "fn": "ip",
+              "arg": "0.0.0.0"
+            }
+          },
+          "\u001d\u0003": 0,
+          "\u001d@[": "",
+          "$": "",
+          ":pVV": "",
+          ":~": "",
+          "=\u000e": [],
+          "?\u0000\u0000\u0000": {
+            "__entity": {
+              "type": "a",
+              "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+            }
+          },
+          "@[": {
+            "__extn": {
+              "fn": "ip",
+              "arg": "0.0.0.0"
+            }
+          },
+          "V@": {
+            "__extn": {
+              "fn": "ip",
+              "arg": "0.0.0.0"
+            }
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+      },
+      "context": {
+        "r": {
+          "": [],
+          "\u0000": {
+            "__entity": {
+              "type": "a",
+              "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+            }
+          },
+          "\u0000\u0000": "",
+          "\u0003\u001dw": "",
+          "\u001d": {
+            "__extn": {
+              "fn": "ip",
+              "arg": "0.0.0.0"
+            }
+          },
+          "\u001d\u0003": 0,
+          "\u001d@[": "",
+          "$": "",
+          ":pVV": "",
+          ":~": "",
+          "=\u000e": [],
+          "?\u0000\u0000\u0000": {
+            "__entity": {
+              "type": "a",
+              "id": "\u0000\u0000\u0000\u0000\u0000\u0005\u0000"
+            }
+          },
+          "@[": {
+            "__extn": {
+              "fn": "ip",
+              "arg": "0.0.0.0"
+            }
+          },
+          "V@": {
+            "__extn": {
+              "fn": "ip",
+              "arg": "0.0.0.0"
+            }
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}

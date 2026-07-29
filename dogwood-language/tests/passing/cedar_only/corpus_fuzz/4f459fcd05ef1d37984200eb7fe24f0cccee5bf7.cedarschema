@@ -1,0 +1,47 @@
+entity a = {
+  A0000001W_3f1xBBB?: __cedar::ipaddr,
+  A000000xf12f3xf15?: __cedar::String,
+  BW_3f1x?: __cedar::String,
+  @B933333Enpp("")
+  @fB("\u{f}")
+  @p("")
+  @r("")
+  Bx: __cedar::ipaddr,
+  BxB?: __cedar::String,
+  K?: __cedar::String,
+  LiiiiiiiiixBBBhB?: __cedar::String,
+  clSSJSS?: __cedar::String,
+  f?: __cedar::ipaddr,
+  fB?: __cedar::String,
+  fh?: __cedar::String,
+  kSSS0SS?: a,
+  m?: {  },
+  mSNg0RS: a,
+  mSSJSSS: {  },
+  mSSSS1W?: {  },
+  mSSSSSS?: __cedar::String,
+  mSSSSSW?: __cedar::String,
+  @_("")
+  @fB("\u{f}")
+  @p("")
+  @r("")
+  mWSSSSS: __cedar::Bool,
+  nf?: __cedar::ipaddr,
+  p: __cedar::String,
+  r?: __cedar::ipaddr,
+  @vRDDDDD
+  r1G0000000xf12: __cedar::Long,
+  r333333333?: __cedar::String,
+  rB?: __cedar::String,
+  rD3?: __cedar::String,
+  tgYlW3Zx331kKKKKK?: __cedar::String,
+  z?: __cedar::String,
+  z3D31G00000001W_?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

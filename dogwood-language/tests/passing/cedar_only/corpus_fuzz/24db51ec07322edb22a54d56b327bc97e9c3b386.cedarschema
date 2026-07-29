@@ -1,0 +1,14 @@
+entity a;
+
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "s" in [Action::""] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

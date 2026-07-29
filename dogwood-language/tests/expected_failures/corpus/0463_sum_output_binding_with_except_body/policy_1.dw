@@ -1,0 +1,8 @@
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    let total = sum r where (formerly within 1h (Drupe::Action::"Compute"::response{ input.user: context.input.user, output.result: r } except Drupe::Action::"Compute"::response{ input.user: context.input.user, output.result: r, output.server: "admin-srv" })) in total < 1000
+};

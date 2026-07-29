@@ -1,0 +1,9 @@
+@E
+entity a tags Set<Set<__cedar::ipaddr>>;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

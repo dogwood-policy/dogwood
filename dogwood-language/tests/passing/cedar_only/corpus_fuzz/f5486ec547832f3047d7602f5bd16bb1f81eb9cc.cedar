@@ -1,0 +1,8 @@
+@Wjjjjj20jjjLLL("\u{15}\u{15}\u{15}\0\0")
+forbid(
+  principal == a::"\0\0\0\0\0\0\0\0\0\0\0\0\0\0hh\0",
+  action == Action::"action",
+  resource == a::"\0\0\0\0\0\0\0\0\0\0\0\0\0\0hh\0"
+) when {
+  true && (!(((if false then (datetime("9048-05-21")) else (datetime("1028-05-05"))).toTime()) < (((datetime("1028-05-05")).offset(duration("-3905246706147852290d210238627310660330h"))).toTime())))
+};

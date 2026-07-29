@@ -1,0 +1,16 @@
+// Macro-form rewrite of 0867_sum_negative_threshold.
+//
+// Net balance over the last hour must be >= -100. Three trace pairs
+// probe positive, negative, and exactly-at-threshold sums.
+
+def temporal sum_formerly(?a, ?w, ?body) {
+    sum ?a for (?a: Long), ($t: Timepoint). where (formerly within ?w (?body && tp($t)))
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    exists (net: Long). ((sum_formerly(a, 1h, Drupe::Action::"Transfer"::request{ input.user: context.input.user, input.amount: a })) == net && net >= -100)};

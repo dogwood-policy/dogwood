@@ -1,0 +1,26 @@
+entity a tags {
+  ""?: __cedar::ipaddr,
+  "\u{3}\u{1d}w"?: __cedar::ipaddr,
+  "\u{e}"?: __cedar::ipaddr,
+  "\u{1d}\u{3}"?: __cedar::ipaddr,
+  "\u{1d}\u{3}fD~"?: __cedar::ipaddr,
+  "\u{1d}@["?: __cedar::ipaddr,
+  "$"?: __cedar::ipaddr,
+  "$=2"?: __cedar::ipaddr,
+  ":~"?: __cedar::ipaddr,
+  "=\u{e}"?: __cedar::ipaddr,
+  "@"?: __cedar::ipaddr,
+  "["?: __cedar::ipaddr,
+  "\\"?: __cedar::ipaddr,
+  "\\\\"?: __cedar::Bool,
+  "^"?: __cedar::ipaddr,
+  "d>d\u{1d}A"?: __cedar::ipaddr,
+  "t/ionebian\\\\]\\\\"?: __cedar::ipaddr
+};
+
+action "d\u{1d}A" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,21 @@
+// Permit Login if a Login on server `s1` happened within the last
+// hour. The predicate pins `server` to a *string literal* `"s1"`
+// rather than to a context-bound value — this is the position that
+// tripped the original trace-field-ordering bug, where the runtime
+// driver rebuilt the trace event's named context by zipping the
+// trace's positional arg values against the schema's alphabetized
+// field names. With Login's input alphabetized to `(server, user)`
+// but the trace writing `(user, server)`, the row's `server` slot
+// ended up holding the user's value, and the comparison
+// `server == "s1"` never fired even when the trace's `server` was
+// in fact `"s1"`. `formerly within Nh` is reflexive (matches the
+// current time-point), so both Login events should produce a
+// permit verdict.
+permit (
+    principal,
+    action == Drupe::Action::"Login",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.server: "s1" }
+};

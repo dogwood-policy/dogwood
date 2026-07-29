@@ -1,0 +1,72 @@
+entity a = {
+  r?: {
+    ""?: __cedar::String,
+    "\0"?: {
+      "": a,
+      "\0\0\01"?: __cedar::String,
+      "\u{1}"?: __cedar::String,
+      "\u{1}\0\0\u{f}"?: __cedar::String,
+      "\u{1}\u{f}"?: __cedar::String,
+      "\u{1}\u{f}i"?: __cedar::String,
+      "\u{e}\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\u{1}\0\0\0\0\0\0\u{18}\0\0\0\0\u{13}:\u{b}\u{f}i"?: __cedar::String,
+      "\u{e}\0\0\0V@"?: __cedar::String,
+      "\u{f}"?: __cedar::String,
+      "\u{13}\u{13}\u{13}\0\0\0\u{1}\0\0\0\0\0\0\u{11}\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\u{7}\0\0\0\0\0\0"?: __cedar::String,
+      "\u{13}\u{13}\u{13}\u{13}:\u{b}\u{f}i"?: __cedar::String,
+      "\u{1b}\u{e}"?: __cedar::String,
+      "\u{1b}\u{e}\\"?: __cedar::String,
+      " "?: __cedar::String,
+      "&[\u{1d}v"?: __cedar::String,
+      "\'ggg\ng\u{3}gg"?: __cedar::String,
+      "\'ggg\nggg"?: __cedar::String,
+      "*\0\0\0SSSSSSSSSSSSSSSS"?: __cedar::String,
+      "*\0\0\0SSSSSSSSSSSSSSSSSSSSSSSSSSS"?: __cedar::String,
+      "*\0\0\0SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSJSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"?: __cedar::String,
+      "*\0\0\0SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS\'SSSSSSS1SSSSSSSSSS"?: __cedar::String,
+      "*\0\0\0SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"?: __cedar::String,
+      @B("")
+      @P2nl13("")
+      @P2nn13("")
+      @TJJ
+      @_31Fnnw2nn133344("\'ggg\ngfg")
+      @i000000
+      @i4W33f3("")
+      @r1Fg33("Debian \u{1}\u{f}")
+      "***************************": __cedar::Bool,
+      "*********=*********\t\u{1} "?: __cedar::String,
+      "."?: __cedar::String,
+      "1\'ggg\ngfg"?: __cedar::String,
+      "1\'ggg\ngfgSSSSSSSSSSSSSSSSSSSSSSSJ"?: __cedar::String,
+      ":p"?: __cedar::String,
+      B?: __cedar::String,
+      De?: __cedar::String,
+      "Debian \u{1}"?: __cedar::String,
+      "Debian \u{1}\u{f}"?: __cedar::String,
+      "P "?: __cedar::String,
+      SSSSSSSSSSSSS?: __cedar::String,
+      SSSSSSSSSSSSSSSSSSSSSSSSS?: __cedar::String,
+      SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS?: __cedar::String,
+      SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS?: __cedar::String,
+      VV?: __cedar::String,
+      g?: __cedar::String,
+      "g\ngfg"?: __cedar::String,
+      h?: __cedar::String,
+      hSSSSSSSSSSSSSSSSSISSSSSSSSSSSSSSSSSSSSS?: __cedar::String,
+      hSSSSSSSSSSSSSSSSSSSSSSSSS?: __cedar::String,
+      hSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS?: __cedar::String,
+      hSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS?: __cedar::String,
+      "hSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS[SSSSSS"?: __cedar::String,
+      "hSSSSSSSSSSSSSSSSSSSSSSSSShSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS[SSSSSS"?: __cedar::String,
+      hSSSSSSSSSSSSSSSSSTSSSSSSS?: __cedar::String,
+      yA?: __cedar::String,
+      yAA?: __cedar::String
+    }
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,72 @@
+entity a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    r?: {
+      ""?: __cedar::ipaddr,
+      "\0"?: __cedar::ipaddr,
+      "\0\u{1d}@gffd~": __cedar::Bool,
+      "\u{3}\u{1d}wDebian "?: __cedar::ipaddr,
+      @F
+      @L3("\0\0\0")
+      @LS("")
+      "\u{e}": __cedar::String,
+      @r("\0\u{1d}Debian ")
+      @vRT30qdVR35cZgY
+      "\u{1d}": {
+        ""?: Set<Set<__cedar::Long>>,
+        "\u{1d}"?: __cedar::String,
+        "V@"?: Set<Set<__cedar::Long>>
+      },
+      "\u{1d}\u{3}": a,
+      "!\u{3}"?: a,
+      @yHIHHH2mmmmmmmmm
+      "$"?: __cedar::ipaddr,
+      "$\u{e}=": Set<__cedar::ipaddr>,
+      ":pVV"?: __cedar::ipaddr,
+      @X0qdVR35cZgYlW
+      @r
+      "=\u{e}"?: __cedar::datetime,
+      "?\0\0\0"?: Set<__cedar::String>,
+      "@": __cedar::ipaddr,
+      "@["?: __cedar::String,
+      "V@"?: {
+        ""?: __cedar::datetime,
+        "\0"?: __cedar::datetime,
+        "\0\0"?: __cedar::datetime,
+        "\0\0\0"?: __cedar::datetime,
+        "\u{3}\u{1d}w"?: __cedar::datetime,
+        "\u{e}"?: __cedar::datetime,
+        "\u{1d}\u{3}"?: __cedar::datetime,
+        "\u{1d}@["?: __cedar::datetime,
+        "\u{1d}@gffd~"?: __cedar::datetime,
+        "!\u{3}"?: __cedar::ipaddr,
+        "4"?: __cedar::ipaddr,
+        ":pVV"?: __cedar::datetime,
+        ":~"?: __cedar::datetime,
+        "=\u{e}"?: __cedar::datetime,
+        "?"?: __cedar::datetime,
+        "?\0\0\0"?: __cedar::datetime,
+        "V@"?: __cedar::datetime,
+        "V@[\u{1d}"?: __cedar::datetime,
+        "[:@[\u{1d}w"?: __cedar::ipaddr,
+        "[@["?: __cedar::datetime,
+        "^"?: __cedar::datetime,
+        "^$"?: __cedar::Long
+      },
+      "[": Set<Set<__cedar::Long>>,
+      @F
+      "[\u{1}\0\0\0"?: __cedar::String,
+      @F
+      @LS33RVR3X33S1("$\u{e}=")
+      @m("")
+      "[@"?: Set<Set<__cedar::datetime>>,
+      "^": __cedar::ipaddr,
+      "ddddddffd~\u{1d}"?: __cedar::String,
+      "~:\0\u{1d}"?: __cedar::decimal
+    }
+  }
+};
+

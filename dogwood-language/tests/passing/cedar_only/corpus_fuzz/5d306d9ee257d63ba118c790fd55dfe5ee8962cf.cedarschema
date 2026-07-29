@@ -1,0 +1,10 @@
+namespace A::A {
+  entity a;
+
+  action "" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

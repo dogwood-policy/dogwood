@@ -1,0 +1,16 @@
+entity T;
+
+entity r;
+
+entity t;
+
+entity xTT;
+
+entity xui tags __cedar::String;
+
+action "action" appliesTo {
+  principal: [r],
+  resource: [r],
+  context: {}
+};
+

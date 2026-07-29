@@ -1,0 +1,13 @@
+// Two `when` clauses on one rule.
+//
+// New idea: a rule may carry multiple Cedar `when` clauses.
+// They are AND-ed together — the rule fires only if every
+// `when` body evaluates to true.
+
+permit(
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+)
+when { context.input.shares < 100 }
+when { context.input.stock == "AMZN" };

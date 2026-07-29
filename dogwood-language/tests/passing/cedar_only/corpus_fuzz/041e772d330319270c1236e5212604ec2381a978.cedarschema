@@ -1,0 +1,13 @@
+namespace A {
+  @v3aa
+  entity a tags Set<Set<{
+  ""?: __cedar::decimal
+}>>;
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

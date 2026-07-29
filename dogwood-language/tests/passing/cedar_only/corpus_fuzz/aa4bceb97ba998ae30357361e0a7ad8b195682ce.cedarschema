@@ -1,0 +1,12 @@
+entity a = {
+  B?: Set<Set<{
+    ""?: __cedar::Bool
+  }>>
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

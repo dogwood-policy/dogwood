@@ -1,0 +1,14 @@
+entity a enum [""];
+
+action "///////////////////////////////" in [Action::"////////////////////////////////....."] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "////////////////////////////////....." appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

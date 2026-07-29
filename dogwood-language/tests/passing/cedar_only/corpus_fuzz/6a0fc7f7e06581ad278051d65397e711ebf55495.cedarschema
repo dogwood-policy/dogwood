@@ -1,0 +1,22 @@
+entity B;
+
+entity B333333;
+
+entity C tags Set<Set<__cedar::Bool>>;
+
+entity KgmNNNNNNNNNNNN;
+
+entity Mppp;
+
+entity r;
+
+entity r3333;
+
+entity r33333k;
+
+action "action" appliesTo {
+  principal: [B, r3333, r],
+  resource: [Mppp, B, r33333k, r3333, KgmNNNNNNNNNNNN, C, r],
+  context: {}
+};
+

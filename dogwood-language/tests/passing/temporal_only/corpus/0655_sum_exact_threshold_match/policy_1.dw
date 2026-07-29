@@ -1,0 +1,7 @@
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (total: Long). ((sum a for (a: Long), (t: Timepoint). where formerly within 1h (Drupe::Action::"Transfer"::request{ input.user: _, input.amount: a } && tp(t))) == total && total == 100)};

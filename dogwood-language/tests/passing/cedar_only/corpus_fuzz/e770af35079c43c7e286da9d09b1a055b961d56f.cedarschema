@@ -1,0 +1,12 @@
+namespace r::B000000 {
+  entity M enum ["\u{1}", ""];
+
+  entity r enum [""];
+
+  action "action" appliesTo {
+    principal: [M],
+    resource: [M],
+    context: {}
+  };
+}
+

@@ -1,0 +1,16 @@
+entity a;
+
+action "" in [Action::"?", Action::"\u{1}", Action::"\u{5}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    Fj00000000000?: __cedar::String
+  }
+};
+
+action "\u{1}" in [Action::"\u{5}"];
+
+action "\u{5}";
+
+action "?" in [Action::"\u{1}", Action::"\u{5}"];
+

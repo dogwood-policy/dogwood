@@ -1,0 +1,26 @@
+[package]
+name = "amzn-dogwood-cli"
+version = "1.0.0"
+edition = "2024"
+# A binary crate: it produces the `dogwood` executable, not a library artifact
+# other packages consume, so it is not published to the version set.
+publish = false
+description = "The `dogwood` command-line tool: check, validate, lower, and replay Dogwood policies locally. A thin shell over the `amzn-dogwood-language` frontend."
+exclude = ["/build", "/Config", "/build-tools/"]
+
+# Rename the executable to `dogwood` (a single default bin at src/main.rs
+# would otherwise take the crate name).
+[[bin]]
+name = "dogwood"
+path = "src/main.rs"
+
+[dependencies]
+# The Dogwood frontend — an intra-workspace path dependency to the sibling
+# member. (The CLI itself is not published, so no version requirement is needed.)
+amzn-dogwood-language = { path = "../dogwood-language" }
+clap = { version = "4", features = ["derive"] }
+serde = "1"
+serde_json = "1"
+# `fancy` pulls in the graphical report handler so `PublicError`'s miette
+# diagnostics render with underlined source snippets in the terminal.
+miette = { version = "7", features = ["fancy"] }

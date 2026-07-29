@@ -1,0 +1,9 @@
+// Provider rule in the Drupe namespace only.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Strings::Length(context.input.document).length < 6
+};

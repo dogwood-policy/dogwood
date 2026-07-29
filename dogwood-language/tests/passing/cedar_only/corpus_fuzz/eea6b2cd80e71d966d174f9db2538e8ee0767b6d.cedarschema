@@ -1,0 +1,14 @@
+namespace r {
+  entity A0 tags __cedar::Long;
+
+  entity Q09033 tags r::r;
+
+  entity r tags __cedar::Long;
+
+  action "action" appliesTo {
+    principal: [r],
+    resource: [r],
+    context: {}
+  };
+}
+

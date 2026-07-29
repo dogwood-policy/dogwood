@@ -1,0 +1,33 @@
+namespace p::r::h::r {
+  entity a;
+
+  action "" in [p::r::h::r::Action::":p", p::r::h::r::Action::"0", p::r::h::r::Action::"+\u{1d}", p::r::h::r::Action::"V@", p::r::h::r::Action::"\u{1}", p::r::h::r::Action::")", p::r::h::r::Action::"VV"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{1}" in [p::r::h::r::Action::")", p::r::h::r::Action::"VV"];
+
+  action ")" in [p::r::h::r::Action::"VV"];
+
+  action "+\u{1d}" in [p::r::h::r::Action::"V@", p::r::h::r::Action::"\u{1}", p::r::h::r::Action::")", p::r::h::r::Action::"VV"];
+
+  @A000000000
+  action "0" in [p::r::h::r::Action::"+\u{1d}", p::r::h::r::Action::"V@", p::r::h::r::Action::"\u{1}", p::r::h::r::Action::")", p::r::h::r::Action::"VV"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action ":p" in [p::r::h::r::Action::"0", p::r::h::r::Action::"+\u{1d}", p::r::h::r::Action::"V@", p::r::h::r::Action::"\u{1}", p::r::h::r::Action::")", p::r::h::r::Action::"VV"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "V@" in [p::r::h::r::Action::"\u{1}", p::r::h::r::Action::")", p::r::h::r::Action::"VV"];
+
+  action "VV";
+}
+

@@ -1,0 +1,11 @@
+entity WMMM;
+
+action "action" appliesTo {
+  principal: [WMMM],
+  resource: [WMMM],
+  context: {
+    A0?: __cedar::String,
+    r?: __cedar::String
+  }
+};
+

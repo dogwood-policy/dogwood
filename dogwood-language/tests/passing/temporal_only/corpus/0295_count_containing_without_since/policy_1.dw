@@ -1,0 +1,7 @@
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    exists (n: Long). ((count for (t: Timepoint). where ((!Drupe::Action::"Login"::request{ input.user: context.input.user } since within 1h Drupe::Action::"Write"::request{ input.user: context.input.user, input.document: context.input.document }) && tp(t))) == n && n > 0)};

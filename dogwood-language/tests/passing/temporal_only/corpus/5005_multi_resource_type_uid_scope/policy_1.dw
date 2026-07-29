@@ -1,0 +1,10 @@
+// Reads of the specific gateway gw1 are temporally gated on a same-user
+// Login. Other gateways (e.g. gw2) match no policy and stay denied.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource == Drupe::Gateway::"gw1"
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

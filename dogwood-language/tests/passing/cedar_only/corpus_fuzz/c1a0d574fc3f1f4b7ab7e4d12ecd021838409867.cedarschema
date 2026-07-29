@@ -1,0 +1,32 @@
+entity a tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: {
+      ""?: __cedar::String,
+      "$\u{3}\u{3}\u{3}"?: __cedar::String,
+      ".6"?: __cedar::String,
+      ".a;4"?: __cedar::String,
+      "A\u{3}$\u{3}\u{3}\u{3}"?: __cedar::String,
+      "Debia;"?: __cedar::String,
+      "n\u{1}\0 \0 "?: {
+        "\u{3}"?: __cedar::String,
+        "\u{3}\u{3}\u{3}"?: __cedar::String,
+        "$\u{3}\u{3}\u{3}"?: __cedar::String,
+        "A\u{3}$"?: __cedar::String,
+        "bia;8"?: __cedar::String,
+        ebi?: __cedar::String,
+        ion?: {
+          ""?: __cedar::String,
+          "$\u{3}\u{3}*~"?: __cedar::String,
+          "3"?: __cedar::String,
+          A?: __cedar::String
+        },
+        "n D"?: __cedar::String
+      }
+    }
+  }
+};
+

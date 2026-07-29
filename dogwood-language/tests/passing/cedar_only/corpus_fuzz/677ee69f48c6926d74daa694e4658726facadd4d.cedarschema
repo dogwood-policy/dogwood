@@ -1,0 +1,16 @@
+entity a;
+
+action "" in [Action::"ѿ"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "ѿ" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    c: __cedar::Long
+  }
+};
+

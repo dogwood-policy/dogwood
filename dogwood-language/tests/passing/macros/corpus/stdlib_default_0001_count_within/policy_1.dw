@@ -1,0 +1,21 @@
+// Confirms `count_within` is loaded from the DEFAULT macro library.
+//
+// This case ships NO `macros.dw`, so the harness omits `macros_str` and the
+// ServiceSchema falls back to `DEFAULT_MACROS`. The policy calls `count_within`
+// without declaring it anywhere, so it can only parse and replay correctly if
+// the built-in stdlib supplies that macro by default. Verdict-equivalent to
+// `stdlib_0002_count_within`, which loads the same macro explicitly via its own
+// `macros.dw`. Permit an Alert when more than two Logins to the same server
+// occurred within the last hour.
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (n: Long). (
+        (count_within(1h, Drupe::Action::"Login"::request{ input.user: _, input.server: context.input.server })) == n
+        && n > 2
+    )
+};

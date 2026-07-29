@@ -1,0 +1,23 @@
+entity g04uq1233 = {
+  D?: __cedar::datetime,
+  K333SRRReX0?: __cedar::datetime,
+  @A
+  M?: __cedar::datetime,
+  N?: __cedar::datetime,
+  h4?: __cedar::datetime,
+  m3?: __cedar::datetime,
+  p2?: __cedar::datetime,
+  r3?: __cedar::datetime,
+  r33V3?: __cedar::datetime,
+  v?: __cedar::datetime,
+  vR?: __cedar::datetime
+};
+
+entity r enum ["\0\0"];
+
+action "action" appliesTo {
+  principal: [g04uq1233],
+  resource: [g04uq1233],
+  context: {}
+};
+

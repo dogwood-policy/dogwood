@@ -1,0 +1,27 @@
+// Relativization / partition-safety, `previous` operator.
+//
+// A Read is permitted iff A's IMMEDIATELY PRECEDING OWN event (within 1h) was
+// a Login. The event schema pins `callerPrincipal` universally, so `previous`
+// means "this principal's previous event", not "the previous event in the
+// global trace".
+//
+// The two traces are a differential pair for principal alice's Read at @3:
+//   trace_1: alice Login @1, BOB Transfer @2 (foreign), alice Read @3.
+//   trace_2: alice Login @1,                             alice Read @3.
+// Under key-local semantics bob's interleaved Transfer is invisible to alice,
+// so alice's previous own event is the Login in BOTH traces → PERMIT in both.
+// Under (incorrect) global semantics, trace_1's previous event would be bob's
+// Transfer → deny, diverging from trace_2. The rewrite makes them agree.
+//
+// alice's Read is the only decision event; bob has no decision. The verdict
+// for alice's Read must be `true` in both traces (only its trace-position
+// index differs).
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    previous within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

@@ -1,0 +1,12 @@
+namespace A {
+  entity a enum ["\0\0\0\0\0", "", "", "", "\0\0\0"];
+
+  action "" in [A::Action::"padd"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "padd";
+}
+

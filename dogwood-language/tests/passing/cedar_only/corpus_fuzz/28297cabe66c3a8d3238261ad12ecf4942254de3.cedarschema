@@ -1,0 +1,14 @@
+@B
+@F("")
+@T0("\0")
+@Tc
+@m("")
+@v
+entity a tags __cedar::String;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,18 @@
+// A permit and a forbid for Read. The permit requires a prior
+// Login with matching user. The forbid blocks if the user was
+// suspended with matching user.
+//
+// When Suspend's user field is null, the forbid is silenced (the
+// join `user: context.input.user` fails against null). The permit still
+// evaluates independently and fires. This matches Cedar's
+// policy-independence: an error in a forbid does not affect a
+// permit.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

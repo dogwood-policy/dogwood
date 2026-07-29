@@ -1,0 +1,12 @@
+// Permit Transfer when a prior Transfer for this user occurred within 1h.
+// At tp1 (second Transfer, 30 min after tp0) this fires.
+// At tp2 (Read, 30 min after tp1) the Transfer scope prevents this from
+// being a determining policy even though the temporal body is still satisfied.
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Transfer"::request{ input.user: context.input.user }
+};

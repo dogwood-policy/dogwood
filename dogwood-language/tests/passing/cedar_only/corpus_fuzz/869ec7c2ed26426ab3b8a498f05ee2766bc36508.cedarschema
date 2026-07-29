@@ -1,0 +1,66 @@
+namespace t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t {
+  entity B tags t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t::D;
+
+  entity D;
+
+  entity I;
+
+  entity N;
+
+  entity f;
+
+  entity h0;
+
+  entity m3;
+
+  entity qoqqPbop333 tags __cedar::Long;
+
+  entity r;
+
+  entity r3;
+
+  @p
+  entity ry333S3 enum [""];
+
+  @AEttttfm
+  entity v;
+
+  entity vR;
+
+  entity yyqPbop3333;
+
+  entity z;
+
+  @rWWoq
+  action "" in [t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t::Action::"0A3", t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t::Action::"o", t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t::Action::"vvvvv"] appliesTo {
+    principal: [h0, r3, m3, D, I, B, z, r, yyqPbop3333, N, qoqqPbop333],
+    resource: [m3, vR, qoqqPbop333, z, ry333S3, r, B, r3],
+    context: {
+      m3: t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t::v
+    }
+  };
+
+  action "0A3" in [t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t::Action::"o", t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t::Action::"vvvvv"] appliesTo {
+    principal: [r],
+    resource: [h0, r3, N, D, I, B, z, m3, yyqPbop3333, r, qoqqPbop333],
+    context: {}
+  };
+
+  action "o" in [t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t::Action::"vvvvv"] appliesTo {
+    principal: [qoqqPbop333, v, f, yyqPbop3333, N, r, ry333S3, B, m3, vR, D, I, z, r3],
+    resource: [qoqqPbop333, v, f, B, h0, m3, I, ry333S3, vR, yyqPbop3333, N, z, r3, r],
+    context: {}
+  };
+
+  action "vvvvv" appliesTo {
+    principal: [qoqqPbop333, v, f, yyqPbop3333, N, z, D, r3, m3, I, vR, r, ry333S3, B],
+    resource: [qoqqPbop333, v, f, yyqPbop3333, N, z, ry333S3, B, m3, vR, D, I, r3, r],
+    context: {
+      Mp?: t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t::qoqqPbop333,
+      cmoooooooocct?: __cedar::datetime,
+      r?: __cedar::datetime,
+      v?: __cedar::datetime
+    }
+  };
+}
+

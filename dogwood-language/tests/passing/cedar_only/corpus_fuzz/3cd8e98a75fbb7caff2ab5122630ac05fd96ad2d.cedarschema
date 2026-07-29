@@ -1,0 +1,18 @@
+entity Pf enum [""];
+
+entity U enum [""];
+
+entity g3 enum [""];
+
+entity r enum [""];
+
+entity r32c0000000000 enum [""];
+
+entity sFV enum [""];
+
+action "action" appliesTo {
+  principal: [g3],
+  resource: [g3],
+  context: {}
+};
+

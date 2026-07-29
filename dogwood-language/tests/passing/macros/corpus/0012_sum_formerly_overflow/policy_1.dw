@@ -1,0 +1,22 @@
+// IMPLEMENTATION-SPECIFIC EXPECTATION. This case's total does not fit a `Long`, which
+// the language leaves implementation-defined (formal specification 5.4, "Aggregate
+// value"): a conforming implementation may clamp, evaluate at a wider precision, or
+// report an error. The expected verdicts below pin THIS engine's choice to clamp, so
+// they are a regression guard for this crate and NOT a conformance requirement. A
+// consumer running differential tests over the embedded corpus should expect an
+// implementation that does not clamp to disagree here, and exclude the case.
+// Macro-form rewrite of 0870_sum_overflow.
+//
+// Exercises a sum whose exact total does not fit a `Long`.
+
+def temporal sum_formerly(?a, ?w, ?body) {
+    sum ?a for (?a: Long), ($t: Timepoint). where (formerly within ?w (?body && tp($t)))
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    exists (total: Long). ((sum_formerly(a, 1h, Drupe::Action::"Transfer"::request{ input.user: context.input.user, input.amount: a })) == total && total > 0)};

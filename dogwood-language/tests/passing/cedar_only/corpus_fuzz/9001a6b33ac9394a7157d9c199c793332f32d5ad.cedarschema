@@ -1,0 +1,31 @@
+entity a tags {
+  ""?: __cedar::Bool,
+  "\u{3}\u{1d}w"?: __cedar::String,
+  "\u{3}dddddddddddddd\u{1d}A\u{1}\0\0\0\0\0\0\0"?: __cedar::String,
+  "\u{e}"?: __cedar::String,
+  "\u{1d}\u{3}"?: __cedar::String,
+  "\u{1d}@["?: __cedar::String,
+  "\u{1d}@]ffd~"?: __cedar::String,
+  "\u{1d}["?: __cedar::String,
+  "$"?: __cedar::String,
+  "$=\u{e}"?: __cedar::String,
+  ":~"?: __cedar::String,
+  "=\u{e}"?: __cedar::String,
+  "@\u{3}"?: __cedar::String,
+  "["?: __cedar::String,
+  "[@"?: __cedar::String,
+  "[@["?: __cedar::String,
+  "\\"?: __cedar::String,
+  "\\\\\\\\\\\\\\\\\\\\\\\\\\\\"?: __cedar::String,
+  "^"?: __cedar::String,
+  "bian\\\\\\>\\"?: __cedar::String,
+  "t/ionEr@an\\\\\\\\\\"?: __cedar::Bool,
+  "y\\"?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

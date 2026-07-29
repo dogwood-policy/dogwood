@@ -1,0 +1,12 @@
+entity a enum ["\0"];
+
+action "" in [Action::"\u{f}", Action::"@"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{f}" in [Action::"@"];
+
+action "@";
+

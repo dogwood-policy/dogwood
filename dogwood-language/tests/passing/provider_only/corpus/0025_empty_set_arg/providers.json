@@ -1,0 +1,16 @@
+{
+  "availableProviders": {
+    "Tags::Count": {
+      "argumentTypes": [
+        { "paramType": "string" },
+        { "paramType": "set", "items": { "paramType": "string" } }
+      ],
+      "outputType": {
+        "paramType": "record",
+        "fields": { "count": { "paramType": "integer" } },
+        "required": ["count"]
+      },
+      "implementation": { "kind": "rhai", "scriptFile": "tags_count.rhai" }
+    }
+  }
+}

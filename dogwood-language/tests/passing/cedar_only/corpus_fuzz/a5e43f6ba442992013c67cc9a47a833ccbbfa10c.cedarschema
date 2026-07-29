@@ -1,0 +1,10 @@
+entity _WZ50kb = {
+  A?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [_WZ50kb],
+  resource: [_WZ50kb],
+  context: {}
+};
+

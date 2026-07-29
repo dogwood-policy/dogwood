@@ -1,0 +1,18 @@
+entity A enum [""];
+
+entity IVppppZ enum [""];
+
+entity M enum [""];
+
+entity r enum [""];
+
+entity rY enum [""];
+
+entity zp enum [""];
+
+action "action" appliesTo {
+  principal: [IVppppZ],
+  resource: [IVppppZ],
+  context: {}
+};
+

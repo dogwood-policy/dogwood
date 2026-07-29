@@ -1,0 +1,22 @@
+{
+  "availableProviders": {
+    "Strings::Length": {
+      "argumentTypes": [ { "paramType": "string" } ],
+      "outputType": {
+        "paramType": "record",
+        "fields": { "length": { "paramType": "integer" } },
+        "required": ["length"]
+      },
+      "implementation": { "kind": "rhai", "scriptFile": "length.rhai" }
+    },
+    "Strings::Matches": {
+      "argumentTypes": [ { "paramType": "string" }, { "paramType": "string" } ],
+      "outputType": {
+        "paramType": "record",
+        "fields": { "matched": { "paramType": "bool" } },
+        "required": ["matched"]
+      },
+      "implementation": { "kind": "rhai", "scriptFile": "matches.rhai" }
+    }
+  }
+}

@@ -1,0 +1,6 @@
+// Base permit for Write (so forbid-unless can block it)
+permit (
+    principal,
+    action == Drupe::Action::"Write",
+    resource
+);

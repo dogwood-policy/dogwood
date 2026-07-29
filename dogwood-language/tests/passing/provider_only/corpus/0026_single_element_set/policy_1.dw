@@ -1,0 +1,11 @@
+// Edge case: set with exactly one literal element ["secret"].
+// Verifies the single-element set arrives as an array (not unwrapped to scalar).
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Tags::Count(context.input.document, ["secret"]).count == 0
+};

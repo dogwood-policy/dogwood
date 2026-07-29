@@ -1,0 +1,20 @@
+{
+  "availableProviders": {
+    "Access::ByTier": {
+      "argumentTypes": [
+        { "paramType": "string" }
+      ],
+      "outputType": {
+        "paramType": "record",
+        "fields": {
+          "allowed": { "paramType": "bool" }
+        },
+        "required": ["allowed"]
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "by_tier.rhai"
+      }
+    }
+  }
+}

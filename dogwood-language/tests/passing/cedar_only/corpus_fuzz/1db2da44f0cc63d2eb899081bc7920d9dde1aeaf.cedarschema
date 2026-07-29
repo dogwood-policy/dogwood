@@ -1,0 +1,12 @@
+entity q = {
+  B?: r
+} tags r;
+
+entity r enum ["\0"];
+
+action "action" appliesTo {
+  principal: [r],
+  resource: [q],
+  context: {}
+};
+

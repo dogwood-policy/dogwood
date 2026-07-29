@@ -1,0 +1,19 @@
+entity a;
+
+@wp0T00000000000
+action "" in [Action::"\u{e}", Action::"#[", Action::"\u{3}", Action::"B", Action::"V"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{3}" in [Action::"B", Action::"V"];
+
+action "\u{e}" in [Action::"#[", Action::"\u{3}", Action::"B", Action::"V"];
+
+action "#[" in [Action::"\u{3}", Action::"B", Action::"V"];
+
+action "B" in [Action::"V"];
+
+action "V";
+

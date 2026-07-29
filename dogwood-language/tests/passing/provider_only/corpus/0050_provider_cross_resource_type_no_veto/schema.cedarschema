@@ -1,0 +1,20 @@
+// An action with multiple resource types where only ONE type declares the
+// attribute a provider consumes: Read applies to [Gateway, Bucket], and
+// only Gateway has `owner`. The guardrail must narrow with `resource is
+// Gateway` before `resource.owner` is type-safe — provider-argument
+// resolution happens against the NARROWED type, not the union.
+namespace Drupe {
+  entity OAuthUser;
+  entity Gateway = {
+    owner: String
+  };
+  entity Bucket;
+  type ReadInput = {
+    document: String
+  };
+  action "Read" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway, Bucket],
+    context: { input: ReadInput }
+  };
+}

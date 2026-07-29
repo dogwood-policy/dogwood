@@ -1,0 +1,60 @@
+// Semantic versioning as cedar macros, from Cedar RFC 0061
+// (User-Defined Function Macros), text/0061-functions.md.
+//
+// The RFC's worked example uses two macros that together let a policy
+// compare semver records without building a one-off Cedar AST every
+// time:
+//
+//     function semver(major, minor, patch) {
+//       { major : major, minor : minor, patch : patch }
+//     };
+//
+//     function semverGT(lhs, rhs) {
+//       if lhs.major == rhs.major then
+//         if lhs.minor == rhs.minor then
+//           lhs.patch > rhs.patch
+//         else
+//           lhs.minor > rhs.minor
+//       else
+//         lhs.major > rhs.major
+//     };
+//
+//     permit (principal, action == Action::"someAction", resource)
+//     when { semverGT(resource.apiVersion, semver(2,1,0)) };
+//
+// Translated to Dogwood syntax: `function` → `def cedar`, bare params
+// → `?p` sigils. The policy below uses `context.input.{major,minor,
+// patch}` as the version under test (the action's input schema
+// declares those three Longs) and compares against the literal
+// threshold 2.1.0 — so the permit fires iff the request's version is
+// strictly greater than 2.1.0.
+//
+// This exercises one cedar macro (`semver`) called as an argument to
+// another (`semverGT`) — supported by our expander, which recursively
+// expands call arguments before resolving the outer call.
+
+def cedar semver(?major, ?minor, ?patch) {
+    { major: ?major, minor: ?minor, patch: ?patch }
+};
+
+def cedar semverGT(?lhs, ?rhs) {
+    if ?lhs.major == ?rhs.major then
+        if ?lhs.minor == ?rhs.minor then
+            ?lhs.patch > ?rhs.patch
+        else
+            ?lhs.minor > ?rhs.minor
+    else
+        ?lhs.major > ?rhs.major
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"CallApi",
+    resource
+)
+when {
+    semverGT(
+        semver(context.input.major, context.input.minor, context.input.patch),
+        semver(2, 1, 0)
+    )
+};

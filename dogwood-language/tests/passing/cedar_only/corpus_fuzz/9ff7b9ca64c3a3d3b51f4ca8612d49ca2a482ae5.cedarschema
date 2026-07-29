@@ -1,0 +1,12 @@
+@A
+@DA00033("")
+@r("")
+@r33333("")
+entity a tags a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

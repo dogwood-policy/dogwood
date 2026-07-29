@@ -1,0 +1,17 @@
+entity Ic7777757 tags __cedar::String;
+
+entity r;
+
+entity y;
+
+action "action" appliesTo {
+  principal: [Ic7777757, y, r],
+  resource: [y, r],
+  context: {
+    R_1uBXuBX: Ic7777757,
+    @rtf
+    r313: {    },
+    r333: Ic7777757
+  }
+};
+

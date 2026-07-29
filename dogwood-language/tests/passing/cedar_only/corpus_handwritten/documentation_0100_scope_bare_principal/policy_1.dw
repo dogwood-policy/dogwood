@@ -1,0 +1,11 @@
+// Bare scope: no constraint on principal, action, or resource.
+// This rule matches *every* possible request and permits it.
+// The new idea is the meaning of an unconstrained scope triple
+// and the role of the four request entities.
+
+@id("allow_anything")
+permit (
+    principal,
+    action,
+    resource
+);

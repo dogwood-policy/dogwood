@@ -1,0 +1,60 @@
+entity a;
+
+action "" in [Action::"\u{1d}\u{3}", Action::"@", Action::"["] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{3}ddd";
+
+action "\u{1d}" in [Action::"&", Action::"\u{3}ddd"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1d}\u{3}" in [Action::"@"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "$=\u{e}" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "&" in [Action::"\u{1d}\u{3}", Action::"["] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "=\u{e}" in [Action::"\u{1d}\u{3}", Action::"[", Action::"\u{3}ddd"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "@" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "[" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "p" in [Action::"[", Action::"\u{3}ddd"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    a33eeeeeveeieeee?: __cedar::ipaddr
+  }
+};
+

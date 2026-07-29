@@ -1,0 +1,12 @@
+// Aggregate-free sibling of 0533 (`count … formerly Login … == 0`). "No
+// Login in the 1h window" needs no aggregation: it is the negation of a
+// positive existence. Exercises a negation OUTSIDE a closed `exists` (the
+// §7-safe shape). Verdicts must match 0533.
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    !exists (u: String). formerly within 1h Drupe::Action::"Login"::request{ input.user: u, input.server: context.input.server }};

@@ -1,0 +1,19 @@
+// Macro-form rewrite of 0655_sum_exact_threshold_match.
+//
+// `sum_formerly(a, W, P(a))` (W a bare interval, e.g. `1h`) desugars to
+// `sum a for (a: Long), ($t: Timepoint). where (formerly within W (P(a) && tp($t)))`.
+// The user-supplied identifier `a` is both the bound var of the sum
+// and the variable used inside the body (`amount: a`); the macro's
+// hygienically introduced `$t` is the per-timepoint domain.
+
+def temporal sum_formerly(?a, ?w, ?body) {
+    sum ?a for (?a: Long), ($t: Timepoint). where (formerly within ?w (?body && tp($t)))
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (total: Long). ((sum_formerly(a, 1h, Drupe::Action::"Transfer"::request{ input.user: _, input.amount: a })) == total && total == 100)};

@@ -1,0 +1,23 @@
+entity a = {
+  r?: {
+    @wS
+    ""?: a
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: {
+      "": Set<__cedar::String>,
+      "33\0\0\0\0"?: {
+        @A
+        "": __cedar::Long,
+        @A
+        "\0"?: a
+      }
+    }
+  }
+};
+

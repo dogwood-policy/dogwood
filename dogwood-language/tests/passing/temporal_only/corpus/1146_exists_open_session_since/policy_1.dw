@@ -1,0 +1,15 @@
+// `exists` over a negated-left `since` — the "open session" pattern.
+// `!Logout{user:u} since within 1h Login{user:u}` holds when user `u`
+// logged in and has NOT logged out at any step since (the negated left
+// `!Logout` DOES hold at the Read decision point, unlike a positive-left
+// `since`, which is why this shape is satisfiable). Wrapped in `exists`,
+// it asks "is SOME user's session currently open?" — the bound `u`
+// correlates the login with the absence-of-logout across the since-scan.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    exists (u: String). (!Drupe::Action::"Logout"::request{ input.user: u } since within 1h Drupe::Action::"Login"::request{ input.user: u })};

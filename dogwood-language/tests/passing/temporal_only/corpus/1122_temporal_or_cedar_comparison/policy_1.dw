@@ -1,0 +1,17 @@
+// A Transfer is permitted if EITHER its amount is under 100 OR the same
+// user logged in within the last 30 minutes. The `||` disjoins a native
+// Cedar comparison with a `temporal { … }` monitor in one expression, so
+// the rule fires whenever either side holds and is silent only when both
+// fail. Exercises the OR truth table for a hoisted temporal conjunct
+// sitting beside native Cedar.
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when {
+    context.input.amount < 100
+    || temporal {
+        formerly within 30m Drupe::Action::"Login"::request{ input.user: context.input.user }
+    }
+};

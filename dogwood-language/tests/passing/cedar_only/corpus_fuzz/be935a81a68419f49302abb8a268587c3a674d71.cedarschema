@@ -1,0 +1,9 @@
+@q0q
+entity a tags {};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,16 @@
+// Macro-form rewrite of 0254_count_tps_bare_transfer / policy_2.
+//
+// Rate-limit forbid: deny if 3+ Transfers by the same user have happened
+// in the last hour.
+
+def temporal count_formerly(?w, ?s) {
+    count for ($t: Timepoint). where (formerly within ?w (?s && tp($t)))
+};
+
+forbid (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    exists (n: Long). ((count_formerly(1h, Drupe::Action::"Transfer"::request{ input.user: context.input.user, input.amount: _ })) == n && n >= 3)};

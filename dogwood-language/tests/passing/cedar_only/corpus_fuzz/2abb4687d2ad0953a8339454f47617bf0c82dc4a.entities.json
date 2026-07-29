@@ -1,0 +1,123 @@
+[
+  {
+    "uid": {
+      "type": "A::r::r::r::r::r::r::A::Action",
+      "id": "\u0005"
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "A::r::r::r::r::r::r::A::Action",
+        "id": "S"
+      },
+      {
+        "type": "A::r::r::r::r::r::r::A::Action",
+        "id": ":"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "A::r::r::r::r::r::r::A::Action",
+      "id": "S"
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "A::r::r::r::r::r::r::A::Action",
+        "id": ":"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "A::r::r::r::r::r::r::A::Action",
+      "id": ""
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "A::r::r::r::r::r::r::A::Action",
+        "id": "\u0005"
+      },
+      {
+        "type": "A::r::r::r::r::r::r::A::Action",
+        "id": "\u0001"
+      },
+      {
+        "type": "A::r::r::r::r::r::r::A::Action",
+        "id": ":"
+      },
+      {
+        "type": "A::r::r::r::r::r::r::A::Action",
+        "id": "@"
+      },
+      {
+        "type": "A::r::r::r::r::r::r::A::Action",
+        "id": "S"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "A::r::r::r::r::r::r::A::Action",
+      "id": ":"
+    },
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "A::r::r::r::r::r::r::A::Action",
+      "id": "\u0001"
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "A::r::r::r::r::r::r::A::Action",
+        "id": "\u0005"
+      },
+      {
+        "type": "A::r::r::r::r::r::r::A::Action",
+        "id": ":"
+      },
+      {
+        "type": "A::r::r::r::r::r::r::A::Action",
+        "id": "S"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "A::r::r::r::r::r::r::A::r",
+      "id": ""
+    },
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "A::r::r::r::r::r::r::A::Action",
+      "id": "@"
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "A::r::r::r::r::r::r::A::Action",
+        "id": ":"
+      },
+      {
+        "type": "A::r::r::r::r::r::r::A::Action",
+        "id": "\u0005"
+      },
+      {
+        "type": "A::r::r::r::r::r::r::A::Action",
+        "id": "S"
+      },
+      {
+        "type": "A::r::r::r::r::r::r::A::Action",
+        "id": "\u0001"
+      }
+    ]
+  }
+]

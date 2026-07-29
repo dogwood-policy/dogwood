@@ -1,0 +1,434 @@
+{
+  "policies": "corpus-tests/6f336dc67b42bf87e7e8a0587b4781b571339e52.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/6f336dc67b42bf87e7e8a0587b4781b571339e52.entities.json",
+  "schema": "corpus-tests/6f336dc67b42bf87e7e8a0587b4781b571339e52.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "\u0000\u0000\u0000": {
+            "": {
+              "": "",
+              "\u0003\u0000\u0000\u0000\u0000\u0003\u0003\u0003\u0003": "",
+              "\u0003\u0003\u0003": "",
+              "\u001d@[": false,
+              "$\u0003\u0003": "",
+              "3Actio:~": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              },
+              "A\u0003$": "",
+              "an ": "",
+              "cti": "",
+              "e": "",
+              "eb": "",
+              "n": ""
+            }
+          },
+          "A\u0003$\u0003\u0003": {
+            "__extn": {
+              "fn": "duration",
+              "arg": "0ms"
+            }
+          },
+          "n\u0001\u0000 \u0000": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "\u0000\u0000\u0000": {
+            "": {
+              "": "",
+              "\u0003\u0000\u0000\u0000\u0000\u0003\u0003\u0003\u0003": "",
+              "\u0003\u0003\u0003": "",
+              "\u001d@[": false,
+              "$\u0003\u0003": "",
+              "3Actio:~": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              },
+              "A\u0003$": "",
+              "an ": "",
+              "cti": "",
+              "e": "",
+              "eb": "",
+              "n": ""
+            }
+          },
+          "A\u0003$\u0003\u0003": {
+            "__extn": {
+              "fn": "duration",
+              "arg": "0ms"
+            }
+          },
+          "n\u0001\u0000 \u0000": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "\u0000\u0000\u0000": {
+            "": {
+              "": "",
+              "\u0003\u0000\u0000\u0000\u0000\u0003\u0003\u0003\u0003": "",
+              "\u0003\u0003\u0003": "",
+              "\u001d@[": false,
+              "$\u0003\u0003": "",
+              "3Actio:~": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              },
+              "A\u0003$": "",
+              "an ": "",
+              "cti": "",
+              "e": "",
+              "eb": "",
+              "n": ""
+            }
+          },
+          "A\u0003$\u0003\u0003": {
+            "__extn": {
+              "fn": "duration",
+              "arg": "0ms"
+            }
+          },
+          "n\u0001\u0000 \u0000": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "\u0000\u0000\u0000": {
+            "": {
+              "": "",
+              "\u0003\u0000\u0000\u0000\u0000\u0003\u0003\u0003\u0003": "",
+              "\u0003\u0003\u0003": "",
+              "\u001d@[": false,
+              "$\u0003\u0003": "",
+              "3Actio:~": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              },
+              "A\u0003$": "",
+              "an ": "",
+              "cti": "",
+              "e": "",
+              "eb": "",
+              "n": ""
+            }
+          },
+          "A\u0003$\u0003\u0003": {
+            "__extn": {
+              "fn": "duration",
+              "arg": "0ms"
+            }
+          },
+          "n\u0001\u0000 \u0000": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "\u0000\u0000\u0000": {
+            "": {
+              "": "",
+              "\u0003\u0000\u0000\u0000\u0000\u0003\u0003\u0003\u0003": "",
+              "\u0003\u0003\u0003": "",
+              "\u001d@[": false,
+              "$\u0003\u0003": "",
+              "3Actio:~": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              },
+              "A\u0003$": "",
+              "an ": "",
+              "cti": "",
+              "e": "",
+              "eb": "",
+              "n": ""
+            }
+          },
+          "A\u0003$\u0003\u0003": {
+            "__extn": {
+              "fn": "duration",
+              "arg": "0ms"
+            }
+          },
+          "n\u0001\u0000 \u0000": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "\u0000\u0000\u0000": {
+            "": {
+              "": "",
+              "\u0003\u0000\u0000\u0000\u0000\u0003\u0003\u0003\u0003": "",
+              "\u0003\u0003\u0003": "",
+              "\u001d@[": false,
+              "$\u0003\u0003": "",
+              "3Actio:~": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              },
+              "A\u0003$": "",
+              "an ": "",
+              "cti": "",
+              "e": "",
+              "eb": "",
+              "n": ""
+            }
+          },
+          "A\u0003$\u0003\u0003": {
+            "__extn": {
+              "fn": "duration",
+              "arg": "0ms"
+            }
+          },
+          "n\u0001\u0000 \u0000": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "\u0000\u0000\u0000": {
+            "": {
+              "": "",
+              "\u0003\u0000\u0000\u0000\u0000\u0003\u0003\u0003\u0003": "",
+              "\u0003\u0003\u0003": "",
+              "\u001d@[": false,
+              "$\u0003\u0003": "",
+              "3Actio:~": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              },
+              "A\u0003$": "",
+              "an ": "",
+              "cti": "",
+              "e": "",
+              "eb": "",
+              "n": ""
+            }
+          },
+          "A\u0003$\u0003\u0003": {
+            "__extn": {
+              "fn": "duration",
+              "arg": "0ms"
+            }
+          },
+          "n\u0001\u0000 \u0000": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "\u0000\u0000\u0000": {
+            "": {
+              "": "",
+              "\u0003\u0000\u0000\u0000\u0000\u0003\u0003\u0003\u0003": "",
+              "\u0003\u0003\u0003": "",
+              "\u001d@[": false,
+              "$\u0003\u0003": "",
+              "3Actio:~": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              },
+              "A\u0003$": "",
+              "an ": "",
+              "cti": "",
+              "e": "",
+              "eb": "",
+              "n": ""
+            }
+          },
+          "A\u0003$\u0003\u0003": {
+            "__extn": {
+              "fn": "duration",
+              "arg": "0ms"
+            }
+          },
+          "n\u0001\u0000 \u0000": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

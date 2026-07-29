@@ -1,0 +1,42 @@
+entity a = {
+  A?: Set<{
+    "": a,
+    "\0\0\0"?: __cedar::String,
+    "\u{1}\u{7}h"?: __cedar::ipaddr,
+    "\u{3}"?: __cedar::datetime,
+    "\u{e}"?: __cedar::Bool,
+    "\u{1d}\u{3}"?: __cedar::ipaddr,
+    "\u{1d}\u{3}["?: __cedar::decimal,
+    "\u{1d}(\u{3}": __cedar::Long,
+    "\u{1d}@["?: __cedar::datetime,
+    "\u{1d}@gffd~"?: __cedar::String,
+    "$"?: __cedar::String,
+    @j4Tdg4542
+    @vbbbcbbbbbbbbbT1("")
+    "$=:~"?: __cedar::datetime,
+    "$a"?: __cedar::ipaddr,
+    "=\u{e}"?: __cedar::ipaddr,
+    "@"?: __cedar::String,
+    "@\t\u{1} "?: __cedar::ipaddr,
+    @r
+    @r_H("")
+    "[@[": a,
+    "^"?: __cedar::String,
+    "h\u{1}/h"?: __cedar::ipaddr,
+    "w\u{e}": __cedar::duration,
+    @LRazw03
+    @Leddb03ERVR3T("")
+    @d("")
+    @vazER3RRS33bbb("\0\u{e}IIIIIIII")
+    "w\u{1d}"?: __cedar::datetime
+  }>,
+  U3T1S333?: __cedar::ipaddr,
+  n?: __cedar::ipaddr
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

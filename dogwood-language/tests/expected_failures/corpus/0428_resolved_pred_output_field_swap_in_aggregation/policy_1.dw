@@ -1,0 +1,16 @@
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};
+forbid (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    let total = sum r where (formerly within 1h Drupe::Action::"Compute"::response{ input.user: context.input.user, output.result: r, output.code: _ }) in total > 1000
+};

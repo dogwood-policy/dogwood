@@ -1,0 +1,20 @@
+entity a = {
+  A?: Set<{
+    ""?: __cedar::String,
+    "\u{1d}@gf"?: __cedar::String,
+    "///"?: __cedar::String,
+    "/////////////////////duration"?: __cedar::String,
+    "=}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}"?: __cedar::String,
+    "ebian //////////////////////////////[@["?: __cedar::String,
+    "}}}}}}}}}}}}}}}}}}}}}}}}}}"?: __cedar::String
+  }>,
+  U3T1S333?: __cedar::String,
+  n?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

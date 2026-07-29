@@ -1,0 +1,31 @@
+// Negated-polarity sibling of 0904/0916: `without ... since` with the guard
+// correlating on the CURRENT request's user, where the guard var is bound
+// ONLY by the guard (the anchor is a literal). Permits an Approve when the
+// requesting user has made NO Transfer since a carol Transfer anchor.
+//
+// Discriminates the PER-BINDING negation from a value-agnostic one:
+//   @0  carol Transfer  — anchor; policy scope (Approve) does not apply.
+//   @10 dave Approve    — no dave Transfer in (0,1] → permit (history path,
+//                         negated guard, guard-only correlation var).
+//   @20 dave Transfer   — guard event for dave's binding; scope does not
+//                         apply. (Writes dave's guard streak.)
+//   @30 dave Approve    — dave DID transfer at @20 → deny.
+//   @40 eve Approve     — dave's Transfer must NOT count against EVE's
+//                         binding → permit. A value-agnostic guard (the
+//                         pre-fix streak key) wrongly denies here; an
+//                         over-narrowed same-step check wrongly permits @30.
+//
+// The compiled backend's negated read (`select_since_negated`) must key the
+// guard-streak lookup by the request's user and constrain the same-step
+// guard check to that binding — the deny at @30 and the permit at @40 pin
+// the two directions. Interpreter is the oracle (see expected_1.out).
+permit (
+    principal,
+    action == Drupe::Action::"Approve",
+    resource
+)
+when temporal {
+    !Drupe::Action::"Transfer"::request{ input.user: context.input.user }
+    since within 1h
+    Drupe::Action::"Transfer"::request{ input.user: "carol" }
+};

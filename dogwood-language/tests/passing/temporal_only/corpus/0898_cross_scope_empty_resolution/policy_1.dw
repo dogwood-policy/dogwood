@@ -1,0 +1,13 @@
+// Permit Transfer when a prior Transfer for this user resolved (any output).
+// Empty -> {} accepts any resolution regardless of output field values. The decimal filter is absent here
+// so any Transfer amount satisfies the body.
+// At a Read timepoint the Transfer scope prevents this from being a
+// determining policy even though the resolved predicate body is still satisfied.
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Transfer"::response{ input.user: context.input.user }
+};

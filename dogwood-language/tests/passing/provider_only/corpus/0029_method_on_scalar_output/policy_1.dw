@@ -1,0 +1,12 @@
+// Edge case: a method called on a provider whose base output is a scalar
+// integer (not a record). The pipeline value passed to the method is the
+// bare integer.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Num::Base(context.input.document).double() > 10
+};

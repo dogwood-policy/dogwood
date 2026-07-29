@@ -1,0 +1,35 @@
+// Non-vacuous `since` with a PAST anchor and a current-request correlation on
+// the left — a DSQL backend divergence distinct from the `0875` current-anchor
+// vacuity case.
+//
+// The formula is `(A && C) since within 1h B` where
+//   A = Transfer{ input.user: context.input.user }   (correlate on the request)
+//   C = context.input.amount >= 10                   (a rigid request filter)
+//   B = Transfer{ input.user: "carol" }              (the literal anchor)
+//
+// `0875` exercises the case where the CURRENT event is itself the anchor, so
+// the left is checked over the empty range `(i, i]` and is vacuously true
+// (the §5.3 `((A S B) ∧ C) ∨ B` rewrite handles that, and `0875` passes DSQL).
+//
+// THIS case exercises the complementary shape: the anchor B is strictly in the
+// PAST (a prior `carol` Transfer), and the left `(A && C)` is checked over a
+// NON-empty range up to the current step, where A correlates on
+// `context.input.user` of the *current* request. The interpreter evaluates
+// this correctly (see expected_1.out); the DSQL compiler returns the wrong
+// verdict at the decision step (it denies where the interpreter permits).
+//
+// Interpreter (oracle) verdicts are correct — this lives in the Passing corpus
+// for the interpreter and is a KNOWN DSQL verdict divergence surfaced by the
+// SMT differential fuzzer (dogwood-fuzz-smt). Tracked for the temporal-compiler
+// `since` left-guard past-anchor compilation; see the compiler root-cause note.
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    (Drupe::Action::"Transfer"::request{ input.user: context.input.user }
+        && context.input.amount >= 10)
+    since within 1h
+    Drupe::Action::"Transfer"::request{ input.user: "carol" }
+};

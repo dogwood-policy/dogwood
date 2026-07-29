@@ -1,0 +1,1 @@
+variable `p` is free in this temporal condition (bound by no `exists` binder or aggregation `for` list); a temporal condition must be closed — wrap it as `exists (p: <type>). (…)`, or use `*` to match any value

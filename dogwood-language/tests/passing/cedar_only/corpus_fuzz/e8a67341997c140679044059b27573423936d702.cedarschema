@@ -1,0 +1,10 @@
+@A("\0")
+@r("")
+entity a tags Set<Set<Set<{}>>>;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

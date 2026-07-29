@@ -1,0 +1,10 @@
+namespace r::r::A2d::r {
+  entity a enum ["\0"];
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

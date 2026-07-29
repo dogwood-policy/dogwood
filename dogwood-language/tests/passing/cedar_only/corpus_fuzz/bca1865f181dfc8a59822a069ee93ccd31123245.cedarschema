@@ -1,0 +1,12 @@
+namespace t::t::t::s {
+  entity a;
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      F: Set<Set<__cedar::datetime>>
+    }
+  };
+}
+

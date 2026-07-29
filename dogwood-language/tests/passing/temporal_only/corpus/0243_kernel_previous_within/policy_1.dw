@@ -1,0 +1,12 @@
+// Read is permitted only if the user logged in at the immediately
+// preceding time point (within 1 hour).
+// Kernel subset: previous + within, no from/to.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    previous within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

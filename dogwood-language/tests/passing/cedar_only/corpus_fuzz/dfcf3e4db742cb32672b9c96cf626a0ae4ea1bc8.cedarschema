@@ -1,0 +1,17 @@
+@t
+entity a;
+
+action "" in [Action::"\u{3}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+@L33EjTVS("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\u{3}")
+@t
+action "\u{3}" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

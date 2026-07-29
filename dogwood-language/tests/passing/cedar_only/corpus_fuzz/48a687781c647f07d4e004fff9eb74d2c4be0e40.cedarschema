@@ -1,0 +1,16 @@
+namespace gCC::gC4::Y444CCCCCCCC {
+  entity a enum ["\u{2}"];
+
+  action "" in [gCC::gC4::Y444CCCCCCCC::Action::"B\u{11}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "B\u{11}" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

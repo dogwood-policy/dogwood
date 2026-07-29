@@ -1,0 +1,34 @@
+// Field-injection macro: a condition macro refines its predicate-valued
+// argument `?s` with an injected field `{ input.status: "approved" }`.
+//
+//   formerly_matching(1h, Approve::request{ input.user: … }{ input.status: "approved" })
+//     ⇒ formerly within 1h Approve::request{ input.user: …, input.status: "approved" }
+//
+// A Submit is permitted only if there was formerly (within 1h) an Approve
+// by the same user WHOSE status was "approved". The injected `input.status`
+// filter is what makes a pending Approve NOT count.
+//
+// This case is a positive/negative control across two traces:
+//   trace_1: the prior Approve has status "approved" → Submit permitted.
+//   trace_2: IDENTICAL except the prior Approve has status "pending" →
+//            the injected `input.status: "approved"` filter excludes it, so
+//            the Submit is NOT permitted (empty verdict output).
+// If the injection silently did nothing, trace_2 would wrongly match and
+// its (empty) expected output would fail — so the pair only passes when
+// injection really conjoins the field.
+
+def temporal formerly_matching(?w, ?s) {
+    formerly within ?w (?s)
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Submit",
+    resource
+)
+when temporal {
+    formerly_matching(
+        1h,
+        Drupe::Action::"Approve"::request{ input.user: context.input.user }{ input.status: "approved" }
+    )
+};

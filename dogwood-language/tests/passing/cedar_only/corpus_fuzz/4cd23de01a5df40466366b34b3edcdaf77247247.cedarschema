@@ -1,0 +1,10 @@
+namespace FS::wS::IH::uop::x::w00::Fp02001205550::e::KS {
+  entity a;
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

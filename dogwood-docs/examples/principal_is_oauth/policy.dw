@@ -1,0 +1,7 @@
+// `is Type` scope test: principal must be an OAuthUser entity.
+@id("oauth_get_stock")
+permit (
+    principal is Drupe::OAuthUser,
+    action == Drupe::Action::"GetStockInfo",
+    resource
+);

@@ -1,0 +1,15 @@
+entity a;
+
+action "" in [Action::":", Action::"\u{e}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @r1Sw3c000000
+    GbpR?: Set<__cedar::duration>
+  }
+};
+
+action "\u{e}";
+
+action ":" in [Action::"\u{e}"];
+

@@ -1,0 +1,7 @@
+// Bucket reads (the ownerless resource type) are permitted without the
+// provider.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource is Drupe::Bucket
+);

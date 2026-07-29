@@ -1,0 +1,35 @@
+@r
+namespace A::A {
+  entity a;
+
+  action "" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      D?: __cedar::Bool,
+      I: __cedar::String,
+      @A00A00
+      N?: Set<__cedar::String>,
+      f?: __cedar::Bool,
+      h0?: __cedar::Bool,
+      m3?: __cedar::Bool,
+      @I("")
+      @P3gl2n("\u{1}")
+      @g123333("\u{1f}")
+      @r
+      @r3f333335cZgYlW1("")
+      @rSRR("g!\02")
+      @v("[")
+      r: __cedar::Bool,
+      v?: __cedar::Bool,
+      vR?: __cedar::Bool
+    }
+  };
+
+  action "VV" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

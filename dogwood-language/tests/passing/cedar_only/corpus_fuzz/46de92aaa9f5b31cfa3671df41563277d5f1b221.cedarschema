@@ -1,0 +1,48 @@
+entity a;
+
+action "" in [Action::":", Action::"\u{e}", Action::"+r", Action::"d&", Action::"[", Action::"\u{3}", Action::"D\u{4}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    P?: Set<a>,
+    r?: __cedar::datetime
+  }
+};
+
+action "\u{3}" in [Action::"D\u{4}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    P4: __cedar::String
+  }
+};
+
+action "\u{e}" in [Action::"+r", Action::"d&", Action::"[", Action::"\u{3}", Action::"D\u{4}"];
+
+action "+r" in [Action::"d&", Action::"[", Action::"\u{3}", Action::"D\u{4}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    P4: __cedar::String
+  }
+};
+
+@l555OO
+@r
+action ":" in [Action::"\u{e}", Action::"+r", Action::"d&", Action::"[", Action::"\u{3}", Action::"D\u{4}"];
+
+@A0
+action "D\u{4}" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "[" in [Action::"\u{3}", Action::"D\u{4}"];
+
+action "d&" in [Action::"[", Action::"\u{3}", Action::"D\u{4}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

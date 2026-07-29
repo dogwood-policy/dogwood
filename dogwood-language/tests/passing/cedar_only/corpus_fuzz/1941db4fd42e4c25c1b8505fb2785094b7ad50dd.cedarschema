@@ -1,0 +1,13 @@
+entity a = {
+  M3: __cedar::ipaddr,
+  Tqq?: __cedar::datetime,
+  r?: __cedar::datetime,
+  z?: __cedar::datetime
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,10 @@
+@B1
+@vR("g!///////")
+entity a tags __cedar::Long;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,17 @@
+// §1.2 example 3 — the new dedup form, impossible before:
+//   sum a for (a: Long). where formerly within 1h (Withdraw(amount: a))
+//
+// Project onto `amount` ALONE (no `t`): equal values at different
+// timepoints collapse to one row, so we sum the *distinct* amounts.
+//
+// Trace (decision at the Alert, ts=350; all Transfers in window):
+// amounts 5, 5, 9. With `for a.` the multiset {5,5,9} dedups to {5,9}
+// → 5 + 9 = 14. (Contrast `for a, t.`, which would keep both 5s and
+// total 19 — the determinism distinction made concrete.)
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (total: Long). ((sum a for (a: Long). where (formerly within 1h (Drupe::Action::"Transfer"::request{ input.amount: a }))) == total && total == 14)};

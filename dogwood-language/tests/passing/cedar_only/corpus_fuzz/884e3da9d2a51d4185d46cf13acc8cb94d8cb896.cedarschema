@@ -1,0 +1,10 @@
+entity A0L enum [""];
+
+entity xTT enum [""];
+
+action "action" appliesTo {
+  principal: [xTT],
+  resource: [xTT],
+  context: {}
+};
+

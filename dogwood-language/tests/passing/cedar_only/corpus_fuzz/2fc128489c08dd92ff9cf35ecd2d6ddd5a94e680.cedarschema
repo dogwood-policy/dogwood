@@ -1,0 +1,15 @@
+entity a = {
+  r?: __cedar::String,
+  r3?: __cedar::String,
+  @A
+  @A0033_3333("")
+  @r("")
+  r3333: __cedar::ipaddr
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

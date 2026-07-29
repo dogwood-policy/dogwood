@@ -1,0 +1,21 @@
+@P("\0\0\u{e}\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}")
+entity a = {
+  F: Set<__cedar::String>
+} tags Set<{
+  @D("D\u{4}")
+  "\u{3}ED\u{4}": {
+    ""?: Set<__cedar::Long>,
+    "\u{7}\u{7}\u{7}\0": a
+  },
+  "["?: __cedar::Long,
+  "d&"?: a
+}>;
+
+@r
+@r55g7lRS3("\u{7}\u{7}\u{7}\u{7}")
+action "\u{5}D" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

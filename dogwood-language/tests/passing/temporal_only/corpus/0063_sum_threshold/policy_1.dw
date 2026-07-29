@@ -1,0 +1,7 @@
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (total: Long). ((sum a for (a: Long). where Drupe::Action::"Transfer"::request{ input.amount: a }) == total && total > 200)};

@@ -1,0 +1,14 @@
+entity a tags {
+  ""?: __cedar::Bool,
+  @LYY
+  @tYY("")
+  "\0\0"?: __cedar::String,
+  "e\0\0"?: __cedar::ipaddr
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

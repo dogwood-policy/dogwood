@@ -1,0 +1,42 @@
+entity a;
+
+action "" in [Action::"\u{e}~\u{e}", Action::"^", Action::"[)\u{3}-Debian ---Ai-y-----\u{1d}B", Action::"S"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{e}~\u{e}" in [Action::"[)\u{3}-Debian ---Ai-y-----\u{1d}B", Action::"deter", Action::"@", Action::"S"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "@" in [Action::"S"];
+
+action "S";
+
+action "[)\u{3}-Debian ---Ai-y-----\u{1d}B" in [Action::"@", Action::"S"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "^" in [Action::"[)\u{3}-Debian ---Ai-y-----\u{1d}B", Action::"@"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "deter" in [Action::"@", Action::"S"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "ݙ:n" in [Action::"\u{e}~\u{e}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

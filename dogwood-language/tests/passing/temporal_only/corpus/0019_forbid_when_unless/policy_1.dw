@@ -1,0 +1,11 @@
+// Permit read if logged in; forbid if logged out
+// except if re-logged in
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

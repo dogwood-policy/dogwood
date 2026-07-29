@@ -1,0 +1,95 @@
+namespace A::A {
+  entity a;
+
+  action "" in [A::A::Action::"r@"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{3}" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{e}" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{1d}\u{3}";
+
+  action "\u{1d}@J<" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "$";
+
+  action ":~" in [A::A::Action::"^"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "=\u{e}" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "V" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "V:" in [A::A::Action::"\u{3}", A::A::Action::"w\u{1d}/"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "[" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      @Hooooooooooo("qqqqqqqqqqqqqqq")
+      HooCoooooooo: Set<Set<Set<Set<__cedar::Long>>>>
+    }
+  };
+
+  action "^" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "r@" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "w\u{1d}/" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "}}" in [A::A::Action::"^"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "~" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

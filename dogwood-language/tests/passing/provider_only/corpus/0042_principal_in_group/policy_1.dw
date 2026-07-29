@@ -1,0 +1,11 @@
+// Scope: principal in Team (group membership).
+// Only principals that are members of the "engineering" team can read.
+
+permit (
+    principal in Drupe::Team::"engineering",
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Strings::Matches(context.input.document, "^[A-Z]+$").matched == true
+};

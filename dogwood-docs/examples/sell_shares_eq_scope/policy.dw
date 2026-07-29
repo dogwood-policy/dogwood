@@ -1,0 +1,7 @@
+// `== EntityRef` action scope: this rule can only apply to SellShares.
+@id("sell_shares_eq_scope")
+permit (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+);

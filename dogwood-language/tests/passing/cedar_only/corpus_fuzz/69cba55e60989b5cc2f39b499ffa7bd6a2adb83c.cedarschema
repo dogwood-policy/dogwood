@@ -1,0 +1,111 @@
+namespace A::A {
+  entity a;
+
+  action "" in [A::A::Action::"VV", A::A::Action::":~", A::A::Action::"\u{e}\u{1}+", A::A::Action::"[", A::A::Action::"\u{3}\u{1d}w", A::A::Action::"$", A::A::Action::"00\u{1d}@", A::A::Action::"e", A::A::Action::"V", A::A::Action::"::", A::A::Action::"&", A::A::Action::"\u{1}", A::A::Action::"\u{e}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{1}" in [A::A::Action::"\u{e}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      EWidddRRRRRRR: __cedar::Long,
+      r?: __cedar::String,
+      v?: __cedar::String
+    }
+  };
+
+  @_YlWidddRRRRRR("")
+  @m("")
+  @r("")
+  @v("")
+  action "\u{3}\u{1d}w" in [A::A::Action::"$", A::A::Action::"00\u{1d}@", A::A::Action::"e", A::A::Action::"V", A::A::Action::"::", A::A::Action::"&", A::A::Action::"\u{1}", A::A::Action::"\u{e}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{e}";
+
+  action "\u{e}\u{1}+" in [A::A::Action::"[", A::A::Action::"\u{3}\u{1d}w", A::A::Action::"$", A::A::Action::"00\u{1d}@", A::A::Action::"e", A::A::Action::"V", A::A::Action::"::", A::A::Action::"&", A::A::Action::"\u{1}", A::A::Action::"\u{e}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  @A("\u{5}")
+  @O4("C")
+  @Y("")
+  @r("")
+  @r3("")
+  @v("")
+  action "$" in [A::A::Action::"00\u{1d}@", A::A::Action::"e", A::A::Action::"V", A::A::Action::"::", A::A::Action::"&", A::A::Action::"\u{1}", A::A::Action::"\u{e}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "&" in [A::A::Action::"\u{1}", A::A::Action::"\u{e}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  @O4("C")
+  @Q
+  @Y("")
+  @p("")
+  @r("")
+  @r3("")
+  @v("")
+  action "00\u{1d}@" in [A::A::Action::"e", A::A::Action::"V", A::A::Action::"::", A::A::Action::"&", A::A::Action::"\u{1}", A::A::Action::"\u{e}"];
+
+  action "::" in [A::A::Action::"&", A::A::Action::"\u{1}", A::A::Action::"\u{e}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action ":~" in [A::A::Action::"\u{e}\u{1}+", A::A::Action::"[", A::A::Action::"\u{3}\u{1d}w", A::A::Action::"$", A::A::Action::"00\u{1d}@", A::A::Action::"e", A::A::Action::"V", A::A::Action::"::", A::A::Action::"&", A::A::Action::"\u{1}", A::A::Action::"\u{e}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "V" in [A::A::Action::"::", A::A::Action::"&", A::A::Action::"\u{1}", A::A::Action::"\u{e}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "VV" in [A::A::Action::":~", A::A::Action::"\u{e}\u{1}+", A::A::Action::"[", A::A::Action::"\u{3}\u{1d}w", A::A::Action::"$", A::A::Action::"00\u{1d}@", A::A::Action::"e", A::A::Action::"V", A::A::Action::"::", A::A::Action::"&", A::A::Action::"\u{1}", A::A::Action::"\u{e}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      r: __cedar::ipaddr,
+      @B("CCC")
+      @Q
+      @RS0oS3("")
+      @p("")
+      @r("")
+      @r3("")
+      @v("")
+      v: __cedar::String
+    }
+  };
+
+  action "[" in [A::A::Action::"\u{3}\u{1d}w", A::A::Action::"$", A::A::Action::"00\u{1d}@", A::A::Action::"e", A::A::Action::"V", A::A::Action::"::", A::A::Action::"&", A::A::Action::"\u{1}", A::A::Action::"\u{e}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "e" in [A::A::Action::"V", A::A::Action::"::", A::A::Action::"&", A::A::Action::"\u{1}", A::A::Action::"\u{e}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

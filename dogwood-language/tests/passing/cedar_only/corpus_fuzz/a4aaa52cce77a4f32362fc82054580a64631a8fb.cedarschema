@@ -1,0 +1,23 @@
+@x33333333333
+namespace w {
+  entity a enum ["\0", ""];
+
+  @tjjjTSSSSD0B
+  @tjjjpUjTSSSS("\0\u{b}\0\0---")
+  action "" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      @r("")
+      @t("-")
+      r: __cedar::Bool
+    }
+  };
+
+  action "-----------------" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

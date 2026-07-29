@@ -1,0 +1,11 @@
+entity a tags __cedar::decimal;
+
+@HYl10W0Wd5C0000
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: {    }
+  }
+};
+

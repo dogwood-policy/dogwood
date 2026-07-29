@@ -1,0 +1,20 @@
+entity a = {
+  z?: {
+    ""?: {    },
+    "\0\0\0hh"?: {    },
+    @CPPPPPPPPPX
+    "\t\0"?: {    },
+    "#sour\0\0\0\0\0"?: {    },
+    A: {    },
+    U?: {    },
+    "e\u{2}\n*"?: {    },
+    "h:Dez\0\0\06"?: {    }
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

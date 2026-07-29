@@ -1,0 +1,28 @@
+entity a = {
+  A?: __cedar::datetime,
+  wo?: {
+    ""?: __cedar::datetime,
+    "\u{1}"?: __cedar::datetime,
+    "\u{1}\0\0\0!@\0"?: __cedar::datetime,
+    "\u{e}"?: __cedar::datetime,
+    "["?: __cedar::datetime
+  },
+  z?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: __cedar::datetime,
+    wo?: {
+      ""?: __cedar::datetime,
+      "\u{1}"?: __cedar::datetime,
+      "\u{1}\0\0\0!@\0"?: __cedar::datetime,
+      "\u{e}"?: __cedar::datetime,
+      "[\u{1d}@e"?: __cedar::datetime
+    },
+    z?: __cedar::String
+  }
+};
+

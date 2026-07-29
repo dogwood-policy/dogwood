@@ -1,0 +1,26 @@
+entity a = {
+  @Jgml
+  r: __cedar::String,
+  @r
+  @v("")
+  @z("")
+  v?: a
+};
+
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @r("")
+    @r33333333333333("")
+    @v("")
+    @vRRRRRRRRR333("")
+    lHHHHHHH?: __cedar::decimal,
+    r: __cedar::duration,
+    @r("")
+    @w9i33333("")
+    r33333333333?: {    },
+    r333jj02?: __cedar::String
+  }
+};
+

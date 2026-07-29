@@ -1,0 +1,7 @@
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    (exists (total: Long). ((sum a for (a: Long). where Drupe::Action::"Transfer"::request{ input.user: _, input.amount: a }) == total && total == 0)) && (exists (cnt: Long). ((count for (t: Timepoint). where (Drupe::Action::"Transfer"::request{ input.user: _, input.amount: _ } && tp(t))) == cnt && cnt == 0))};

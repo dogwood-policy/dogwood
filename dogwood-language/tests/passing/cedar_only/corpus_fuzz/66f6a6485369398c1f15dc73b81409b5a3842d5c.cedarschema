@@ -1,0 +1,11 @@
+entity a = {
+  A00pWd?: __cedar::duration
+};
+
+@z("")
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

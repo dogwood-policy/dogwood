@@ -1,0 +1,14 @@
+@hNwn7FR00000000
+entity TT60R = {
+  @h
+  m: __cedar::duration
+} tags __cedar::duration;
+
+entity v enum [""];
+
+action "action" appliesTo {
+  principal: [TT60R],
+  resource: [TT60R],
+  context: {}
+};
+

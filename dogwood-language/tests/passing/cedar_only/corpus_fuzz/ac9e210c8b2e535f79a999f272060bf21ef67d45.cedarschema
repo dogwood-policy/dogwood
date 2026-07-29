@@ -1,0 +1,9 @@
+@T___200
+entity a enum ["", "}}}}"];
+
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

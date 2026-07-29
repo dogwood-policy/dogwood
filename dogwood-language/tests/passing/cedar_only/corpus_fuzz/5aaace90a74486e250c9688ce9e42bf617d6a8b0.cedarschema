@@ -1,0 +1,20 @@
+entity a;
+
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "~" in [Action::""] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    D?: Set<__cedar::Bool>,
+    d?: __cedar::String,
+    m1S3T?: __cedar::String,
+    @E0Wb3EwR3SRR3
+    va3zE?: __cedar::Long
+  }
+};
+

@@ -1,0 +1,25 @@
+// MOVED from the passing corpus (macros/mcagg_0524): the macro variant of
+// 0524_resolved_left_of_since_in_sum_agg — the same non-monitorable sum
+// (summand `a` occurring only in the since-LEFT) supplied through a `let_`
+// macro. Pins the POST-EXPANSION re-run of the binding checks: the leaf
+// carries an unresolved call at parse time, so the parse-time check cannot
+// see the aggregation; the re-check after expansion must reject it.
+def temporal let_(?n, ?A, ?B) {
+    exists (?n: Long). (?A == ?n && ?B)
+};
+
+forbid (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    let_(total, sum a for (a: Long). where (Drupe::Action::"Transfer"::response{ input.user: context.input.user, input.amount: a } since within 2h Drupe::Action::"Login"::request{ input.user: context.input.user }), total > 1500)};
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

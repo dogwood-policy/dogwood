@@ -1,0 +1,28 @@
+namespace r::V::h::r {
+  entity a;
+
+  action "" in [r::V::h::r::Action::":p", r::V::h::r::Action::"0[\u{1d}", r::V::h::r::Action::"V@", r::V::h::r::Action::"\u{1b}", r::V::h::r::Action::"\u{7f}", r::V::h::r::Action::"VV", r::V::h::r::Action::"\u{8}0[\u{1d}", r::V::h::r::Action::"\u{1b}\u{e}e"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      r?: __cedar::String
+    }
+  };
+
+  action "\u{8}0[\u{1d}" in [r::V::h::r::Action::"\u{1b}\u{e}e"];
+
+  action "\u{1b}" in [r::V::h::r::Action::"\u{7f}", r::V::h::r::Action::"VV", r::V::h::r::Action::"\u{8}0[\u{1d}", r::V::h::r::Action::"\u{1b}\u{e}e"];
+
+  action "\u{1b}\u{e}e";
+
+  action "0[\u{1d}" in [r::V::h::r::Action::"V@", r::V::h::r::Action::"\u{1b}", r::V::h::r::Action::"\u{7f}", r::V::h::r::Action::"VV", r::V::h::r::Action::"\u{8}0[\u{1d}", r::V::h::r::Action::"\u{1b}\u{e}e"];
+
+  action ":p" in [r::V::h::r::Action::"0[\u{1d}", r::V::h::r::Action::"V@", r::V::h::r::Action::"\u{1b}", r::V::h::r::Action::"\u{7f}", r::V::h::r::Action::"VV", r::V::h::r::Action::"\u{8}0[\u{1d}", r::V::h::r::Action::"\u{1b}\u{e}e"];
+
+  action "V@" in [r::V::h::r::Action::"\u{1b}", r::V::h::r::Action::"\u{7f}", r::V::h::r::Action::"VV", r::V::h::r::Action::"\u{8}0[\u{1d}", r::V::h::r::Action::"\u{1b}\u{e}e"];
+
+  action "VV" in [r::V::h::r::Action::"\u{8}0[\u{1d}", r::V::h::r::Action::"\u{1b}\u{e}e"];
+
+  action "\u{7f}" in [r::V::h::r::Action::"VV", r::V::h::r::Action::"\u{8}0[\u{1d}", r::V::h::r::Action::"\u{1b}\u{e}e"];
+}
+

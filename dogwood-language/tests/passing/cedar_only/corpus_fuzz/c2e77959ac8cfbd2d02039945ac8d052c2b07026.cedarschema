@@ -1,0 +1,116 @@
+entity a = {
+  A?: {
+    @bo("שּׁ")
+    ""?: __cedar::String,
+    "\u{1}\n\u{f}VV\n\ne?\0:\u{f}ee~": a,
+    "\u{3}\u{1d}@"?: Set<{
+      "": a,
+      "\0\0\0@"?: __cedar::duration,
+      "\u{1}\n\u{f}VV\n\ne?\0:\u{f}ee~": __cedar::ipaddr,
+      @LRa3KRookkkkk
+      @m("")
+      @rF0V3
+      "\u{3}\u{1d}@": __cedar::ipaddr,
+      "\u{3}\u{1d}w"?: __cedar::ipaddr,
+      "\u{3}\u{1d}w["?: __cedar::ipaddr,
+      "\u{e}": __cedar::String,
+      "\u{14}"?: __cedar::Bool,
+      @booooooooo
+      "\u{1a}\u{1a}\u{1a}": __cedar::duration,
+      @bo("שּׁ")
+      "\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}"?: __cedar::String,
+      "\u{1d}\u{3}": __cedar::String,
+      "\u{1d}@"?: __cedar::ipaddr,
+      "\u{1d}@["?: __cedar::ipaddr,
+      @LRaQQQQ
+      @d("\0\0\0\u{3}")
+      "\u{1d}@gf"?: Set<__cedar::Long>,
+      @Hkkkkkkkkkko("")
+      @LRa3KRookk
+      @r3T1Ra3
+      "\u{1d}G\0\0\0\u{3}": a,
+      "$"?: __cedar::ipaddr,
+      "$\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}"?: __cedar::Bool,
+      @Nkk0oo
+      "$=-\u{e}"?: __cedar::Bool,
+      @aQYQQQQQQQ
+      ":~"?: __cedar::ipaddr,
+      "=\u{e}"?: __cedar::ipaddr,
+      "N~\u{1f}"?: Set<__cedar::Long>,
+      "["?: __cedar::Bool,
+      "[@"?: __cedar::Bool,
+      @aQYQQQQQQQ
+      "[@["?: __cedar::ipaddr,
+      "^"?: a,
+      @EWookkkR1RKRw("qqqqqqqqqqqqqbian \u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}")
+      @Hooooooooooo
+      @_YlWookkkR1RKR
+      @aQYQQQQQQQ
+      @bo
+      "an \u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1d}w"?: __cedar::String,
+      @booooooooQ
+      "qqqqq\0\0!": __cedar::duration,
+      @D3S1S3T1edRRx
+      @EWQQQQQQQQQQQ("w")
+      @F
+      @LS33TuSo5So50
+      @UV3ERRS33T1("$")
+      @rzE("")
+      @v3T33S1Raz("\u{e}")
+      @vooo("q\0\0!")
+      "z~"?: __cedar::ipaddr
+    }>,
+    "\u{3}\u{1d}w"?: __cedar::Bool,
+    "\u{3}\u{1d}w["?: __cedar::ipaddr,
+    "\u{e}"?: __cedar::ipaddr,
+    "\u{14}"?: __cedar::duration,
+    "\u{1d}\u{3}"?: a,
+    @Hkkkkkkkkkko("")
+    @LRa3KRookk
+    @r3T1Ra3
+    "\u{1d}@[": a,
+    @Nkk0oo
+    "\u{1d}@gf"?: __cedar::Bool,
+    "$"?: __cedar::Bool,
+    ":~"?: __cedar::ipaddr,
+    @booooooooo
+    "=\u{e}": __cedar::duration,
+    "N~\u{1f}"?: __cedar::ipaddr,
+    @aQYQQQQQQQ
+    "["?: __cedar::ipaddr,
+    "[@[": __cedar::String,
+    "qqqqq\0\0!": __cedar::ipaddr,
+    @Nk
+    @_YlWookkkR1ekd("qqqqqqqqqqqqqqbian ")
+    @aQYQQQQQQQ
+    @bo
+    @vKRwoooooooooo("qqqbian \u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}")
+    "z~"?: __cedar::String
+  }
+} tags {
+  ""?: __cedar::ipaddr,
+  "\u{3}"?: __cedar::ipaddr,
+  "\u{1a}\u{1a}"?: __cedar::String,
+  "\u{1a}\u{1a}\u{1a}"?: __cedar::String,
+  "$\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}"?: __cedar::String,
+  "[@"?: Set<{
+    ""?: __cedar::String,
+    "\u{3}\u{1d}@"?: __cedar::String,
+    "\u{e}"?: __cedar::String,
+    "\u{14}"?: __cedar::String,
+    "\u{1d}"?: __cedar::String,
+    "$"?: __cedar::String,
+    "N~\u{1f}"?: __cedar::String,
+    "["?: __cedar::String,
+    "q\0\0"?: __cedar::String,
+    qqq?: __cedar::String,
+    "z~"?: __cedar::String
+  }>
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

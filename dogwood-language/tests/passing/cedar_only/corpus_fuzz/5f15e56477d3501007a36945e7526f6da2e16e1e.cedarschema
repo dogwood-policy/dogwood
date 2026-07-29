@@ -1,0 +1,10 @@
+namespace r::r::B::r::I {
+  entity a enum ["\u{19}"];
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

@@ -1,0 +1,16 @@
+namespace I {
+  entity a = {
+    P0?: Set<{
+      "": I::a,
+      @ly0000000000
+      "deter-"?: I::a
+    }>
+  };
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

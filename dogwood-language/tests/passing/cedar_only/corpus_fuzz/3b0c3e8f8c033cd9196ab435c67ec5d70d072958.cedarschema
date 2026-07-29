@@ -1,0 +1,35 @@
+entity a = {
+  r?: {
+    @A
+    ""?: {
+      ""?: {      },
+      @L
+      "\0"?: {      },
+      "--"?: Set<__cedar::String>,
+      "---"?: {      },
+      @wSS
+      "-----------": a
+    },
+    "\0": {
+      @r
+      @x333c333r30_
+      "": __cedar::String,
+      @A
+      @wS
+      @wj("----------------")
+      "-----"?: a,
+      @A
+      @tjjjjjjjjjjj("--")
+      @w5
+      @wS("\0\u{b}")
+      "-----------"?: {      }
+    }
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,14 @@
+// Permit Read when the document is EITHER explicitly allowlisted OR
+// short enough — `(A || B)` — showing the `||` operator and parentheses
+// in a guardrail body, over two different providers. Together with 0004
+// (`&&`, `!`) this covers the full boolean spine `|| && ! ( )`.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    (Lists::Allowed(context.input.document).allowed == true
+     || Strings::Length(context.input.document).length < 4)
+};

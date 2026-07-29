@@ -1,0 +1,14 @@
+namespace Q5cag333::QddddXdAtdd {
+  entity r enum [""];
+
+  entity s enum [""];
+
+  entity w enum [""];
+
+  action "action" appliesTo {
+    principal: [r],
+    resource: [r],
+    context: {}
+  };
+}
+

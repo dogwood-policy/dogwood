@@ -1,0 +1,95 @@
+entity a = {
+  A?: {
+    ""?: __cedar::ipaddr,
+    "\u{1}\n\u{f}VV\n\ne?\0:\u{f}ee~": a,
+    @HoZgYlWQQQQQ
+    "\u{3}\u{1d}@": __cedar::ipaddr,
+    "\u{3}\u{1d}w=\u{e}"?: {
+      ""?: __cedar::ipaddr,
+      "\u{e}"?: __cedar::ipaddr,
+      "\u{e}\0\0\0\0\0qbian \u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}"?: __cedar::ipaddr,
+      "\u{1a}\u{1a}\u{1a}": __cedar::ipaddr,
+      @aQQQQQQQQQ
+      "\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{3}"?: __cedar::ipaddr,
+      @D3S1oooooZgYl
+      @aQQQQQQQRV("")
+      "\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}"?: __cedar::ipaddr,
+      "\u{1d}\u{3}"?: __cedar::decimal,
+      "\u{1d}@gf"?: __cedar::ipaddr,
+      "$\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}": __cedar::ipaddr,
+      ":"?: __cedar::ipaddr,
+      @r
+      "N~\u{1f}": a,
+      "[\0"?: __cedar::ipaddr,
+      "[@"?: __cedar::ipaddr,
+      @F("qqqqqqqqqqqqqbian ")
+      @Nk
+      @vKRwoooooooook
+      @voooooooooZgYl
+      "[@[": Set<{      }>,
+      "[an "?: __cedar::duration,
+      "^"?: __cedar::ipaddr,
+      "z~"?: __cedar::ipaddr,
+      "שּׁ": __cedar::ipaddr
+    },
+    "\u{3}\u{1d}w["?: __cedar::String,
+    "\u{e}"?: __cedar::ipaddr,
+    "\u{14}"?: __cedar::ipaddr,
+    "\u{1d}\u{3}"?: __cedar::ipaddr,
+    "\u{1d}@["?: __cedar::String,
+    "\u{1d}@[hN": a,
+    @aQYQQQQQQQ
+    "\u{1d}@gf"?: __cedar::ipaddr,
+    "$"?: __cedar::ipaddr,
+    ":~"?: __cedar::String,
+    @aQYQQQQQQQ
+    "N~\u{1f}"?: __cedar::ipaddr,
+    "["?: __cedar::ipaddr,
+    "[@["?: __cedar::ipaddr,
+    qq?: __cedar::ipaddr,
+    "qq\0\0!"?: __cedar::ipaddr,
+    "z~"?: Set<{
+      ""?: __cedar::Bool,
+      "\u{3}@": __cedar::ipaddr,
+      "\u{e}"?: __cedar::ipaddr,
+      "\u{14}"?: __cedar::ipaddr,
+      "\u{1a}\u{1a}\u{1a}": __cedar::ipaddr,
+      "\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}"?: __cedar::ipaddr,
+      @v3T33S1RaQ
+      "\u{1d}\u{3}"?: __cedar::ipaddr,
+      "$"?: __cedar::ipaddr,
+      "$\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}\u{1a}"?: __cedar::duration,
+      @aQQQQQQQQQ
+      "$=-\u{e}"?: __cedar::ipaddr,
+      "&\u{3}\u{1d}@": __cedar::ipaddr,
+      ":"?: __cedar::ipaddr,
+      @D3S1RaQQQQQQo
+      @aQQQQQQQRV("")
+      "N~\u{1f}"?: __cedar::ipaddr,
+      "["?: __cedar::ipaddr,
+      @A0000oZgYlWQQQQ
+      @Nk
+      @U3F0("")
+      @v3T33S0RRw("")
+      @vKRwoooooooook
+      @vKS0E3S1S3T1ed("")
+      @vRSYlWookkkR1RK(":qqqqqqqqqqqqqqbian ")
+      "[\0"?: __cedar::ipaddr,
+      "[@"?: __cedar::ipaddr,
+      "^"?: __cedar::ipaddr,
+      "an \u{1a}\u{1a}\u{1a}"?: __cedar::ipaddr,
+      @r
+      @v3T33S0RRw("")
+      @vRSYlWookkkRQQ3("")
+      qq?: __cedar::ipaddr,
+      "z~": __cedar::ipaddr
+    }>
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

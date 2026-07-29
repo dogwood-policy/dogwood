@@ -1,0 +1,40 @@
+namespace A::A {
+  entity a;
+
+  action "" in [A::A::Action::"VV", A::A::Action::":~", A::A::Action::"\u{e}", A::A::Action::"[", A::A::Action::"\u{3}\u{1d}w", A::A::Action::"$", A::A::Action::"00\u{1d}@", A::A::Action::"e", A::A::Action::"V", A::A::Action::"::", A::A::Action::"&", A::A::Action::"=\u{e}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      V?: __cedar::String,
+      r?: __cedar::String,
+      r333333: __cedar::Bool,
+      v?: __cedar::String,
+      vRRRR31444?: __cedar::String
+    }
+  };
+
+  action "\u{3}\u{1d}w" in [A::A::Action::"$", A::A::Action::"00\u{1d}@", A::A::Action::"e", A::A::Action::"V", A::A::Action::"::", A::A::Action::"&", A::A::Action::"=\u{e}"];
+
+  action "\u{e}" in [A::A::Action::"[", A::A::Action::"\u{3}\u{1d}w", A::A::Action::"$", A::A::Action::"00\u{1d}@", A::A::Action::"e", A::A::Action::"V", A::A::Action::"::", A::A::Action::"&", A::A::Action::"=\u{e}"];
+
+  action "$" in [A::A::Action::"00\u{1d}@", A::A::Action::"e", A::A::Action::"V", A::A::Action::"::", A::A::Action::"&", A::A::Action::"=\u{e}"];
+
+  action "&" in [A::A::Action::"=\u{e}"];
+
+  action "00\u{1d}@" in [A::A::Action::"e", A::A::Action::"V", A::A::Action::"::", A::A::Action::"&", A::A::Action::"=\u{e}"];
+
+  action "::" in [A::A::Action::"&", A::A::Action::"=\u{e}"];
+
+  action ":~" in [A::A::Action::"\u{e}", A::A::Action::"[", A::A::Action::"\u{3}\u{1d}w", A::A::Action::"$", A::A::Action::"00\u{1d}@", A::A::Action::"e", A::A::Action::"V", A::A::Action::"::", A::A::Action::"&", A::A::Action::"=\u{e}"];
+
+  action "=\u{e}";
+
+  action "V" in [A::A::Action::"::", A::A::Action::"&", A::A::Action::"=\u{e}"];
+
+  action "VV" in [A::A::Action::":~", A::A::Action::"\u{e}", A::A::Action::"[", A::A::Action::"\u{3}\u{1d}w", A::A::Action::"$", A::A::Action::"00\u{1d}@", A::A::Action::"e", A::A::Action::"V", A::A::Action::"::", A::A::Action::"&", A::A::Action::"=\u{e}"];
+
+  action "[" in [A::A::Action::"\u{3}\u{1d}w", A::A::Action::"$", A::A::Action::"00\u{1d}@", A::A::Action::"e", A::A::Action::"V", A::A::Action::"::", A::A::Action::"&", A::A::Action::"=\u{e}"];
+
+  action "e" in [A::A::Action::"V", A::A::Action::"::", A::A::Action::"&", A::A::Action::"=\u{e}"];
+}
+

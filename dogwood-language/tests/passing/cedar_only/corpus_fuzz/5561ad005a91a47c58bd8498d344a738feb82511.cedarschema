@@ -1,0 +1,15 @@
+entity a = {
+  z?: {
+    ""?: {
+      @w5z0000000000
+      h: a
+    }
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

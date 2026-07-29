@@ -1,0 +1,12 @@
+entity r = {
+  A?: zV
+};
+
+entity zV enum [""];
+
+action "action" appliesTo {
+  principal: [r],
+  resource: [r],
+  context: {}
+};
+

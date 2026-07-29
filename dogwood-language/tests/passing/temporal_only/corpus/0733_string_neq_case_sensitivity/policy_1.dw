@@ -1,0 +1,14 @@
+// String `!=` inequality. Permit Transfer only when a prior Transfer by
+// the same user carried a `user` field that is NOT exactly "alice".
+// The exact complement of 0725's `== "alice"` over the same trace
+// (alice / Alice / ALICE / "alice "), so `!=` is case- and
+// whitespace-sensitive: only the byte-identical "alice" fails the filter.
+
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    formerly within 1h (Drupe::Action::"Transfer"::request{ input.user: context.input.user } && context.input.user != "alice")
+};

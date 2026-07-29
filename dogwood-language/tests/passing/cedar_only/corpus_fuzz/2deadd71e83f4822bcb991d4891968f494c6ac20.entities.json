@@ -1,0 +1,33 @@
+[
+  {
+    "uid": {
+      "type": "A::A::Action",
+      "id": ""
+    },
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "A::A::a",
+      "id": ""
+    },
+    "attrs": {
+      "A": {
+        "__entity": {
+          "type": "A::A::a",
+          "id": ""
+        }
+      }
+    },
+    "parents": [],
+    "tags": {
+      "": {
+        "__entity": {
+          "type": "A::A::a",
+          "id": ""
+        }
+      }
+    }
+  }
+]

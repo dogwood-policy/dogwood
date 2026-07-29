@@ -1,0 +1,18 @@
+// Permit Read only when the document's worst content-filter score is
+// below 50, as decided by the `BedrockGuardrails::ContentFilter`
+// information provider (implemented in content_filter.rhai).
+//
+// The provider's base output is a per-category score record
+// `{ violence: Long, malicious: Long }`. The zero-argument output method
+// `maxConfidenceScore()` collapses that record to the single worst score
+// (the reference-parity accessor case: a method with no arguments), and the
+// policy compares that Long with a plain `<` operator.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    BedrockGuardrails::ContentFilter(context.input.document).maxConfidenceScore() < 50
+};

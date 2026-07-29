@@ -1,0 +1,32 @@
+entity a = {
+  A?: {  },
+  B0083?: {  },
+  E?: {  },
+  M?: {
+    @j("")
+    @r
+    @r333SSSSSSSS9S
+    "\0e": __cedar::Long,
+    "\u{4}\u{1}\0"?: {    },
+    "3#"?: {    }
+  },
+  i00?: {  },
+  iOO?: {  },
+  j?: {  },
+  r?: {  },
+  r33RpZ343333l333?: {  },
+  ri33l?: {  },
+  rm3ukRcRpZ?: {  },
+  rm3ukucR30?: {  },
+  v3?: {  },
+  w?: {  },
+  wS?: {  },
+  z?: {  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

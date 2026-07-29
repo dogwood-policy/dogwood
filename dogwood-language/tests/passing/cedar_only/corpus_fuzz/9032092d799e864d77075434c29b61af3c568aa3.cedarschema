@@ -1,0 +1,28 @@
+entity a tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: {
+      ""?: __cedar::ipaddr,
+      "\0"?: __cedar::ipaddr,
+      "\0\0"?: __cedar::ipaddr,
+      @u
+      "\0\0\0\0\0\0\0\u{1}\0\u{1}\0 \0 \'6": __cedar::ipaddr,
+      "\u{f}"?: __cedar::ipaddr,
+      "\u{1d}\u{3}"?: __cedar::ipaddr,
+      "$\u{3}&\u{3}\u{3}"?: __cedar::ipaddr,
+      "$=\u{e}"?: __cedar::ipaddr,
+      "+++\u{3}ddd\u{1}\0\u{e}"?: __cedar::ipaddr,
+      "3"?: __cedar::ipaddr,
+      ":\0\0"?: __cedar::ipaddr,
+      ":=\u{e}"?: __cedar::ipaddr,
+      "@"?: __cedar::ipaddr,
+      "A\u{3}$\u{3}\u{3}VV"?: __cedar::ipaddr,
+      "bian\u{3}\u{3}\u{3}\u{3} "?: __cedar::ipaddr,
+      "geD\u{1}\0 \0 \'"?: __cedar::ipaddr
+    }
+  }
+};
+

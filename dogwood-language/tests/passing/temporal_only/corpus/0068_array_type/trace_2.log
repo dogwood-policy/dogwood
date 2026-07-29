@@ -1,0 +1,1 @@
+@0 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { tags: "[1,2,3]", user: "alice" }) Drupe::Action::"SetTags"::request(input: { tags: "[1,2,3]", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u1")

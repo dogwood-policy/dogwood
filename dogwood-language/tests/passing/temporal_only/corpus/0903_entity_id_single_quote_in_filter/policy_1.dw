@@ -1,0 +1,11 @@
+permit (
+    principal,
+    action == Drupe::Action::"Grant",
+    resource
+)
+when temporal {
+    formerly within 1h (
+        Drupe::Action::"Grant"::request{ input.user: context.input.user }
+        && context.input.role == Drupe::Grant_Input_role::"o'admin"
+    )
+};

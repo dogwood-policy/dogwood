@@ -1,0 +1,60 @@
+namespace A::A {
+  entity a;
+
+  action "" in [A::A::Action::"VV", A::A::Action::":~", A::A::Action::"\u{e}", A::A::Action::"[", A::A::Action::"\u{3}\u{1d}w", A::A::Action::"$"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      @EWRRRRRRRRR00
+      LRcRNTwwR3c33?: __cedar::Long,
+      @A("\u{5}")
+      @r("")
+      @v("")
+      ORRS3T1A0SRRR: A::A::a,
+      i?: __cedar::Bool,
+      @EWiTwwR3c331A
+      @m("\u{1d}@\n~")
+      @p("")
+      @r("")
+      @r3("")
+      @v("!")
+      @vRRRR31444("")
+      @w
+      @xddddd
+      r: __cedar::Long,
+      @B("CCC")
+      @Q
+      @p("")
+      @r("")
+      @r3("")
+      @v("")
+      r333333: __cedar::Long,
+      @A("")
+      @_YlWRRRRRRRRR0
+      @m("")
+      @r("")
+      @v
+      v: Set<Set<Set<A::A::a>>>
+    }
+  };
+
+  action "\u{3}\u{1d}w" in [A::A::Action::"$"];
+
+  action "\u{e}" in [A::A::Action::"[", A::A::Action::"\u{3}\u{1d}w", A::A::Action::"$"];
+
+  action "$";
+
+  action ":~" in [A::A::Action::"\u{e}", A::A::Action::"[", A::A::Action::"\u{3}\u{1d}w", A::A::Action::"$"];
+
+  action "VV" in [A::A::Action::":~", A::A::Action::"\u{e}", A::A::Action::"[", A::A::Action::"\u{3}\u{1d}w", A::A::Action::"$"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      r?: __cedar::String,
+      v?: __cedar::Long
+    }
+  };
+
+  action "[" in [A::A::Action::"\u{3}\u{1d}w", A::A::Action::"$"];
+}
+

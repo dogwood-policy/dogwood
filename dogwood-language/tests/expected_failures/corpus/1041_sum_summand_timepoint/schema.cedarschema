@@ -1,0 +1,17 @@
+namespace Drupe {
+    entity OAuthUser;
+    entity Gateway;
+    // `amount` is Long (the only summable type), `label` is a String, and
+    // `score` is a decimal — the latter two are non-numeric summands.
+    type ChargeInput = { user: String, amount: Long, label: String, score: decimal };
+    action Charge appliesTo {
+        principal: [OAuthUser],
+        resource: [Gateway],
+        context: { input: ChargeInput }
+    };
+    action Read appliesTo {
+        principal: [OAuthUser],
+        resource: [Gateway],
+        context: { input: ChargeInput }
+    };
+}

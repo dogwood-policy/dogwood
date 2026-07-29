@@ -1,0 +1,20 @@
+entity A enum [""];
+
+entity B enum [""];
+
+entity N enum [""];
+
+entity r enum [""];
+
+entity r33RRR1 enum [""];
+
+entity vR enum [""];
+
+entity x enum [""];
+
+action "action" appliesTo {
+  principal: [vR],
+  resource: [vR],
+  context: {}
+};
+

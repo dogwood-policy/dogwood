@@ -1,0 +1,8 @@
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    formerly within 30m Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

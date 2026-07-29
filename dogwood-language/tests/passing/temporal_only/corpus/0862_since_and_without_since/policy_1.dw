@@ -1,0 +1,13 @@
+permit (
+    principal,
+    action == Drupe::Action::"Heartbeat",
+    resource
+)
+when temporal {
+    (Drupe::Action::"Heartbeat"::request{ input.server: context.input.server }
+        since within 1h
+        Drupe::Action::"Login"::request{ input.server: context.input.server, input.user: _ })
+    && (!(Drupe::Action::"Logout"::request{ input.server: context.input.server })
+        since within 1h
+        Drupe::Action::"Login"::request{ input.server: context.input.server, input.user: _ })
+};

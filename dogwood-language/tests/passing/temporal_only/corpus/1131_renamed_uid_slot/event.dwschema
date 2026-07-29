@@ -1,0 +1,21 @@
+// Custom event schema that RENAMES the reserved uid slot from the default
+// `requestId` to `trace_id`. The principal/resource reserved slots keep
+// their default names; only the uid is renamed. This probes that a renamed
+// reserved slot is treated as an ordinary declared field end to end
+// (derive -> wire -> match), with no hardcoded knowledge of the name
+// `requestId` in the compiler or encoder.
+
+decision event <A>::request {
+    ...inputs(A),
+    callerPrincipal: principalType(A),
+    callerResource:  resourceType(A),
+    trace_id:          String,
+}
+
+event <A>::response {
+    ...inputs(A),
+    ...outputs(A),
+    callerPrincipal: principalType(A),
+    callerResource:  resourceType(A),
+    trace_id:          String,
+}

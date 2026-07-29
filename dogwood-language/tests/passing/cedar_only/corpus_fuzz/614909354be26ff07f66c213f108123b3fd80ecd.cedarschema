@@ -1,0 +1,11 @@
+entity a = {
+  @P("\0rbia\0\0\0\0\0\0\0\0\0\0=\0\0\0\0\0\0\0\0\0\0\0n ")
+  I: a
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

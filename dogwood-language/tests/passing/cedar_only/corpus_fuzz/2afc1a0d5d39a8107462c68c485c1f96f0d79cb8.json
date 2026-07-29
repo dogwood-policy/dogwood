@@ -1,0 +1,570 @@
+{
+  "policies": "corpus-tests/2afc1a0d5d39a8107462c68c485c1f96f0d79cb8.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/2afc1a0d5d39a8107462c68c485c1f96f0d79cb8.entities.json",
+  "schema": "corpus-tests/2afc1a0d5d39a8107462c68c485c1f96f0d79cb8.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "context": {
+        "A300": 0,
+        "M": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "Mj": "",
+        "RSj333": {
+          "__entity": {
+            "type": "a",
+            "id": "\u0000ve&\u0000"
+          }
+        },
+        "X": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "in_": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "r3": 0,
+        "r3n3Oa3000P": false,
+        "r6Ona3Rjjjj": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "rA": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "v": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "w": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "context": {
+        "A300": 0,
+        "M": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "Mj": "",
+        "RSj333": {
+          "__entity": {
+            "type": "a",
+            "id": "\u0000ve&\u0000"
+          }
+        },
+        "X": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "in_": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "r3": 0,
+        "r3n3Oa3000P": false,
+        "r6Ona3Rjjjj": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "rA": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "v": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "w": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "context": {
+        "A300": 0,
+        "M": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "Mj": "",
+        "RSj333": {
+          "__entity": {
+            "type": "a",
+            "id": "\u0000ve&\u0000"
+          }
+        },
+        "X": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "in_": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "r3": 0,
+        "r3n3Oa3000P": false,
+        "r6Ona3Rjjjj": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "rA": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "v": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "w": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "context": {
+        "A300": 0,
+        "M": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "Mj": "",
+        "RSj333": {
+          "__entity": {
+            "type": "a",
+            "id": "\u0000ve&\u0000"
+          }
+        },
+        "X": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "in_": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "r3": 0,
+        "r3n3Oa3000P": false,
+        "r6Ona3Rjjjj": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "rA": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "v": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "w": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "context": {
+        "A300": 0,
+        "M": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "Mj": "",
+        "RSj333": {
+          "__entity": {
+            "type": "a",
+            "id": "\u0000ve&\u0000"
+          }
+        },
+        "X": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "in_": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "r3": 0,
+        "r3n3Oa3000P": false,
+        "r6Ona3Rjjjj": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "rA": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "v": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "w": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "context": {
+        "A300": 0,
+        "M": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "Mj": "",
+        "RSj333": {
+          "__entity": {
+            "type": "a",
+            "id": "\u0000ve&\u0000"
+          }
+        },
+        "X": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "in_": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "r3": 0,
+        "r3n3Oa3000P": false,
+        "r6Ona3Rjjjj": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "rA": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "v": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "w": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "context": {
+        "A300": 0,
+        "M": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "Mj": "",
+        "RSj333": {
+          "__entity": {
+            "type": "a",
+            "id": "\u0000ve&\u0000"
+          }
+        },
+        "X": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "in_": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "r3": 0,
+        "r3n3Oa3000P": false,
+        "r6Ona3Rjjjj": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "rA": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "v": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "w": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "context": {
+        "A300": 0,
+        "M": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "Mj": "",
+        "RSj333": {
+          "__entity": {
+            "type": "a",
+            "id": "\u0000ve&\u0000"
+          }
+        },
+        "X": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "in_": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "r3": 0,
+        "r3n3Oa3000P": false,
+        "r6Ona3Rjjjj": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "rA": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "v": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "w": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

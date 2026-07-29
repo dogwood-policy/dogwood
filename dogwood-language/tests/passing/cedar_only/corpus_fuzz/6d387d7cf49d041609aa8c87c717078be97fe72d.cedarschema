@@ -1,0 +1,10 @@
+@A0
+@bo("")
+entity a tags __cedar::duration;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

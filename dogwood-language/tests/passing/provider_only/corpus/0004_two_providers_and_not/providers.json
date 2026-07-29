@@ -1,0 +1,33 @@
+{
+  "availableProviders": {
+    "Strings::Matches": {
+      "argumentTypes": [
+        { "paramType": "string" },
+        { "paramType": "string" }
+      ],
+      "outputType": {
+        "paramType": "record",
+        "fields": { "matched": { "paramType": "bool" } },
+        "required": ["matched"]
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "matches.rhai"
+      }
+    },
+    "Lists::Blocked": {
+      "argumentTypes": [
+        { "paramType": "string" }
+      ],
+      "outputType": {
+        "paramType": "record",
+        "fields": { "blocked": { "paramType": "bool" } },
+        "required": ["blocked"]
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "blocked.rhai"
+      }
+    }
+  }
+}

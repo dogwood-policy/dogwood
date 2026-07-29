@@ -1,0 +1,13 @@
+entity a = {
+  A?: {
+    @A
+    "\u{1}\u{1}\u{1}\u{1}\u{1}\u{1}\u{1}\u{1}\u{1}\u{1}ebi\0\u{6}an 2": __cedar::duration
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

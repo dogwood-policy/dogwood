@@ -1,0 +1,17 @@
+// Cedar-macro rewrite of documentation_0002_when_clause.
+//
+// `is_small(?n)` abstracts the `< 100` threshold. The two
+// SellShares calls in the trace probe the threshold: the first is
+// under (permitted), the second is at the boundary (denied since
+// the comparison is strict `<`).
+
+def cedar is_small(?n) { ?n < 100 };
+
+permit (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+)
+when {
+    is_small(context.input.shares)
+};

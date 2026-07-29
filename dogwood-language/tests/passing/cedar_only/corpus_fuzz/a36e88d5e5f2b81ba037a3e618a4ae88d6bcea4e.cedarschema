@@ -1,0 +1,24 @@
+entity a;
+
+action "" in [Action::"p", Action::"&"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    r?: {
+      "^^^^^^^^^^\u{12}\0#\0555555\0\0\0*"?: __cedar::String
+    }
+  }
+};
+
+action "&" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "p" in [Action::"&"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

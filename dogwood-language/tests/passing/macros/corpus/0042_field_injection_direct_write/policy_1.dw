@@ -1,0 +1,23 @@
+// Direct-write field injection — NO macro involved (design D5).
+//
+// The refinement operator `{ … }` works on a directly-written predicate:
+// `Approve::request{ input.user: … }{ input.status: "approved" }` folds to
+// a single predicate `Approve::request{ input.user: …, input.status:
+// "approved" }`. This exercises the expander's direct-write fold path (not
+// the macro-body substitution path), proving injection is a general
+// operator that also works on nested field paths.
+//
+// Positive/negative control across two traces (identical but for the prior
+// Approve's status):
+//   trace_1: prior Approve status "approved" → Submit permitted.
+//   trace_2: prior Approve status "pending"  → excluded → not permitted.
+
+permit (
+    principal,
+    action == Drupe::Action::"Submit",
+    resource
+)
+when temporal {
+    formerly within 1h
+        Drupe::Action::"Approve"::request{ input.user: context.input.user }{ input.status: "approved" }
+};
