@@ -1,106 +1,139 @@
 # Dogwood
 
-<!-- TODO: write the full README. Placeholder to satisfy the OSS hygiene check. -->
-
-Dogwood is a policy language: a Cedar-derived surface syntax with temporal
-(history-dependent) conditions and information providers, lowered to Cedar. See
-the [language guide](dogwood-docs/guide/README.md) and the
-[`dogwood` CLI](dogwood-docs/guide/12-cli.md).
-
-## The Dogwood skills
-
-This repo ships a suite of Claude Code [Agent Skills](https://code.claude.com/docs/en/skills)
-that cover the Dogwood authorization lifecycle. Each references the guide as its
-source of truth and validates its output with the `dogwood` CLI. They live under
-[`.claude/skills/`](.claude/skills/):
-
-- **[`authoring-action-schema`](.claude/skills/authoring-action-schema/SKILL.md)** —
-  stand up the Cedar action schema (entities, actions, `context` layout),
-  hand-written or generated from an MCP tool manifest. The prerequisite for the
-  rest.
-- **[`authoring-service-schema`](.claude/skills/authoring-service-schema/SKILL.md)** —
-  set up the event schema and information providers (the optional service-schema
-  half), when a policy needs history events or computed facts.
-- **[`autoformalize-policies`](.claude/skills/autoformalize-policies/SKILL.md)** —
-  turn a natural-language authorization requirement ("permit X only if Y", "deny
-  after Z", "no more than N per hour") into a validated `.dw` policy.
-- **`/dogwood`** — a user-only orientation command (type `/dogwood`) that maps
-  the lifecycle and routes you to the right skill when you are starting out.
-
-For the common cases you don't invoke these explicitly: Claude Code loads the
-right one **automatically** from what you describe (declaring an action → the
-action-schema skill; a prose access rule → autoformalize; and so on). You can
-also run one directly by name, e.g. `/authoring-action-schema` (or
-`/dogwood:authoring-action-schema` when installed as a plugin).
-
-### Using them while working in this repo
-
-Claude Code auto-discovers skills under a project's `.claude/skills/` directory.
-So if you run Claude Code from within this package, all of them are available
-with no setup — just describe what you want.
-
-### Using them in another project
-
-Copy (or symlink) the skill directories into the target project's — or your
-personal — skills directory:
-
-```bash
-# Project-scoped (commit them to share with your team):
-cp -r .claude/skills/{authoring-action-schema,authoring-service-schema,autoformalize-policies} <your-project>/.claude/skills/
-
-# Or personal, available in every project:
-cp -r .claude/skills/{authoring-action-schema,authoring-service-schema,autoformalize-policies} ~/.claude/skills/
-```
-
-Then invoke one by name (e.g. `/autoformalize-policies`) or let Claude load it
-automatically. Note: the skills' guide references are relative to this repo, so
-for the richest behavior run them where the `dogwood-docs/guide/` files and the
-`dogwood` CLI are reachable.
-
-### Installing them as a plugin
-
-This repo is also a Claude Code plugin marketplace. To install the `dogwood`
-plugin (which bundles all the skills) into your Claude Code:
+Dogwood is a policy language for authorization decisions that depend on
+**history** — not just a single request, but patterns of events over time. It
+extends [Cedar](https://www.cedarpolicy.com/) with temporal conditions (`since`,
+`formerly`, `once`, aggregations) and information providers (computed guardrail
+facts), then lowers everything back to Cedar for evaluation.
 
 ```text
-/plugin marketplace add <this-repo-url>
-/plugin install dogwood@dogwood
+permit(principal, action, resource)
+when { context.input.amount < 1000 }
+when formerly within 1h {
+    Action::"Approve"::request{ approver: context.input.approver }
+};
 ```
 
-The skill is then available as `/dogwood:autoformalize-policies`. For local
-development you can instead load it for a single session without installing:
+## Key features
+
+- **Cedar-derived syntax** — familiar `permit`/`forbid` with `when`/`unless`
+- **Temporal conditions** — express "since login," "formerly approved," rate
+  limits, and windowed aggregations over an event history
+- **Information providers** — computed facts (Rhai scripts) injected at
+  evaluation time as guardrail context fields
+- **Compile-to-Cedar** — policies lower to standard Cedar; the temporal and
+  provider fields become `context.*` slots filled at runtime
+- **Pluggable backends** — swap the policy engine (local Cedar or a remote
+  policy store) and the temporal engine (in-memory or compiled-to-SQL)
+  independently
+
+## Repository layout
+
+| Path | Description |
+|------|-------------|
+| [`dogwood-language/`](dogwood-language/README.md) | The core Rust library — parser, interpreter, lowering, and API |
+| [`dogwood-docs/guide/`](dogwood-docs/guide/README.md) | The language guide (syntax, schemas, temporal expressions, providers, formal spec) |
+| [`dogwood-cli/`](dogwood-docs/guide/12-cli.md) | The `dogwood` CLI (validate, lower, replay) |
+| [`dogwood-docs/examples/`](dogwood-docs/examples/) | Runnable example policies with traces and expected output |
+| [`dogwood-language/configuration/`](dogwood-language/configuration/README.md) | Starter action schemas and event schemas |
+
+## Quick start
 
 ```bash
-claude --plugin-dir /path/to/this/repo
+# Validate a policy against its schemas:
+dogwood validate policy.dw --policy-schema schema.cedarschema
+
+# Lower to Cedar and see the output:
+dogwood lower policy.dw --policy-schema schema.cedarschema --emit both
+
+# Replay a trace and see verdicts:
+dogwood replay policy.dw --policy-schema schema.cedarschema --trace events.log
 ```
 
-The plugin reuses the same single skill directory (`.claude/skills/`) via the
-`skills` path in [`.claude-plugin/plugin.json`](.claude-plugin/plugin.json) —
-there is no second copy to keep in sync.
+### Worked example
 
-## Other coding agents
+The [`read_after_login`](dogwood-docs/examples/read_after_login/) example
+permits a Read only if the same user logged in within the last hour:
 
-The same policy-authoring guidance is exposed to non-Claude agents through a
-repo-root [`AGENTS.md`](AGENTS.md) — the emerging cross-agent instructions
-standard. `AGENTS.md` is a *thin pointer*: it tells the agent to read
-`.claude/skills/autoformalize-policies/SKILL.md` (the single source of truth)
-**only when** the user asks to formalize a policy, so it adds almost nothing to
-an agent's always-on context otherwise.
+```text
+// policy.dw
+@id("read_after_login")
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};
+```
 
-**Read out of the box** (they auto-discover a repo-root `AGENTS.md`): OpenAI
-Codex CLI, Cursor, GitHub Copilot, Windsurf, Cline. Just work in the repo and
-ask for a policy — the agent picks up the pointer.
+Replay it against a trace of three events (login at t=0, read at t=10s, read at
+t=2h):
 
-**Claude Code** does not read `AGENTS.md`; it uses the native skill above
-(auto-loaded on demand). The repo-root [`CLAUDE.md`](CLAUDE.md) imports
-`AGENTS.md` as well, so the guidance has a single source across all agents.
+```bash
+$ dogwood replay dogwood-docs/examples/read_after_login/policy.dw \
+    --policy-schema dogwood-docs/examples/read_after_login/schema.cedarschema \
+    --trace dogwood-docs/examples/read_after_login/trace.log
 
-**Manual opt-in** (these don't read `AGENTS.md` automatically today):
-- **Gemini CLI** — add `"AGENTS.md"` to `context.fileName` in your Gemini
-  settings, or point it at the skill file directly.
-- **Aider** — run with `--read AGENTS.md` (or `--read
-  .claude/skills/autoformalize-policies/SKILL.md`).
+@0 (time point 0): DENY
+@10 (time point 1): ALLOW  [rules: 0]
+@7200 (time point 2): DENY
+```
 
-In every case the guidance lives in exactly one file
-(`.claude/skills/autoformalize-policies/SKILL.md`); the per-agent files only
-point at it.
+The first event is the login itself (no read requested) → DENY. Ten seconds
+later Alice reads → ALLOW (she logged in recently). Two hours later she tries
+again → DENY (the login has expired from the 1-hour window).
+
+You can also validate and lower to Cedar:
+
+```bash
+$ dogwood validate dogwood-docs/examples/read_after_login/policy.dw \
+    --policy-schema dogwood-docs/examples/read_after_login/schema.cedarschema
+OK: validation passed with no errors or warnings.
+
+$ dogwood lower dogwood-docs/examples/read_after_login/policy.dw \
+    --policy-schema dogwood-docs/examples/read_after_login/schema.cedarschema \
+    --emit cedar-policies
+@id("read_after_login")
+permit(principal, action == Drupe::Action::"Read", resource) when { context.policy_0__temporal_0 };
+```
+
+The lowered Cedar replaces the temporal condition with a `context.*` slot that
+Dogwood fills at runtime from the event history.
+
+See the [Getting Started guide](dogwood-docs/guide/01-getting-started.md) for
+full setup instructions and more examples in
+[`dogwood-docs/examples/`](dogwood-docs/examples/).
+
+## Using Dogwood as a Rust library
+
+Add the crate to your `Cargo.toml`:
+
+```toml
+[dependencies]
+amzn-dogwood-language = "1"
+```
+
+See the [library README](dogwood-language/README.md) for the API overview and
+the [API and Workflow guide](dogwood-docs/guide/07-api-and-workflow.md) for
+detailed usage.
+
+## AI agent integration
+
+This repo ships agent skills that let AI coding assistants author Dogwood
+policies from natural-language requirements. See
+[AGENTS-README.md](AGENTS-README.md) for setup across Claude Code, Codex CLI,
+Cursor, Copilot, and others.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Security
+
+See [SECURITY.md](SECURITY.md).
+
+## License
+
+This project is licensed under the Apache-2.0 License. See [LICENSE](LICENSE).
