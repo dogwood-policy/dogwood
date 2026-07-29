@@ -1,0 +1,51 @@
+name: CI
+
+# Build and test the workspace on every PR and on pushes to the default branch.
+# This is the gate that catches a publish sync dropping a file the crates depend
+# on: if the sanitized snapshot no longer builds, the sync PR goes red and
+# cannot merge.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      # First-party action only — avoids the per-repo AppSec re-review that a
+      # third-party toolchain action would trigger in awslabs.
+      - uses: actions/checkout@v4
+
+      # Install the toolchain via rustup (preinstalled on GitHub runners) rather
+      # than a third-party action. edition 2024 needs a recent stable.
+      - name: Install Rust toolchain
+        run: |
+          rustup update stable --no-self-update
+          rustup default stable
+          rustup component add rustfmt clippy
+          rustc --version
+
+      - name: Cargo cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock', '**/Cargo.toml') }}
+          restore-keys: cargo-${{ runner.os }}-
+
+      - name: Build
+        run: cargo build --workspace --all-targets --locked
+
+      - name: Test
+        run: cargo test --workspace --locked
