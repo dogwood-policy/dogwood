@@ -1,0 +1,119 @@
+@K
+@iOO("B")
+@r("")
+@r333l("")
+entity J3 = {
+  A?: __cedar::datetime,
+  AcRp?: __cedar::Long,
+  @EJaaaa5cZ("an \t\0")
+  E: __cedar::Bool,
+  @q("\u{5}")
+  Fjj3333333: J3,
+  @x0aaR(";")
+  Krrrr3333333: __cedar::datetime,
+  L?: __cedar::Bool,
+  M?: J3,
+  @r("\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}")
+  _?: J3,
+  i?: Set<J3>,
+  iOO: {  },
+  @EJaaaaaz1("\u{4}")
+  r: __cedar::Bool,
+  @xJ1x_4Jaa
+  r3: __cedar::Bool,
+  @EJaa5555OOjD
+  r3333: __cedar::datetime,
+  r33340aax133333: __cedar::String,
+  r33RpZ343333l333?: __cedar::Bool,
+  @q("\u{5}")
+  ri33l: J3,
+  rm3ukRcRpZ?: __cedar::ipaddr,
+  rm3ukucR30: {  },
+  v: __cedar::datetime,
+  @D("D\u{4}")
+  v3: __cedar::datetime,
+  vRcRpZ343i33lRZN: __cedar::datetime,
+  z?: __cedar::Bool
+};
+
+entity r;
+
+@H7777777("")
+action "" in [Action::"YYYYY", Action::"tttttt", Action::"\u{4}", Action::"ooll", Action::"S", Action::"e", Action::"3#", Action::",", Action::"/", Action::"#VV", Action::"\u{e}", Action::"+r", Action::"d&", Action::"[", Action::"\u{3}ED\u{4}"] appliesTo {
+  principal: [r],
+  resource: [J3, r],
+  context: {}
+};
+
+action "\u{3}ED\u{4}";
+
+action "\u{4}" in [Action::"ooll", Action::"S", Action::"e", Action::"3#", Action::",", Action::"/", Action::"#VV", Action::"\u{e}", Action::"+r", Action::"d&", Action::"[", Action::"\u{3}ED\u{4}"] appliesTo {
+  principal: [r],
+  resource: [J3],
+  context: {}
+};
+
+action "\u{e}" in [Action::"+r", Action::"d&", Action::"[", Action::"\u{3}ED\u{4}"];
+
+action "#VV" in [Action::"\u{e}", Action::"+r", Action::"d&", Action::"[", Action::"\u{3}ED\u{4}"];
+
+action "+r" in [Action::"d&", Action::"[", Action::"\u{3}ED\u{4}"];
+
+action "," in [Action::"/", Action::"#VV", Action::"\u{e}", Action::"+r", Action::"d&", Action::"[", Action::"\u{3}ED\u{4}"];
+
+action "/" in [Action::"#VV", Action::"\u{e}", Action::"+r", Action::"d&", Action::"[", Action::"\u{3}ED\u{4}"];
+
+action "3#" in [Action::",", Action::"/", Action::"#VV", Action::"\u{e}", Action::"+r", Action::"d&", Action::"[", Action::"\u{3}ED\u{4}"];
+
+action "S" in [Action::"e", Action::"3#", Action::",", Action::"/", Action::"#VV", Action::"\u{e}", Action::"+r", Action::"d&", Action::"[", Action::"\u{3}ED\u{4}"] appliesTo {
+  principal: [r, J3],
+  resource: [r, J3],
+  context: {
+    Cj33333333?: __cedar::datetime,
+    @D("D\u{4}")
+    E: __cedar::datetime,
+    r?: Set<J3>,
+    r3lRZNNg200?: J3,
+    v?: __cedar::ipaddr,
+    @q("\u{5}")
+    z: J3
+  }
+};
+
+action "YYYYY" in [Action::"tttttt", Action::"\u{4}", Action::"ooll", Action::"S", Action::"e", Action::"3#", Action::",", Action::"/", Action::"#VV", Action::"\u{e}", Action::"+r", Action::"d&", Action::"[", Action::"\u{3}ED\u{4}"] appliesTo {
+  principal: [J3],
+  resource: [r, J3],
+  context: {}
+};
+
+action "[" in [Action::"\u{3}ED\u{4}"];
+
+action "d&" in [Action::"[", Action::"\u{3}ED\u{4}"];
+
+action "e" in [Action::"3#", Action::",", Action::"/", Action::"#VV", Action::"\u{e}", Action::"+r", Action::"d&", Action::"[", Action::"\u{3}ED\u{4}"];
+
+action "ooll" in [Action::"S", Action::"e", Action::"3#", Action::",", Action::"/", Action::"#VV", Action::"\u{e}", Action::"+r", Action::"d&", Action::"[", Action::"\u{3}ED\u{4}"] appliesTo {
+  principal: [J3],
+  resource: [J3],
+  context: {
+    @j("\u{4}")
+    @r
+    E55OOjDm5351132l: r,
+    PRaaR333j3: __cedar::ipaddr,
+    iO3?: __cedar::ipaddr,
+    @k("YYY")
+    @r
+    r?: __cedar::ipaddr
+  }
+};
+
+action "tttttt" in [Action::"\u{4}", Action::"ooll", Action::"S", Action::"e", Action::"3#", Action::",", Action::"/", Action::"#VV", Action::"\u{e}", Action::"+r", Action::"d&", Action::"[", Action::"\u{3}ED\u{4}"] appliesTo {
+  principal: [r],
+  resource: [J3],
+  context: {
+    E: {    },
+    l5RS33?: __cedar::datetime,
+    q?: J3
+  }
+};
+

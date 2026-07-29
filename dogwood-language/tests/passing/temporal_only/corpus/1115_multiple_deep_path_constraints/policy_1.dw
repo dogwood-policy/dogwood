@@ -1,0 +1,28 @@
+// MULTIPLE deep-path constraints in one predicate, each correlated to a
+// request-context value (no free variables). A Read is permitted only if
+// there was formerly a Login whose session `id` AND `region` both match the
+// current request's — i.e. same session in the same region.
+//
+//   Login::request{ __drupe.session.id:     context.__drupe.session.id,
+//                   __drupe.session.region: context.__drupe.session.region }
+//
+// Exercises two depth-3 constraints conjoined on one event, both bound to
+// the request's own deep fields.
+//
+// Positive/negative control across two traces:
+//   trace_1: prior Login matches the Read on both id and region → permitted.
+//   trace_2: IDENTICAL except the prior Login's region differs → the second
+//            deep constraint fails → NOT permitted (proves both constraints
+//            are enforced, not just the id).
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{
+        __drupe.session.id:     context.__drupe.session.id,
+        __drupe.session.region: context.__drupe.session.region
+    }
+};

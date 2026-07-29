@@ -1,0 +1,10 @@
+namespace A0000000::lbYw {
+  entity a enum [""];
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

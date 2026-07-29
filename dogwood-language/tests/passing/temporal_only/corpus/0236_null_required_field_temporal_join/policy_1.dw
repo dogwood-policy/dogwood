@@ -1,0 +1,14 @@
+// Permit read only if the same user logged in within the last hour.
+// When Login's user field is null, the join `user: context.input.user`
+// should NOT match a Read with a non-null user — null does not
+// unify with a concrete value. This verifies that null required
+// fields do not create spurious joins in temporal operators.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

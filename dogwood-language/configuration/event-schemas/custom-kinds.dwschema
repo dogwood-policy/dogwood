@@ -1,0 +1,17 @@
+// Custom event kinds example.
+//
+// Demonstrates that event kind names are author-defined, not fixed.
+// Here: `attempt` (decision) and `outcome` (history-only), with the
+// principal field renamed to `actor`. A policy correlates via
+// `actor: principal`.
+
+decision event <A>::attempt {
+    ...inputs(A),
+    actor: principalType(A),
+}
+
+event <A>::outcome {
+    ...inputs(A),
+    ...outputs(A),
+    actor: principalType(A),
+}

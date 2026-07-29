@@ -1,0 +1,36 @@
+entity a;
+
+@P555OO
+@r
+action "" in [Action::":", Action::"\u{e}", Action::"+", Action::"dpa[", Action::"[", Action::"\u{3}ED\u{4}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    P?: __cedar::ipaddr
+  }
+};
+
+action "\u{3}ED\u{4}";
+
+action "\u{e}" in [Action::"+", Action::"dpa[", Action::"[", Action::"\u{3}ED\u{4}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    P4: __cedar::String
+  }
+};
+
+action "+" in [Action::"dpa[", Action::"[", Action::"\u{3}ED\u{4}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    vJJJ0000000000000?: __cedar::String
+  }
+};
+
+action ":" in [Action::"\u{e}", Action::"+", Action::"dpa[", Action::"[", Action::"\u{3}ED\u{4}"];
+
+action "[" in [Action::"\u{3}ED\u{4}"];
+
+action "dpa[" in [Action::"[", Action::"\u{3}ED\u{4}"];
+

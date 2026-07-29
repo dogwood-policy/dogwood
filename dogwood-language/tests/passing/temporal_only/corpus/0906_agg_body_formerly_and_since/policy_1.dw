@@ -1,0 +1,7 @@
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    exists (total: Long). ((sum a for (a: Long), (t: Timepoint). where ((formerly within 1h (Drupe::Action::"Transfer"::request{ input.user: context.input.user, input.amount: a } && tp(t))) && (!(Drupe::Action::"Logout"::request{ input.user: context.input.user }) since within 1h Drupe::Action::"Transfer"::request{ input.user: context.input.user }))) == total && total >= 100)};

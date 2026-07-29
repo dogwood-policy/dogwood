@@ -1,0 +1,18 @@
+entity A1f tags l;
+
+entity Pf;
+
+entity g3;
+
+entity l;
+
+entity lHHHH34;
+
+entity n;
+
+action "action" appliesTo {
+  principal: [l, lHHHH34, g3, A1f, n],
+  resource: [l, lHHHH34, g3, A1f, n],
+  context: {}
+};
+

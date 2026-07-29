@@ -1,0 +1,27 @@
+entity a tags a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @i
+    D: __cedar::datetime,
+    I?: __cedar::datetime,
+    N?: __cedar::datetime,
+    P?: __cedar::datetime,
+    @M
+    P3?: __cedar::String,
+    h0?: __cedar::datetime,
+    m3?: __cedar::datetime,
+    n?: __cedar::datetime,
+    qoqqPbop33N?: __cedar::datetime,
+    r3?: __cedar::datetime,
+    r33333em2p3333?: __cedar::datetime,
+    r3333S3?: __cedar::datetime,
+    v?: __cedar::datetime,
+    vR?: __cedar::datetime,
+    yPPPbop3333?: __cedar::datetime,
+    z?: __cedar::datetime
+  }
+};
+

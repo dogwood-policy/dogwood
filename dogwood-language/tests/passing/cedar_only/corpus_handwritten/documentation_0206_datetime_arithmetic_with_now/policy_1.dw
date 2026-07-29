@@ -1,0 +1,15 @@
+// Permit SellShares only inside a fixed validity window.
+// New idea: comparing `context.system.now` against datetime
+// literals. Datetimes support the full set of ordered
+// comparisons (<, <=, >, >=, ==, !=), which is the key way
+// they differ from decimals (see 0106).
+
+permit (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+)
+when {
+    context.system.now >= datetime("2025-01-01T00:00:00Z")
+    && context.system.now < datetime("2026-01-01T00:00:00Z")
+};

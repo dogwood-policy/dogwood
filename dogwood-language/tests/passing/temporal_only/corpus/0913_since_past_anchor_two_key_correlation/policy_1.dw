@@ -1,0 +1,25 @@
+// Adjacent to 0904: the same past-anchor `since` divergence, but the left side
+// correlates on TWO current-request keys (`input.user` AND `input.region`).
+//
+// This guards against a fix that threads only ONE correlation column through
+// the since-anchor branch of the §5.3 rewrite: a one-column fix would still
+// drop `region`, so the outer identity join would fail on the second key and
+// the verdict would (still wrongly) be false. Both keys must be carried.
+//
+// The interpreter is the oracle (see expected_1.out); DSQL is a known
+// verdict divergence until the temporal-compiler since-left correlation fix
+// lands. Found by the SMT differential fuzzer.
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    (Drupe::Action::"Transfer"::request{
+        input.user: context.input.user,
+        input.region: context.input.region
+     }
+        && context.input.amount >= 10)
+    since within 1h
+    Drupe::Action::"Transfer"::request{ input.user: "carol" }
+};

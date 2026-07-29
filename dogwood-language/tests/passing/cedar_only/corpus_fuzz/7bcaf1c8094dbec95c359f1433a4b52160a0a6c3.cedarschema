@@ -1,0 +1,12 @@
+@V11000000
+entity M0;
+
+@V
+entity v enum [""];
+
+action "action" appliesTo {
+  principal: [v],
+  resource: [v],
+  context: {}
+};
+

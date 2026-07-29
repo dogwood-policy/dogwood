@@ -1,0 +1,13 @@
+// Permit Read when a prior Transfer for this user resolved (any output).
+// This is Anurag's exact policy — the temporal body uses an empty resolved
+// predicate -> {} with no output field constraints.
+// At a Transfer timepoint the Read scope prevents this from being a
+// determining policy even though the resolved predicate body may be satisfied.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Transfer"::response{ input.user: context.input.user }
+};

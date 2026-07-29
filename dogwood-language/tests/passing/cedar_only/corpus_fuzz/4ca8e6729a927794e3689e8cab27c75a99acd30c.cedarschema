@@ -1,0 +1,16 @@
+entity FP2pppq enum [""];
+
+entity _ enum [""];
+
+entity _m0000000000000 enum [""];
+
+entity r enum [""];
+
+entity u enum [""];
+
+action "action" appliesTo {
+  principal: [r],
+  resource: [r],
+  context: {}
+};
+

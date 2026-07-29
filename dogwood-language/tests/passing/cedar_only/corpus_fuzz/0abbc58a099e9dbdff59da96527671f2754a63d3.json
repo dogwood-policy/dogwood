@@ -1,0 +1,250 @@
+{
+  "policies": "corpus-tests/0abbc58a099e9dbdff59da96527671f2754a63d3.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/0abbc58a099e9dbdff59da96527671f2754a63d3.entities.json",
+  "schema": "corpus-tests/0abbc58a099e9dbdff59da96527671f2754a63d3.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": false,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "Gdddddfdddddd::GdddddducRcRo::Gd::M",
+        "id": "\u0000Debian \u001d"
+      },
+      "action": {
+        "type": "Gdddddfdddddd::GdddddducRcRo::Gd::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Gdddddfdddddd::GdddddducRcRo::Gd::j",
+        "id": ""
+      },
+      "context": {
+        "fy": {
+          "__entity": {
+            "type": "Gdddddfdddddd::GdddddducRcRo::Gd::j",
+            "id": ""
+          }
+        },
+        "zMMMMMMCC0N1333G": []
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "Gdddddfdddddd::GdddddducRcRo::Gd::M",
+        "id": "\u0000Debian \u001d"
+      },
+      "action": {
+        "type": "Gdddddfdddddd::GdddddducRcRo::Gd::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Gdddddfdddddd::GdddddducRcRo::Gd::j",
+        "id": ""
+      },
+      "context": {
+        "fy": {
+          "__entity": {
+            "type": "Gdddddfdddddd::GdddddducRcRo::Gd::j",
+            "id": ""
+          }
+        },
+        "zMMMMMMCC0N1333G": []
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "Gdddddfdddddd::GdddddducRcRo::Gd::M",
+        "id": "\u0000Debian \u001d"
+      },
+      "action": {
+        "type": "Gdddddfdddddd::GdddddducRcRo::Gd::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Gdddddfdddddd::GdddddducRcRo::Gd::j",
+        "id": ""
+      },
+      "context": {
+        "fy": {
+          "__entity": {
+            "type": "Gdddddfdddddd::GdddddducRcRo::Gd::j",
+            "id": ""
+          }
+        },
+        "zMMMMMMCC0N1333G": []
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "Gdddddfdddddd::GdddddducRcRo::Gd::M",
+        "id": "\u0000Debian \u001d"
+      },
+      "action": {
+        "type": "Gdddddfdddddd::GdddddducRcRo::Gd::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Gdddddfdddddd::GdddddducRcRo::Gd::j",
+        "id": ""
+      },
+      "context": {
+        "fy": {
+          "__entity": {
+            "type": "Gdddddfdddddd::GdddddducRcRo::Gd::j",
+            "id": ""
+          }
+        },
+        "zMMMMMMCC0N1333G": []
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "Gdddddfdddddd::GdddddducRcRo::Gd::M",
+        "id": "\u0000Debian \u001d"
+      },
+      "action": {
+        "type": "Gdddddfdddddd::GdddddducRcRo::Gd::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Gdddddfdddddd::GdddddducRcRo::Gd::j",
+        "id": ""
+      },
+      "context": {
+        "fy": {
+          "__entity": {
+            "type": "Gdddddfdddddd::GdddddducRcRo::Gd::j",
+            "id": ""
+          }
+        },
+        "zMMMMMMCC0N1333G": []
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "Gdddddfdddddd::GdddddducRcRo::Gd::M",
+        "id": "\u0000Debian \u001d"
+      },
+      "action": {
+        "type": "Gdddddfdddddd::GdddddducRcRo::Gd::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Gdddddfdddddd::GdddddducRcRo::Gd::j",
+        "id": ""
+      },
+      "context": {
+        "fy": {
+          "__entity": {
+            "type": "Gdddddfdddddd::GdddddducRcRo::Gd::j",
+            "id": ""
+          }
+        },
+        "zMMMMMMCC0N1333G": []
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "Gdddddfdddddd::GdddddducRcRo::Gd::M",
+        "id": "\u0000Debian \u001d"
+      },
+      "action": {
+        "type": "Gdddddfdddddd::GdddddducRcRo::Gd::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Gdddddfdddddd::GdddddducRcRo::Gd::j",
+        "id": ""
+      },
+      "context": {
+        "fy": {
+          "__entity": {
+            "type": "Gdddddfdddddd::GdddddducRcRo::Gd::j",
+            "id": ""
+          }
+        },
+        "zMMMMMMCC0N1333G": []
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "Gdddddfdddddd::GdddddducRcRo::Gd::M",
+        "id": "\u0000Debian \u001d"
+      },
+      "action": {
+        "type": "Gdddddfdddddd::GdddddducRcRo::Gd::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Gdddddfdddddd::GdddddducRcRo::Gd::j",
+        "id": ""
+      },
+      "context": {
+        "fy": {
+          "__entity": {
+            "type": "Gdddddfdddddd::GdddddducRcRo::Gd::j",
+            "id": ""
+          }
+        },
+        "zMMMMMMCC0N1333G": []
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    }
+  ]
+}

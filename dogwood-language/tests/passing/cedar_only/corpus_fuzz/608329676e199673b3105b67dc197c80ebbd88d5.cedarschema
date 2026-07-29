@@ -1,0 +1,13 @@
+entity a tags __cedar::decimal;
+
+@A000000000000000
+@r
+@wmm333F0aaaag00
+action "" in [Action::"\u{17}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{17}";
+

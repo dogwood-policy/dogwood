@@ -1,0 +1,13 @@
+entity a = {
+  Qnn_33?: __cedar::datetime,
+  YOO3332c?: __cedar::datetime,
+  r3fiFf3?: __cedar::datetime,
+  z33onUU444nnnnnn?: __cedar::datetime
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

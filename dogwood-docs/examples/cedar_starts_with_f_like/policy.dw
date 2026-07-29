@@ -1,0 +1,13 @@
+// A Cedar macro body can be any Cedar expression, including a `like`
+// pattern. `starts_with_f(?s)` wraps `?s like "F*"`.
+def cedar starts_with_f(?s) { ?s like "F*" };
+
+@id("stock_starts_with_f")
+permit(
+    principal,
+    action == Drupe::Action::"GetStockInfo",
+    resource
+)
+when {
+    starts_with_f(context.input.stock)
+};

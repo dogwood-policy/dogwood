@@ -1,0 +1,11 @@
+entity a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    L?: __cedar::duration,
+    s00400U003333333?: __cedar::datetime
+  }
+};
+

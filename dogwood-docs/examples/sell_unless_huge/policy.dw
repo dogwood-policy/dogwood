@@ -1,0 +1,7 @@
+// An `unless` clause blocks the rule when its body holds: permit selling
+// unless the order is enormous.
+@id("sell_unless_huge")
+permit ( principal, action == Drupe::Action::"SellShares", resource )
+unless {
+    context.input.shares > 10000
+};

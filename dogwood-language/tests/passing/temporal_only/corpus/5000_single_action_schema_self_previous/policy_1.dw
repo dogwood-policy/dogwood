@@ -1,0 +1,22 @@
+// Single-action schema: the only action is Transfer, so the temporal
+// predicate necessarily self-references the decision action. Permit a
+// Transfer only when the immediately preceding timepoint was also a
+// Transfer by the SAME user (`previous`, not `formerly`, because with one
+// action a `formerly` self-match is vacuously true at every timepoint —
+// the current event always matches).
+//
+// Trace: Transfer(alice @0) -> Transfer(alice @10) -> Transfer(bob @20)
+//        -> Transfer(bob @30).
+// tp0: no previous timepoint            -> false
+// tp1: previous is alice's, user=alice  -> true
+// tp2: previous is alice's, user=bob    -> false (pin mismatch)
+// tp3: previous is bob's, user=bob      -> true
+
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    previous within 1h Drupe::Action::"Transfer"::request{ input.user: context.input.user }
+};

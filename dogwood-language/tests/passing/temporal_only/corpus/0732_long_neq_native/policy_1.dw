@@ -1,0 +1,13 @@
+// Native `!=` inequality in a temporal comparison. Permit Transfer only
+// when a prior Transfer by the same user moved an amount other than 100.
+// This is the single-operator equivalent of 0729's `< 100` OR `> 100`
+// two-policy emulation of `!= 100`.
+
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    formerly within 1h (Drupe::Action::"Transfer"::request{ input.user: context.input.user } && context.input.amount != 100)
+};

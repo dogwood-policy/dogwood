@@ -1,0 +1,13 @@
+entity a tags Set<Set<{
+  "": {  },
+  "\0\0"?: {  },
+  "\u{2}"?: {  },
+  "\u{1b}\u{5}\0$$$$$"?: {  }
+}>>;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,22 @@
+// Permit Read when a regex guardrail is satisfied — the document matches an
+// allowed-name pattern — EXCEPT when the document is the literal sentinel
+// "BLOCKED". The guardrail clause is a positive precondition (must hold),
+// while the plain Cedar `unless` clause carves out an exception. Both kinds
+// of clause coexist on one non-temporal rule and are conjoined: the rule
+// fires iff the guardrail holds AND the unless condition does not.
+//
+// This is the runnable, regex-backed analog of the reference
+// `documentation_0407_guardrails_with_unless_cedar` (a prompt-injection
+// guardrail plus an `unless` carve-out for a blocked symbol).
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Strings::Matches(context.input.document, "^[A-Za-z]+$").matched == true
+}
+unless {
+    context.input.document == "BLOCKED"
+};

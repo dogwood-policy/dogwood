@@ -1,0 +1,28 @@
+entity a = {
+  LR10008vvFR1Rvvc?: {
+    ""?: __cedar::String,
+    "\u{3}"?: __cedar::String,
+    "=?"?: __cedar::String,
+    "Va燇"?: __cedar::String,
+    @A
+    @A000000levNNg0("VV")
+    @B("")
+    @F(".")
+    @YFR1g000000000
+    @_WS33qPpqb3
+    @r("vvdecisivvvvvvvvvvvvvvvvvvvvvvvvvvv")
+    @r3("_244Xd23")
+    @v("[")
+    @vR
+    @vRRScvNNScvHNF
+    @z("")
+    ring: Set<Set<Set<__cedar::Long>>>
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

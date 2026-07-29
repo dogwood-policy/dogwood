@@ -1,0 +1,14 @@
+namespace t::A::A::A::A::RH::r::R::A {
+  entity g enum [""];
+
+  entity r000000000000000 enum [""];
+
+  entity wmm33 enum [""];
+
+  action "action" appliesTo {
+    principal: [wmm33],
+    resource: [wmm33],
+    context: {}
+  };
+}
+

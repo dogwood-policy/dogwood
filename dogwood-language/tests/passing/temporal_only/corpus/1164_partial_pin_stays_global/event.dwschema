@@ -1,0 +1,28 @@
+// A PARTIAL pin: `callerPrincipal = principal` is pinned on `request` but
+// NOT on `resolution`. Per the universality requirement, a pin declared on
+// only some event kinds is NOT universal, so it must NOT activate key-local
+// (partition) semantics — the leaf keeps GLOBAL-trace semantics, silently and
+// with no error. This is the safety direction of the partition guarantee: the
+// engine must not grant isolation the schema did not earn.
+//
+// This bundle is the deliberate inverse of 1155 (same policy, same trace) whose
+// schema pins `callerPrincipal` on BOTH kinds (universal → partition active).
+// 1155 PERMITS its trace (the foreign event is excluded); this bundle must
+// DENY the same trace (the foreign event is the global `previous` and is NOT
+// excluded). A bug that treated this partial pin as universal would wrongly
+// make this bundle's verdict match 1155's.
+
+decision event <A>::request {
+    ...inputs(A),
+    pin callerPrincipal: principalType(A) = principal,
+    callerResource:  resourceType(A),
+    requestId:       String,
+}
+
+event <A>::response {
+    ...inputs(A),
+    ...outputs(A),
+    callerPrincipal: principalType(A),
+    callerResource:  resourceType(A),
+    requestId:       String,
+}

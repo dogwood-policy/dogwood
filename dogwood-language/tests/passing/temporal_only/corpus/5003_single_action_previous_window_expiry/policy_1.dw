@@ -1,0 +1,19 @@
+// Single-action schema, window-expiry flavor: a self-referential
+// `previous` with a tight 30s window and a trace whose
+// gaps straddle it — so the false verdicts come from WINDOW EXPIRY, not
+// from a field-pin mismatch (all events are alice's).
+//
+// Trace gaps: @0 -> @10 (10s) -> @100 (90s) -> @120 (20s).
+// tp0: no previous timepoint            -> false
+// tp1: gap 10s <= 30s                   -> true
+// tp2: gap 90s  > 30s (window expired)  -> false
+// tp3: gap 20s <= 30s                   -> true
+
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    previous within 30s Drupe::Action::"Transfer"::request{ input.user: context.input.user }
+};

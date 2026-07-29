@@ -1,0 +1,11 @@
+// Fires iff there is at least one Login at the CURRENT tp with the
+// same server as the Alert. Without a temporal wrapper on the body,
+// the aggregation sees only same-tp events.
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (n: Long). ((count for (t: Timepoint). where (Drupe::Action::"Login"::request{ input.user: _, input.server: context.input.server } && tp(t))) == n && n > 0)};

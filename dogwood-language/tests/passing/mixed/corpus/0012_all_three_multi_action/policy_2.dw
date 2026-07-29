@@ -1,0 +1,9 @@
+// Permit Read when user has logged in within 1h (temporal only)
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

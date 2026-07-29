@@ -1,0 +1,18 @@
+entity a;
+
+action "\u{1}\u{f}" in [Action::":BKrr"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action ":BKrr";
+
+action "@." in [Action::"\u{1}\u{f}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "S" in [Action::":BKrr"];
+

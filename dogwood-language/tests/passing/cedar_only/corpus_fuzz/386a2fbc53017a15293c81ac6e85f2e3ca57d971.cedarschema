@@ -1,0 +1,14 @@
+entity a tags __cedar::datetime;
+
+action "" in [Action::"\u{17}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{17}" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

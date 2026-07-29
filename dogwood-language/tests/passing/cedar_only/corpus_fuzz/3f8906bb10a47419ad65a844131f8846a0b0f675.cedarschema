@@ -1,0 +1,10 @@
+@A0
+@B1("A")
+entity a tags __cedar::Long;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

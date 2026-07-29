@@ -1,0 +1,15 @@
+namespace A {
+  entity a;
+
+  action ":" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      A?: __cedar::decimal,
+      K?: __cedar::String,
+      M?: __cedar::String,
+      r?: __cedar::duration
+    }
+  };
+}
+

@@ -1,0 +1,34 @@
+entity a tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: {
+      "\0\0\0A"?: __cedar::String,
+      "######C####################TJu"?: __cedar::String,
+      "#2222222222222222222222"?: __cedar::String,
+      "3"?: __cedar::String,
+      "33/33336"?: {
+        "": Set<__cedar::Long>,
+        "\0"?: __cedar::String,
+        "\0\0\0A"?: __cedar::String,
+        @r("")
+        "\0\0\0G": a,
+        "\u{1d}222222222222222222222###"?: __cedar::String,
+        "#"?: __cedar::ipaddr,
+        "########## \'\u{8}\0\0r333/333336"?: __cedar::String,
+        "####/333336"?: __cedar::String,
+        "2#"?: __cedar::ipaddr,
+        "3"?: __cedar::String,
+        ">3"?: __cedar::String,
+        A?: __cedar::String,
+        S?: __cedar::String,
+        e?: __cedar::ipaddr
+      },
+      ">3"?: __cedar::String,
+      A?: __cedar::String
+    }
+  }
+};
+

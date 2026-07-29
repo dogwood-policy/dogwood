@@ -1,0 +1,17 @@
+// stdlib `count_distinct_within`: count DISTINCT values of the key `?k` that
+// satisfied a predicate in the window (the key is a `for`-binder with no
+// timepoint, so equal values across timepoints deduplicate). Contrast with
+// `count_within`, which counts events. Permit an Alert when more than two
+// DISTINCT users logged in to the server within the last hour.
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (d: Long). (
+        (count_distinct_within(u, 1h, Drupe::Action::"Login"::request{ input.user: u, input.server: context.input.server })) == d
+        && d > 2
+    )
+};

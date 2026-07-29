@@ -1,0 +1,14 @@
+namespace ye::ye::A::B::ye {
+  entity A0 enum [""];
+
+  entity y enum [""];
+
+  entity ye enum [""];
+
+  action "action" appliesTo {
+    principal: [y],
+    resource: [y],
+    context: {}
+  };
+}
+

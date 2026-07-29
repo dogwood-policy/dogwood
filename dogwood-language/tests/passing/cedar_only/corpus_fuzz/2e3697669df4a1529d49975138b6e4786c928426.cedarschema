@@ -1,0 +1,31 @@
+entity a = {
+  @d
+  @m
+  @x
+  A?: Set<Set<__cedar::duration>>,
+  D3S1Razw03T1S?: __cedar::String,
+  I?: __cedar::String,
+  T?: __cedar::String,
+  T_____R?: __cedar::String,
+  T______?: __cedar::String,
+  @m("ebi a")
+  @v3T33S1Raz
+  U23T1S_R?: a,
+  k?: __cedar::String,
+  @d
+  @d33S1Razw0("\u{1d}@[")
+  @m
+  @rEVu("")
+  @rRaY3zERRT
+  @x
+  n?: a,
+  p?: __cedar::String,
+  rEVu?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

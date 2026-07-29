@@ -1,0 +1,43 @@
+// Current-anchor vacuity of `since` — the left operand carries a
+// current-request comparison (`context.input.amount >= 10`) that the CURRENT
+// event does NOT satisfy, but the current event IS a matching anchor.
+//
+// The interpreter's `eval_since` (eval.rs:406) allows the anchor at the
+// current timepoint `j == i` and checks the left operand only over the
+// half-open range `(j+1)..=i` — which is EMPTY when `j == i`. So the left's
+// `amount >= 10` is vacuously satisfied at the current step, and the verdict
+// is `true` even though the current amount is below 10.
+//
+// To make the CURRENT event able to be the anchor (so vacuity arises at a
+// decision point), the anchor predicate correlates on a fixed user literal
+// (`"carol"`) rather than `context.input.user`: a `Transfer` by carol both is
+// a decision point (the permit is Transfer-scoped) and matches the anchor.
+//
+// This exposes a live, currently-masked divergence: a naive SQL compiler
+// lifts the Since-left comparison to a plain verdict-time filter, which would
+// (incorrectly) require `amount >= 10` at the current step even at a vacuous
+// anchor, denying the case. The correct compilation must preserve the
+// `((A S B) ∧ C) ∨ B` vacuity identity (GuardRel design §5.3). Known-failing
+// in the differential SQL test until §5.3 lands; the interpreter (oracle)
+// verdicts below are correct and this is a valid Passing case.
+//
+// Controls across traces:
+//   trace_1: the current event is a matching anchor (Transfer by carol),
+//            current amount below 10 -> vacuous anchor -> PERMIT (true).
+//   trace_2: @0 anchor by carol (itself vacuous -> true); @10 a Transfer by
+//            alice (NOT the anchor user) with amount below 10 -> the left
+//            `amount >= 10` is checked over a non-empty range and fails
+//            -> NOT permitted (isolates that the comparison still binds when
+//            the anchor is strictly in the past).
+
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    (Drupe::Action::"Transfer"::request{ input.user: context.input.user }
+        && context.input.amount >= 10)
+    since within 1h
+    Drupe::Action::"Transfer"::request{ input.user: "carol" }
+};

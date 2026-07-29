@@ -1,0 +1,17 @@
+@A("")
+@Spppp333("")
+@Sppppppp("")
+@isQQie333("")
+@r("")
+@u0
+@uG("")
+entity a enum ["\0"];
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    r?: __cedar::String
+  }
+};
+

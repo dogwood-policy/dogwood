@@ -1,0 +1,11 @@
+namespace Drupe {
+  type ReadInput = { document: String };
+  entity Org;
+  entity Gateway in [Org] = { region: String };
+  entity Team;
+  entity OAuthUser in [Team] = { id: String } tags String;
+  action "Read" appliesTo {
+    principal: [OAuthUser], resource: [Gateway],
+    context: { input: ReadInput }
+  };
+}

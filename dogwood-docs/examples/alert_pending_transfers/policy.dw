@@ -1,0 +1,18 @@
+// An aggregate on BOTH sides of a comparison. The LEFT aggregate is
+// parenthesized so its greedy `where` body does not swallow the `<` operator;
+// the RIGHT is rightmost so it needs no parens. Permit an Alert if there are
+// more Transfer requests than resolutions in the last hour (some pending).
+@id("alert_pending_transfers")
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    (count for (t: Timepoint). where (
+        formerly within 1h (Drupe::Action::"Transfer"::response{ requestId: _ } && tp(t))
+    ))
+    < count for (t: Timepoint). where (
+        formerly within 1h (Drupe::Action::"Transfer"::request{ requestId: _ } && tp(t))
+    )
+};

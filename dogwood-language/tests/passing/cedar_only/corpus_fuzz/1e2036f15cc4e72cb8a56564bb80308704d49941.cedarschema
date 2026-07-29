@@ -1,0 +1,14 @@
+@Dwwwwwwvww("")
+@YF1FF00000
+@jwwwQwwwww("")
+@jwwwwwwwww("")
+entity a = {
+  A?: __cedar::String
+} tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

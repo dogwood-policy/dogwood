@@ -1,0 +1,18 @@
+// Composition of two stdlib library macros: `bind` takes the aggregation
+// macro `count_within` as its value argument. Before the arg-classification
+// fix, a bare aggregation-macro call in an argument position parsed as a
+// condition and was rejected; it now expands to a `Term::Agg` and fills the
+// comparison-operand slot (`?A == ?n`).
+//
+// Permit an Alert only when more than two Logins to the same server have
+// occurred within the last hour. Verdict-equivalent to the hand-written
+// `exists (n: Long). ((count for (t). where (…)) == n && n > 2)` form.
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    bind(c, count_within(1h, Drupe::Action::"Login"::request{ input.user: _, input.server: context.input.server }), c > 2)
+};

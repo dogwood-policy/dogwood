@@ -1,0 +1,11 @@
+namespace Drupe {
+  type Inner = { value: String };
+  type Nested = { deep: Inner };
+  type ReadInput = { nested: Nested };
+  entity Gateway;
+  entity OAuthUser = { id: String } tags String;
+  action "Read" appliesTo {
+    principal: [OAuthUser], resource: [Gateway],
+    context: { input: ReadInput }
+  };
+}

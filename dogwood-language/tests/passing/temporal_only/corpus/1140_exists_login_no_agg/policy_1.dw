@@ -1,0 +1,13 @@
+// Aggregate-free sibling of 0179 (`count … > 0`). "At least one Login in
+// the window" needs no aggregation: `count for (t). where (formerly … Login
+// && tp(t)) > 0` is equivalent to a bare positive existence of a Login in
+// the window. Exercises `exists` restricting a data variable by a predicate
+// field (rather than by an aggregate equality). Verdicts must match 0179.
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (u: String). formerly within 1h Drupe::Action::"Login"::request{ input.user: u, input.server: context.input.server }};

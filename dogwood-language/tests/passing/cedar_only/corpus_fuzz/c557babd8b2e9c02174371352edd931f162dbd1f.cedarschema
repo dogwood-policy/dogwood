@@ -1,0 +1,19 @@
+entity a = {
+  z?: {
+    @A
+    @M
+    @q("Long")
+    @r(",\0___")
+    @r33("(")
+    @z
+    @z33("0")
+    "": a
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

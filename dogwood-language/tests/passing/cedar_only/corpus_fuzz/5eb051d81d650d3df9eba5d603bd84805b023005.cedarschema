@@ -1,0 +1,20 @@
+entity a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    r?: {
+      ""?: __cedar::Long,
+      "\0": Set<a>,
+      @r("")
+      "\0\0": __cedar::String,
+      "\0\0\0\0\0\0\u{2}\0\0": Set<Set<a>>,
+      "\u{1d}@[\0"?: __cedar::Long,
+      @v
+      ":pVV": Set<a>,
+      ":~": Set<Set<a>>
+    }
+  }
+};
+

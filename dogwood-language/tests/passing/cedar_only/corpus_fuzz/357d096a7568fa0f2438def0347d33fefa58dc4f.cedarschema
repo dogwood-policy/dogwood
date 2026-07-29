@@ -1,0 +1,33 @@
+namespace A::A {
+  entity a;
+
+  action "" in [A::A::Action::"VV", A::A::Action::":~", A::A::Action::"\u{e}", A::A::Action::"\u{3}", A::A::Action::"w\u{1d}["] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      @B
+      ORRS3T1By3p: A::A::a
+    }
+  };
+
+  action "\u{3}" in [A::A::Action::"w\u{1d}["];
+
+  action "\u{e}" in [A::A::Action::"\u{3}", A::A::Action::"w\u{1d}["] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      v3T33S1Raz: __cedar::Bool
+    }
+  };
+
+  action ":~" in [A::A::Action::"\u{e}", A::A::Action::"\u{3}", A::A::Action::"w\u{1d}["] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "VV" in [A::A::Action::":~", A::A::Action::"\u{e}", A::A::Action::"\u{3}", A::A::Action::"w\u{1d}["];
+
+  action "w\u{1d}[";
+}
+

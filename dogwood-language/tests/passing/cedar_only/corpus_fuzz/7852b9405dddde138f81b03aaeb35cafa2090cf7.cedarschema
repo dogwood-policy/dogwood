@@ -1,0 +1,26 @@
+entity a tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: __cedar::Bool,
+    N?: __cedar::Bool,
+    P?: __cedar::Bool,
+    P3?: __cedar::String,
+    gWV33z033?: __cedar::Bool,
+    h0?: __cedar::Bool,
+    m3?: __cedar::Bool,
+    n?: __cedar::Bool,
+    r?: __cedar::Bool,
+    r3?: __cedar::Bool,
+    r3333333333333?: __cedar::Bool,
+    r33f33__33335cZg?: __cedar::Bool,
+    slW3?: __cedar::Bool,
+    v?: __cedar::Bool,
+    vR?: __cedar::Bool,
+    yqqPbop3333?: __cedar::Bool,
+    z?: __cedar::Bool
+  }
+};
+

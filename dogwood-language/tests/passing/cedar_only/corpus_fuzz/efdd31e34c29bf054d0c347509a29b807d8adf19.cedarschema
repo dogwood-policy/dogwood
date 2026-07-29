@@ -1,0 +1,12 @@
+entity a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A00E3RR3333?: __cedar::String,
+    B4444440000000000: __cedar::decimal,
+    PcZ1o32444444: __cedar::decimal
+  }
+};
+

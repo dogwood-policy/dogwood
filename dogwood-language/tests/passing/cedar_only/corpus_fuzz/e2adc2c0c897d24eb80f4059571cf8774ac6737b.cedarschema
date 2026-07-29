@@ -1,0 +1,10 @@
+entity a;
+
+action "\u{e}" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "ipa";
+

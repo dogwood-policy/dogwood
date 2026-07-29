@@ -1,0 +1,36 @@
+// Field injection inside a MACRO BODY, onto a field the caller omitted.
+//
+// The macro `approved_recently` refines its predicate-valued parameter
+// `?s` in its OWN body with `{ input.status: "approved" }`. The caller
+// passes an Approve predicate that mentions only `input.user` — it never
+// writes `input.status`. The macro forces `input.status: "approved"` onto
+// that matched event:
+//
+//   def approved_recently(?w, ?s) { formerly within ?w (?s{ input.status: "approved" }) }
+//   approved_recently(1h, Approve::request{ input.user: … })
+//     ⇒ formerly within 1h Approve::request{ input.user: …, input.status: "approved" }
+//
+// This is the load-bearing `?s{…}` substitution path (the base of the
+// refinement is a condition-sigil, resolved during macro substitution),
+// distinct from a call-site refinement on a concrete predicate.
+//
+// Positive/negative control across two traces (identical but for the prior
+// Approve's status):
+//   trace_1: prior Approve status "approved" → Submit permitted.
+//   trace_2: prior Approve status "pending"  → excluded → not permitted.
+
+def temporal approved_recently(?w, ?s) {
+    formerly within ?w (?s{ input.status: "approved" })
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Submit",
+    resource
+)
+when temporal {
+    approved_recently(
+        1h,
+        Drupe::Action::"Approve"::request{ input.user: context.input.user }
+    )
+};

@@ -1,0 +1,12 @@
+// has-guarded read of the optional attribute plus the provider gate; the
+// @20 timepoint omits `note` entirely and must still permit via the
+// short document (optionality must survive inlining end to end).
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when { !(context has note) || context.note.text like "SAFE*" }
+when guardrails {
+    Strings::Length(context.input.document).length < 6
+};

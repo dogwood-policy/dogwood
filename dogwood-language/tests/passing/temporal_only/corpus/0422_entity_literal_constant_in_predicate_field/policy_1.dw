@@ -1,0 +1,20 @@
+// Permit Access if a Grant with role "admin" happened within the
+// last hour for any user. The predicate pins `role` to the entity
+// literal `Drupe::Grant_Input_role::"admin"` and omits `user`
+// (wildcarding it). This exercises:
+//   1. Entity-literal constant matching in predicate fields.
+//   2. Correct serialization of the entity `Type::"id"` format in
+//      the SQL WHERE clause comparison.
+//   3. Wildcarding of the omitted `user` field.
+//
+// The trace has two Grant events: one granting "reader" and one
+// granting "admin". Only the admin grant should satisfy the predicate.
+
+permit (
+    principal,
+    action == Drupe::Action::"Access",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Grant"::request{ input.role: Drupe::Grant_Input_role::"admin" }
+};

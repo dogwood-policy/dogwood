@@ -1,0 +1,13 @@
+@A000000000000000
+entity a = {
+  m0W: {  },
+  r?: {  },
+  zfW: {  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

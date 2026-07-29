@@ -1,0 +1,12 @@
+namespace A::A {
+  entity a = {
+    B?: A::A::a
+  } tags A::A::a;
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

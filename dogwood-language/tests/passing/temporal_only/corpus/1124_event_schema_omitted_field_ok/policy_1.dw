@@ -1,0 +1,7 @@
+// Omitting declared fields (server, reserved fields) in a temporal predicate is legal.
+// Only the fields you name are matched; others are implicitly wildcarded.
+
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{}
+};

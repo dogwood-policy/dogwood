@@ -1,0 +1,11 @@
+// Permit Write unless the user has logged out recently,
+// AND unless the document starts with TEST_
+permit (
+    principal,
+    action == Drupe::Action::"Write",
+    resource
+)
+unless temporal {
+    formerly within 1h Drupe::Action::"Logout"::request{ input.user: context.input.user }
+}
+unless { context.input.document like "TEST_*" };

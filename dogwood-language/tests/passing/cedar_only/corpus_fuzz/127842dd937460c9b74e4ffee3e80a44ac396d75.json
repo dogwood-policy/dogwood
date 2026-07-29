@@ -1,0 +1,249 @@
+{
+  "policies": "corpus-tests/127842dd937460c9b74e4ffee3e80a44ac396d75.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/127842dd937460c9b74e4ffee3e80a44ac396d75.entities.json",
+  "schema": "corpus-tests/127842dd937460c9b74e4ffee3e80a44ac396d75.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "a",
+        "id": "\u0002\u0005V@$J?"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0002\u0005V@$J?"
+      },
+      "context": {
+        "GRRcSTwn": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "255.255.255.149"
+          }
+        },
+        "m": [
+          {
+            "__extn": {
+              "fn": "datetime",
+              "arg": "0000-01-01"
+            }
+          }
+        ],
+        "rhuRNag3ENNg3": ""
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "a",
+        "id": "\u0002\u0005V@$J?"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0002\u0005V@$J?"
+      },
+      "context": {
+        "GRRcSTwn": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "m": [],
+        "rhuRNag3ENNg3": ""
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "a",
+        "id": "\u0002\u0005V@$J?"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0002\u0005V@$J?"
+      },
+      "context": {
+        "GRRcSTwn": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "m": [],
+        "rhuRNag3ENNg3": ""
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "a",
+        "id": "\u0002\u0005V@$J?"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0002\u0005V@$J?"
+      },
+      "context": {
+        "GRRcSTwn": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "m": [],
+        "rhuRNag3ENNg3": ""
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "a",
+        "id": "\u0002\u0005V@$J?"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0002\u0005V@$J?"
+      },
+      "context": {
+        "GRRcSTwn": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "m": [],
+        "rhuRNag3ENNg3": ""
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "a",
+        "id": "\u0002\u0005V@$J?"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0002\u0005V@$J?"
+      },
+      "context": {
+        "GRRcSTwn": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "m": [],
+        "rhuRNag3ENNg3": ""
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "a",
+        "id": "\u0002\u0005V@$J?"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0002\u0005V@$J?"
+      },
+      "context": {
+        "GRRcSTwn": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "m": [],
+        "rhuRNag3ENNg3": ""
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "a",
+        "id": "\u0002\u0005V@$J?"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0002\u0005V@$J?"
+      },
+      "context": {
+        "GRRcSTwn": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "m": [],
+        "rhuRNag3ENNg3": ""
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}

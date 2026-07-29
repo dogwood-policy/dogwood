@@ -1,0 +1,14 @@
+// Edge: two variables x == y compared inside an aggregate body. Tests
+// var_vs_var comparison operand type. Both x and y must be range-restricted
+// by preceding predicates within the same scope (count for body). The count
+// counts transfers where the transfer user (y) matches the login user (x)
+// via an explicit x == y filter rather than using the same variable name.
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    (count for (t: Timepoint), (x: String), (y: String). where (formerly within 1h Drupe::Action::"Login"::request{ input.user: x } && formerly within 1h Drupe::Action::"Transfer"::request{ input.user: y } && x == y && tp(t))) > 0
+};

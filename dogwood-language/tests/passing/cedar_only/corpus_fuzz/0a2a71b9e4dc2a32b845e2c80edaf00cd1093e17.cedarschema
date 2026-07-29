@@ -1,0 +1,16 @@
+entity a;
+
+action "" in [Action::":", Action::"\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}", Action::"\u{1f}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}############bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb##############################\'###########################"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: __cedar::String
+  }
+};
+
+action "\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}" in [Action::"\u{1f}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}############bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb##############################\'###########################"];
+
+action "\u{1f}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}############bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb##############################\'###########################";
+
+action ":" in [Action::"\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}", Action::"\u{1f}\u{1c}\u{1c}\u{1c}\u{1c}\u{1c}############bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb##############################\'###########################"];
+

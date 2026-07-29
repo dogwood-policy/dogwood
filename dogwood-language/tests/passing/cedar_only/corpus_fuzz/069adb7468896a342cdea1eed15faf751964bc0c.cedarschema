@@ -1,0 +1,21 @@
+entity a = {
+  r?: {
+    @tjjjjjj1A000
+    ""?: a,
+    "\0"?: {
+      @A
+      @wSS
+      "": a,
+      @L
+      @tjjjjjjjTSSS
+      "------------------"?: {      }
+    }
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

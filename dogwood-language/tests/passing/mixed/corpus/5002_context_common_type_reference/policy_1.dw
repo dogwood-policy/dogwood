@@ -1,0 +1,7 @@
+// Cedar half: only SAFE_-prefixed documents.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when { context.input.document like "SAFE_*" };

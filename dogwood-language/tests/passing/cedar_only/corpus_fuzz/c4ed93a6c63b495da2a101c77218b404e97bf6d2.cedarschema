@@ -1,0 +1,18 @@
+namespace r::f::r {
+  @k("\u{1}K0VVVVV")
+  @r("")
+  entity D enum ["\0\0\0\0", "", "", ""];
+
+  entity I tags {};
+
+  entity rD;
+
+  entity vR;
+
+  action "action" appliesTo {
+    principal: [I],
+    resource: [I],
+    context: {}
+  };
+}
+

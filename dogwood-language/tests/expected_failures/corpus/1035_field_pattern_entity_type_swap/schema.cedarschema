@@ -1,0 +1,25 @@
+namespace Drupe {
+    entity OAuthUser;
+    entity Gateway;
+
+    // Two DISTINCT enum entity types with the same set of ids. `input.mode`
+    // on Tool1 is typed `Tool1_Input_mode`; on Tool2 it is `Tool2_Input_mode`.
+    // They share ids ("read"/"write") but are different types, so a value of
+    // one type is NOT a value of the other.
+    entity Tool1_Input_mode enum ["read", "write"];
+    entity Tool2_Input_mode enum ["read", "write"];
+
+    type Tool1Input = { user: String, mode: Drupe::Tool1_Input_mode };
+    type Tool2Input = { user: String, mode: Drupe::Tool2_Input_mode };
+
+    action Tool1 appliesTo {
+        principal: [OAuthUser],
+        resource: [Gateway],
+        context: { input: Tool1Input }
+    };
+    action Tool2 appliesTo {
+        principal: [OAuthUser],
+        resource: [Gateway],
+        context: { input: Tool2Input }
+    };
+}

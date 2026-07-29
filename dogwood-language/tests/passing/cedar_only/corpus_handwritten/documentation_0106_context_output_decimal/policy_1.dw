@@ -1,0 +1,15 @@
+// Permit SellShares only when the recorded result settles to zero proceeds.
+// The new idea: `context.output` is *optional* (it exists only after the tool
+// resolves), so we guard the read with `context has output`, and we compare
+// the `proceeds` decimal with `==` since decimals support equality only.
+
+permit (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+)
+when {
+    if context has output
+    then context.output.proceeds == decimal("0.0")
+    else false
+};

@@ -1,0 +1,172 @@
+{
+  "policies": "corpus-tests/b2ceaca3aeecbfdf447e1c6d48244f259399cc48.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/b2ceaca3aeecbfdf447e1c6d48244f259399cc48.entities.json",
+  "schema": "corpus-tests/b2ceaca3aeecbfdf447e1c6d48244f259399cc48.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "Pf::I00191W33f00f3::n",
+        "id": "\u0010\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u00003\u0000DD"
+      },
+      "action": {
+        "type": "Pf::I00191W33f00f3::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Pf::I00191W33f00f3::n",
+        "id": "\u0010\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u00003\u0000DD"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "Pf::I00191W33f00f3::n",
+        "id": "\u0010\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u00003\u0000DD"
+      },
+      "action": {
+        "type": "Pf::I00191W33f00f3::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Pf::I00191W33f00f3::n",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "Pf::I00191W33f00f3::n",
+        "id": ""
+      },
+      "action": {
+        "type": "Pf::I00191W33f00f3::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Pf::I00191W33f00f3::n",
+        "id": "\u0010\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u00003\u0000DD"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "Pf::I00191W33f00f3::n",
+        "id": "\u0010\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u00003\u0000DD"
+      },
+      "action": {
+        "type": "Pf::I00191W33f00f3::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Pf::I00191W33f00f3::n",
+        "id": "\u0010\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u00003\u0000DD"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "Pf::I00191W33f00f3::n",
+        "id": "\u0010\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u00003\u0000DD"
+      },
+      "action": {
+        "type": "Pf::I00191W33f00f3::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Pf::I00191W33f00f3::n",
+        "id": "\u0010\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u00003\u0000DD"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "Pf::I00191W33f00f3::n",
+        "id": "\u0010\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u00003\u0000DD"
+      },
+      "action": {
+        "type": "Pf::I00191W33f00f3::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Pf::I00191W33f00f3::n",
+        "id": "\u0010\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u00003\u0000DD"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "Pf::I00191W33f00f3::n",
+        "id": ""
+      },
+      "action": {
+        "type": "Pf::I00191W33f00f3::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Pf::I00191W33f00f3::n",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "Pf::I00191W33f00f3::n",
+        "id": ""
+      },
+      "action": {
+        "type": "Pf::I00191W33f00f3::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Pf::I00191W33f00f3::n",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}

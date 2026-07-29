@@ -1,0 +1,14 @@
+def temporal let_(?n, ?A, ?B) {
+    exists (?n: Long). (?A == ?n && ?B)
+};
+
+
+forbid (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    let_(total, sum a for (a: Long), (t1: Timepoint), (t2: Timepoint). where
+        ((formerly within 1h (Drupe::Action::"Transfer"::request{ input.user: context.input.user, input.amount: a } && tp(t1)))
+         && (formerly within 1h (Drupe::Action::"Confirm"::request{ input.user: context.input.user, input.amount: a } && tp(t2)))), total > 500)};

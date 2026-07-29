@@ -1,0 +1,16 @@
+namespace r::r::z::A::hDFf {
+  entity a;
+
+  action "" in [r::r::z::A::hDFf::Action::"\u{1}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{1}" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

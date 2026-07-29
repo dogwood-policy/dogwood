@@ -1,0 +1,18 @@
+// Edge case: provider inside a `forbid` rule (not just permit).
+// The provider gates a deny: if the pattern matches, the request is forbidden.
+// A separate bare permit allows everything else.
+
+forbid (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Strings::Matches(context.input.document, "^FORBIDDEN").matched == true
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+);

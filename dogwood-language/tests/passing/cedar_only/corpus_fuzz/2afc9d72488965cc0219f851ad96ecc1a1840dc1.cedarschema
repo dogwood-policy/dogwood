@@ -1,0 +1,10 @@
+namespace i::pO::if_::A::A::A::if_ {
+  entity a enum [""];
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

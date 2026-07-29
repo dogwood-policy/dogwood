@@ -1,0 +1,10 @@
+// UNSOUNDNESS repro (reviewer finding A3): `a == *` treated as a binding
+// equality. A wildcard resolves to no value at evaluation, so the "binding"
+// never happens and the whole guard is permanently false — a validated,
+// dead forbid guard (fail-open), the same failure class as an unclosed
+// leaf. A wildcard must not count as a resolvable value side: `a == *` is
+// not a restrictor, leaving `a` unrestricted here — rejected.
+forbid (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    exists (a: Long). (a == * && a > 100)
+};

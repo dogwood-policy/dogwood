@@ -1,0 +1,8 @@
+// Chained comparisons folded into one && conjunction (range + inequality).
+@id("sell_range_not_777")
+permit ( principal, action == Drupe::Action::"SellShares", resource )
+when {
+    context.input.shares >= 1
+    && context.input.shares <= 1000
+    && context.input.shares != 777
+};

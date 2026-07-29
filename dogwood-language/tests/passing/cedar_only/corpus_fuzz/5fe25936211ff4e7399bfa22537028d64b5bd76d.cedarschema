@@ -1,0 +1,31 @@
+entity a;
+
+action "" in [Action::":|", Action::"\u{e}", Action::"ipaB", Action::"a 1q3ddr", Action::"[", Action::"\u{2}\u{1d}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @r333iiuwhXXX("")
+    r3ciiuwhXXXE?: __cedar::ipaddr
+  }
+};
+
+action "\u{2}\u{1d}";
+
+action "\u{e}" in [Action::"ipaB", Action::"a 1q3ddr", Action::"[", Action::"\u{2}\u{1d}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    J90rki00000000000?: __cedar::String,
+    l23k?: __cedar::String,
+    r333?: __cedar::String
+  }
+};
+
+action ":|" in [Action::"\u{e}", Action::"ipaB", Action::"a 1q3ddr", Action::"[", Action::"\u{2}\u{1d}"];
+
+action "[" in [Action::"\u{2}\u{1d}"];
+
+action "a 1q3ddr" in [Action::"[", Action::"\u{2}\u{1d}"];
+
+action "ipaB" in [Action::"a 1q3ddr", Action::"[", Action::"\u{2}\u{1d}"];
+

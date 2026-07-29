@@ -1,0 +1,14 @@
+// All three dialects: permit Approve when approver is not suspended (Cedar),
+// has logged in within 1h (temporal formerly), and request_id matches ^REQ-[0-9]+$ (guardrail)
+permit (
+    principal,
+    action == Drupe::Action::"Approve",
+    resource
+)
+when { context.input.approver != "suspended" }
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.approver }
+}
+when guardrails {
+    Strings::Matches(context.input.request_id, "^REQ-[0-9]+$").matched == true
+};

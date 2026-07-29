@@ -1,0 +1,12 @@
+// All-wildcard predicate args inside `previous within 1s`.
+// Probes whether previous-window evaluation handles all-explicit
+// wildcards correctly (versus formerly which is exercised in 0700).
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    previous within 1s Drupe::Action::"Heartbeat"::request{ input.server: _ }
+};

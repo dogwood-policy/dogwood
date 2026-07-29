@@ -1,0 +1,16 @@
+namespace ye::ye::v::y3::ye {
+  entity A enum [""];
+
+  entity A000000 enum [""];
+
+  entity r enum [""];
+
+  entity ye enum [""];
+
+  action "action" appliesTo {
+    principal: [r],
+    resource: [r],
+    context: {}
+  };
+}
+

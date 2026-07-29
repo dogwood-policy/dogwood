@@ -1,0 +1,17 @@
+entity a = {
+  M03?: __cedar::String,
+  m?: __cedar::String,
+  @F333000000000000
+  @v
+  r: Set<Set<Set<Set<__cedar::Long>>>>,
+  @M03("\0[")
+  vR?: Set<Set<Set<Set<__cedar::Long>>>>,
+  x: Set<Set<Set<Set<__cedar::Long>>>>
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

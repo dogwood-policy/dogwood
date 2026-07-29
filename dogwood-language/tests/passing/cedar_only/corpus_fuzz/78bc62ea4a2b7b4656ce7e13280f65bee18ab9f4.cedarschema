@@ -1,0 +1,16 @@
+namespace Q::Qppnnn::QXn133::r::y {
+  entity K enum [""];
+
+  entity r enum [""];
+
+  entity y enum [""];
+
+  entity yd enum [""];
+
+  action "action" appliesTo {
+    principal: [r],
+    resource: [r],
+    context: {}
+  };
+}
+

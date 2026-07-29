@@ -1,0 +1,11 @@
+// Forbid long documents on Read and Ping. On Ping the document argument is
+// absent -> sentinel { length: -1 } -> the >= 6 guard is FALSE -> the
+// forbid does NOT fire. Guard-false sentinels are permissive under forbid.
+forbid (
+    principal,
+    action in [Drupe::Action::"Read", Drupe::Action::"Ping"],
+    resource
+)
+when guardrails {
+    Strings::Length(context.input.document).length >= 6
+};

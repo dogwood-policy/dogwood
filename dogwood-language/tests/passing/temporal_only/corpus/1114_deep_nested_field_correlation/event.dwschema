@@ -1,0 +1,20 @@
+// Custom event schema with a THREE-LEVEL nested injected field:
+// `__drupe.session.id`. Exercises deep-hierarchy derivation, the
+// nested wire format, and matching / correlation on a depth-3 path.
+
+decision event <A>::request {
+    ...inputs(A),
+    callerPrincipal: principalType(A),
+    callerResource:  resourceType(A),
+    requestId:       String,
+    __drupe:       { session: { id: String, region: String } },
+}
+
+event <A>::response {
+    ...inputs(A),
+    ...outputs(A),
+    callerPrincipal: principalType(A),
+    callerResource:  resourceType(A),
+    requestId:       String,
+    __drupe:       { session: { id: String, region: String } },
+}

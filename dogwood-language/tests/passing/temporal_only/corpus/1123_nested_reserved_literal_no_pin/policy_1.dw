@@ -1,0 +1,35 @@
+// A NESTED reserved field (`__drupe.sessionid`, declared by the custom
+// event schema) bound by a LITERAL in the temporal predicate — with NO
+// `context.` correlation and NO schema pin. This isolates a serialization gap
+// adjacent to case 1122: there, a schema pin adds a `context.__drupe.*`
+// reference to the same field, which incidentally causes the field to be
+// serialized; here there is no such reference, so the field is only ever
+// mentioned as a literal-matched predicate arg.
+//
+// The interpreter matches the arg by descending the event's nested
+// `__drupe.sessionid` record directly (`field_path`), so the literal
+// "sess-1" matches the past Login and the `formerly` fires.
+//
+// A differential SQL backend must serialize the nested reserved field into the
+// event's `ctx` REGARDLESS of how the policy binds it (literal, var, or
+// `context.` correlation) — the compiled predicate reads that `ctx` key in all
+// cases. A harness that only serializes reserved paths bound via a
+// `context.<...>` correlation leaves the key absent for a literal binding, so
+// the predicate's `= 'sess-1'` filter sees NULL and never matches → the leaf
+// wrongly denies. This case exists to catch exactly that.
+//
+// Controls:
+//   trace_1: past Login with sessionid "sess-1" (matches the literal) → the
+//            current Read is PERMITTED.
+//   trace_2: past Login with sessionid "sess-OTHER" (does not match the
+//            literal) → NOT permitted (isolates that the literal actually
+//            constrains the match, so a spurious permit is not a false pass).
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user, __drupe.sessionid: "sess-1" }
+};

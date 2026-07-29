@@ -1,0 +1,14 @@
+entity r enum ["\0ision\0?."];
+
+@P
+entity r2 tags __cedar::Bool;
+
+action "action" appliesTo {
+  principal: [r2, r],
+  resource: [r2, r],
+  context: {
+    @r331("on\0?\0\0\0\0\0\0\0\0\0DDDDD\0\0\0\u{8}\0\0\u{8}r\0")
+    _RiZ3333132gCmm?: __cedar::ipaddr
+  }
+};
+

@@ -1,0 +1,16 @@
+// Custom event schema injects an extra reserved field
+// `__drupe_sessionid` (see event.dwschema). This policy correlates on
+// it: a Read is permitted only if there was formerly a Login in the SAME
+// session — the past Login's `__drupe_sessionid` must equal the
+// current Read's, referenced via the generic `context.<field>` path
+// (`context.__drupe_sessionid` reads the request event's field of that
+// name). This is an ordinary injected/declared field, not request scope,
+// so it is reached by its own name (unlike `principal`).
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user, __drupe_sessionid: context.__drupe_sessionid }
+};

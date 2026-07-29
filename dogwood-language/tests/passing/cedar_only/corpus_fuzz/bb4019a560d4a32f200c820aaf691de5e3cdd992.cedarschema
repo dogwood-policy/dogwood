@@ -1,0 +1,26 @@
+entity BFf enum [""];
+
+entity K000V0000000S enum [""];
+
+entity Pf enum [""];
+
+entity g3;
+
+entity pVnVVVVVVV enum [""];
+
+entity r enum [""];
+
+entity r333zzzYYYYaYYYYY enum [""];
+
+entity sA000VVVVVV33 enum [""];
+
+entity v enum [""];
+
+entity vRcz3333333 enum [""];
+
+action "action" appliesTo {
+  principal: [v, g3, sA000VVVVVV33, K000V0000000S, r333zzzYYYYaYYYYY],
+  resource: [sA000VVVVVV33, v, K000V0000000S, r, pVnVVVVVVV, BFf, g3, r333zzzYYYYaYYYYY, vRcz3333333],
+  context: {}
+};
+

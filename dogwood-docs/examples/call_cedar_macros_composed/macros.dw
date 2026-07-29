@@ -1,0 +1,12 @@
+// Macro library: two reusable `def cedar` fragments composed by policy.dw.
+//
+// `is_eligible` takes a Long (?shares) and a String (?stock); `is_not_blocked`
+// takes a String (?stock). Each is called with a different argument shape,
+// proving ?p literal-splicing carries call-site types through.
+def cedar is_eligible(?shares, ?stock) {
+    ?shares < 100 || ?stock == "FOO"
+};
+
+def cedar is_not_blocked(?stock) {
+    !(?stock == "BLOCKED")
+};

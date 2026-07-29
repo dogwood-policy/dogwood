@@ -1,0 +1,1 @@
+@10 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") entities(Drupe::OAuthUser::"alice": { id: "alice", dept: "eng" }) request_context(input: { user: "alice" }) Drupe::Action::"Read"::request(input: { user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u2")

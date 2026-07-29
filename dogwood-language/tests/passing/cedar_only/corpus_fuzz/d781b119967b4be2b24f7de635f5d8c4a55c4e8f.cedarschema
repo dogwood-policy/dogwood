@@ -1,0 +1,23 @@
+@v("")
+namespace r::r::h::r {
+  entity a;
+
+  action "" in [r::r::h::r::Action::":p"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "0[" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action ":p" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

@@ -1,0 +1,42 @@
+// Relativization / partition-safety with TWO universal pins: the partition
+// key is the TUPLE (principal, session). A Read is permitted iff THIS key has
+// at least two of its own Logins in the last hour. An event counts only if it
+// agrees with the current request on BOTH pins (`callerPrincipal = principal`
+// AND `__drupe.session_id = context.__drupe.session_id`).
+//
+// The policy body correlates on NEITHER pin (the count body is `Login{...: _}`),
+// so the two schema pins are the ONLY thing confining the count. This makes the
+// traces discriminate whether the rewrite really requires BOTH pins:
+//
+//   trace_1 (discriminator) — key (alice, sess-1) has ONE own Login, plus two
+//   foreign Logins that each match EXACTLY ONE pin:
+//     @1 alice/sess-1 Login  (mine: both pins)
+//     @2 alice/sess-2 Login  (principal matches, session differs → NOT mine)
+//     @3 bob  /sess-1 Login  (session matches, principal differs → NOT mine)
+//     @4 alice/sess-1 Read   (decision)
+//   Correct (both pins required): count = 1 (< 2) → DENY.
+//   A "principal-only" bug would also count @2 → 2 → PERMIT.
+//   A "session-only"  bug would also count @3 → 2 → PERMIT.
+//   So the correct verdict (deny/false) differs from EITHER single-pin bug.
+//
+//   trace_2 (permit control) — key (alice, sess-1) has TWO own Logins (@1, @4)
+//   with the same two single-pin-matching foreign Logins interleaved (@2, @3):
+//   count = 2 → PERMIT. Confirms genuinely-mine events DO count (not just
+//   always-deny), and the foreign single-pin matches neither add nor block.
+//
+//   trace_3 (partition-safety twin of trace_2, foreign events removed):
+//   @1, @4 alice/sess-1 Logins, then the Read → PERMIT. Same verdict as
+//   trace_2, so the foreign events were inert (the with/without-foreign pair).
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    exists (n: Long). (
+        (count for (t: Timepoint). where (
+            formerly within 1h (Drupe::Action::"Login"::request{ input.user: _ } && tp(t))
+        )) == n && n >= 2
+    )
+};

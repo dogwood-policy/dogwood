@@ -1,0 +1,552 @@
+{
+  "policies": "corpus-tests/f36df2d84c27e148fd903a4b07aeb02318a79ed7.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/f36df2d84c27e148fd903a4b07aeb02318a79ed7.entities.json",
+  "schema": "corpus-tests/f36df2d84c27e148fd903a4b07aeb02318a79ed7.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": "",
+          "\u001d": {
+            "": {
+              "__entity": {
+                "type": "a",
+                "id": ""
+              }
+            },
+            "\u0000\u0000\u0000": "",
+            "\u0000qqqqq\u0000\u0000\u0000": "",
+            "\u0003\u001dw": "",
+            "\t\u0003": "",
+            "\u000e": "",
+            "\u0014": "",
+            "\u001d": "",
+            "\u001d@[": "",
+            "$": "",
+            ":pVV": "",
+            ":~": "",
+            "=XX\u000e": "",
+            "?\u0000\u0000\u0000": "",
+            "???????": "",
+            "????????????????????\u0003\u001d@": "",
+            "N~\u001f": 0,
+            "V@": "",
+            "VV": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "[": "",
+            "[@[\u001d": "",
+            "qqqqqqqq\u0000\u0000\u0000": "",
+            "z~": {
+              "__entity": {
+                "type": "a",
+                "id": ""
+              }
+            }
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": "",
+          "\u001d": {
+            "": {
+              "__entity": {
+                "type": "a",
+                "id": ""
+              }
+            },
+            "\u0000": "",
+            "\u0000\u0000": "",
+            "\u0000\u0000\u0000": "",
+            "\u0000qqqqq\u0000\u0000\u0000": "",
+            "\u0003\u001dw": "",
+            "\t\u0003": "",
+            "\u000e": "",
+            "\u0014": "",
+            "\u001d": "",
+            "\u001d@[": "",
+            "$": "",
+            ":pVV": "",
+            ":~": "",
+            "=XX\u000e": "",
+            "?\u0000\u0000\u0000": "",
+            "???????": "",
+            "????????????????????\u0003\u001d@": "",
+            "N~\u001f": 0,
+            "V@": "",
+            "VV": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "[": "",
+            "[@[\u001d": "",
+            "qqqqqqqq\u0000\u0000\u0000": "",
+            "z~": {
+              "__entity": {
+                "type": "a",
+                "id": ""
+              }
+            }
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": "",
+          "\u001d": {
+            "": {
+              "__entity": {
+                "type": "a",
+                "id": ""
+              }
+            },
+            "\u0000": "",
+            "\u0000\u0000": "",
+            "\u0000\u0000\u0000": "",
+            "\u0000qqqqq\u0000\u0000\u0000": "",
+            "\u0003\u001dw": "",
+            "\t\u0003": "",
+            "\u000e": "",
+            "\u0014": "",
+            "\u001d": "",
+            "\u001d@[": "",
+            "$": "",
+            ":pVV": "",
+            ":~": "",
+            "=XX\u000e": "",
+            "?\u0000\u0000\u0000": "",
+            "???????": "",
+            "????????????????????\u0003\u001d@": "",
+            "N~\u001f": 0,
+            "V@": "",
+            "VV": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "[": "",
+            "[@[\u001d": "",
+            "qqqqqqqq\u0000\u0000\u0000": "",
+            "z~": {
+              "__entity": {
+                "type": "a",
+                "id": ""
+              }
+            }
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": "",
+          "\u001d": {
+            "": {
+              "__entity": {
+                "type": "a",
+                "id": ""
+              }
+            },
+            "\u0000": "",
+            "\u0000\u0000": "",
+            "\u0000\u0000\u0000": "",
+            "\u0000qqqqq\u0000\u0000\u0000": "",
+            "\u0003\u001dw": "",
+            "\t\u0003": "",
+            "\u000e": "",
+            "\u0014": "",
+            "\u001d": "",
+            "\u001d@[": "",
+            "$": "",
+            ":pVV": "",
+            ":~": "",
+            "=XX\u000e": "",
+            "?\u0000\u0000\u0000": "",
+            "???????": "",
+            "????????????????????\u0003\u001d@": "",
+            "N~\u001f": 0,
+            "V@": "",
+            "VV": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "[": "",
+            "[@[\u001d": "",
+            "qqqqqqqq\u0000\u0000\u0000": "",
+            "z~": {
+              "__entity": {
+                "type": "a",
+                "id": ""
+              }
+            }
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": "",
+          "\u001d": {
+            "": {
+              "__entity": {
+                "type": "a",
+                "id": ""
+              }
+            },
+            "\u0000": "",
+            "\u0000\u0000": "",
+            "\u0000\u0000\u0000": "",
+            "\u0000qqqqq\u0000\u0000\u0000": "",
+            "\u0003\u001dw": "",
+            "\t\u0003": "",
+            "\u000e": "",
+            "\u0014": "",
+            "\u001d": "",
+            "\u001d@[": "",
+            "$": "",
+            ":pVV": "",
+            ":~": "",
+            "=XX\u000e": "",
+            "?\u0000\u0000\u0000": "",
+            "???????": "",
+            "????????????????????\u0003\u001d@": "",
+            "N~\u001f": 0,
+            "V@": "",
+            "VV": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "[": "",
+            "[@[\u001d": "",
+            "qqqqqqqq\u0000\u0000\u0000": "",
+            "z~": {
+              "__entity": {
+                "type": "a",
+                "id": ""
+              }
+            }
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": "",
+          "\u001d": {
+            "": {
+              "__entity": {
+                "type": "a",
+                "id": ""
+              }
+            },
+            "\u0000": "",
+            "\u0000\u0000": "",
+            "\u0000\u0000\u0000": "",
+            "\u0000qqqqq\u0000\u0000\u0000": "",
+            "\u0003\u001dw": "",
+            "\t\u0003": "",
+            "\u000e": "",
+            "\u0014": "",
+            "\u001d": "",
+            "\u001d@[": "",
+            "$": "",
+            ":pVV": "",
+            ":~": "",
+            "=XX\u000e": "",
+            "?\u0000\u0000\u0000": "",
+            "???????": "",
+            "????????????????????\u0003\u001d@": "",
+            "N~\u001f": 0,
+            "V@": "",
+            "VV": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "[": "",
+            "[@[\u001d": "",
+            "qqqqqqqq\u0000\u0000\u0000": "",
+            "z~": {
+              "__entity": {
+                "type": "a",
+                "id": ""
+              }
+            }
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": "",
+          "\u001d": {
+            "": {
+              "__entity": {
+                "type": "a",
+                "id": ""
+              }
+            },
+            "\u0000": "",
+            "\u0000\u0000": "",
+            "\u0000\u0000\u0000": "",
+            "\u0000qqqqq\u0000\u0000\u0000": "",
+            "\u0003\u001dw": "",
+            "\t\u0003": "",
+            "\u000e": "",
+            "\u0014": "",
+            "\u001d": "",
+            "\u001d@[": "",
+            "$": "",
+            ":pVV": "",
+            ":~": "",
+            "=XX\u000e": "",
+            "?\u0000\u0000\u0000": "",
+            "???????": "",
+            "????????????????????\u0003\u001d@": "",
+            "N~\u001f": 0,
+            "V@": "",
+            "VV": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "[": "",
+            "[@[\u001d": "",
+            "qqqqqqqq\u0000\u0000\u0000": "",
+            "z~": {
+              "__entity": {
+                "type": "a",
+                "id": ""
+              }
+            }
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": "",
+          "\u001d": {
+            "": {
+              "__entity": {
+                "type": "a",
+                "id": ""
+              }
+            },
+            "\u0000": "",
+            "\u0000\u0000": "",
+            "\u0000\u0000\u0000": "",
+            "\u0000qqqqq\u0000\u0000\u0000": "",
+            "\u0003\u001dw": "",
+            "\t\u0003": "",
+            "\u000e": "",
+            "\u0014": "",
+            "\u001d": "",
+            "\u001d@[": "",
+            "$": "",
+            ":pVV": "",
+            ":~": "",
+            "=XX\u000e": "",
+            "?\u0000\u0000\u0000": "",
+            "???????": "",
+            "????????????????????\u0003\u001d@": "",
+            "N~\u001f": 0,
+            "V@": "",
+            "VV": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "[": "",
+            "[@[\u001d": "",
+            "qqqqqqqq\u0000\u0000\u0000": "",
+            "z~": {
+              "__entity": {
+                "type": "a",
+                "id": ""
+              }
+            }
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

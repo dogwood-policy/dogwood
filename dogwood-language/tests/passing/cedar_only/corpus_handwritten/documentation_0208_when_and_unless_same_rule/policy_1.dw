@@ -1,0 +1,16 @@
+// Permit small SellShares requests, except for blocked stocks.
+// New idea: a single rule may carry both `when` and `unless`
+// clauses. The rule fires only when every `when` body is true
+// AND every `unless` body is false.
+
+permit (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+)
+when {
+    context.input.shares <= 1000
+}
+unless {
+    context.input.stock == "BLOCKED"
+};

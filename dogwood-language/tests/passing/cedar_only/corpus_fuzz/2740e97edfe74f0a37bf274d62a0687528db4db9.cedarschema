@@ -1,0 +1,18 @@
+entity a tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: {
+      ""?: {
+        @hXXX0000000000000
+        @hXXXXXXXXXXXXXXXX("!!!!!!!!`!!!!!!!!!!!!!!!!!!!!!!!!")
+        @hXXXXXXmmmmXXXXXX("!!!!!!!!!!!!!!!!!`!!!!!!!!!!!!!!!")
+        "": Set<Set<__cedar::Long>>,
+        "!!!!b0000000000!!!!!!!!!!!!!!!!!!"?: __cedar::String
+      }
+    }
+  }
+};
+

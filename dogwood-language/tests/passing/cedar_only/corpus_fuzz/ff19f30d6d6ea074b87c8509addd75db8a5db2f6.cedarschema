@@ -1,0 +1,35 @@
+@A
+entity a = {
+  A: {
+    @L
+    @q("\0\0\0\0\0\0\033g02+\0")
+    ""?: a,
+    "\u{e}"?: __cedar::Long,
+    "\u{19}\u{19}\u{19}\u{19} \0": a,
+    "\u{1d}@e": __cedar::String,
+    @C
+    "@": a,
+    @C
+    "```````"?: a
+  },
+  wo?: Set<{
+    @L
+    @q("3g02+\0")
+    ""?: a,
+    "\u{e}": a,
+    @Pjjjj_BBBBFFFFSF("")
+    @Q_("")
+    @f9
+    @rZl_BBBB1x_BBB("\u{f}\u{f}\u{f}\u{f}")
+    "33g02+\0": a,
+    "@@": a
+  }>,
+  z?: __cedar::String
+} tags __cedar::datetime;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

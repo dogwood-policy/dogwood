@@ -1,0 +1,7 @@
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    let_(n, count for (t: Timepoint). where (Drupe::Action::"Login"::request{ input.user: _, input.server: context.input.server } && tp(t)), n == 0)};

@@ -1,0 +1,49 @@
+entity BFf enum [""];
+
+@DkkkkkkL
+@Q6("")
+@r("")
+entity PFdFFRFFFFFFFW24 enum [""];
+
+entity Pf enum [""];
+
+entity WMMFFFFFFFEF000F enum ["", ""];
+
+entity g3 enum [""];
+
+action "" in [Action::"########", Action::"\u{f}h", Action::"mmmmmm\u{f}mmmmm\u{f}h", Action::"\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h", Action::"f", Action::"\u{1}\u{f}h", Action::"z", Action::"!", Action::"m\u{f}h", Action::"##################", Action::"\u{f}", Action::"\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h"] appliesTo {
+  principal: [g3],
+  resource: [g3],
+  context: {}
+};
+
+action "\u{1}\u{f}h" in [Action::"z", Action::"!", Action::"m\u{f}h", Action::"##################", Action::"\u{f}", Action::"\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h"];
+
+action "\u{f}" in [Action::"\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h"];
+
+action "\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h" in [Action::"f", Action::"\u{1}\u{f}h", Action::"z", Action::"!", Action::"m\u{f}h", Action::"##################", Action::"\u{f}", Action::"\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h"];
+
+action "\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h";
+
+action "\u{f}h" in [Action::"mmmmmm\u{f}mmmmm\u{f}h", Action::"\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h", Action::"f", Action::"\u{1}\u{f}h", Action::"z", Action::"!", Action::"m\u{f}h", Action::"##################", Action::"\u{f}", Action::"\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h"];
+
+action "!" in [Action::"m\u{f}h", Action::"##################", Action::"\u{f}", Action::"\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h"];
+
+action "########" in [Action::"\u{f}h", Action::"mmmmmm\u{f}mmmmm\u{f}h", Action::"\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h", Action::"f", Action::"\u{1}\u{f}h", Action::"z", Action::"!", Action::"m\u{f}h", Action::"##################", Action::"\u{f}", Action::"\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h"] appliesTo {
+  principal: [g3],
+  resource: [g3],
+  context: {
+    A?: __cedar::String
+  }
+};
+
+action "##################" in [Action::"\u{f}", Action::"\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h"];
+
+action "f" in [Action::"\u{1}\u{f}h", Action::"z", Action::"!", Action::"m\u{f}h", Action::"##################", Action::"\u{f}", Action::"\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h"];
+
+action "m\u{f}h" in [Action::"##################", Action::"\u{f}", Action::"\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h"];
+
+action "mmmmmm\u{f}mmmmm\u{f}h" in [Action::"\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h", Action::"f", Action::"\u{1}\u{f}h", Action::"z", Action::"!", Action::"m\u{f}h", Action::"##################", Action::"\u{f}", Action::"\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h"];
+
+action "z" in [Action::"!", Action::"m\u{f}h", Action::"##################", Action::"\u{f}", Action::"\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h"];
+

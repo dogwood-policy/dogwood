@@ -1,0 +1,99 @@
+entity a tags __cedar::String;
+
+action "" in [Action::"\u{1d}@[", Action::"\u{3}\u{1d}w", Action::"$", Action::"=\u{e}", Action::"w", Action::"\u{1d}Ee[@[", Action::"\u{1d}@gffd~", Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"[", Action::"\u{3}dd~"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+@CPPPPPPPPPP
+action "\u{3}\u{1d}w" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{3}dd~" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{e}" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1d}\u{3}" in [Action::"[@", Action::"$=\u{e}", Action::"[", Action::"\u{3}dd~"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1d}@[" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1d}@gffd~" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1d}Ee[@[" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "$" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "$=\u{e}" in [Action::"[", Action::"\u{3}dd~"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "=\u{e}" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "J4" in [Action::"\u{1d}@[", Action::"\u{3}\u{1d}w", Action::"$", Action::"=\u{e}", Action::"w", Action::"\u{1d}Ee[@[", Action::"\u{1d}@gffd~", Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"$=\u{e}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "[" in [Action::"\u{3}dd~"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "[@" in [Action::"$=\u{e}", Action::"["] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "^" in [Action::"[@", Action::"$=\u{e}", Action::"[", Action::"\u{3}dd~"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "w" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,21 @@
+@IOO
+entity a;
+
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action ":cc" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "ccc" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

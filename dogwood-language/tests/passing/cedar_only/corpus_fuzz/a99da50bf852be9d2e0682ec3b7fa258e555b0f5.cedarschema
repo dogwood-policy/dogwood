@@ -1,0 +1,11 @@
+entity a tags a;
+
+@Y1("......~.\0\0\0\u{2}")
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    r00aFx1p01F01?: Set<Set<Set<__cedar::String>>>
+  }
+};
+

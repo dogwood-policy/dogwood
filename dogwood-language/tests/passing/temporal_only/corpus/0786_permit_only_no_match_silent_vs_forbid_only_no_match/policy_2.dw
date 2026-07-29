@@ -1,0 +1,2 @@
+forbid (principal, action == Drupe::Action::"Read", resource)
+when temporal { formerly within 10s Drupe::Action::"Logout"::request{ input.user: context.input.user } };

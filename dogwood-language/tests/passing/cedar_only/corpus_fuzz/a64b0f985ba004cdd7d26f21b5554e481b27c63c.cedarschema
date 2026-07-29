@@ -1,0 +1,29 @@
+entity a tags __cedar::duration;
+
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    D?: __cedar::datetime,
+    I?: __cedar::datetime,
+    N?: __cedar::datetime,
+    f?: __cedar::datetime,
+    h0?: __cedar::datetime,
+    h4?: __cedar::datetime,
+    m3?: __cedar::datetime,
+    p2?: __cedar::datetime,
+    qoqqttttttt?: __cedar::String,
+    r?: __cedar::datetime,
+    r3?: __cedar::datetime,
+    r3333S3?: __cedar::String,
+    v?: __cedar::String,
+    vR?: __cedar::datetime,
+    @cxmo330000000
+    @r("")
+    @v("")
+    @w2("")
+    yqqPbop3333?: __cedar::datetime,
+    z?: __cedar::String
+  }
+};
+

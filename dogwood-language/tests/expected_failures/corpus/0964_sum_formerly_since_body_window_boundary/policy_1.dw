@@ -1,0 +1,8 @@
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    let total = sum a where ((formerly within 10m Drupe::Action::"Transfer"::request{ input.user: context.input.user, input.amount: a }) && (without (Drupe::Action::"Logout"::request{ input.user: context.input.user }) since within 10m Drupe::Action::"Transfer"::request{ input.user: context.input.user })) in total >= 80
+};

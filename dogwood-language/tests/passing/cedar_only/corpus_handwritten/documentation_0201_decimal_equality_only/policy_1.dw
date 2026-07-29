@@ -1,0 +1,14 @@
+// Permit SellShares only when the trade actually generated
+// proceeds. The new idea: decimals support `==` and `!=` only.
+// Ordered comparisons (`<`, `>`, `<=`, `>=`) on decimals do not
+// type-check, so equality against `decimal("0.0")` is the
+// idiomatic way to ask "did this produce any proceeds?".
+
+permit (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+)
+when {
+    context has output && context.output.proceeds != decimal("0.0")
+};

@@ -1,0 +1,23 @@
+// L3: Two near-identical permit rules differ only by whether the lone
+// temporal conjunct is wrapped in parentheses. Rule 1 wraps a
+// `formerly within 1h Login{...}` in parens; Rule 2 uses a bare
+// `formerly within 1h Read{...}`. Both target Write. Both should fire
+// at any Write tp where a matching past event exists in window.
+
+permit (
+    principal,
+    action == Drupe::Action::"Write",
+    resource
+)
+when temporal {
+    (formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user })
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Write",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Read"::request{ input.user: context.input.user, input.document: context.input.document }
+};

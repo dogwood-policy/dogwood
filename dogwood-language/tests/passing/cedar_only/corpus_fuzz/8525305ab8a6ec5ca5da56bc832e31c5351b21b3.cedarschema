@@ -1,0 +1,8 @@
+entity Fp200l;
+
+action "action" appliesTo {
+  principal: [Fp200l],
+  resource: [Fp200l],
+  context: {}
+};
+

@@ -1,0 +1,27 @@
+// The k0-seek-path member of the 0919 family: a DRIVER predicate joined on
+// the anchor-shared var routes the since read through the correlated k0
+// path (`to_join_on_since_key`) instead of the standalone read, so the
+// same-step guard check there is keyed by the DRIVER's value (`_drv`), not
+// the anchor row's.
+//
+// With a single event per step the driver pins `x` to the current event's
+// server, so the foreign-mismatch trap of 0919 cannot fire here — this case
+// is the OVER-CONSTRAINT control for the k0 path: a MATCHING same-step
+// heartbeat (@10, streak seeded in the same statement) must still PERMIT
+// after the guard check is keyed. @20 pins the no-anchor deny for a foreign
+// server.
+//
+// Interpreter is the oracle (see expected_1.out).
+permit (
+    principal,
+    action == Drupe::Action::"Heartbeat",
+    resource
+)
+when temporal {
+    exists (x: String). (
+        Drupe::Action::"Heartbeat"::request{ input.server: x }
+        && (Drupe::Action::"Heartbeat"::request{ input.server: x }
+            since within 1h
+            Drupe::Action::"Login"::request{ input.server: x })
+    )
+};

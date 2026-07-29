@@ -1,0 +1,75 @@
+@Daaaaaaaaaaa
+@Hooooooooooo("")
+namespace A::A {
+  entity a;
+
+  action "" in [A::A::Action::"V:", A::A::Action::"f1V", A::A::Action::"~", A::A::Action::"\u{e}", A::A::Action::"\u{3}", A::A::Action::"w\u{1d}/", A::A::Action::"$", A::A::Action::"=\u{e}", A::A::Action::"[", A::A::Action::"\u{1d}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{3}" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{e}" in [A::A::Action::"=\u{e}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{1d}" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "$" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "=\u{e}" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  @TRRRw03
+  @r("")
+  @v3T33aaaaa
+  action "V:" in [A::A::Action::"f1V", A::A::Action::"~", A::A::Action::"\u{e}", A::A::Action::"\u{3}", A::A::Action::"w\u{1d}/", A::A::Action::"$", A::A::Action::"=\u{e}", A::A::Action::"[", A::A::Action::"\u{1d}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "[" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "f1V" in [A::A::Action::"~", A::A::Action::"\u{e}", A::A::Action::"\u{3}", A::A::Action::"w\u{1d}/"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "w\u{1d}/" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "~" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

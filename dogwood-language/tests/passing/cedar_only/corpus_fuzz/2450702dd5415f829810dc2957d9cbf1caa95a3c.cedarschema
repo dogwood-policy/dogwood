@@ -1,0 +1,14 @@
+namespace gMM::g::r {
+  entity L000000 enum [""];
+
+  entity r enum [""];
+
+  entity z enum [""];
+
+  action "action" appliesTo {
+    principal: [z],
+    resource: [z],
+    context: {}
+  };
+}
+

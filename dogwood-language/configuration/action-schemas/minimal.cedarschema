@@ -1,0 +1,16 @@
+// Minimal action schema: one principal, one resource, one action.
+// The simplest possible schema for getting started.
+
+namespace Drupe {
+    entity User;
+    entity Resource;
+
+    type GreetInput = { name: String };
+    type GreetOutput = { message: String };
+
+    action "Greet" appliesTo {
+        principal: [User],
+        resource: [Resource],
+        context: { input: GreetInput, output: GreetOutput }
+    };
+}

@@ -1,0 +1,15 @@
+// UNSOUNDNESS repro (U2): an `exists` binder whose only "restrictor" sits
+// under a DOUBLE negation. The range-restriction collector must treat ANY
+// negation as discarding all restriction facts (the range-restriction rule: the ¬
+// labeling rule removes every fact — it does not flip a parity). Counting an
+// even-negation-depth atom as a positive restrictor is operationally unsound:
+// the evaluator's negation is an opaque boolean filter, so the relation it
+// produces carries no `x` binding — under an aggregation the same shape
+// miscounts, and the "restricted by a positive atom" invariant is violated.
+//
+// Expected: rejected at parse-time binding checks — `x` is not
+// range-restricted by any positive atom.
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    exists (x: String). !(!(formerly within 1h Drupe::Action::"Login"::request{ input.user: x }))
+};

@@ -1,0 +1,13 @@
+// Edge: (count for ...) == 0 in a PERMIT policy. Verifies that count
+// correctly returns 0 when no events match the aggregate body.
+// At tp0: no prior Logins, count=0, 0==0=true (permit fires).
+// At tp2: 1 prior Login, count=1, 1==0=false (permit does not fire).
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    (count for (t: Timepoint). where (formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.server } && tp(t))) == 0
+};

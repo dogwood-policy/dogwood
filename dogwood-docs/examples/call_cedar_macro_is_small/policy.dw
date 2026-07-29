@@ -1,0 +1,6 @@
+// Calling a `def cedar` macro in an ordinary `when` position.
+// `is_small` is defined in the macro library (macros.dw) and slots
+// into the clause exactly like plain Cedar.
+@id("sell_small")
+permit (principal, action == Drupe::Action::"SellShares", resource)
+when { is_small(context.input.shares) };

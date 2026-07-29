@@ -1,0 +1,11 @@
+// Counts distinct historical Login users for the Alert's server over
+// the last hour. With `formerly within 1h` in the body, every Alert with
+// at least one prior Login fires.
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (n: Long). ((count for (t: Timepoint). where (formerly within 1h (Drupe::Action::"Login"::request{ input.user: _, input.server: context.input.server } && tp(t)))) == n && n > 0)};

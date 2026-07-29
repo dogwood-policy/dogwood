@@ -1,0 +1,10 @@
+namespace izO::iOz::A00::A::A::A::iOO {
+  entity a enum [""];
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

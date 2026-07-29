@@ -1,0 +1,8 @@
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    previous within 1h (Drupe::Action::"Login"::request{ input.user: context.input.user } && !(Drupe::Action::"Login"::request{ input.user: context.input.user, input.server: "admin" }))
+};

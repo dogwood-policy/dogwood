@@ -1,0 +1,38 @@
+entity a = {
+  A?: Set<{
+    ""?: {
+      ""?: {      },
+      "\0j"?: {      },
+      "\u{f}\u{f}s\0j"?: {      },
+      "Debian "?: {      },
+      "PcZz~g"?: {      },
+      U?: {      },
+      "zz\0"?: {      },
+      "~"?: {      },
+      "ԙ"?: {      }
+    },
+    @m("ebi a")
+    "\u{3}"?: __cedar::Long,
+    "\u{e}"?: __cedar::datetime,
+    "\u{1d}\u{3}"?: __cedar::String,
+    "\u{1d}(\u{3}"?: __cedar::String,
+    "\u{1d}@[": {    },
+    "\u{1d}@gffd~"?: __cedar::String,
+    "$a"?: __cedar::String,
+    "=\u{e}"?: __cedar::String,
+    "=}}}}}}}}}y}}}}}}}}}}}}:~"?: {    },
+    "[@\0\0!\0\0*"?: __cedar::String,
+    "[@["?: __cedar::String,
+    "^"?: __cedar::String,
+    "w\u{1d}"?: __cedar::String
+  }>,
+  U3T1S333?: __cedar::String,
+  n?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

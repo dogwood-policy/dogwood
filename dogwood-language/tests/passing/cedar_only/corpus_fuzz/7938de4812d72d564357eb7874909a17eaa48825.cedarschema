@@ -1,0 +1,14 @@
+namespace XNNNNNp::z::M::r::KeppNNN {
+  entity A enum [""];
+
+  entity B enum [""];
+
+  entity K13 enum [""];
+
+  action "action" appliesTo {
+    principal: [B],
+    resource: [B],
+    context: {}
+  };
+}
+

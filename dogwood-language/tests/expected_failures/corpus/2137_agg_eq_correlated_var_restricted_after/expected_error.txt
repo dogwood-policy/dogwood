@@ -1,0 +1,1 @@
+the equality binding `n` reads `u` inside its aggregate operand (`u` is used in the aggregation body but not bound by its `for` list), and `u` is not range-restricted by a preceding conjunct; place the conjunct that binds `u` before the equality, widening the `exists` scope if needed

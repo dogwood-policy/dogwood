@@ -1,0 +1,21 @@
+// Custom event schema with TWO deep sibling fields under one group:
+// `__drupe.session.id` and `__drupe.session.region`. Used to test a
+// predicate carrying MULTIPLE deep-path constraints at once, each
+// correlated to a request-context value.
+
+decision event <A>::request {
+    ...inputs(A),
+    callerPrincipal: principalType(A),
+    callerResource:  resourceType(A),
+    requestId:       String,
+    __drupe:       { session: { id: String, region: String } },
+}
+
+event <A>::response {
+    ...inputs(A),
+    ...outputs(A),
+    callerPrincipal: principalType(A),
+    callerResource:  resourceType(A),
+    requestId:       String,
+    __drupe:       { session: { id: String, region: String } },
+}

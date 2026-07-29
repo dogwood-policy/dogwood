@@ -1,0 +1,20 @@
+entity a;
+
+action "" in [Action::"[&:\u{1d}vvvvvvvvan vvowDebian vvv", Action::"p"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "[&:\u{1d}vvvvvvvvan vvowDebian vvv" in [Action::"p"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "p" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,12 @@
+@wj("")
+entity a enum ["\0\0\0\0\0\0N", "", ""];
+
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    l?: {    },
+    r?: __cedar::String
+  }
+};
+

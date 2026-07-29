@@ -1,0 +1,18 @@
+entity a = {
+  M03?: __cedar::String,
+  m?: __cedar::String,
+  @F3333RRRRRFFFFdd
+  @v
+  r: Set<Set<Set<Set<__cedar::Long>>>>,
+  vR: Set<Set<Set<Set<__cedar::Long>>>>,
+  x: Set<Set<Set<Set<__cedar::Long>>>>
+};
+
+@T_a4_13("")
+@Y("a:\u{7}}\u{2}")
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

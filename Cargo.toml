@@ -1,0 +1,29 @@
+[workspace]
+resolver = "2"
+# The Dogwood frontend is a single crate: `dogwood-language` holds both
+# the public surface and the (crate-private) implementation. A split
+# impl/api pair cannot enforce encapsulation across a crate boundary — a
+# published api forces its impl dependency to be published too, and the
+# impl's `pub` items are then reachable directly. One crate with
+# crate-private modules gives compiler-enforced encapsulation.
+members = [
+    "dogwood-language",
+    # `dogwood-cli` is the `dogwood` binary — a thin shell that drives the
+    # frontend's curated public surface directly (schema/policy in, verdicts and
+    # diagnostics out). Its serializable report/error types live in the crate
+    # itself, since a JSON output shape is a CLI concern, not a library one.
+    "dogwood-cli",
+    # The documentation crate: the guide prose plus complete, CLI-checked
+    # example bundles (policy + schema [+ trace/providers]). Its test harness
+    # runs each bundle through the `dogwood` binary, so a doc example that stops
+    # compiling is a build failure.
+    "dogwood-docs",
+]
+
+[workspace.package]
+version = "1.0.0"
+edition = "2024"
+# The registry each publishable crate is released to (inherited by members via
+# `publish.workspace = true`). Pins publishing to the internal registry rather
+# than crates.io; see the `Config` file for the corresponding build setup.
+publish = ["brazil"]

@@ -1,0 +1,17 @@
+// The action's context reference resolves in a FOREIGN namespace to a
+// record containing a further UNQUALIFIED reference (`input: Doc`, with
+// Doc written in Shared). Inlining the record into an Drupe action
+// must keep `Doc` meaning `Shared::Doc` — names inside a definition
+// resolve where the definition is written.
+namespace Shared {
+  type Ctx = { input: Doc };
+  type Doc = { document: String };
+}
+namespace Drupe {
+  entity OAuthUser;
+  entity Gateway;
+  action "Read" appliesTo {
+    principal: [OAuthUser], resource: [Gateway],
+    context: Shared::Ctx
+  };
+}

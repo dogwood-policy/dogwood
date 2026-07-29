@@ -1,0 +1,10 @@
+namespace r::A000000000000000::A::KAg33 {
+  entity a enum [""];
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

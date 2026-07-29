@@ -1,0 +1,22 @@
+{
+  "availableProviders": {
+    "Sensitivity::Analyze": {
+      "argumentTypes": [
+        { "paramType": "set", "items": { "paramType": "string" } },
+        { "paramType": "string" }
+      ],
+      "outputType": {
+        "paramType": "record",
+        "fields": {
+          "scored": { "paramType": "decimal" },
+          "raw": { "paramType": "integer" }
+        },
+        "required": ["scored", "raw"]
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "sensitivity.rhai"
+      }
+    }
+  }
+}

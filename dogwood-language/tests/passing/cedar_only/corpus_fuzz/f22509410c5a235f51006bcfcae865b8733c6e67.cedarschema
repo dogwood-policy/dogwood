@@ -1,0 +1,20 @@
+entity a;
+
+action "\u{1d}" in [Action::"&@"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @A
+    @F("")
+    A0RnR3SN13cE?: {
+      @rNpy313
+      "": Set<__cedar::Bool>,
+      "\0": Set<__cedar::duration>,
+      @r
+      "\u{e}V": a
+    }
+  }
+};
+
+action "&@";
+

@@ -1,0 +1,11 @@
+@r3332a
+@r3333
+@sgW000000
+entity a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

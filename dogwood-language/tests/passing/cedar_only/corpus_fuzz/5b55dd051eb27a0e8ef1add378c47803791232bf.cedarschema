@@ -1,0 +1,34 @@
+entity a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    r?: {
+      @LS3b0T3q1ST3N
+      ""?: Set<Set<__cedar::datetime>>,
+      "\0"?: __cedar::String,
+      "\0\0"?: __cedar::String,
+      "\u{3}\u{1d}w"?: __cedar::String,
+      "\t\u{3}"?: __cedar::String,
+      "\u{e}"?: __cedar::String,
+      @F
+      @P("bian :pV\0")
+      "\u{1d}"?: __cedar::String,
+      "\u{1d}\u{3}"?: __cedar::String,
+      "\u{1d}@["?: __cedar::String,
+      "$"?: __cedar::String,
+      ":pVV"?: __cedar::String,
+      ":~"?: __cedar::String,
+      "=XX\u{e}"?: __cedar::String,
+      "?\0\0\0"?: a,
+      "V\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0@"?: __cedar::String,
+      "V@": __cedar::ipaddr,
+      "V@[\u{1d}"?: __cedar::String,
+      "[@$"?: __cedar::String,
+      "[@["?: __cedar::String,
+      "[@[\u{1d}"?: __cedar::String
+    }
+  }
+};
+

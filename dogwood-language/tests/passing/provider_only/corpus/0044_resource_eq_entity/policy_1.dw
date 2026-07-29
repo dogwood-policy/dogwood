@@ -1,0 +1,11 @@
+// Scope: resource == specific entity.
+// Only the specific gateway "gw1" is accessible.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource == Drupe::Gateway::"gw1"
+)
+when guardrails {
+    Strings::Matches(context.input.document, "^[A-Z]+$").matched == true
+};

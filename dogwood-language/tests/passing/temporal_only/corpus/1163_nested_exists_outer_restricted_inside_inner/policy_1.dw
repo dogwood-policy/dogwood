@@ -1,0 +1,23 @@
+// Nested `exists` where the OUTER binder's only positive restrictor lives
+// INSIDE the inner `exists` body. Both `v` and `g` occur as positive
+// predicate-field arguments of the same `Access` atom, so each is bound to a
+// finite column of the Access relation — the formula is range-restricted
+// (safe) by the range-restriction definition and its `∃x.φ` labeling rule
+// (the inner `∃g` propagates `∅ → v` up, since that fact does not mention `g`).
+//
+// Regression guard for a validator-incompleteness bug: `collect_range_
+// restricted` had no `Exists` arm, so it never descended into the nested
+// `exists` and wrongly rejected `v` as "not range-restricted". Distinct from
+// 1143, where the outer binder is restricted at its own conjunct level — here
+// the ONLY restrictor of `v` is under the inner binder.
+//
+// Semantics: "some Access happened within the last hour" — permit Alert iff
+// such an Access is in the past-hour window (mirrors 1142's window shape).
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (v: String). exists (g: String). formerly within 1h Drupe::Action::"Access"::request{ input.user: v, input.resource: g }
+};

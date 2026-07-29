@@ -1,0 +1,15 @@
+@r
+entity a tags __cedar::decimal;
+
+action "" in [Action::"\u{6},\u{6}\u{6}\u{6}\u{6}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{6},\u{6}\u{6}\u{6}\u{6}" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

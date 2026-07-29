@@ -1,0 +1,17 @@
+entity a tags a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    F?: {
+      @p
+      ""?: Set<a>,
+      @tFFFFFTO133EF8000
+      "A\0\0": __cedar::Long
+    },
+    O?: __cedar::datetime,
+    p: {    }
+  }
+};
+

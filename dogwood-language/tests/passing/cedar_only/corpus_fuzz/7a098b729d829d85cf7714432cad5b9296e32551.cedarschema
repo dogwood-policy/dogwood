@@ -1,0 +1,11 @@
+entity a = {
+  r00?: __cedar::Bool,
+  z0_?: __cedar::Bool
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

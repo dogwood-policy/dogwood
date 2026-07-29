@@ -1,0 +1,21 @@
+// Confirms `sum_within` is loaded from the DEFAULT macro library.
+//
+// This case ships NO `macros.dw`, so the harness omits `macros_str` and the
+// ServiceSchema falls back to `DEFAULT_MACROS`. The policy calls `sum_within`
+// without declaring it anywhere, so it can only parse and replay correctly if
+// the built-in stdlib supplies that macro by default. Verdict-equivalent to
+// `stdlib_0003_sum_within`, which loads the same macro explicitly via its own
+// `macros.dw`. Permit an Alert when the total transferred by any user exceeds
+// 200 within the last hour.
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (total: Long). (
+        (sum_within(a, 1h, Drupe::Action::"Transfer"::request{ input.user: _, input.amount: a })) == total
+        && total > 200
+    )
+};

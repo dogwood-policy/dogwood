@@ -1,0 +1,16 @@
+entity A3;
+
+entity nR;
+
+entity r;
+
+entity r00BB;
+
+entity v;
+
+action "action" appliesTo {
+  principal: [nR],
+  resource: [nR],
+  context: {}
+};
+

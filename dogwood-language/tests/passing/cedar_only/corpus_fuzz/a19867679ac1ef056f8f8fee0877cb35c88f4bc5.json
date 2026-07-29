@@ -1,0 +1,186 @@
+{
+  "policies": "corpus-tests/a19867679ac1ef056f8f8fee0877cb35c88f4bc5.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/a19867679ac1ef056f8f8fee0877cb35c88f4bc5.entities.json",
+  "schema": "corpus-tests/a19867679ac1ef056f8f8fee0877cb35c88f4bc5.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "A::A::A::zkjHu00::a",
+        "id": ""
+      },
+      "action": {
+        "type": "A::A::A::zkjHu00::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A::A::A::zkjHu00::a",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "A::A::A::zkjHu00::a",
+        "id": ""
+      },
+      "action": {
+        "type": "A::A::A::zkjHu00::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A::A::A::zkjHu00::a",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "A::A::A::zkjHu00::a",
+        "id": ""
+      },
+      "action": {
+        "type": "A::A::A::zkjHu00::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A::A::A::zkjHu00::a",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "A::A::A::zkjHu00::a",
+        "id": ""
+      },
+      "action": {
+        "type": "A::A::A::zkjHu00::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A::A::A::zkjHu00::a",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "A::A::A::zkjHu00::a",
+        "id": ""
+      },
+      "action": {
+        "type": "A::A::A::zkjHu00::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A::A::A::zkjHu00::a",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "A::A::A::zkjHu00::a",
+        "id": ""
+      },
+      "action": {
+        "type": "A::A::A::zkjHu00::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A::A::A::zkjHu00::a",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "A::A::A::zkjHu00::a",
+        "id": ""
+      },
+      "action": {
+        "type": "A::A::A::zkjHu00::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A::A::A::zkjHu00::a",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "A::A::A::zkjHu00::a",
+        "id": ""
+      },
+      "action": {
+        "type": "A::A::A::zkjHu00::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A::A::A::zkjHu00::a",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+@S("")
+@Y4000000
+@n("")
+@r("")
+entity a enum [""];
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

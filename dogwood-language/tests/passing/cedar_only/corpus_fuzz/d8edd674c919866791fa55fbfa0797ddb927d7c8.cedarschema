@@ -1,0 +1,10 @@
+namespace QI00dppp::ID000pppppppp::IpppppppppppT::M {
+  entity a enum ["", "", "", "", "", "0", "", "A"];
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

@@ -1,0 +1,14 @@
+entity BBB;
+
+entity P;
+
+entity fB tags __cedar::String;
+
+entity g_;
+
+action "action" appliesTo {
+  principal: [fB, BBB, P, g_],
+  resource: [P, g_, BBB, fB],
+  context: {}
+};
+

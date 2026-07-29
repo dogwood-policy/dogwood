@@ -1,0 +1,24 @@
+entity a tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: {
+      "Debia;4"?: {
+        @r("a;4")
+        "$\u{3}\u{3}\u{3}": a,
+        "$\u{3}\u{3}\u{3}\u{3}\u{3}\u{3}\u{1}\u{14}"?: {
+          ""?: __cedar::String,
+          @w00000000000000
+          "$\u{3}\u{3}\u{3}"?: a,
+          @PFjF333333400000
+          "3": a,
+          "A\u{3}$\u{3}\u{3}\u{3}\u{3}D"?: __cedar::String
+        },
+        "3": __cedar::ipaddr
+      }
+    }
+  }
+};
+

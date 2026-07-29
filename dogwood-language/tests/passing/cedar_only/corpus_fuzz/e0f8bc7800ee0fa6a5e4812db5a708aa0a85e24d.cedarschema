@@ -1,0 +1,16 @@
+entity a enum ["\0"];
+
+action "" in [Action::"\u{f}", Action::"`", Action::"?S", Action::"::"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{f}" in [Action::"`", Action::"?S", Action::"::"];
+
+action "::";
+
+action "?S" in [Action::"::"];
+
+action "`" in [Action::"?S", Action::"::"];
+

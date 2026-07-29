@@ -1,0 +1,13 @@
+namespace b {
+  entity a;
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      @A
+      w: b::a
+    }
+  };
+}
+

@@ -1,0 +1,7 @@
+// Blanket permit over all six actions; every denial in this case must
+// therefore come from the guardrail forbid.
+permit (
+    principal,
+    action,
+    resource
+);

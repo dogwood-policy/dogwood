@@ -1,0 +1,14 @@
+namespace A::A::A::A::hD10 {
+  entity a;
+
+  action "" in [A::A::A::A::hD10::Action::"\u{1}", A::A::A::A::hD10::Action::"%"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{1}" in [A::A::A::A::hD10::Action::"%"];
+
+  action "%";
+}
+

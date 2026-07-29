@@ -1,0 +1,16 @@
+entity a = {
+  eU333333300dYc?: {
+    ""?: Set<__cedar::String>
+  },
+  q: __cedar::decimal,
+  r?: {
+    ""?: Set<__cedar::String>
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

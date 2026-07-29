@@ -1,0 +1,9 @@
+// Forbid Read when document starts with BLOCKED or is too short (< 3 chars)
+forbid (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Strings::Matches(context.input.document, "^BLOCKED").matched == true || Strings::Length(context.input.document).length < 3
+};

@@ -1,0 +1,450 @@
+{
+  "policies": "corpus-tests/ecde065f24d8116517c4401d6a40800362d803f7.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/ecde065f24d8116517c4401d6a40800362d803f7.entities.json",
+  "schema": "corpus-tests/ecde065f24d8116517c4401d6a40800362d803f7.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "Debia;4": {
+            "$\u0003\u0003\u0003": {
+              "__entity": {
+                "type": "a",
+                "id": ""
+              }
+            },
+            "$\u0003\u0003\u0003\u0003\u0003\u0003\u0001\u0014": {
+              "": "",
+              "$\u0003\u0003\u0003": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              },
+              "3": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              },
+              "A\u0003$\u0003\u0003\u0003\u0003D": ""
+            },
+            "3": {
+              "__extn": {
+                "fn": "ip",
+                "arg": "0.0.0.0"
+              }
+            }
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "Debia;4": {
+            "$\u0003\u0003\u0003": {
+              "__entity": {
+                "type": "a",
+                "id": ""
+              }
+            },
+            "$\u0003\u0003\u0003\u0003\u0003\u0003\u0001\u0014": {
+              "": "",
+              "$\u0003\u0003\u0003": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              },
+              "3": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              },
+              "A\u0003$\u0003\u0003\u0003\u0003D": ""
+            },
+            "3": {
+              "__extn": {
+                "fn": "ip",
+                "arg": "0.0.0.0"
+              }
+            }
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "Debia;4": {
+            "$\u0003\u0003\u0003": {
+              "__entity": {
+                "type": "a",
+                "id": ""
+              }
+            },
+            "$\u0003\u0003\u0003\u0003\u0003\u0003\u0001\u0014": {
+              "": "",
+              "$\u0003\u0003\u0003": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              },
+              "3": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              },
+              "A\u0003$\u0003\u0003\u0003\u0003D": ""
+            },
+            "3": {
+              "__extn": {
+                "fn": "ip",
+                "arg": "0.0.0.0"
+              }
+            }
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "Debia;4": {
+            "$\u0003\u0003\u0003": {
+              "__entity": {
+                "type": "a",
+                "id": ""
+              }
+            },
+            "$\u0003\u0003\u0003\u0003\u0003\u0003\u0001\u0014": {
+              "": "",
+              "$\u0003\u0003\u0003": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              },
+              "3": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              },
+              "A\u0003$\u0003\u0003\u0003\u0003D": ""
+            },
+            "3": {
+              "__extn": {
+                "fn": "ip",
+                "arg": "0.0.0.0"
+              }
+            }
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "Debia;4": {
+            "$\u0003\u0003\u0003": {
+              "__entity": {
+                "type": "a",
+                "id": ""
+              }
+            },
+            "$\u0003\u0003\u0003\u0003\u0003\u0003\u0001\u0014": {
+              "": "",
+              "$\u0003\u0003\u0003": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              },
+              "3": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              },
+              "A\u0003$\u0003\u0003\u0003\u0003D": ""
+            },
+            "3": {
+              "__extn": {
+                "fn": "ip",
+                "arg": "0.0.0.0"
+              }
+            }
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "Debia;4": {
+            "$\u0003\u0003\u0003": {
+              "__entity": {
+                "type": "a",
+                "id": ""
+              }
+            },
+            "$\u0003\u0003\u0003\u0003\u0003\u0003\u0001\u0014": {
+              "": "",
+              "$\u0003\u0003\u0003": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              },
+              "3": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              },
+              "A\u0003$\u0003\u0003\u0003\u0003D": ""
+            },
+            "3": {
+              "__extn": {
+                "fn": "ip",
+                "arg": "0.0.0.0"
+              }
+            }
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "Debia;4": {
+            "$\u0003\u0003\u0003": {
+              "__entity": {
+                "type": "a",
+                "id": ""
+              }
+            },
+            "$\u0003\u0003\u0003\u0003\u0003\u0003\u0001\u0014": {
+              "": "",
+              "$\u0003\u0003\u0003": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              },
+              "3": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              },
+              "A\u0003$\u0003\u0003\u0003\u0003D": ""
+            },
+            "3": {
+              "__extn": {
+                "fn": "ip",
+                "arg": "0.0.0.0"
+              }
+            }
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "Debia;4": {
+            "$\u0003\u0003\u0003": {
+              "__entity": {
+                "type": "a",
+                "id": ""
+              }
+            },
+            "$\u0003\u0003\u0003\u0003\u0003\u0003\u0001\u0014": {
+              "": "",
+              "$\u0003\u0003\u0003": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              },
+              "3": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              },
+              "A\u0003$\u0003\u0003\u0003\u0003D": ""
+            },
+            "3": {
+              "__extn": {
+                "fn": "ip",
+                "arg": "0.0.0.0"
+              }
+            }
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+@gC("")
+entity a = {
+  Z00?: __cedar::String
+} tags a;
+
+@cS
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

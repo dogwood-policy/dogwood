@@ -1,0 +1,18 @@
+entity K enum [""];
+
+entity PB enum [""];
+
+entity Pf enum [""];
+
+entity gB = {
+  A?: __cedar::String
+};
+
+entity r enum [""];
+
+action "action" appliesTo {
+  principal: [gB],
+  resource: [gB],
+  context: {}
+};
+

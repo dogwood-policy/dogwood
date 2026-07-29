@@ -1,0 +1,13 @@
+// General `exists` (NOT the `let`-replacement mode): the existential
+// correlates two DIFFERENT predicates through its bound variable — "some
+// single user both logged in and made a transfer in the last hour". The
+// join on `u` is the whole point; a broken join that accepted "some login
+// AND some (other-user) transfer" would wrongly permit the second Alert.
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (u: String). (formerly within 1h Drupe::Action::"Login"::request{ input.user: u } && formerly within 1h Drupe::Action::"Transfer"::request{ input.user: u })};

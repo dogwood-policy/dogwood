@@ -1,0 +1,16 @@
+// UNSOUNDNESS repro (U1b): a `sum` whose summand's ONLY occurrence in the
+// `where` body is under a negation. Same infinite-relation defect as the
+// `count` case (2130), with a sharper trap: the negated body produces witness
+// rows carrying no `a` column, so the sum silently evaluates to 0 — exactly
+// the "silently sums 0" failure the summand-in-`for`-list rule exists to
+// prevent, reintroduced through an accepted formula.
+//
+// Expected: rejected at parse-time binding checks — the `for`-variable `a`
+// must be range-restricted by a positive atom in the body.
+permit (principal, action == Drupe::Action::"Alert", resource)
+when temporal {
+    exists (nn: Long). (
+        (sum a for (a: Long). where (!(formerly within 1h Drupe::Action::"Transfer"::request{ input.amount: a }))) == nn
+        && nn == 0
+    )
+};

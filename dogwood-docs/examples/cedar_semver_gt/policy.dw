@@ -1,0 +1,15 @@
+// RFC 0061 worked example: `semver` builds a { major, minor, patch }
+// record that `semverGT` compares. Nesting one macro call as an argument
+// to another is allowed (call arguments are expanded first).
+def cedar semver(?major, ?minor, ?patch) {
+    { major: ?major, minor: ?minor, patch: ?patch }
+};
+def cedar semverGT(?a, ?b) {
+    if ?a.major == ?b.major
+    then (if ?a.minor == ?b.minor then ?a.patch > ?b.patch else ?a.minor > ?b.minor)
+    else ?a.major > ?b.major
+};
+
+@id("semver_gt_constant")
+permit (principal, action, resource)
+when { semverGT(semver(2, 1, 1), semver(2, 1, 0)) };

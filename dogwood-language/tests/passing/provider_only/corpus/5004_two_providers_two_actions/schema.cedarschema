@@ -1,0 +1,18 @@
+// Two provider rules on two DIFFERENT actions (cross-pollination): under
+// unconditional execution BOTH providers evaluate on BOTH actions' events
+// (the off-action argument arrives Null -> sentinel). Also declares a PURE
+// ACTION GROUP (`action "Ops";`, no appliesTo): it can never receive a
+// request, and the grafting passes must skip it.
+namespace Drupe {
+  entity OAuthUser;
+  entity Gateway;
+  action "Ops";
+  action "Read" in [Action::"Ops"] appliesTo {
+    principal: [OAuthUser], resource: [Gateway],
+    context: { input: { document: String } }
+  };
+  action "Post" in [Action::"Ops"] appliesTo {
+    principal: [OAuthUser], resource: [Gateway],
+    context: { input: { message: String } }
+  };
+}

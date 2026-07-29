@@ -1,0 +1,15 @@
+// Forbid Approve if the approver's Submit has NOT been revoked since their Login
+// (i.e., the approver submitted something and it hasn't been cleared)
+// This uses without-since: !Revoke since Login means "no Revoke since Login" 
+// which is true when Login exists and no Revoke happened after it.
+// Here: forbid if Submit exists since Login (using positive since would require
+// Submit at every point, so we use formerly for the Submit check separately).
+// Actually: forbid if the approver submitted the same request (self-approval)
+forbid (
+    principal,
+    action == Drupe::Action::"Approve",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Submit"::request{ input.user: context.input.approver, input.request_id: context.input.request_id }
+};

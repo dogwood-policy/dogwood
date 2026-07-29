@@ -1,0 +1,5 @@
+// Decimals are ordered with the decimal comparison methods, not < / <=
+// (which do not type-check on decimals). Guard the optional output first.
+@id("sell_small_proceeds")
+permit ( principal, action == Drupe::Action::"SellShares", resource )
+when { context has output && context.output.proceeds.lessThan(decimal("0.5")) };

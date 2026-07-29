@@ -1,0 +1,21 @@
+// A custom event schema that keeps the standard request/resolution kinds
+// and reserved scope fields, but ALSO injects an extra reserved field
+// `__drupe_sessionid` on every event. This exercises injecting an
+// additional (non-standard) reserved field alongside the usual ones, and
+// matching a temporal predicate on it.
+decision event <A>::request {
+    ...inputs(A),
+    callerPrincipal:      principalType(A),
+    callerResource:       resourceType(A),
+    requestId:            String,
+    __drupe_sessionid:  String,
+}
+
+event <A>::response {
+    ...inputs(A),
+    ...outputs(A),
+    callerPrincipal:      principalType(A),
+    callerResource:       resourceType(A),
+    requestId:            String,
+    __drupe_sessionid:  String,
+}

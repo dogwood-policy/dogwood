@@ -1,0 +1,18 @@
+{
+  "availableProviders": {
+    "Content::Risk": {
+      "argumentTypes": [
+        { "paramType": "string" }
+      ],
+      "outputType": {
+        "paramType": "record",
+        "fields": { "severityScore": { "paramType": "decimal" } },
+        "required": ["severityScore"]
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "risk.rhai"
+      }
+    }
+  }
+}

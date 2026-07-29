@@ -1,0 +1,39 @@
+namespace r::V::h::r {
+  entity a;
+
+  action "" in [r::V::h::r::Action::":p", r::V::h::r::Action::"=Debian ", r::V::h::r::Action::"0", r::V::h::r::Action::"\u{1d}", r::V::h::r::Action::"V@", r::V::h::r::Action::"\u{1b}", r::V::h::r::Action::"\u{7f}", r::V::h::r::Action::"VV", r::V::h::r::Action::"\':", r::V::h::r::Action::"VH"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      Y4?: __cedar::String
+    }
+  };
+
+  action "\u{1b}" in [r::V::h::r::Action::"\u{7f}", r::V::h::r::Action::"VV", r::V::h::r::Action::"\':", r::V::h::r::Action::"VH"];
+
+  action "\u{1d}" in [r::V::h::r::Action::"V@", r::V::h::r::Action::"\u{1b}", r::V::h::r::Action::"\u{7f}", r::V::h::r::Action::"VV", r::V::h::r::Action::"\':", r::V::h::r::Action::"VH"];
+
+  action "\':" in [r::V::h::r::Action::"VH"];
+
+  action "0" in [r::V::h::r::Action::"\u{1d}", r::V::h::r::Action::"V@", r::V::h::r::Action::"\u{1b}", r::V::h::r::Action::"\u{7f}", r::V::h::r::Action::"VV", r::V::h::r::Action::"\':", r::V::h::r::Action::"VH"];
+
+  action ":p" in [r::V::h::r::Action::"=Debian ", r::V::h::r::Action::"0", r::V::h::r::Action::"\u{1d}", r::V::h::r::Action::"V@", r::V::h::r::Action::"\u{1b}", r::V::h::r::Action::"\u{7f}", r::V::h::r::Action::"VV", r::V::h::r::Action::"\':", r::V::h::r::Action::"VH"];
+
+  action "=Debian " in [r::V::h::r::Action::"0", r::V::h::r::Action::"\u{1d}", r::V::h::r::Action::"V@", r::V::h::r::Action::"\u{1b}", r::V::h::r::Action::"\u{7f}", r::V::h::r::Action::"VV", r::V::h::r::Action::"\':", r::V::h::r::Action::"VH"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      EYgY0Ec000000?: __cedar::String,
+      g?: __cedar::String
+    }
+  };
+
+  action "V@" in [r::V::h::r::Action::"\u{1b}", r::V::h::r::Action::"\u{7f}", r::V::h::r::Action::"VV", r::V::h::r::Action::"\':", r::V::h::r::Action::"VH"];
+
+  action "VH";
+
+  action "VV" in [r::V::h::r::Action::"\':", r::V::h::r::Action::"VH"];
+
+  action "\u{7f}" in [r::V::h::r::Action::"VV", r::V::h::r::Action::"\':", r::V::h::r::Action::"VH"];
+}
+

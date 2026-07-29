@@ -1,0 +1,15 @@
+{
+  "availableProviders": {
+    "Num::Base": {
+      "argumentTypes": [{ "paramType": "string" }],
+      "outputType": { "paramType": "integer" },
+      "availableMethods": {
+        "double": {
+          "argumentTypes": [],
+          "outputType": { "paramType": "integer" }
+        }
+      },
+      "implementation": { "kind": "rhai", "scriptFile": "num.rhai" }
+    }
+  }
+}

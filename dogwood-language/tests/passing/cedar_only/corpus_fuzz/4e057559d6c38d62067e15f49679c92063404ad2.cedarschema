@@ -1,0 +1,15 @@
+entity a tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: {
+      "3"?: __cedar::String,
+      "336"?: __cedar::String,
+      "6"?: __cedar::String,
+      A?: __cedar::String
+    }
+  }
+};
+

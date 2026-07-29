@@ -1,0 +1,22 @@
+// Custom event schema declaring a NESTED reserved field. `__drupe` is
+// a named field with a record type, so it becomes a group addressed as
+// `__drupe.sessionid` — author-chosen hierarchy for an injected field,
+// distinct from the flat `caller*` reserved set. This exercises the
+// record-typed named field path end to end (derive → wire → match).
+
+decision event <A>::request {
+    ...inputs(A),
+    callerPrincipal:  principalType(A),
+    callerResource:   resourceType(A),
+    requestId:        String,
+    __drupe:        { sessionid: String },
+}
+
+event <A>::response {
+    ...inputs(A),
+    ...outputs(A),
+    callerPrincipal:  principalType(A),
+    callerResource:   resourceType(A),
+    requestId:        String,
+    __drupe:        { sessionid: String },
+}

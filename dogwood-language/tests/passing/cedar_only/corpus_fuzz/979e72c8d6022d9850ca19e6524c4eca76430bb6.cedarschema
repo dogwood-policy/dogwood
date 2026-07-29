@@ -1,0 +1,9 @@
+entity a;
+
+@A
+action "3  `       \'          ZZZ" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

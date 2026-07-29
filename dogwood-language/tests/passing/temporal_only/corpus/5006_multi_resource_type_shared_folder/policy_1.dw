@@ -1,0 +1,12 @@
+// ONE policy covering resources of both types through their shared parent:
+// any Read of a resource in Folder::"prod" requires a same-user Login
+// within the hour. Resources outside the folder (of either type) match no
+// policy and stay denied.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource in Drupe::Folder::"prod"
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

@@ -1,0 +1,17 @@
+namespace A::A {
+  @K3u33333333("")
+  @_YlU1Fnnw2nn13("")
+  @f("")
+  @i4W1233("")
+  @r("")
+  entity a = {
+    A: A::A::a
+  } tags A::A::a;
+
+  action "" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

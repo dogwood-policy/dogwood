@@ -1,0 +1,23 @@
+entity a;
+
+action "" in [Action::":;", Action::"V\u{1d}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    I?: __cedar::ipaddr
+  }
+};
+
+@O
+action ":;" in [Action::"V\u{1d}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "V\u{1d}" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

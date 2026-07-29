@@ -1,0 +1,24 @@
+namespace g3 {
+  entity A0000000000 enum [""];
+
+  entity BFg enum [""];
+
+  entity Mnn enum [""];
+
+  entity Pn enum [""];
+
+  entity i445443 enum [""];
+
+  entity r enum [""];
+
+  entity yd enum [""];
+
+  entity ye enum [""];
+
+  action "action" appliesTo {
+    principal: [BFg],
+    resource: [BFg],
+    context: {}
+  };
+}
+

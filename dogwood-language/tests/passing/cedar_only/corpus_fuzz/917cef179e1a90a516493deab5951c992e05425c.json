@@ -1,0 +1,170 @@
+{
+  "policies": "corpus-tests/917cef179e1a90a516493deab5951c992e05425c.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/917cef179e1a90a516493deab5951c992e05425c.entities.json",
+  "schema": "corpus-tests/917cef179e1a90a516493deab5951c992e05425c.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": false,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "jx::a",
+        "id": "!\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018"
+      },
+      "action": {
+        "type": "jx::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "jx::a",
+        "id": "!\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "jx::a",
+        "id": "!\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018"
+      },
+      "action": {
+        "type": "jx::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "jx::a",
+        "id": "!\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "jx::a",
+        "id": "!\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018"
+      },
+      "action": {
+        "type": "jx::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "jx::a",
+        "id": "!\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "jx::a",
+        "id": "!\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018"
+      },
+      "action": {
+        "type": "jx::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "jx::a",
+        "id": "!\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "jx::a",
+        "id": "!\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018"
+      },
+      "action": {
+        "type": "jx::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "jx::a",
+        "id": "!\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "jx::a",
+        "id": "!\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018"
+      },
+      "action": {
+        "type": "jx::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "jx::a",
+        "id": "!\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "jx::a",
+        "id": "!\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018"
+      },
+      "action": {
+        "type": "jx::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "jx::a",
+        "id": "!\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "jx::a",
+        "id": "!\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018"
+      },
+      "action": {
+        "type": "jx::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "jx::a",
+        "id": "!\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}

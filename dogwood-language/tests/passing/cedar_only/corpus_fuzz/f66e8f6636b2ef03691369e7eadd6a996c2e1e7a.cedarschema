@@ -1,0 +1,15 @@
+entity A00 enum [""];
+
+entity P enum [""];
+
+@XBXu00000000
+entity r enum ["\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"];
+
+entity yx_a enum [""];
+
+action "action" appliesTo {
+  principal: [P],
+  resource: [P],
+  context: {}
+};
+

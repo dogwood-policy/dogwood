@@ -1,0 +1,419 @@
+// =============================================================================
+// Cedar policy grammar for `pest`
+// =============================================================================
+//
+// This grammar describes the Cedar policy language
+// (https://docs.cedarpolicy.com/). It is a pest translation of the upstream
+// LALRPOP grammar at
+//   cedar-policy-core/src/parser/grammar.lalrpop
+// (cedar-policy-core v4.10.0).
+//
+// Design notes
+// ------------
+//
+//  * We intentionally keep the grammar flat and readable. Where the upstream
+//    grammar layered rules to encode operator precedence (`Or` wraps `And`
+//    wraps `Relation` ...), we keep those layers here too, because the
+//    downstream consumer is Cedar's own CST — and Cedar's CST has the same
+//    shape. Keeping our rule shape aligned with the CST shape makes the
+//    pest-tree → CST conversion almost mechanical.
+//
+//  * `WHITESPACE` and `COMMENT` are implicit between tokens in non-atomic
+//    rules. Atomic rules (`@{ ... }`) handle their own spacing.
+//
+//  * Reserved words ("keywords") are *contextual* in Cedar: most of them can
+//    appear as ordinary identifiers in some positions (e.g. `.when` is a
+//    valid field access, `{ if: 1 }` is a valid record literal key). We
+//    therefore keep `ident` permissive and define distinct `common_ident` /
+//    `any_ident` / `if_ident` rules mirroring the upstream grammar.
+//
+//  * Template slots (`?principal`, `?resource`, `?other`) are tokenized up
+//    front so they never collide with the `?ident` syntactic space.
+
+// =============================================================================
+// 1. Lexical
+// =============================================================================
+
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+
+// Cedar has only line comments.
+COMMENT    = _{ "//" ~ (!("\n" | "\r") ~ ANY)* }
+
+ident_start = _{ ASCII_ALPHA | "_" }
+ident_cont  = _{ ASCII_ALPHANUMERIC | "_" }
+
+// Bare identifier token (does not exclude reserved words on its own).
+// Atomic so whitespace cannot appear inside an identifier.
+ident = @{ ident_start ~ ident_cont* }
+
+// `def` declares a macro at the top level; the kind keyword (`cedar` or
+// `temporal`) chooses the body sub-parser. These are atomic with a
+// trailing word boundary so they cannot swallow the prefix of an
+// ordinary identifier (`define`, `cedartype`, `temporalThing`).
+kw_def           = @{ "def"      ~ !ident_cont }
+kw_def_cedar     = @{ "cedar"    ~ !ident_cont }
+kw_def_temporal  = @{ "temporal" ~ !ident_cont }
+
+// Keyword matcher: matches the literal word followed by a word boundary.
+// Atomic so whitespace between the word and the following character cannot
+// fool the lookahead.
+kw_true      = @{ "true"      ~ !ident_cont }
+kw_false     = @{ "false"     ~ !ident_cont }
+kw_if        = @{ "if"        ~ !ident_cont }
+kw_then      = @{ "then"      ~ !ident_cont }
+kw_else      = @{ "else"      ~ !ident_cont }
+kw_in        = @{ "in"        ~ !ident_cont }
+kw_has       = @{ "has"       ~ !ident_cont }
+kw_like      = @{ "like"      ~ !ident_cont }
+kw_is        = @{ "is"        ~ !ident_cont }
+kw_permit    = @{ "permit"    ~ !ident_cont }
+kw_forbid    = @{ "forbid"    ~ !ident_cont }
+kw_when      = @{ "when"      ~ !ident_cont }
+kw_unless    = @{ "unless"    ~ !ident_cont }
+kw_principal = @{ "principal" ~ !ident_cont }
+kw_action    = @{ "action"    ~ !ident_cont }
+kw_resource  = @{ "resource"  ~ !ident_cont }
+kw_context   = @{ "context"   ~ !ident_cont }
+
+// Integer literal: positive only at the token level. Negative numbers are
+// expressed via the unary `-` operator. Matches upstream behavior.
+number = @{ ASCII_DIGIT+ }
+
+// String literal: double-quoted, with `\\x` escape sequences accepted
+// verbatim. The inner contents are left for a later semantic pass
+// (`cedar_policy_core::parser::unescape`) to decode and validate.
+string = @{ "\"" ~ ( "\\" ~ ANY | (!"\"" ~ !"\\" ~ ANY) )* ~ "\"" }
+
+// Template slots. `?principal` and `?resource` are the only valid ones
+// today; the generic `?ident` form is tokenized so we can produce a
+// meaningful "unknown slot" CST node instead of a raw parse error.
+slot_principal = @{ "?principal" ~ !ident_cont }
+slot_resource  = @{ "?resource"  ~ !ident_cont }
+slot_other     = @{ "?" ~ ident_start ~ ident_cont* }
+
+// -- Identifier roles -------------------------------------------------------
+//
+// Upstream distinguishes:
+//   * `CommonIdent` = any keyword except `if`, `true`, `false`, OR a bare
+//      identifier. Used in most positions.
+//   * `SpecialIdent` = `if`, `true`, `false`. Kept apart so they don't get
+//      swallowed as `Name`s in expression contexts.
+//   * `AnyIdent` = `CommonIdent | SpecialIdent`.
+//
+// We follow the same split. Each rule is compound-atomic so inner token
+// captures are preserved.
+
+common_ident = ${
+      kw_permit
+    | kw_forbid
+    | kw_when
+    | kw_unless
+    | kw_in
+    | kw_has
+    | kw_like
+    | kw_is
+    | kw_then
+    | kw_else
+    | kw_principal
+    | kw_action
+    | kw_resource
+    | kw_context
+    | bare_ident
+}
+
+special_ident = ${ kw_if | kw_true | kw_false }
+
+any_ident = ${ special_ident | common_ident }
+
+// A plain-identifier, excluding every reserved word. Used inside
+// `common_ident` as the fallback arm.
+bare_ident = @{
+    !(
+          ( "true"      | "false"    | "if"
+          | "then"      | "else"
+          | "in"        | "has"      | "like"   | "is"
+          | "permit"    | "forbid"   | "when"   | "unless"
+          | "principal" | "action"   | "resource" | "context"
+          ) ~ !ident_cont
+    )
+    ~ ident_start ~ ident_cont*
+}
+
+// =============================================================================
+// 2. Top-level productions
+// =============================================================================
+
+// Entry rules: these wrap a production with `SOI` / `EOI` to ensure
+// the parser consumes the whole input (and tolerates leading/trailing
+// whitespace and comments, since the `~` between SOI/EOI and the
+// wrapped rule triggers pest's implicit skipping). Regular callers
+// should use these rather than the bare `policy` / `expr` rules.
+//
+// These are non-silent (no leading `_`) so that the parse result
+// surfaces as a single top-level pair; pest's `parse` method doesn't
+// implicitly enforce full-input consumption, so the EOI inside these
+// rules is what rejects trailing garbage.
+policy_entry = { SOI ~ policy ~ EOI }
+expr_entry   = { SOI ~ expr   ~ EOI }
+
+// policies := { def_decl | policy }
+//
+// A file is a sequence of top-level macro definitions interleaved with
+// policy rules. Macro definitions are processed before the policies are
+// validated (the expansion pass substitutes their bodies into the
+// surrounding policy expressions).
+policies = { SOI ~ (def_decl | policy)* ~ EOI }
+
+// def_decl := "def" ("cedar" | "temporal") IDENT "(" param_list? ")"
+//             "{" body "}" ";"
+//
+// The body is captured as raw text (`block_inner`) and dispatched to
+// the cedar or temporal sub-parser depending on the kind. Params are
+// `?`-prefixed identifiers; their inner names are kept unprefixed in the
+// AST.
+def_decl       = { kw_def ~ def_kind ~ ident ~ "(" ~ param_list? ~ ")" ~ "{" ~ block_inner ~ "}" ~ ";" }
+def_kind       = { kw_def_cedar | kw_def_temporal }
+param_list     = { param ~ ("," ~ param)* }
+param          = ${ "?" ~ ident }
+
+// policy := { annotation } effect "(" scope ")" { cond } ";"
+//
+// `effect` is permissively any identifier at the grammar level; the
+// semantic pass enforces that it is `permit` or `forbid`. This mirrors
+// upstream and gives better error messages than a hard parse failure.
+policy = {
+    annotation*
+    ~ effect
+    ~ "(" ~ scope ~ ")"
+    ~ cond*
+    ~ ";"
+}
+
+effect = { any_ident }
+
+// scope := variable_def { "," variable_def } [","]
+scope = { (variable_def ~ ("," ~ variable_def)*)? ~ ","? }
+
+// annotation := "@" any_ident [ "(" string ")" ]
+annotation = { "@" ~ any_ident ~ ("(" ~ string ~ ")")? }
+
+// variable_def := any_ident [ ":" name ] [ "is" add ] [ rel_op expr ]
+//
+// The `:` form (`principal : User`) is legacy syntax; it still parses so
+// we can produce a "use `is` instead" diagnostic in the AST-building pass.
+// The `is` RHS is parsed as `add` rather than `name` to disambiguate from
+// a trailing `in` operator — matching upstream exactly.
+variable_def = {
+    any_ident
+    ~ (":" ~ name)?
+    ~ (kw_is ~ add)?
+    ~ (rel_op ~ expr)?
+}
+
+// cond := cond_kw ( extension_marker | guardrails_tag? "{" expr "}" )
+//
+// A condition clause is one of:
+//   when { <cedar expr> }                — Cedar expression (structured)
+//   unless { <cedar expr> }              — Cedar expression, negated
+//   when temporal { <temporal body> }    — Temporal dialect (tagged form)
+//   unless temporal { <temporal body> }  — Temporal dialect negated
+//   when guardrails { <cedar expr> }     — Cedar expression (see below)
+//   unless guardrails { <cedar expr> }   — Cedar expression, negated
+//
+// A rule may have any number of these in any combination. They are
+// implicitly conjoined: the rule fires iff all `when` clauses hold
+// and no `unless` clause holds.
+//
+// `temporal { … }` is a genuine sub-language: the tag sits outside the
+// braces and the braced body is captured as *raw text* (`block_inner`)
+// and dispatched to the temporal sub-parser. Because an `extension_marker`
+// is also a `primary` (see below), a temporal marker may appear *inside*
+// an expression (`when { context.x > 5 && temporal { … } }`).
+//
+// `guardrails { … }`, by contrast, is **transparent sugar** for a bare
+// `{ … }` clause: its body is a full Cedar `expr`, parsed identically to
+// an untagged `when { … }`. An information-provider invocation inside it
+// (`Ns::Fn(args)…`) is recognized and hoisted at *lowering* time — exactly
+// as in a bare `when { … }` — so the tag adds nothing semantically. It is
+// retained only for surface compatibility with the reference monitor Dogwood
+// descends from and is discarded by the parser (see `build_cond`); there is no
+// dedicated `guardrails` sub-language and no closed provider grammar.
+cond = { cond_kw ~ (extension_marker | guardrails_tag? ~ "{" ~ expr ~ "}") }
+cond_kw = { any_ident }
+
+// The temporal extension marker, as it appears mid-expression (a `primary`)
+// or as a tagged clause body: `temporal { … }`. The braced body is raw text
+// dispatched to the temporal sub-parser.
+//
+// The tag is atomic with a trailing word boundary so it cannot swallow
+// the prefix of an ordinary identifier (`temporalThing`).
+extension_marker = { dialect_tag ~ "{" ~ block_inner ~ "}" }
+dialect_tag = @{ "temporal" ~ !ident_cont }
+// The `guardrails` clause tag — atomic with a trailing word boundary so it
+// cannot swallow the prefix of an ordinary identifier (`guardrailsThing`).
+// It is a clause-level tag only (not a `primary`), mirroring the reference
+// monitor Dogwood descends from, and the parser drops it: the body is plain Cedar.
+guardrails_tag = @{ "guardrails" ~ !ident_cont }
+// `block_inner` is whatever bytes lie between a temporal marker's braces,
+// with balanced inner braces honored.
+block_inner = @{ (string | "{" ~ block_inner ~ "}" | (!"{" ~ !"}" ~ ANY) )* }
+
+// =============================================================================
+// 3. Expressions
+// =============================================================================
+//
+// The user asked for a flat grammar with precedence handled outside the
+// grammar. We honor precedence here because our output type is Cedar's
+// own layered CST (`Or { initial, extended }` / `And { ... }` / ...).
+// Matching the grammar shape to the CST shape makes the tree builder
+// straightforward. The layering is a directed one-way chain, not the
+// fully ambiguous precedence climb found in hand-rolled parsers.
+
+// expr := if_expr | or
+expr = { if_expr | or }
+
+if_expr = { kw_if ~ expr ~ kw_then ~ expr ~ kw_else ~ expr }
+
+// or  := and  { "||" and }
+or  = { and ~ ("||" ~ and)* }
+
+// and := rel  { "&&" rel }
+and = { rel ~ ("&&" ~ rel)* }
+
+// rel := add ( { rel_op add }
+//            | "has"  has_rhs
+//            | "like" add
+//            | "is"   add [ "in" add ]
+//            )?
+//
+// The ordering of the alternatives matters: `has_tail` / `like_tail` /
+// `is_tail` are tried before the generic `rel_op_tail` so the keyword
+// operators win over a chain of regular comparison operators.
+rel = { add ~ (has_tail | like_tail | is_tail | rel_op_tail)? }
+
+rel_op_tail = { (rel_op ~ add)+ }
+
+// `has` accepts either a regular `add` on the right or — per RFC 62 — an
+// identifier-sequence beginning with the otherwise-reserved word `if`.
+has_tail = { kw_has ~ has_rhs }
+has_rhs  = { has_if_rhs | add }
+has_if_rhs = { kw_if ~ mem_access* }
+
+like_tail = { kw_like ~ add }
+
+is_tail   = { kw_is ~ add ~ (kw_in ~ add)? }
+
+// rel_op := "<=" | "<" | ">=" | ">" | "!=" | "==" | "in" | "="
+//
+// `=` is intentionally captured here so the semantic layer can emit a
+// "did you mean `==`?" hint. Longer forms come first because pest's `|`
+// is ordered.
+rel_op = {
+      "<=" | ">=" | "!=" | "==" | "<" | ">"
+    | kw_in
+    | "="
+}
+
+// add := mult { add_op mult }
+add  = { mult ~ (add_op ~ mult)* }
+
+// mult := unary { mult_op unary }
+mult = { unary ~ (mult_op ~ unary)* }
+
+add_op  = { "+" | "-" }
+mult_op = { "*" | "/" | "%" }
+
+// unary := { "!" } member | { "-" } member | member
+//
+// Upstream distinguishes homogeneous runs of `!` (logical not) from
+// homogeneous runs of `-` (arithmetic negation) and rejects mixed
+// combinations such as `!-x` or `-!x` (because a bare `-x` or `!x` is
+// not a valid `member`: members start with a `primary`, and neither `-`
+// nor `!` can start a primary). We encode the same here, but keep the
+// runs *non-atomic* so that whitespace and line comments may appear
+// between consecutive `!`s (or `-`s) — upstream tokenizes each `!` and
+// `-` individually and relies on the implicit whitespace between tokens,
+// so inputs like:
+//     !  // inner comment
+//     ! 1
+// must parse. The tree builder counts the actual `!` / `-` characters
+// in the matched span to produce `NegOp::Bang(n)` / `NegOp::Dash(n)`
+// (with overflow variants for runs of 5 or more, matching upstream).
+unary    = { (bang_run | dash_run)? ~ member }
+bang_run = { ("!")+ }
+dash_run = { ("-")+ }
+
+// member := primary { mem_access }
+member = { primary ~ mem_access* }
+
+// mem_access := "." any_ident | "(" [ expr { "," expr } ] ")" | "[" expr "]"
+mem_access = { access_field | access_call | access_index }
+access_field = { "." ~ any_ident }
+access_call  = { "(" ~ (expr ~ ("," ~ expr)*)? ~ ","? ~ ")" }
+access_index = { "[" ~ expr ~ "]" }
+
+// primary := extension_marker | literal | ref | name | slot | "(" expr ")" | list | record
+//
+// Order is important: `extension_marker` (`temporal { … }`) is tried
+// first so its dialect tag wins over a bare `name` that would otherwise
+// swallow `temporal` as an identifier. `ref` (`Name "::" ...`) must be
+// tried before bare `name`
+// because the two share a prefix. Literals are tried early so `true` /
+// `false` / `42` / `"..."` don't get mis-parsed as identifiers.
+primary = {
+      extension_marker
+    | literal
+    | slot
+    | ref_
+    | name
+    | paren_expr
+    | list
+    | record
+}
+
+paren_expr = { "(" ~ expr ~ ")" }
+list       = { "[" ~ (expr ~ ("," ~ expr)*)? ~ ","? ~ "]" }
+record     = { "{" ~ (rec_init ~ ("," ~ rec_init)*)? ~ ","? ~ "}" }
+
+// rec_init := "if" ":" expr | expr ":" expr
+//
+// Upstream has a dedicated rule for the `if` case because `if` cannot
+// otherwise appear as an expression that would serve as the key. The key
+// side of a record entry is a full expression in principle, but in
+// practice only string keys and identifier keys are meaningful; we accept
+// the full form and let the semantic layer validate it.
+rec_init = { rec_init_if | rec_init_expr }
+rec_init_if   = { kw_if ~ ":" ~ expr }
+rec_init_expr = { expr ~ ":" ~ expr }
+
+// =============================================================================
+// 4. Names, refs, slots, literals
+// =============================================================================
+
+// name := common_ident | any_ident { "::" any_ident }
+//
+// Per upstream: if the name contains no `::`, the (single) segment must
+// be a `common_ident` — so a bare `if` / `true` / `false` never starts a
+// name. If it contains at least one `::`, every segment may be `any_ident`,
+// which is consistent with upstream's `(AnyIdent "::")+ AnyIdent` arm.
+//
+// Note on PEG shape: we write the multi-segment form as one leading ident
+// plus a repeated `"::" ident` tail, rather than `(ident "::")+ ident`.
+// pest's repetition operators are possessive — they do not give back
+// already-consumed characters — and the second form would greedily eat
+// the trailing `::` that should belong to a following `ref_` (e.g. in
+// `Foo::Bar::"alice"`).
+name = { any_ident ~ ("::" ~ any_ident)+ | common_ident }
+
+// ref := name "::" ( string | "{" [ ref_init { "," ref_init } ] "}" )
+ref_         = { name ~ "::" ~ (string | ref_record) }
+ref_record   = { "{" ~ (ref_init ~ ("," ~ ref_init)*)? ~ ","? ~ "}" }
+
+// ref_init := any_ident ":" literal
+ref_init = { any_ident ~ ":" ~ literal }
+
+// slot := "?principal" | "?resource" | "?" ident
+slot = { slot_principal | slot_resource | slot_other }
+
+// literal := "true" | "false" | number | string
+literal = { kw_true | kw_false | number | string }

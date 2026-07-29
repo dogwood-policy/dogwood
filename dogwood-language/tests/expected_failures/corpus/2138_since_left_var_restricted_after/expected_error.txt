@@ -1,0 +1,1 @@
+variable `u` is used in the left operand of a `since` but is restricted neither by the `since` anchor (its right operand) nor by a preceding conjunct; the left of a `since` is a per-step condition and cannot bind `u` — restrict it in the anchor or in a conjunct before the `since`

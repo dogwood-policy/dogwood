@@ -1,0 +1,24 @@
+// Showcase of all three regex operations a provider script can call
+// (regex_is_match / regex_find / regex_count), each surfaced as a field of
+// the `Regex::Analyze` provider's output and projected in the policy.
+//
+// UNWRAPPED form on purpose — no `guardrails { … }` block. The provider
+// calls sit directly in an ordinary Cedar `when { … }`, recognized because
+// `Regex::Analyze` is a declared provider; the projections and comparisons
+// are plain Cedar, combined with `&&`.
+//
+// Permit `Read` only when the document:
+//   1. starts with an uppercase letter        (is_match of `^[A-Z]`),
+//   2. contains at least three digit chars     (count of `[0-9]` >= 3), and
+//   3. its first run of digits is exactly "42" (first_match of `[0-9]+`).
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when {
+    Regex::Analyze(context.input.document, "^[A-Z]").is_match == true
+    && Regex::Analyze(context.input.document, "[0-9]").count >= 3
+    && Regex::Analyze(context.input.document, "[0-9]+").first_match == "42"
+};

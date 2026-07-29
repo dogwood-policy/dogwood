@@ -1,0 +1,12 @@
+namespace r::r::h::r {
+  entity a = {
+    r?: __cedar::String
+  };
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

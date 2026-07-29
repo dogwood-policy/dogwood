@@ -1,0 +1,16 @@
+// PURE-CEDAR PARALLEL to 1037 (bare string for entity). An ordinary Cedar
+// `when` equality: `context.input.mode` on Tool2 is declared an enum entity
+// type `Drupe::Tool2_Input_mode`, compared with `==` against the bare
+// string literal `"read"`. A String is not an entity value — even though
+// `"read"` is a permitted enum id, the entity literal would have to be written
+// `Drupe::Tool2_Input_mode::"read"`. Cedar's strict-mode validator is
+// expected to reject the String-vs-entity comparison as ill-typed.
+//
+// This is the most insidious variant (the string looks right to a human but is
+// the wrong type). It exercises the base Cedar validation path, establishing
+// whether the string-for-entity gap seen in 1037 is specific to the temporal
+// sublanguage.
+//
+// Expected: rejected at `validate` (by Cedar's own validator).
+permit (principal, action == Drupe::Action::"Tool2", resource)
+when { context.input.mode == "read" };

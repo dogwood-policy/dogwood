@@ -1,0 +1,40 @@
+@A
+@AK
+@AKhrp("n")
+@F
+@Q00W00033GB("")
+@dTTTTTT333333("")
+@dTTTTTTTTTTTT("\u{1d}\u{1d}\u{1d}\u{1d}\u{1d}\u{1d}\u{1d}")
+@f
+@g("UUU\u{c}\u{c}\u{1d}\u{1d}\u{1d}\u{1d}\u{1d}\u{1d}\u{1d}\u{1d}")
+@m
+@r("\t\0\0\0")
+@r30N130000RRw
+entity a = {
+  @F
+  @L3("\0\0\0")
+  @LS("")
+  @Qd0RYwnR("&[\u{1d}")
+  M?: a,
+  @A("\0")
+  @AK
+  @AKhrp("n")
+  @F
+  @Q00W00033GB("")
+  @dTTTTTT333333("")
+  @dTTTTTcTTTTTT("\u{1d}\u{1d}\u{1d}\u{1d}\u{1d}\u{1d}\u{1d}\u{1d}\u{1d}\u{1d}\u{1d}\u{1d}\u{1d}\u{1d}\u{1d}")
+  @f
+  @m
+  @r("\t\0\0\0")
+  @r30N130000RRw
+  @vcbbbbmMMMMMMC
+  j?: {  },
+  y?: __cedar::Bool
+};
+
+action "ng" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

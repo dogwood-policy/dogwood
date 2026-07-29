@@ -1,0 +1,28 @@
+// Adjacent to 0916: the same missing-rigid-filter shape, but with a DRIVER
+// predicate joined to the `since` on a variable the ANCHOR binds
+// (`input.doc: d`). In the DSQL backend this routes the since read through
+// the k0-seek join path (`to_join_on_since_key`) instead of the standalone
+// read — so it pins the OTHER same-step compensation site, plus the
+// GuardRel binding lookup across an `exists` scope boundary (the
+// RequestRelation for `context.input.user` sits one binder ABOVE the since).
+//
+// Same semantics as 0916 otherwise: at the anchor's own timepoint (@0) the
+// left is vacuously true over the empty range → PERMIT regardless of the
+// correlation; @10 pins the per-user guard streak over the history path;
+// @20 is the deny control (dave's intervening event breaks eve's streak).
+//
+// Interpreter is the oracle (see expected_1.out). Found by differential
+// review of the temporal-compiler since compensation paths.
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    exists (d: String). (
+        Drupe::Action::"Transfer"::request{ input.doc: d }
+        && (Drupe::Action::"Transfer"::request{ input.user: context.input.user }
+            since within 1h
+            Drupe::Action::"Transfer"::request{ input.doc: d, input.user: "carol" })
+    )
+};

@@ -1,0 +1,12 @@
+entity a = {
+  z?: {
+    "\u{17}": a
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

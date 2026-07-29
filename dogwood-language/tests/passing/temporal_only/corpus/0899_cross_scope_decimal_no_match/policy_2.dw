@@ -1,0 +1,12 @@
+// Permit Read when the user previously made a Transfer of exactly
+// decimal("2.50") that resolved (any output).
+// At a Transfer timepoint the Read scope prevents this from being a
+// determining policy even though the resolved predicate body may be satisfied.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Transfer"::response{ input.user: context.input.user, input.amount: decimal("2.50") }
+};

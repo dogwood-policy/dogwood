@@ -1,0 +1,12 @@
+entity a = {
+  P0?: Set<{
+    "\0\0\0\0\u{1}": a
+  }>
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

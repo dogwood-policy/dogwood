@@ -1,0 +1,18 @@
+entity V3jmP2n3XcGB09;
+
+entity r;
+
+entity ukkkkkkkkkkk1;
+
+action "" in [Action::"s", Action::"l", Action::"X"] appliesTo {
+  principal: [ukkkkkkkkkkk1],
+  resource: [ukkkkkkkkkkk1],
+  context: {}
+};
+
+action "X";
+
+action "l" in [Action::"X"];
+
+action "s" in [Action::"l", Action::"X"];
+

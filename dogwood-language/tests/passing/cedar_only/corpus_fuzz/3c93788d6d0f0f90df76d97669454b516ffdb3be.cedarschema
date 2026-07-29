@@ -1,0 +1,21 @@
+namespace r::r::r::A {
+  entity A enum ["\0\0\0\0!"];
+
+  entity r;
+
+  action "" in [r::r::r::A::Action::"D"] appliesTo {
+    principal: [r],
+    resource: [r],
+    context: {}
+  };
+
+  action "D" appliesTo {
+    principal: [r],
+    resource: [A],
+    context: {
+      A?: __cedar::String,
+      r?: __cedar::String
+    }
+  };
+}
+

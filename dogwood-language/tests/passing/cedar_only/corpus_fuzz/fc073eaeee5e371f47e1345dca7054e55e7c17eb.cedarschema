@@ -1,0 +1,8 @@
+entity AN5cZgY0 enum ["\u{10}\0\0D", "ed", "ion=\u{e}", "", "\u{1d}\u{3}", "[\u{1d}@", "ffd~", "\u{e}", "^", "", "", "[", "\u{3}dddddddddddd\0", "", ":~", "", "", "[c", "\u{3}\u{1d}@", "", "fd~", "\u{1d}$w", "$", "=\u{e}", "$w", "$", "\0\0D", "edi", "\0\0\0\u{10}\0\0D", "ed", "ion", "\u{3}", "[@T", "\u{1d}@gffd~", "\u{e}", "^", "", "", "Debian dddddddddd\u{1d}@", "", "n:~", "\u{1d}@[", ""];
+
+action "action" appliesTo {
+  principal: [AN5cZgY0],
+  resource: [AN5cZgY0],
+  context: {}
+};
+

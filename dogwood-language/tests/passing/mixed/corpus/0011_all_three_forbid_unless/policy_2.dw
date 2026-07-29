@@ -1,0 +1,7 @@
+// Permit Write when tags contains "approved"
+permit (
+    principal,
+    action == Drupe::Action::"Write",
+    resource
+)
+when { context.input.tags.contains("approved") };

@@ -1,0 +1,11 @@
+// Edge case: two zero-arg methods chained .double().double()
+// Each takes the previous stage's output and doubles it.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Num::Base(context.input.document).double().double() > 20
+};

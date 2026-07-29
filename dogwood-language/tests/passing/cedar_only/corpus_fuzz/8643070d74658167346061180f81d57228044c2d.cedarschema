@@ -1,0 +1,10 @@
+namespace Ke::yQ::A0::A::ne {
+  entity a enum [""];
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

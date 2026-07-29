@@ -1,0 +1,12 @@
+entity A;
+
+entity r;
+
+action "UU" in [Action::"UUU\u{c}"] appliesTo {
+  principal: [A, r],
+  resource: [r],
+  context: {}
+};
+
+action "UUU\u{c}";
+

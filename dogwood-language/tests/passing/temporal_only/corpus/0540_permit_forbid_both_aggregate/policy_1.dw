@@ -1,0 +1,14 @@
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    exists (n: Long). ((count for (t: Timepoint). where (Drupe::Action::"Login"::request{ input.user: context.input.user } && tp(t))) == n && n == 0)};
+forbid (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    exists (total: Long). ((sum a for (a: Long), (t: Timepoint). where (formerly within 1h (Drupe::Action::"Transfer"::response{ input.user: context.input.user, input.amount: a } && tp(t)))) == total && total > 50)};

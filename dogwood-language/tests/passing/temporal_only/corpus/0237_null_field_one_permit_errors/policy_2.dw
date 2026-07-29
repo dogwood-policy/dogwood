@@ -1,0 +1,9 @@
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Write"::request{ input.user: context.input.user, input.document: context.input.document }
+};

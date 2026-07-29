@@ -1,0 +1,14 @@
+// Permit SellShares only when the request matches a compound
+// boolean condition built from `&&`, `||`, and `!`. The body
+// reads: "shares is small OR the stock is AMZN, AND the stock
+// is not BLOCKED".
+
+permit (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+)
+when {
+    (context.input.shares < 100 || context.input.stock == "AMZN")
+    && !(context.input.stock == "BLOCKED")
+};

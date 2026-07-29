@@ -1,0 +1,44 @@
+entity a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    r?: {
+      @Mj(">")
+      "": __cedar::Long,
+      "\u{1}"?: __cedar::String,
+      @Bj(">")
+      @M("")
+      @M3("")
+      @M5("bian ")
+      @Mj("")
+      @Mn("")
+      @in("")
+      @r
+      "\u{1d}": __cedar::decimal,
+      ">"?: __cedar::String,
+      @A("")
+      @D0("\0")
+      @M("")
+      @M3("1")
+      @M_
+      @Mj("")
+      @_YlWjjjjjjjjjj("")
+      @hzjjjj33332A("EW")
+      @in("")
+      @r("")
+      @r6Ona3Rjjjj("")
+      @tgYlWjjjjjjjjjjjj("")
+      "?": __cedar::decimal,
+      @M3("")
+      @d
+      "Debian ": __cedar::decimal,
+      @M3("")
+      @Mj
+      @r("hDDs")
+      "V@": __cedar::decimal
+    }
+  }
+};
+

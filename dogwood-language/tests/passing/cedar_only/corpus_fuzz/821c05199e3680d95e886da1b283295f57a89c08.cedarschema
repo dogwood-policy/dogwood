@@ -1,0 +1,16 @@
+namespace R {
+  entity A enum [""];
+
+  entity R enum [""];
+
+  entity S enum [""];
+
+  entity r enum [""];
+
+  action "action" appliesTo {
+    principal: [R],
+    resource: [R],
+    context: {}
+  };
+}
+

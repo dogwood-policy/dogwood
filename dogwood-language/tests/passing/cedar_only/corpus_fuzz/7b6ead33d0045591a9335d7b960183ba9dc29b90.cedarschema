@@ -1,0 +1,22 @@
+entity BFf enum [""];
+
+entity Pf enum [""];
+
+entity g3;
+
+entity v enum ["1"];
+
+entity vkkkkcMVVVV enum [""];
+
+action "" in [Action::"@", Action::"S", Action::":\u{1b}\u{12}"] appliesTo {
+  principal: [g3],
+  resource: [g3],
+  context: {}
+};
+
+action ":\u{1b}\u{12}";
+
+action "@" in [Action::"S", Action::":\u{1b}\u{12}"];
+
+action "S" in [Action::":\u{1b}\u{12}"];
+

@@ -1,0 +1,30 @@
+entity a tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: __cedar::String,
+    D?: __cedar::datetime,
+    I?: __cedar::datetime,
+    N?: __cedar::datetime,
+    P?: __cedar::Bool,
+    P3?: __cedar::String,
+    _?: __cedar::datetime,
+    g31F333f3?: __cedar::datetime,
+    h0?: __cedar::datetime,
+    m3?: __cedar::datetime,
+    n?: __cedar::Bool,
+    @i
+    n33335cZgYlWWV: __cedar::datetime,
+    r?: __cedar::datetime,
+    r3?: __cedar::datetime,
+    r3333333333333?: __cedar::Bool,
+    v?: __cedar::datetime,
+    vR?: __cedar::datetime,
+    @A
+    yqqPbop3333?: __cedar::String,
+    z?: __cedar::String
+  }
+};
+

@@ -1,0 +1,13 @@
+// Scope-driven input typing: because this rule's action scope is
+// pinned to SellShares, `context.input` is the SellShares input
+// record, which declares `shares: Long`. The `< 100` comparison
+// type-checks because `shares` is an integer.
+
+permit (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+)
+when {
+    context.input.shares < 100
+};

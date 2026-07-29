@@ -1,0 +1,19 @@
+// Tests nested `previous` wrapping a `since` expression. The `since`
+// operator requires the right arm to hold at EVERY time point between
+// anchor and decision — including the decision point itself. Since the
+// Alert at @30 is not a Heartbeat, bare `since` fails. Wrapping in
+// `previous within` shifts evaluation to @20 (the prior time point),
+// which does satisfy the chain.
+//
+// Trace: Login(@0) → HB(@10) → HB(@20) → Alert(@30)
+// At @30 with `previous`: checks the since condition up to @20, where
+// HB holds and has a previous HB at @10 → true.
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    previous within 2h (Drupe::Action::"Login"::request{ input.user: context.input.server } since within 2h (Drupe::Action::"Heartbeat"::request{ input.server: context.input.server } && previous within 1h Drupe::Action::"Heartbeat"::request{ input.server: context.input.server }))
+};

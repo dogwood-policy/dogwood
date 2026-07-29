@@ -1,0 +1,30 @@
+entity a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    r?: {
+      ""?: __cedar::datetime,
+      "\0"?: __cedar::datetime,
+      "\0\0"?: __cedar::datetime,
+      "\u{3}\u{1d}w"?: __cedar::datetime,
+      "\u{1d}": a,
+      @vRK3Np3T13310W3
+      "\u{1d}\u{3}": __cedar::ipaddr,
+      "\u{1d}@["?: __cedar::datetime,
+      "\u{1d}of"?: __cedar::String,
+      "$"?: __cedar::datetime,
+      ":pVV"?: __cedar::datetime,
+      ":~"?: __cedar::datetime,
+      "=\u{e}": __cedar::ipaddr,
+      @gC
+      "?\0\0\0": __cedar::Long,
+      "V@"?: __cedar::String,
+      "V@[\u{1d}"?: __cedar::String,
+      @r("")
+      "[@[": __cedar::datetime
+    }
+  }
+};
+

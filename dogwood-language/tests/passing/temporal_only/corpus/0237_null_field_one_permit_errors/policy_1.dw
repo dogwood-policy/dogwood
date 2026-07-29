@@ -1,0 +1,17 @@
+// Two independent permits for Read. Permit A requires a prior
+// Login with matching user. Permit B requires a prior Write with
+// matching user and document.
+//
+// When Login's user field is null, permit A is silenced (the join
+// fails). But permit B still evaluates independently and can fire.
+// This matches Cedar's policy-independence semantics: an error in
+// one policy does not affect another.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

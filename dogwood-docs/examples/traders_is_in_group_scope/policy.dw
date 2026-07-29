@@ -1,0 +1,8 @@
+// `is Type in Group` scope: principal must be an OAuthUser AND a member of
+// the traders team.
+@id("traders_only_scope")
+permit (
+    principal is Drupe::OAuthUser in Drupe::Team::"traders",
+    action == Drupe::Action::"GetStockInfo",
+    resource
+);

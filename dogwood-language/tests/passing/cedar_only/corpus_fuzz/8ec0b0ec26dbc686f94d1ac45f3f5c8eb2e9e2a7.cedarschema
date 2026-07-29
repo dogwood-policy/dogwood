@@ -1,0 +1,14 @@
+namespace B::r::E::P::hs20 {
+  entity A enum [""];
+
+  entity App enum [""];
+
+  entity sYug00 enum [""];
+
+  action "action" appliesTo {
+    principal: [App],
+    resource: [App],
+    context: {}
+  };
+}
+

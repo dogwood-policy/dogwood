@@ -1,0 +1,49 @@
+entity BFf;
+
+entity P;
+
+entity P6RKR06666666666;
+
+entity PFFFFF;
+
+entity PFFFFFFFF000FFFF;
+
+entity PFb244v000000004;
+
+entity Pf;
+
+entity Q3;
+
+entity Q6;
+
+entity Y4466666666666666;
+
+entity g3;
+
+entity r;
+
+entity r333;
+
+action "" in [Action::"S", Action::"?y\u{f}"] appliesTo {
+  principal: [P, Pf, Q3, Y4466666666666666, r333, r, PFFFFFFFF000FFFF, P6RKR06666666666, BFf, PFb244v000000004, Q6, g3],
+  resource: [P, Pf, Q3, Y4466666666666666, r333, r, PFFFFFFFF000FFFF, P6RKR06666666666, BFf, PFb244v000000004, Q6, g3],
+  context: {}
+};
+
+action "?y\u{f}";
+
+action "S" in [Action::"?y\u{f}"] appliesTo {
+  principal: [g3, PFFFFFFFF000FFFF, Pf, P, Q3, Q6],
+  resource: [P, Q6, P6RKR06666666666, r, PFFFFF, PFFFFFFFF000FFFF, Y4466666666666666, BFf, Q3, r333, g3, PFb244v000000004],
+  context: {
+    lH33331QHHHHHHH00?: __cedar::String,
+    r?: __cedar::String
+  }
+};
+
+action "gggg" in [Action::"", Action::"S", Action::"?y\u{f}"] appliesTo {
+  principal: [r, g3, Q6, P6RKR06666666666, PFFFFF, PFFFFFFFF000FFFF, Y4466666666666666, BFf, Q3, Pf],
+  resource: [P, Pf, Q3, Y4466666666666666, r333, r, PFFFFFFFF000FFFF, P6RKR06666666666, BFf, Q6, PFFFFF, PFb244v000000004],
+  context: {}
+};
+

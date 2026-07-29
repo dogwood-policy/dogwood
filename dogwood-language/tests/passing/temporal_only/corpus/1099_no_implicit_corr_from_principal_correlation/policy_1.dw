@@ -1,0 +1,10 @@
+// Read permitted only if the SAME principal logged in recently
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

@@ -1,0 +1,67 @@
+entity a tags __cedar::String;
+
+action "" in [Action::":~", Action::"\u{3}\u{1d}[\u{1d}@w", Action::"$", Action::"=\u{e}", Action::"\u{1d}\u{3}", Action::"@", Action::"$=\u{e}", Action::"[", Action::"\u{3}dddddddddd.", Action::"\u{1}\u{f}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+@A
+@Margml01hy("ction\0\0\0\\")
+action "\u{1}\u{f}";
+
+action "\u{3}\u{1d}[\u{1d}@w" in [Action::"$", Action::"=\u{e}", Action::"\u{1d}\u{3}", Action::"@", Action::"$=\u{e}", Action::"[", Action::"\u{3}dddddddddd.", Action::"\u{1}\u{f}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+@A
+action "\u{3}dddddddddd." in [Action::"\u{1}\u{f}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1d}\u{3}" in [Action::"@", Action::"\u{3}dddddddddd.", Action::"\u{1}\u{f}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "$" in [Action::"=\u{e}", Action::"\u{1d}\u{3}", Action::"@", Action::"$=\u{e}", Action::"[", Action::"\u{3}dddddddddd.", Action::"\u{1}\u{f}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "$=\u{e}" in [Action::"[", Action::"\u{3}dddddddddd.", Action::"\u{1}\u{f}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action ":~" in [Action::"\u{3}\u{1d}[\u{1d}@w", Action::"$", Action::"=\u{e}", Action::"\u{1d}\u{3}", Action::"@", Action::"$=\u{e}", Action::"[", Action::"\u{3}dddddddddd.", Action::"\u{1}\u{f}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "=\u{e}" in [Action::"\u{1d}\u{3}", Action::"@", Action::"$=\u{e}", Action::"[", Action::"\u{3}dddddddddd.", Action::"\u{1}\u{f}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "@" in [Action::"$=\u{e}", Action::"\u{1}\u{f}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "[" in [Action::"\u{3}dddddddddd."] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

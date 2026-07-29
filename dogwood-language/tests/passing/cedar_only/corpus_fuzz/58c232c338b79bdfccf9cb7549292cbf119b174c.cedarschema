@@ -1,0 +1,14 @@
+entity a tags Set<__cedar::ipaddr>;
+
+action "" in [Action::":p", Action::"&", Action::"\u{1d}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1d}";
+
+action "&" in [Action::"\u{1d}"];
+
+action ":p" in [Action::"&", Action::"\u{1d}"];
+

@@ -1,0 +1,27 @@
+// A Read is permitted if there was formerly a Login. Unlike case 1117, this
+// policy DOES write the pinned field — but with a wildcard,
+// `callerPrincipal: _`, an explicit attempt to accept a Login by ANY
+// principal (a bypass of the schema's principal pin).
+//
+// Because the pin is injected unconditionally, the predicate ends up
+// constraining `callerPrincipal` twice: the author's wildcard (matches
+// anything) AND the pin's `principal` (the current request's
+// principal). The wildcard adds nothing; the pin still forces the past Login
+// to share the Read's principal. A hand-written field can only NARROW a pin,
+// never relax it — so this bypass attempt has no effect.
+//
+// Positive/negative control across two traces (identical to 1117's, proving
+// the wildcard changed nothing):
+//   trace_1: the prior Login is by the SAME principal as the Read → permitted.
+//   trace_2: IDENTICAL except the prior Login is by a DIFFERENT principal →
+//            the injected pin forces a mismatch → NOT permitted.
+// If the wildcard had bypassed the pin, trace_2 would wrongly permit.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user, callerPrincipal: _ }
+};

@@ -1,0 +1,16 @@
+entity a;
+
+action "" in [Action::":", Action::"\u{e}", Action::"gDe"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    EWcbxcw000000?: __cedar::String
+  }
+};
+
+action "\u{e}" in [Action::"gDe"];
+
+action ":" in [Action::"\u{e}", Action::"gDe"];
+
+action "gDe";
+

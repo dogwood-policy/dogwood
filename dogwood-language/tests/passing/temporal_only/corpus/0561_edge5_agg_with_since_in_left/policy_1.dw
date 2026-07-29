@@ -1,0 +1,7 @@
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (n: Long). ((count for (t: Timepoint). where ((Drupe::Action::"Heartbeat"::request{ input.server: context.input.server } since within 1h Drupe::Action::"Login"::request{ input.server: context.input.server, input.user: _ }) && tp(t))) == n && n > 1)};

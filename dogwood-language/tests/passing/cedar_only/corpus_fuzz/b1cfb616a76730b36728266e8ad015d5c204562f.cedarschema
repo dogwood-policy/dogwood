@@ -1,0 +1,10 @@
+entity a tags {
+  "0000000000\0\0\0\0\0\0\0\0\0\0\0\0\0000": __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

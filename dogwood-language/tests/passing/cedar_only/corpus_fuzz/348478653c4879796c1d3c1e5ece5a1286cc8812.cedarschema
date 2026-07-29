@@ -1,0 +1,15 @@
+@A
+entity a = {
+  @S("")
+  I: a,
+  @A
+  r: __cedar::String
+} tags __cedar::String;
+
+@Q
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

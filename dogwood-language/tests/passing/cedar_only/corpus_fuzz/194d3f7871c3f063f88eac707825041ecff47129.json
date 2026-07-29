@@ -1,0 +1,172 @@
+{
+  "policies": "corpus-tests/194d3f7871c3f063f88eac707825041ecff47129.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/194d3f7871c3f063f88eac707825041ecff47129.entities.json",
+  "schema": "corpus-tests/194d3f7871c3f063f88eac707825041ecff47129.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": false,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "A::A::j::a",
+        "id": ""
+      },
+      "action": {
+        "type": "A::A::j::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A::A::j::a",
+        "id": "sssssss^3"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "A::A::j::a",
+        "id": "sssssss^3"
+      },
+      "action": {
+        "type": "A::A::j::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A::A::j::a",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "A::A::j::a",
+        "id": "sssssss^3"
+      },
+      "action": {
+        "type": "A::A::j::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A::A::j::a",
+        "id": "sssssss^3"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "A::A::j::a",
+        "id": "sssssss^3"
+      },
+      "action": {
+        "type": "A::A::j::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A::A::j::a",
+        "id": "sssssss^3"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "A::A::j::a",
+        "id": "sssssss^3"
+      },
+      "action": {
+        "type": "A::A::j::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A::A::j::a",
+        "id": "sssssss^3"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "A::A::j::a",
+        "id": "sssssss^3"
+      },
+      "action": {
+        "type": "A::A::j::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A::A::j::a",
+        "id": "sssssss^3"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "A::A::j::a",
+        "id": "sssssss^3"
+      },
+      "action": {
+        "type": "A::A::j::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A::A::j::a",
+        "id": "sssssss^3"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "A::A::j::a",
+        "id": "sssssss^3"
+      },
+      "action": {
+        "type": "A::A::j::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "A::A::j::a",
+        "id": "sssssss^3"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}

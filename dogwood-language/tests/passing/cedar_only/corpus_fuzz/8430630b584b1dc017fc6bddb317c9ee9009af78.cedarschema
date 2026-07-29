@@ -1,0 +1,204 @@
+entity a = {
+  @sFFF
+  D: {
+    @sRwR("\u{e}=")
+    @t
+    ""?: {
+      "": {
+        ""?: {        },
+        @LNMMMMEF
+        "\u{3}"?: {        },
+        "\u{18}@"?: {        }
+      },
+      @g("U\u{5}")
+      @sFFF
+      @vNTwFFFFFFTjTVS33("")
+      "\u{3}"?: {
+        "": {        },
+        @LNMFFTO1("\u{3}˙:")
+        @p("")
+        @sFFF
+        "\u{3}"?: {        },
+        "\u{18}@"?: {        }
+      },
+      "\u{18}@"?: {      },
+      "-\\^["?: {      }
+    },
+    "\u{3}": {
+      ""?: {
+        ""?: {        },
+        @g("")
+        @vNTwFFFFFFTjTVS33("")
+        "\u{3}": a,
+        "\u{18}@"?: {        }
+      },
+      @sFFF
+      @sRwR("^[")
+      "\u{3}"?: {
+        "\u{18}@VU": {        }
+      },
+      "\u{18}@"?: {      }
+    },
+    "\u{18}@"?: {    },
+    @sFFF
+    "-\\^[": {
+      @nVSg200RRw("")
+      @sRwR("\u{e}=")
+      @t
+      @vRjTVS33EFFFFFF("\u{18}@")
+      "": {
+        "\u{18}@VUUUUUU\u{5}"?: {        },
+        ":": Set<__cedar::Long>,
+        V: Set<__cedar::Long>,
+        @LNMMMNg2
+        e?: {        }
+      },
+      "\u{3}"?: {      }
+    }
+  },
+  t: {
+    ""?: {
+      @t
+      "": a,
+      @g("U\u{5}")
+      @sFFF
+      @vNTwFFFFFFTjTVSUr("E\u{17}]t\u{1}")
+      "\u{3}"?: {
+        "": {        },
+        @LNMFFTO1("\u{3}˙:")
+        @p("")
+        @sFFF
+        "\u{3}"?: {        },
+        "\u{18}@"?: {        }
+      },
+      "\u{18}@"?: {      },
+      "-\\^["?: __cedar::duration
+    },
+    "\u{3}": {
+      ""?: {
+        ""?: {        },
+        @g("")
+        @vNTwFFFFFFTjTVS33("")
+        "\u{3}": a,
+        "\u{18}@"?: {        }
+      },
+      @sFFF
+      @sRwR("^[")
+      "\u{3}"?: {
+        "\u{18}@VU": {        }
+      },
+      "\u{18}@"?: {      }
+    },
+    "\u{18}@"?: {    },
+    @sFFF
+    "-\\^[": {
+      @nVSg200RRw("")
+      @sRwR("\u{e}=")
+      @t
+      @vRjTVS33EFFFFFF("\u{18}@")
+      "": {
+        "\u{18}@VUUUUUU\u{5}"?: {        },
+        ":": Set<__cedar::Long>,
+        V: Set<__cedar::Long>,
+        @LNMMMNg2
+        e?: {        }
+      },
+      "\u{3}"?: {      }
+    }
+  },
+  @L33ERwR3
+  @sFFF
+  @v("\\^[")
+  v3ERRjTV?: {  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @sFFF
+    D: {
+      @sRwR("\u{e}=")
+      @t
+      ""?: {
+        @g("U\u{5}")
+        @sFFF
+        @vNTwFFFFFFTjTVS33("")
+        ""?: {
+          "": {          },
+          @LNMFFTO1("\u{3}˙:")
+          @p("")
+          @sFFF
+          "\u{3}"?: {          },
+          "\u{18}@"?: {          }
+        },
+        "\u{3}": {
+          ""?: {          },
+          @LNMMMMEF
+          "\u{3}"?: {          },
+          "\u{18}@"?: {          }
+        },
+        "\u{18}@"?: {        },
+        "-\\^["?: {        }
+      },
+      "\u{3}": {
+        ""?: {
+          ""?: {          },
+          @g("")
+          @vNTwFFFFFFTjTVS33("")
+          "\u{3}": a,
+          "\u{18}@"?: {          }
+        },
+        @sFFF
+        @sRwR("^[")
+        "\u{3}"?: {
+          "\u{18}@VU": {          }
+        },
+        "\u{18}@"?: {        }
+      },
+      "\u{18}@"?: {      },
+      @sFFF
+      "-\\^[": {
+        @nVSg200RRw("")
+        @sRwR("\u{e}=")
+        @t
+        @vRjTVS33EFFFFFF("\u{18}@")
+        "": {
+          @LNMMMNg2
+          ""?: {          },
+          "\u{18}@VUUUUiWUU\u{5}"?: {          },
+          ":": Set<__cedar::Long>,
+          V: Set<__cedar::Long>
+        },
+        "\u{3}"?: {        }
+      }
+    },
+    t?: {
+      ""?: __cedar::String,
+      "\u{3}": {
+        ""?: {
+          ""?: {          },
+          @g("")
+          @vNTwFFFFFFTjTVS33("")
+          "\u{3}": a,
+          "\u{18}@"?: {          }
+        },
+        @sFFF
+        @sRwR("^[")
+        "\u{3}"?: {
+          "\u{18}@VU": {          }
+        },
+        "\u{18}@"?: {        }
+      },
+      "\u{18}@"?: {      },
+      "-\\^["?: {
+        ""?: __cedar::String
+      }
+    },
+    @L33ERwR3
+    @sFFF
+    @v("\\^[")
+    v3ERRjTV?: {    }
+  }
+};
+

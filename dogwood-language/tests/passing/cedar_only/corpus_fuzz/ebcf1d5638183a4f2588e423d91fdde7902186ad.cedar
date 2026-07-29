@@ -1,0 +1,8 @@
+@G("")
+forbid(
+  principal in a::"",
+  action in [Action::"action",Action::"action"],
+  resource in a::""
+) when {
+  (true && (false || ([].contains(decimal(""))))) && (principal in principal)
+};

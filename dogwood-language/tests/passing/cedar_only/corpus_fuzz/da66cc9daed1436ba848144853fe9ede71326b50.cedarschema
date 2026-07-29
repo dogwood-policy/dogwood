@@ -1,0 +1,12 @@
+entity q5cZgY = {
+  A?: {
+    "66"?: q5cZgY
+  }
+};
+
+action "action" appliesTo {
+  principal: [q5cZgY],
+  resource: [q5cZgY],
+  context: {}
+};
+

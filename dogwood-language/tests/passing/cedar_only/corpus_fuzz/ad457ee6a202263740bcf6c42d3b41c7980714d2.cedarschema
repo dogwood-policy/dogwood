@@ -1,0 +1,57 @@
+entity B tags Set<__cedar::datetime>;
+
+entity C enum ["\0\0\0\0\0\0\0\0\0\0\0\0\0"];
+
+@r3eaa55
+@y4("")
+entity E tags Set<__cedar::String>;
+
+@r3eaa55
+@y4("")
+entity Mnn tags Set<__cedar::String>;
+
+entity P;
+
+@xaaaa
+entity _YlW1Fnnw2nn13 tags __cedar::Long;
+
+entity g3 tags {
+  ""?: __cedar::ipaddr,
+  @r("\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}")
+  "+r"?: g3,
+  @q("\u{5}")
+  "D\u{4}": g3,
+  "["?: __cedar::datetime,
+  "d&"?: Set<g3>
+};
+
+entity g33f333 enum ["Bo%l\u{1}\u{f}\u{4}"];
+
+entity i;
+
+@C1F4
+entity i4deeeA;
+
+entity neucR30 tags Set<__cedar::datetime>;
+
+entity p enum [""];
+
+entity r;
+
+entity r1Fn tags __cedar::duration;
+
+entity r33 = {
+  D?: g3,
+  E?: __cedar::datetime
+};
+
+entity y4;
+
+entity z tags __cedar::duration;
+
+action "action" appliesTo {
+  principal: [g3],
+  resource: [g3],
+  context: {}
+};
+

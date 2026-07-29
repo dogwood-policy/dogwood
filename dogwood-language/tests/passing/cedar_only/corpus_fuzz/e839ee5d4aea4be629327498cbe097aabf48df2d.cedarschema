@@ -1,0 +1,17 @@
+@A
+@Q
+@UV3E_000RRS("????????????????????????????\u{3}\u{1d}@")
+@fVVVVVVVVVVVVVV("\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}")
+@rKR("qqqqqqqqqqaqqq?????????\u{1f}\u{1f}V@$p")
+@rhuCCCCCNNg00
+@v("\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\r\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}")
+entity r = {
+  A?: Set<__cedar::Long>
+} tags Set<__cedar::datetime>;
+
+action "action" appliesTo {
+  principal: [r],
+  resource: [r],
+  context: {}
+};
+

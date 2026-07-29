@@ -1,0 +1,38 @@
+namespace l::t::K::A::A::t {
+  entity a;
+
+  action "" in [l::t::K::A::A::t::Action::"VV", l::t::K::A::A::t::Action::":~", l::t::K::A::A::t::Action::"\u{e}", l::t::K::A::A::t::Action::"\u{3}", l::t::K::A::A::t::Action::"w\u{1d}[", l::t::K::A::A::t::Action::"$", l::t::K::A::A::t::Action::"\u{1d}[", l::t::K::A::A::t::Action::"=\u{e}", l::t::K::A::A::t::Action::"[", l::t::K::A::A::t::Action::"\u{1d}@J<", l::t::K::A::A::t::Action::"r@", l::t::K::A::A::t::Action::"}", l::t::K::A::A::t::Action::"^", l::t::K::A::A::t::Action::"\u{1d}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{3}" in [l::t::K::A::A::t::Action::"w\u{1d}[", l::t::K::A::A::t::Action::"$", l::t::K::A::A::t::Action::"\u{1d}[", l::t::K::A::A::t::Action::"=\u{e}", l::t::K::A::A::t::Action::"[", l::t::K::A::A::t::Action::"\u{1d}@J<", l::t::K::A::A::t::Action::"r@", l::t::K::A::A::t::Action::"}", l::t::K::A::A::t::Action::"^", l::t::K::A::A::t::Action::"\u{1d}"];
+
+  action "\u{e}" in [l::t::K::A::A::t::Action::"\u{3}", l::t::K::A::A::t::Action::"w\u{1d}[", l::t::K::A::A::t::Action::"$", l::t::K::A::A::t::Action::"\u{1d}[", l::t::K::A::A::t::Action::"=\u{e}", l::t::K::A::A::t::Action::"[", l::t::K::A::A::t::Action::"\u{1d}@J<", l::t::K::A::A::t::Action::"r@", l::t::K::A::A::t::Action::"}", l::t::K::A::A::t::Action::"^", l::t::K::A::A::t::Action::"\u{1d}"];
+
+  action "\u{1d}";
+
+  action "\u{1d}@J<" in [l::t::K::A::A::t::Action::"r@", l::t::K::A::A::t::Action::"}", l::t::K::A::A::t::Action::"^", l::t::K::A::A::t::Action::"\u{1d}"];
+
+  action "\u{1d}[" in [l::t::K::A::A::t::Action::"=\u{e}", l::t::K::A::A::t::Action::"[", l::t::K::A::A::t::Action::"\u{1d}@J<", l::t::K::A::A::t::Action::"r@", l::t::K::A::A::t::Action::"}", l::t::K::A::A::t::Action::"^", l::t::K::A::A::t::Action::"\u{1d}"];
+
+  action "$" in [l::t::K::A::A::t::Action::"\u{1d}[", l::t::K::A::A::t::Action::"=\u{e}", l::t::K::A::A::t::Action::"[", l::t::K::A::A::t::Action::"\u{1d}@J<", l::t::K::A::A::t::Action::"r@", l::t::K::A::A::t::Action::"}", l::t::K::A::A::t::Action::"^", l::t::K::A::A::t::Action::"\u{1d}"];
+
+  action ":~" in [l::t::K::A::A::t::Action::"\u{e}", l::t::K::A::A::t::Action::"\u{3}", l::t::K::A::A::t::Action::"w\u{1d}[", l::t::K::A::A::t::Action::"$", l::t::K::A::A::t::Action::"\u{1d}[", l::t::K::A::A::t::Action::"=\u{e}", l::t::K::A::A::t::Action::"[", l::t::K::A::A::t::Action::"\u{1d}@J<", l::t::K::A::A::t::Action::"r@", l::t::K::A::A::t::Action::"}", l::t::K::A::A::t::Action::"^", l::t::K::A::A::t::Action::"\u{1d}"];
+
+  action "=\u{e}" in [l::t::K::A::A::t::Action::"[", l::t::K::A::A::t::Action::"\u{1d}@J<", l::t::K::A::A::t::Action::"r@", l::t::K::A::A::t::Action::"}", l::t::K::A::A::t::Action::"^", l::t::K::A::A::t::Action::"\u{1d}"];
+
+  action "VV" in [l::t::K::A::A::t::Action::":~", l::t::K::A::A::t::Action::"\u{e}", l::t::K::A::A::t::Action::"\u{3}", l::t::K::A::A::t::Action::"w\u{1d}[", l::t::K::A::A::t::Action::"$", l::t::K::A::A::t::Action::"\u{1d}[", l::t::K::A::A::t::Action::"=\u{e}", l::t::K::A::A::t::Action::"[", l::t::K::A::A::t::Action::"\u{1d}@J<", l::t::K::A::A::t::Action::"r@", l::t::K::A::A::t::Action::"}", l::t::K::A::A::t::Action::"^", l::t::K::A::A::t::Action::"\u{1d}"];
+
+  action "[" in [l::t::K::A::A::t::Action::"\u{1d}@J<", l::t::K::A::A::t::Action::"r@", l::t::K::A::A::t::Action::"}", l::t::K::A::A::t::Action::"^", l::t::K::A::A::t::Action::"\u{1d}"];
+
+  action "^" in [l::t::K::A::A::t::Action::"\u{1d}"];
+
+  action "r@" in [l::t::K::A::A::t::Action::"}", l::t::K::A::A::t::Action::"^", l::t::K::A::A::t::Action::"\u{1d}"];
+
+  action "w\u{1d}[" in [l::t::K::A::A::t::Action::"$", l::t::K::A::A::t::Action::"\u{1d}[", l::t::K::A::A::t::Action::"=\u{e}", l::t::K::A::A::t::Action::"[", l::t::K::A::A::t::Action::"\u{1d}@J<", l::t::K::A::A::t::Action::"r@", l::t::K::A::A::t::Action::"}", l::t::K::A::A::t::Action::"^", l::t::K::A::A::t::Action::"\u{1d}"];
+
+  action "}" in [l::t::K::A::A::t::Action::"^", l::t::K::A::A::t::Action::"\u{1d}"];
+}
+

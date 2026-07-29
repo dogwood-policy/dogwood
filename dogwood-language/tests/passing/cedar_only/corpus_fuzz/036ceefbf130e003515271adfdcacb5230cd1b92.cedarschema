@@ -1,0 +1,24 @@
+namespace r::r::h::r {
+  entity a;
+
+  action "" in [r::r::h::r::Action::":x", r::r::h::r::Action::"0[\u{1d}", r::r::h::r::Action::"V", r::r::h::r::Action::"\u{1}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{1}";
+
+  action "0[\u{1d}" in [r::r::h::r::Action::"V", r::r::h::r::Action::"\u{1}"];
+
+  action ":x" in [r::r::h::r::Action::"0[\u{1d}", r::r::h::r::Action::"V", r::r::h::r::Action::"\u{1}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      r3_30000000?: __cedar::String
+    }
+  };
+
+  action "V" in [r::r::h::r::Action::"\u{1}"];
+}
+

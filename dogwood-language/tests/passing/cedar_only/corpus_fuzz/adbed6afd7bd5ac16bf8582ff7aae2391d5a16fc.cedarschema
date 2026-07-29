@@ -1,0 +1,12 @@
+@q
+@r("+\0")
+entity a tags __cedar::datetime;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    H00000000000000?: __cedar::String
+  }
+};
+

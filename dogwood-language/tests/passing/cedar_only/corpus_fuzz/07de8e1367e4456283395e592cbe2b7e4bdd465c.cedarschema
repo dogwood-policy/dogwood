@@ -1,0 +1,37 @@
+namespace v::B::FSRRR {
+  entity QN = {
+    @r("")
+    U3TjDDDD: __cedar::Bool
+  };
+
+  entity v tags __cedar::Long;
+
+  action "action" appliesTo {
+    principal: [v, QN],
+    resource: [v],
+    context: {
+      r?: {
+        ""?: __cedar::Bool,
+        "\u{3}\u{1d}$w": v::B::FSRRR::v,
+        @gZg
+        "\u{3}[": v::B::FSRRR::QN,
+        "\u{1d}"?: __cedar::String,
+        @E
+        @LRw0azE("")
+        @r3bbppp("330d\u{4}\0@\0ddddddddddd\u{1d}@")
+        "$": Set<v::B::FSRRR::QN>,
+        @D("w")
+        @QRR66X1(" \0")
+        @d("")
+        @r("\u{e}")
+        "=\u{e}"?: v::B::FSRRR::QN,
+        "@T": __cedar::datetime,
+        @wY
+        "@g"?: v::B::FSRRR::v
+      },
+      @JgLl
+      z: __cedar::String
+    }
+  };
+}
+

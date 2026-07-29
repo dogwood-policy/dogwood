@@ -1,0 +1,14 @@
+// Standard-library macros, supplied to the ServiceSchema via `macros_str`
+// (the shipped-library path) rather than inlined in the policy. The harness
+// loads any `macros.dw` in a case directory as the macro library.
+//
+// This case exercises the composition of two library macros: an aggregation
+// macro (`count_within`) nested as an argument to a binding macro (`bind`).
+
+def temporal count_within(?w, ?s) {
+    count for ($t: Timepoint). where (formerly within ?w (?s && tp($t)))
+};
+
+def temporal bind(?n, ?A, ?B) {
+    exists (?n: Long). (?A == ?n && ?B)
+};

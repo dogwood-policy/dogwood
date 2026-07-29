@@ -1,0 +1,30 @@
+// Universal symmetric pin on a CONTEXT field (`tenant_id = context.tenant_id`)
+// as the SOLE partition key — principal and resource are left UNPINNED. This is
+// the missing standalone case for the `PinRoot::Context` path: the other
+// bundles key on a scope entity (1155-1157/1159 principal, 1160 resource), and
+// 1158 uses a context pin only ALONGSIDE a scope pin. Here the context field is
+// the only thing confining evaluation, so `mu_branch` must emit a
+// `Term::ContextField` (read from the request context record) and the
+// interpreter must resolve it correctly — with no scope pin as a safety net.
+//
+// `tenant_id` is symmetric because its context path equals its field path
+// (`is_symmetric`'s `PinRoot::Context && context_path == field_path` arm). Like
+// 1158's `session_id`, it is carried in the trace's `request_context(...)`
+// envelope; it is not part of the Cedar action-schema context.
+
+decision event <A>::request {
+    ...inputs(A),
+    callerPrincipal: principalType(A),
+    callerResource:  resourceType(A),
+    requestId:       String,
+    pin tenant_id: String = context.tenant_id,
+}
+
+event <A>::response {
+    ...inputs(A),
+    ...outputs(A),
+    callerPrincipal: principalType(A),
+    callerResource:  resourceType(A),
+    requestId:       String,
+    pin tenant_id: String = context.tenant_id,
+}

@@ -1,0 +1,13 @@
+// Name a threshold: `is_small(?n)` abstracts the `< 100` comparison so the
+// bound lives in exactly one place. Called as an ordinary Cedar expression.
+def cedar is_small(?n) { ?n < 100 };
+
+@id("sell_small")
+permit (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+)
+when {
+    is_small(context.input.shares)
+};

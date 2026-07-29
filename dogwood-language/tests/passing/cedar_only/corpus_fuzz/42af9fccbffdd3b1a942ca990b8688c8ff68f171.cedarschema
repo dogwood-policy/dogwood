@@ -1,0 +1,17 @@
+entity AXXXXXX enum ["\0\0\0\0\0]\0\0\0\0\0\0\0", "\r\0"];
+
+@A
+@Pf("\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\0\0\0\u{f}\u{f}\u{f}\u{f}\u{f}\'\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}%\u{2}")
+entity g3;
+
+@Y4466666666666665
+entity kFX enum ["x\0\0\0\0\0\0\0\0"];
+
+entity r335D01;
+
+action "sssssssss^3" appliesTo {
+  principal: [g3, AXXXXXX, r335D01, kFX],
+  resource: [g3],
+  context: {}
+};
+

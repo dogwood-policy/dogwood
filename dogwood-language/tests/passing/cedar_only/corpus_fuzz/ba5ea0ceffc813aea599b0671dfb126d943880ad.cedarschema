@@ -1,0 +1,15 @@
+entity A enum [""];
+
+@if("#D######00001########?#")
+@r("")
+@rd3H1Ff3("\u{f}\u{1}\0\0+h")
+entity g3 enum ["\0\0B", "", "##########", "", "", "f", "", "\u{1}\u{f}h", "\u{1}\u{f}"];
+
+entity r enum ["", "", "", "", "]", "", ""];
+
+action "action" appliesTo {
+  principal: [g3],
+  resource: [g3],
+  context: {}
+};
+

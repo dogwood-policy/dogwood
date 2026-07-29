@@ -1,0 +1,15 @@
+@z("3")
+entity a tags __cedar::duration;
+
+action "" in [Action::"@", Action::"A", Action::"s"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "@" in [Action::"A", Action::"s"];
+
+action "A" in [Action::"s"];
+
+action "s";
+

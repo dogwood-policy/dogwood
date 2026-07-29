@@ -1,0 +1,28 @@
+entity M enum [""];
+
+entity iO0 enum [""];
+
+entity j = {
+  A?: __cedar::String,
+  E?: __cedar::String,
+  Q3j33?: __cedar::String,
+  e?: __cedar::String,
+  r?: __cedar::String,
+  s?: __cedar::String,
+  vZR33100LLLLLL?: __cedar::String
+};
+
+entity r enum [""];
+
+entity r333l enum [""];
+
+entity v3 enum [""];
+
+entity w enum ["\0\0\0W", "Boo"];
+
+action "action" appliesTo {
+  principal: [w],
+  resource: [w],
+  context: {}
+};
+

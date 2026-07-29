@@ -1,0 +1,8 @@
+entity a enum ["\n@[Debia\0\0\0\0\0\0\0\0\0\0\0\0\0\0n 0000\0\0\0 D"];
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,18 @@
+entity a enum ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "VV", "\0", "\0\0", "", ";~", "\u{1d}[\u{1d}", "@\u{3}w", "$", "=\u{e}", "", "\u{1d}\u{3}", "[@[", "\u{1d}@gffd~", "\u{e}", "^", "", "\u{1d}\u{3}", "[@", "$=\u{e}", "", "[", "\u{3}dddd\u{e}", "", "[", "\u{3}ddddd", "", "", "", "", "", "", "\0"];
+
+action "" in [Action::":~", Action::"\u{e}~", Action::"\u{e}", Action::"[", Action::"\u{1d}@"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{e}" in [Action::"[", Action::"\u{1d}@"];
+
+action "\u{e}~" in [Action::"\u{e}", Action::"[", Action::"\u{1d}@"];
+
+action "\u{1d}@";
+
+action ":~" in [Action::"\u{e}~", Action::"\u{e}", Action::"[", Action::"\u{1d}@"];
+
+action "[" in [Action::"\u{1d}@"];
+

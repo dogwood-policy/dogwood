@@ -1,0 +1,25 @@
+// Permit any action when the risk score (returned as a bare integer
+// by the provider, no field projection needed) is between 10 and 90
+// (exclusive): score > 10 && score < 90.
+//
+// The provider takes a bool argument (strict mode flag) and a decimal
+// argument (sensitivity threshold). The output is a bare integer
+// (no record wrapping), exercising "no_projection".
+//
+// Gaps covered:
+//   - literal_bool argument (true)
+//   - literal_decimal argument (decimal("0.7"))
+//   - no_projection (provider returns integer directly)
+//   - < comparison operator
+//   - > comparison operator
+//   - bare_action scope
+
+permit (
+    principal,
+    action,
+    resource
+)
+when guardrails {
+    Scoring::Compute(context.input.document, true, decimal("0.7")) > 30
+    && Scoring::Compute(context.input.document, false, decimal("0.3")) < 50
+};

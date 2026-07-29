@@ -1,0 +1,15 @@
+namespace r::V::QN::r {
+  entity A = {
+    @A
+    @F("VH")
+    @h
+    GRRmST3N: r::V::QN::r::A
+  };
+
+  action "action" appliesTo {
+    principal: [A],
+    resource: [A],
+    context: {}
+  };
+}
+

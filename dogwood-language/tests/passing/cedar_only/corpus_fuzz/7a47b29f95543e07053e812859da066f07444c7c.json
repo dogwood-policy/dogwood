@@ -1,0 +1,434 @@
+{
+  "policies": "corpus-tests/7a47b29f95543e07053e812859da066f07444c7c.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/7a47b29f95543e07053e812859da066f07444c7c.entities.json",
+  "schema": "corpus-tests/7a47b29f95543e07053e812859da066f07444c7c.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": "",
+          "\u0000": "",
+          "\u0000\u0000": "",
+          "\u0003ddddddfhd~\u001d": "",
+          "\u000e": "",
+          "\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b%%%%%%yyy\u0000%%%%%%%%%%%%%%%%~": "",
+          "\u001d": {
+            "": "",
+            "\u0000\u0000\u001d": "",
+            "\u001b\u001b\u001b\u001b\u001b\u001b": "",
+            "\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b": "",
+            "\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b%%": "",
+            "\u001d": "",
+            "%%%%%": "",
+            "%%%yyy\u0000%%%%%%%%%%%": "",
+            ":p": "",
+            "?\u0000\u0000\u0000": "",
+            "V@": ""
+          },
+          "\u001d\u0003": "",
+          "$=\u000e": "",
+          ":\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b": "",
+          ":pVV": "",
+          "?\u0000\u0000\u0000": "",
+          "V@": "",
+          "[": "",
+          "[@": "",
+          "^": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": "",
+          "\u0000": "",
+          "\u0000\u0000": "",
+          "\u0003ddddddfhd~\u001d": "",
+          "\u000e": "",
+          "\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b%%%%%%yyy\u0000%%%%%%%%%%%%%%%%~": "",
+          "\u001d": {
+            "": "",
+            "\u0000\u0000\u001d": "",
+            "\u001b\u001b\u001b\u001b\u001b\u001b": "",
+            "\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b": "",
+            "\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b%%": "",
+            "\u001d": "",
+            "%%%%%": "",
+            "%%%yyy\u0000%%%%%%%%%%%": "",
+            ":p": "",
+            "?\u0000\u0000\u0000": "",
+            "V@": ""
+          },
+          "\u001d\u0003": "",
+          "$=\u000e": "",
+          ":\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b": "",
+          ":pVV": "",
+          "?\u0000\u0000\u0000": "",
+          "V@": "",
+          "[": "",
+          "[@": "",
+          "^": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": "",
+          "\u0000": "",
+          "\u0000\u0000": "",
+          "\u0003ddddddfhd~\u001d": "",
+          "\u000e": "",
+          "\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b%%%%%%yyy\u0000%%%%%%%%%%%%%%%%~": "",
+          "\u001d": {
+            "": "",
+            "\u0000\u0000\u001d": "",
+            "\u001b\u001b\u001b\u001b\u001b\u001b": "",
+            "\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b": "",
+            "\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b%%": "",
+            "\u001d": "",
+            "%%%%%": "",
+            "%%%yyy\u0000%%%%%%%%%%%": "",
+            ":p": "",
+            "?\u0000\u0000\u0000": "",
+            "V@": ""
+          },
+          "\u001d\u0003": "",
+          "$=\u000e": "",
+          ":\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b": "",
+          ":pVV": "",
+          "?\u0000\u0000\u0000": "",
+          "V@": "",
+          "[": "",
+          "[@": "",
+          "^": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": "",
+          "\u0000": "",
+          "\u0000\u0000": "",
+          "\u0003ddddddfhd~\u001d": "",
+          "\u000e": "",
+          "\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b%%%%%%yyy\u0000%%%%%%%%%%%%%%%%~": "",
+          "\u001d": {
+            "": "",
+            "\u0000\u0000\u001d": "",
+            "\u001b\u001b\u001b\u001b\u001b\u001b": "",
+            "\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b": "",
+            "\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b%%": "",
+            "\u001d": "",
+            "%%%%%": "",
+            "%%%yyy\u0000%%%%%%%%%%%": "",
+            ":p": "",
+            "?\u0000\u0000\u0000": "",
+            "V@": ""
+          },
+          "\u001d\u0003": "",
+          "$=\u000e": "",
+          ":\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b": "",
+          ":pVV": "",
+          "?\u0000\u0000\u0000": "",
+          "V@": "",
+          "[": "",
+          "[@": "",
+          "^": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": "",
+          "\u0000": "",
+          "\u0000\u0000": "",
+          "\u0003ddddddfhd~\u001d": "",
+          "\u000e": "",
+          "\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b%%%%%%yyy\u0000%%%%%%%%%%%%%%%%~": "",
+          "\u001d": {
+            "": "",
+            "\u0000\u0000\u001d": "",
+            "\u001b\u001b\u001b\u001b\u001b\u001b": "",
+            "\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b": "",
+            "\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b%%": "",
+            "\u001d": "",
+            "%%%%%": "",
+            "%%%yyy\u0000%%%%%%%%%%%": "",
+            ":p": "",
+            "?\u0000\u0000\u0000": "",
+            "V@": ""
+          },
+          "\u001d\u0003": "",
+          "$=\u000e": "",
+          ":\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b": "",
+          ":pVV": "",
+          "?\u0000\u0000\u0000": "",
+          "V@": "",
+          "[": "",
+          "[@": "",
+          "^": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": "",
+          "\u0000": "",
+          "\u0000\u0000": "",
+          "\u0003ddddddfhd~\u001d": "",
+          "\u000e": "",
+          "\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b%%%%%%yyy\u0000%%%%%%%%%%%%%%%%~": "",
+          "\u001d": {
+            "": "",
+            "\u0000\u0000\u001d": "",
+            "\u001b\u001b\u001b\u001b\u001b\u001b": "",
+            "\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b": "",
+            "\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b%%": "",
+            "\u001d": "",
+            "%%%%%": "",
+            "%%%yyy\u0000%%%%%%%%%%%": "",
+            ":p": "",
+            "?\u0000\u0000\u0000": "",
+            "V@": ""
+          },
+          "\u001d\u0003": "",
+          "$=\u000e": "",
+          ":\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b": "",
+          ":pVV": "",
+          "?\u0000\u0000\u0000": "",
+          "V@": "",
+          "[": "",
+          "[@": "",
+          "^": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": "",
+          "\u0000": "",
+          "\u0000\u0000": "",
+          "\u0003ddddddfhd~\u001d": "",
+          "\u000e": "",
+          "\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b%%%%%%yyy\u0000%%%%%%%%%%%%%%%%~": "",
+          "\u001d": {
+            "": "",
+            "\u0000\u0000\u001d": "",
+            "\u001b\u001b\u001b\u001b\u001b\u001b": "",
+            "\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b": "",
+            "\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b%%": "",
+            "\u001d": "",
+            "%%%%%": "",
+            "%%%yyy\u0000%%%%%%%%%%%": "",
+            ":p": "",
+            "?\u0000\u0000\u0000": "",
+            "V@": ""
+          },
+          "\u001d\u0003": "",
+          "$=\u000e": "",
+          ":\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b": "",
+          ":pVV": "",
+          "?\u0000\u0000\u0000": "",
+          "V@": "",
+          "[": "",
+          "[@": "",
+          "^": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": "",
+          "\u0000": "",
+          "\u0000\u0000": "",
+          "\u0003ddddddfhd~\u001d": "",
+          "\u000e": "",
+          "\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b%%%%%%yyy\u0000%%%%%%%%%%%%%%%%~": "",
+          "\u001d": {
+            "": "",
+            "\u0000\u0000\u001d": "",
+            "\u001b\u001b\u001b\u001b\u001b\u001b": "",
+            "\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b": "",
+            "\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b%%": "",
+            "\u001d": "",
+            "%%%%%": "",
+            "%%%yyy\u0000%%%%%%%%%%%": "",
+            ":p": "",
+            "?\u0000\u0000\u0000": "",
+            "V@": ""
+          },
+          "\u001d\u0003": "",
+          "$=\u000e": "",
+          ":\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b\u001b": "",
+          ":pVV": "",
+          "?\u0000\u0000\u0000": "",
+          "V@": "",
+          "[": "",
+          "[@": "",
+          "^": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

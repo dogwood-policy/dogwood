@@ -1,0 +1,8 @@
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal { formerly within 1d Drupe::Action::"Login"::request{ input.user: context.input.user } };
+
+forbid (principal, action == Drupe::Action::"Read", resource)
+when temporal { formerly within 1h Drupe::Action::"Logout"::request{ input.user: context.input.user } };
+
+forbid (principal, action == Drupe::Action::"Read", resource)
+when temporal { previous within 100s Drupe::Action::"Logout"::request{ input.user: context.input.user } };

@@ -1,0 +1,12 @@
+// Edge: formerly within 30s — a sub-minute window. Tests small_window.
+// Event at t=0, check at t=30 (exactly at boundary — inclusive so true),
+// check at t=31 (one past boundary — false).
+
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    formerly within 30s Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

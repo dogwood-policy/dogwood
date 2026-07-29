@@ -1,0 +1,32 @@
+entity a = {
+  @A
+  H?: __cedar::datetime,
+  P5: a,
+  fB: __cedar::duration,
+  g_?: __cedar::datetime
+} tags __cedar::decimal;
+
+action "\u{1}\u{f}" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A00RRw33H3d?: __cedar::String,
+    B?: __cedar::String,
+    B33H3d3H?: __cedar::String,
+    PFFFFF?: __cedar::String,
+    PFFFFFFFF000FFFF?: {
+      ""?: __cedar::String,
+      "\u{1}UUUUUUUian\"\0\0\u{7}DDDDDDD\u{b}\u{b}######################\u{f}"?: __cedar::String
+    },
+    PFFFFFFFFf33_33H?: __cedar::String,
+    PFb244v000000004?: __cedar::String,
+    Q3?: __cedar::String,
+    Q6?: __cedar::String,
+    Y4466666666666666?: __cedar::String,
+    h?: __cedar::String,
+    r?: __cedar::String,
+    r333?: __cedar::String,
+    z31Ff3ZYZZZZZ0RS?: __cedar::String
+  }
+};
+

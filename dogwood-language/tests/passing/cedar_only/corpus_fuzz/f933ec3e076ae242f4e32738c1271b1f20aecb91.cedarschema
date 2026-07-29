@@ -1,0 +1,24 @@
+entity a;
+
+action "" in [Action::"                             ", Action::"\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h", Action::"O", Action::"f", Action::"\u{1}\u{f}h", Action::"\u{f}h", Action::"##############", Action::"##"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1}\u{f}h" in [Action::"\u{f}h", Action::"##############", Action::"##"];
+
+action "\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h" in [Action::"O", Action::"f", Action::"\u{1}\u{f}h", Action::"\u{f}h", Action::"##############", Action::"##"];
+
+action "\u{f}h" in [Action::"##############", Action::"##"];
+
+action "                             " in [Action::"\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h", Action::"O", Action::"f", Action::"\u{1}\u{f}h", Action::"\u{f}h", Action::"##############", Action::"##"];
+
+action "##";
+
+action "##############" in [Action::"##"];
+
+action "O" in [Action::"f", Action::"\u{1}\u{f}h", Action::"\u{f}h", Action::"##############", Action::"##"];
+
+action "f" in [Action::"\u{1}\u{f}h", Action::"\u{f}h", Action::"##############", Action::"##"];
+

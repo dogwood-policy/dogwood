@@ -1,0 +1,14 @@
+entity a tags a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    pTVS: {    },
+    sFFF?: {
+      ""?: __cedar::String,
+      "\u{3}"?: __cedar::datetime
+    }
+  }
+};
+

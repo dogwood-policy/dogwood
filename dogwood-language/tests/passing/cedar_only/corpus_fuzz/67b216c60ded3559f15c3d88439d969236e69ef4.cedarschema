@@ -1,0 +1,10 @@
+namespace r::r::lHHHHHH33000::r {
+  entity a enum ["\0"];
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

@@ -1,0 +1,37 @@
+entity a = {
+  BW_3f1x?: __cedar::Bool,
+  @U
+  BxB: a,
+  K?: __cedar::ipaddr,
+  RcXx00WWWWWW1: {  },
+  Sp3Zx331?: __cedar::String,
+  @fBBh("")
+  @rD3("")
+  Sppppppp?: __cedar::Long,
+  eKKKK0SSSIlSSJSS?: __cedar::String,
+  fh?: __cedar::Bool,
+  kSSS0SS?: {  },
+  mSNg0RS?: __cedar::Bool,
+  mSSJSSS?: __cedar::Bool,
+  mSSSS1W?: __cedar::ipaddr,
+  mSSSSSS?: __cedar::String,
+  mSSSSSW?: {
+    ""?: a
+  },
+  mWSSSSS?: __cedar::Bool,
+  p?: __cedar::ipaddr,
+  r?: __cedar::ipaddr,
+  r333333333?: __cedar::ipaddr,
+  rB?: __cedar::String,
+  @MZ0("")
+  rD3: a,
+  z?: __cedar::ipaddr,
+  z3D31G00000001W_: __cedar::Bool
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

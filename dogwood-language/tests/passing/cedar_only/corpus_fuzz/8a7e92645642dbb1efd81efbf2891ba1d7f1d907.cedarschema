@@ -1,0 +1,22 @@
+entity a = {
+  E?: {
+    ""?: __cedar::datetime,
+    "\u{4}"?: __cedar::datetime,
+    "#"?: __cedar::datetime,
+    "/"?: __cedar::datetime,
+    "4#"?: __cedar::datetime,
+    W?: __cedar::datetime,
+    e?: __cedar::datetime
+  },
+  iO3?: __cedar::String,
+  r?: __cedar::String,
+  vZR333j33Z3433?: __cedar::datetime,
+  z: __cedar::Long
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

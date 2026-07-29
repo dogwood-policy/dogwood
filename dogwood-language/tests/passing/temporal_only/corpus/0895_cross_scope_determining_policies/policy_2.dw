@@ -1,0 +1,11 @@
+// Permit Read when a Transfer has occurred for this user within 1h.
+// At the Transfer timepoint the Read scope prevents this from being a determining policy.
+// At the Read timepoint (within 1h of Transfer) this is the sole determining policy.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Transfer"::request{ input.user: context.input.user }
+};

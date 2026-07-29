@@ -1,0 +1,15 @@
+// The UNWRAPPED information-provider form — no `guardrails { … }` marker.
+// A provider call appears directly inside an ordinary Cedar `when { … }`,
+// recognized because `Content::Filter` is a declared provider. This is
+// exactly the reference guardrail surface: bare `Ns::Fn(args)` with the
+// projection and comparison as plain Cedar. Same policy as case 0006,
+// minus the wrapper.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when {
+    Content::Filter(context.input.document, ["VIOLENCE", "HATE"])["VIOLENCE"].severityScore.lessThan(decimal("0.5"))
+};

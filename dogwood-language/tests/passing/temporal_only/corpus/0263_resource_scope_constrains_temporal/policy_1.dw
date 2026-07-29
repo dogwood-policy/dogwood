@@ -1,0 +1,13 @@
+// A read is only permitted if the user logged in on the same gateway.
+// Omitting "from"/"to" causes the Login predicate to default to the
+// rule's scope principal and resource, so Login must share both with
+// the triggering Read_request.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user, callerPrincipal: principal, callerResource: resource }
+};

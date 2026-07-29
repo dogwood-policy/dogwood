@@ -1,0 +1,12 @@
+namespace E::P::h::Ipc0::hD33 {
+  entity A000000000 enum [""];
+
+  entity r enum [""];
+
+  action "action" appliesTo {
+    principal: [r],
+    resource: [r],
+    context: {}
+  };
+}
+

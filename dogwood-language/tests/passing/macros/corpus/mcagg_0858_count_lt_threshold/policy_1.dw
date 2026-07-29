@@ -1,0 +1,11 @@
+def temporal let_(?n, ?A, ?B) {
+    exists (?n: Long). (?A == ?n && ?B)
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    let_(n, count for (t: Timepoint). where (formerly within 1h (Drupe::Action::"Login"::request{ input.user: context.input.user } && tp(t))), n < 3)};

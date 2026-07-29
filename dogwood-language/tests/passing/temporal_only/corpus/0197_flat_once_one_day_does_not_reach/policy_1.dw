@@ -1,0 +1,11 @@
+// Flat `formerly within 1d Login`. Login at @0, Read at @90000 (25h).
+// 90000s > 86400s (1d) → MUST NOT fire. Contrast with 232.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1d Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

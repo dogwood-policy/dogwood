@@ -1,0 +1,18 @@
+entity a tags Set<Set<{
+  ""?: __cedar::String,
+  "\0\0     "?: {  },
+  "\0\0   !@": a,
+  "\0\0   !@\0"?: __cedar::Bool,
+  "\0\0VV"?: {  },
+  @Urrrrrrrrr("\0")
+  "\u{1b}\u{5}\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0$$$$~": {  },
+  @g
+  "$$$$$"?: __cedar::String
+}>>;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

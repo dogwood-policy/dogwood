@@ -1,0 +1,11 @@
+// Scope: principal is OAuthUser (type constraint).
+// Any OAuthUser can read if document matches.
+
+permit (
+    principal is Drupe::OAuthUser,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Strings::Matches(context.input.document, "^[A-Z]+$").matched == true
+};

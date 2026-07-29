@@ -1,0 +1,10 @@
+namespace w {
+  entity a enum ["\0", ""];
+
+  action "-----------------\u{1b}" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

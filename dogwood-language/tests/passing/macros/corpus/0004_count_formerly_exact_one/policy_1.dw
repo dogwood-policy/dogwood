@@ -1,0 +1,15 @@
+// Macro-form rewrite of 0651_single_event_exact_match_count_one.
+//
+// Permit Alert only when exactly one Login has occurred in the window.
+
+def temporal count_formerly(?w, ?s) {
+    count for ($t: Timepoint). where (formerly within ?w (?s && tp($t)))
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (n: Long). ((count_formerly(1h, Drupe::Action::"Login"::request{ input.user: _, input.server: context.input.server })) == n && n == 1)};

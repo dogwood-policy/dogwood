@@ -1,0 +1,13 @@
+{
+  "availableProviders": {
+    "Score::Exact": {
+      "argumentTypes": [{ "paramType": "string" }],
+      "outputType": {
+        "paramType": "record",
+        "fields": { "score": { "paramType": "decimal" } },
+        "required": ["score"]
+      },
+      "implementation": { "kind": "rhai", "scriptFile": "exact.rhai" }
+    }
+  }
+}

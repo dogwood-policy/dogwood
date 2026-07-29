@@ -1,0 +1,53 @@
+entity a = {
+  A?: {
+    @B("")
+    @B33344("\'ggg\ngfg")
+    @EW1Fnnw233335("bian \u{1}\u{f}")
+    @M2n("\u{1}")
+    @P2nl13("")
+    @P2nn13("")
+    @P31Fnn("A")
+    @Pn("yA")
+    @TJJ
+    @_31Fnnw2nn133344("\'ggg\ngfg")
+    @_YlW1lW1Fnnw2n("\u{1}")
+    @eKKKKKKKKBKKKKKK("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS")
+    @g33f333("\u{13}\u{13}\u{13}:\u{b}\u{f}i")
+    @i("ggg\nggg")
+    @i433344(" ")
+    @i44W33f333333331("i")
+    @i4deeeA("\u{3}")
+    @i4deeeAeee44443("g")
+    @iC("")
+    @neeeAe3("g")
+    @pu03333("")
+    @qCCCCCCCCCCCCCC("")
+    @r("")
+    @w
+    @z("")
+    ""?: __cedar::String,
+    "\0": __cedar::String,
+    @P2nn13("SSSS")
+    @r
+    @yddb03Ekkkkkkk("mm\u{8}mmmm\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0H\t\u{1} ")
+    @z("")
+    "\0\0": __cedar::Long,
+    "\0\0\0"?: __cedar::String,
+    "\0\0\0\0\0\u{7}\0"?: __cedar::String,
+    "\u{1}\u{f}VV": __cedar::duration,
+    "\u{3}\u{1d}w\u{11}\0\0\0\u{e}"?: __cedar::String,
+    "\u{1d}@["?: __cedar::String,
+    "!"?: __cedar::String,
+    ")\u{3}"?: __cedar::String,
+    ":---"?: __cedar::String,
+    ":~"?: __cedar::String,
+    "}"?: __cedar::String
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

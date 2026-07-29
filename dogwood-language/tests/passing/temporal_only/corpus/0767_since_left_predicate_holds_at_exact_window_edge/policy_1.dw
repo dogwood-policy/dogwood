@@ -1,0 +1,9 @@
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    Drupe::Action::"Heartbeat"::request{ input.server: context.input.server }
+    since within 30s Drupe::Action::"Login"::request{ input.server: context.input.server, input.user: _ }
+};

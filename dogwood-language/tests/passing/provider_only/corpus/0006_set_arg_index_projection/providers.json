@@ -1,0 +1,30 @@
+{
+  "availableProviders": {
+    "Content::Filter": {
+      "argumentTypes": [
+        { "paramType": "string" },
+        { "paramType": "set", "items": { "paramType": "string" } }
+      ],
+      "outputType": {
+        "paramType": "record",
+        "fields": {
+          "VIOLENCE": {
+            "paramType": "record",
+            "fields": { "severityScore": { "paramType": "decimal" } },
+            "required": ["severityScore"]
+          },
+          "HATE": {
+            "paramType": "record",
+            "fields": { "severityScore": { "paramType": "decimal" } },
+            "required": ["severityScore"]
+          }
+        },
+        "required": ["VIOLENCE", "HATE"]
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "filter.rhai"
+      }
+    }
+  }
+}

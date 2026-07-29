@@ -1,0 +1,10 @@
+@A1FDvsQQie3333333("")
+@r
+entity a enum ["\0"];
+
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,44 @@
+namespace v::B::FSRRR {
+  entity QN = {
+    U3T1S33T: __cedar::duration
+  } tags __cedar::Long;
+
+  entity v tags __cedar::Long;
+
+  action "" in [v::B::FSRRR::Action::"\u{3}[", v::B::FSRRR::Action::"@T", v::B::FSRRR::Action::"\u{1d}@gffd~", v::B::FSRRR::Action::"\u{e}", v::B::FSRRR::Action::"^", v::B::FSRRR::Action::"\u{1d}\u{3}", v::B::FSRRR::Action::"[@", v::B::FSRRR::Action::":~$=\u{e}", v::B::FSRRR::Action::"[", v::B::FSRRR::Action::"\u{3}ddr33=330dddddddddddd\u{1d}@", v::B::FSRRR::Action::"n:~", v::B::FSRRR::Action::"\u{1d}@[", v::B::FSRRR::Action::"\u{3}\u{1d}w", v::B::FSRRR::Action::"3", v::B::FSRRR::Action::"=\u{e}"] appliesTo {
+    principal: [v, QN],
+    resource: [v, QN],
+    context: {}
+  };
+
+  action "\u{3}\u{1d}w" in [v::B::FSRRR::Action::"3", v::B::FSRRR::Action::"=\u{e}"];
+
+  action "\u{3}[" in [v::B::FSRRR::Action::"@T", v::B::FSRRR::Action::"\u{1d}@gffd~", v::B::FSRRR::Action::"\u{e}", v::B::FSRRR::Action::"^", v::B::FSRRR::Action::"\u{1d}\u{3}", v::B::FSRRR::Action::"[@", v::B::FSRRR::Action::":~$=\u{e}", v::B::FSRRR::Action::"[", v::B::FSRRR::Action::"\u{3}ddr33=330dddddddddddd\u{1d}@", v::B::FSRRR::Action::"n:~", v::B::FSRRR::Action::"\u{1d}@[", v::B::FSRRR::Action::"\u{3}\u{1d}w", v::B::FSRRR::Action::"3", v::B::FSRRR::Action::"=\u{e}"];
+
+  action "\u{3}ddr33=330dddddddddddd\u{1d}@" in [v::B::FSRRR::Action::"n:~", v::B::FSRRR::Action::"\u{1d}@[", v::B::FSRRR::Action::"\u{3}\u{1d}w", v::B::FSRRR::Action::"3", v::B::FSRRR::Action::"=\u{e}"];
+
+  action "\u{e}" in [v::B::FSRRR::Action::"^", v::B::FSRRR::Action::"\u{1d}\u{3}", v::B::FSRRR::Action::"[@", v::B::FSRRR::Action::":~$=\u{e}", v::B::FSRRR::Action::"[", v::B::FSRRR::Action::"\u{3}ddr33=330dddddddddddd\u{1d}@", v::B::FSRRR::Action::"n:~", v::B::FSRRR::Action::"\u{1d}@[", v::B::FSRRR::Action::"\u{3}\u{1d}w", v::B::FSRRR::Action::"3", v::B::FSRRR::Action::"=\u{e}"];
+
+  action "\u{1d}\u{3}" in [v::B::FSRRR::Action::"[@", v::B::FSRRR::Action::":~$=\u{e}", v::B::FSRRR::Action::"[", v::B::FSRRR::Action::"\u{3}ddr33=330dddddddddddd\u{1d}@", v::B::FSRRR::Action::"n:~", v::B::FSRRR::Action::"\u{1d}@[", v::B::FSRRR::Action::"\u{3}\u{1d}w", v::B::FSRRR::Action::"3", v::B::FSRRR::Action::"=\u{e}"];
+
+  action "\u{1d}@[" in [v::B::FSRRR::Action::"\u{3}\u{1d}w", v::B::FSRRR::Action::"3", v::B::FSRRR::Action::"=\u{e}"];
+
+  action "\u{1d}@gffd~" in [v::B::FSRRR::Action::"\u{e}", v::B::FSRRR::Action::"^", v::B::FSRRR::Action::"\u{1d}\u{3}", v::B::FSRRR::Action::"[@", v::B::FSRRR::Action::":~$=\u{e}", v::B::FSRRR::Action::"[", v::B::FSRRR::Action::"\u{3}ddr33=330dddddddddddd\u{1d}@", v::B::FSRRR::Action::"n:~", v::B::FSRRR::Action::"\u{1d}@[", v::B::FSRRR::Action::"\u{3}\u{1d}w", v::B::FSRRR::Action::"3", v::B::FSRRR::Action::"=\u{e}"];
+
+  action "3" in [v::B::FSRRR::Action::"=\u{e}"];
+
+  action ":~$=\u{e}" in [v::B::FSRRR::Action::"[", v::B::FSRRR::Action::"\u{3}ddr33=330dddddddddddd\u{1d}@", v::B::FSRRR::Action::"n:~", v::B::FSRRR::Action::"\u{1d}@[", v::B::FSRRR::Action::"\u{3}\u{1d}w", v::B::FSRRR::Action::"3", v::B::FSRRR::Action::"=\u{e}"];
+
+  action "=\u{e}";
+
+  action "@T" in [v::B::FSRRR::Action::"\u{1d}@gffd~", v::B::FSRRR::Action::"\u{e}", v::B::FSRRR::Action::"^", v::B::FSRRR::Action::"\u{1d}\u{3}", v::B::FSRRR::Action::"[@", v::B::FSRRR::Action::":~$=\u{e}", v::B::FSRRR::Action::"[", v::B::FSRRR::Action::"\u{3}ddr33=330dddddddddddd\u{1d}@", v::B::FSRRR::Action::"n:~", v::B::FSRRR::Action::"\u{1d}@[", v::B::FSRRR::Action::"\u{3}\u{1d}w", v::B::FSRRR::Action::"3", v::B::FSRRR::Action::"=\u{e}"];
+
+  action "[" in [v::B::FSRRR::Action::"\u{3}ddr33=330dddddddddddd\u{1d}@", v::B::FSRRR::Action::"n:~", v::B::FSRRR::Action::"\u{1d}@[", v::B::FSRRR::Action::"\u{3}\u{1d}w", v::B::FSRRR::Action::"3", v::B::FSRRR::Action::"=\u{e}"];
+
+  action "[@" in [v::B::FSRRR::Action::":~$=\u{e}", v::B::FSRRR::Action::"[", v::B::FSRRR::Action::"\u{3}ddr33=330dddddddddddd\u{1d}@", v::B::FSRRR::Action::"n:~", v::B::FSRRR::Action::"\u{1d}@[", v::B::FSRRR::Action::"\u{3}\u{1d}w", v::B::FSRRR::Action::"3", v::B::FSRRR::Action::"=\u{e}"];
+
+  action "^" in [v::B::FSRRR::Action::"\u{1d}\u{3}", v::B::FSRRR::Action::"[@", v::B::FSRRR::Action::":~$=\u{e}", v::B::FSRRR::Action::"[", v::B::FSRRR::Action::"\u{3}ddr33=330dddddddddddd\u{1d}@", v::B::FSRRR::Action::"n:~", v::B::FSRRR::Action::"\u{1d}@[", v::B::FSRRR::Action::"\u{3}\u{1d}w", v::B::FSRRR::Action::"3", v::B::FSRRR::Action::"=\u{e}"];
+
+  action "n:~" in [v::B::FSRRR::Action::"\u{1d}@[", v::B::FSRRR::Action::"\u{3}\u{1d}w", v::B::FSRRR::Action::"3", v::B::FSRRR::Action::"=\u{e}"];
+}
+

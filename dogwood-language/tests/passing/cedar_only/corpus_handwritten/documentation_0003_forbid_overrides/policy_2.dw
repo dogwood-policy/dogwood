@@ -1,0 +1,20 @@
+// The same two rules as policy_1.dw, but with the forbid first
+// and the permit second. The verdict for every request is
+// identical: order in the source file does not matter.
+
+@id("forbid-sell-amzn")
+forbid (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+)
+when {
+    context.input.stock == "AMZN"
+};
+
+@id("permit-sell-shares")
+permit (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+);

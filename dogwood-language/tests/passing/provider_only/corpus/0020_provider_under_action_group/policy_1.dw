@@ -1,0 +1,20 @@
+// Gate a whole action GROUP with one information provider. The rule is
+// scoped `action in [Drupe::Action::"CallTool"]` — the group — rather
+// than a single `action == …`. The provider's hoisted
+// `context.providers.<id>` field is declared on every action's context and
+// evaluated for every decision event, so the same guardrail applies to
+// both descendants (`Read`, `Post`) without duplicating the rule per
+// action; the group scope decides which requests the RULE fires for.
+//
+// This exercises the group case end to end: a request for either
+// descendant action evaluates the provider and is permitted only when the
+// document id is all-uppercase letters.
+
+permit (
+    principal,
+    action in [Drupe::Action::"CallTool"],
+    resource
+)
+when guardrails {
+    Strings::Matches(context.input.document, "^[A-Z]+$").matched == true
+};

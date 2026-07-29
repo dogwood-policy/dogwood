@@ -1,0 +1,18 @@
+entity A1f;
+
+entity Pm;
+
+entity g3;
+
+action "" appliesTo {
+  principal: [A1f, g3],
+  resource: [A1f, g3],
+  context: {}
+};
+
+action "68520184233983h" in [Action::""] appliesTo {
+  principal: [Pm],
+  resource: [Pm, g3, A1f],
+  context: {}
+};
+

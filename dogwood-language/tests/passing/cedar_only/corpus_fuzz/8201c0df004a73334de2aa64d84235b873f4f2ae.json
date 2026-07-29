@@ -1,0 +1,186 @@
+{
+  "policies": "corpus-tests/8201c0df004a73334de2aa64d84235b873f4f2ae.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/8201c0df004a73334de2aa64d84235b873f4f2ae.entities.json",
+  "schema": "corpus-tests/8201c0df004a73334de2aa64d84235b873f4f2ae.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "L::k",
+        "id": "ttttttttttttttttt"
+      },
+      "action": {
+        "type": "L::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "L::k",
+        "id": "ttttttttttttttttt"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "L::k",
+        "id": "ttttttttttttttttt"
+      },
+      "action": {
+        "type": "L::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "L::k",
+        "id": "ttttttttttttttttt"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "L::k",
+        "id": "ttttttttttttttttt"
+      },
+      "action": {
+        "type": "L::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "L::k",
+        "id": "ttttttttttttttttt"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "L::k",
+        "id": "ttttttttttttttttt"
+      },
+      "action": {
+        "type": "L::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "L::k",
+        "id": "ttttttttttttttttt"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "L::k",
+        "id": "ttttttttttttttttt"
+      },
+      "action": {
+        "type": "L::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "L::k",
+        "id": "ttttttttttttttttt"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "L::k",
+        "id": "ttttttttttttttttt"
+      },
+      "action": {
+        "type": "L::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "L::k",
+        "id": "ttttttttttttttttt"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "L::k",
+        "id": "ttttttttttttttttt"
+      },
+      "action": {
+        "type": "L::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "L::k",
+        "id": "ttttttttttttttttt"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "L::k",
+        "id": "ttttttttttttttttt"
+      },
+      "action": {
+        "type": "L::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "L::k",
+        "id": "ttttttttttttttttt"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

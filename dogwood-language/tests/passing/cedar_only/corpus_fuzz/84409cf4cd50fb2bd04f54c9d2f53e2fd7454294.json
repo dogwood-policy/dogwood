@@ -1,0 +1,186 @@
+{
+  "policies": "corpus-tests/84409cf4cd50fb2bd04f54c9d2f53e2fd7454294.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/84409cf4cd50fb2bd04f54c9d2f53e2fd7454294.entities.json",
+  "schema": "corpus-tests/84409cf4cd50fb2bd04f54c9d2f53e2fd7454294.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "r33::r::w::_YlW1Fnnw2nn13::r::i4ZgYlW1Fn31Fg33::P::J1W33::_YlW1Fnnw2nn13",
+        "id": ""
+      },
+      "action": {
+        "type": "r33::r::w::_YlW1Fnnw2nn13::r::i4ZgYlW1Fn31Fg33::P::J1W33::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "r33::r::w::_YlW1Fnnw2nn13::r::i4ZgYlW1Fn31Fg33::P::J1W33::_YlW1Fnnw2nn13",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "r33::r::w::_YlW1Fnnw2nn13::r::i4ZgYlW1Fn31Fg33::P::J1W33::_YlW1Fnnw2nn13",
+        "id": ""
+      },
+      "action": {
+        "type": "r33::r::w::_YlW1Fnnw2nn13::r::i4ZgYlW1Fn31Fg33::P::J1W33::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "r33::r::w::_YlW1Fnnw2nn13::r::i4ZgYlW1Fn31Fg33::P::J1W33::_YlW1Fnnw2nn13",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "r33::r::w::_YlW1Fnnw2nn13::r::i4ZgYlW1Fn31Fg33::P::J1W33::_YlW1Fnnw2nn13",
+        "id": ""
+      },
+      "action": {
+        "type": "r33::r::w::_YlW1Fnnw2nn13::r::i4ZgYlW1Fn31Fg33::P::J1W33::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "r33::r::w::_YlW1Fnnw2nn13::r::i4ZgYlW1Fn31Fg33::P::J1W33::_YlW1Fnnw2nn13",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "r33::r::w::_YlW1Fnnw2nn13::r::i4ZgYlW1Fn31Fg33::P::J1W33::_YlW1Fnnw2nn13",
+        "id": ""
+      },
+      "action": {
+        "type": "r33::r::w::_YlW1Fnnw2nn13::r::i4ZgYlW1Fn31Fg33::P::J1W33::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "r33::r::w::_YlW1Fnnw2nn13::r::i4ZgYlW1Fn31Fg33::P::J1W33::_YlW1Fnnw2nn13",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "r33::r::w::_YlW1Fnnw2nn13::r::i4ZgYlW1Fn31Fg33::P::J1W33::_YlW1Fnnw2nn13",
+        "id": ""
+      },
+      "action": {
+        "type": "r33::r::w::_YlW1Fnnw2nn13::r::i4ZgYlW1Fn31Fg33::P::J1W33::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "r33::r::w::_YlW1Fnnw2nn13::r::i4ZgYlW1Fn31Fg33::P::J1W33::_YlW1Fnnw2nn13",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "r33::r::w::_YlW1Fnnw2nn13::r::i4ZgYlW1Fn31Fg33::P::J1W33::_YlW1Fnnw2nn13",
+        "id": ""
+      },
+      "action": {
+        "type": "r33::r::w::_YlW1Fnnw2nn13::r::i4ZgYlW1Fn31Fg33::P::J1W33::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "r33::r::w::_YlW1Fnnw2nn13::r::i4ZgYlW1Fn31Fg33::P::J1W33::_YlW1Fnnw2nn13",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "r33::r::w::_YlW1Fnnw2nn13::r::i4ZgYlW1Fn31Fg33::P::J1W33::_YlW1Fnnw2nn13",
+        "id": ""
+      },
+      "action": {
+        "type": "r33::r::w::_YlW1Fnnw2nn13::r::i4ZgYlW1Fn31Fg33::P::J1W33::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "r33::r::w::_YlW1Fnnw2nn13::r::i4ZgYlW1Fn31Fg33::P::J1W33::_YlW1Fnnw2nn13",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "r33::r::w::_YlW1Fnnw2nn13::r::i4ZgYlW1Fn31Fg33::P::J1W33::_YlW1Fnnw2nn13",
+        "id": ""
+      },
+      "action": {
+        "type": "r33::r::w::_YlW1Fnnw2nn13::r::i4ZgYlW1Fn31Fg33::P::J1W33::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "r33::r::w::_YlW1Fnnw2nn13::r::i4ZgYlW1Fn31Fg33::P::J1W33::_YlW1Fnnw2nn13",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

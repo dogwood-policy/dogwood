@@ -1,0 +1,38 @@
+entity a tags __cedar::String;
+
+action "" in [Action::":~", Action::"\u{1d}@[", Action::"$", Action::"=\u{e}", Action::"\u{1d}", Action::"[", Action::"@T", Action::"oU ", Action::"                                 ", Action::"\u{1d}@gf\u{e}fd", Action::"oUUUUUUaU@                      ", Action::"                               ", Action::"\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}]\u{18}\u{18}\u{18}\u{11}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}U", Action::"UUaU@                      ", Action::"                                "] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}]\u{18}\u{18}\u{18}\u{11}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}U" in [Action::"UUaU@                      ", Action::"                                "];
+
+action "\u{1d}" in [Action::"[", Action::"@T", Action::"oU ", Action::"                                 ", Action::"\u{1d}@gf\u{e}fd", Action::"oUUUUUUaU@                      ", Action::"                               ", Action::"\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}]\u{18}\u{18}\u{18}\u{11}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}U", Action::"UUaU@                      ", Action::"                                "];
+
+action "\u{1d}@[" in [Action::"$", Action::"=\u{e}", Action::"\u{1d}", Action::"[", Action::"@T", Action::"oU ", Action::"                                 ", Action::"\u{1d}@gf\u{e}fd", Action::"oUUUUUUaU@                      ", Action::"                               ", Action::"\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}]\u{18}\u{18}\u{18}\u{11}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}U", Action::"UUaU@                      ", Action::"                                "];
+
+action "\u{1d}@gf\u{e}fd" in [Action::"oUUUUUUaU@                      ", Action::"                               ", Action::"\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}]\u{18}\u{18}\u{18}\u{11}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}U", Action::"UUaU@                      ", Action::"                                "];
+
+action "                               " in [Action::"\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}]\u{18}\u{18}\u{18}\u{11}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}U", Action::"UUaU@                      ", Action::"                                "];
+
+action "                                ";
+
+action "                                 " in [Action::"\u{1d}@gf\u{e}fd", Action::"oUUUUUUaU@                      ", Action::"                               ", Action::"\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}]\u{18}\u{18}\u{18}\u{11}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}U", Action::"UUaU@                      ", Action::"                                "];
+
+action "$" in [Action::"=\u{e}", Action::"\u{1d}", Action::"[", Action::"@T", Action::"oU ", Action::"                                 ", Action::"\u{1d}@gf\u{e}fd", Action::"oUUUUUUaU@                      ", Action::"                               ", Action::"\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}]\u{18}\u{18}\u{18}\u{11}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}U", Action::"UUaU@                      ", Action::"                                "];
+
+action ":~" in [Action::"\u{1d}@[", Action::"$", Action::"=\u{e}", Action::"\u{1d}", Action::"[", Action::"@T", Action::"oU ", Action::"                                 ", Action::"\u{1d}@gf\u{e}fd", Action::"oUUUUUUaU@                      ", Action::"                               ", Action::"\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}]\u{18}\u{18}\u{18}\u{11}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}U", Action::"UUaU@                      ", Action::"                                "];
+
+action "=\u{e}" in [Action::"\u{1d}", Action::"[", Action::"@T", Action::"oU ", Action::"                                 ", Action::"\u{1d}@gf\u{e}fd", Action::"oUUUUUUaU@                      ", Action::"                               ", Action::"\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}]\u{18}\u{18}\u{18}\u{11}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}U", Action::"UUaU@                      ", Action::"                                "];
+
+action "@T" in [Action::"oU ", Action::"                                 ", Action::"\u{1d}@gf\u{e}fd", Action::"oUUUUUUaU@                      ", Action::"                               ", Action::"\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}]\u{18}\u{18}\u{18}\u{11}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}U", Action::"UUaU@                      ", Action::"                                "];
+
+action "UUaU@                      " in [Action::"                                "];
+
+action "[" in [Action::"@T", Action::"oU ", Action::"                                 ", Action::"\u{1d}@gf\u{e}fd", Action::"oUUUUUUaU@                      ", Action::"                               ", Action::"\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}]\u{18}\u{18}\u{18}\u{11}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}U", Action::"UUaU@                      ", Action::"                                "];
+
+action "oU " in [Action::"                                 ", Action::"\u{1d}@gf\u{e}fd", Action::"oUUUUUUaU@                      ", Action::"                               ", Action::"\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}]\u{18}\u{18}\u{18}\u{11}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}U", Action::"UUaU@                      ", Action::"                                "];
+
+action "oUUUUUUaU@                      " in [Action::"                               ", Action::"\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}]\u{18}\u{18}\u{18}\u{11}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}\u{18}U", Action::"UUaU@                      ", Action::"                                "];
+

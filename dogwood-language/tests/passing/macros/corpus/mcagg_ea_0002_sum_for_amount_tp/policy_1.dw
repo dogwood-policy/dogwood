@@ -1,0 +1,22 @@
+// §1.2 example 2 — recover today's `sum a` (per-occurrence) via the
+// explicit form:
+//   sum a for (a: Long), (t: Timepoint). where formerly within 1h (Withdraw(amount: a) ∧ tp(t))
+//
+// Project onto (amount, t) and sum the amount column over the multiset:
+// the total withdrawn in the last hour by everyone. Two equal amounts at
+// different timepoints do NOT collapse, because their `t` differs.
+//
+// Trace (decision at the Alert, ts=3700; window 1h): Transfers at ts=0
+// (out of window), 100 (amount 5), 200 (amount 9), 3600 (amount 4, one second before the decision).
+// Rows (5,t1),(9,t2),(4,t3) → 5 + 9 + 4 = 18.
+def temporal let_(?n, ?A, ?B) {
+    exists (?n: Long). (?A == ?n && ?B)
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    let_(total, sum a for (a: Long), (t: Timepoint). where (formerly within 1h (Drupe::Action::"Transfer"::request{ input.amount: a } && tp(t))), total == 18)};

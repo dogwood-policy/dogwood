@@ -1,0 +1,40 @@
+namespace h::A00AIII3w {
+  entity a;
+
+  action "" in [h::A00AIII3w::Action::":~", h::A00AIII3w::Action::"\u{e}", h::A00AIII3w::Action::"[", h::A00AIII3w::Action::"\u{3}\u{1d}w", h::A00AIII3w::Action::"$", h::A00AIII3w::Action::"00\u{1d}@", h::A00AIII3w::Action::"e", h::A00AIII3w::Action::"V", h::A00AIII3w::Action::"::", h::A00AIII3w::Action::"&", h::A00AIII3w::Action::"=\u{e}", h::A00AIII3w::Action::"\u{1d}@J<", h::A00AIII3w::Action::"r@", h::A00AIII3w::Action::"}}", h::A00AIII3w::Action::"Ai\u{e}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{3}\u{1d}w" in [h::A00AIII3w::Action::"$", h::A00AIII3w::Action::"00\u{1d}@", h::A00AIII3w::Action::"e", h::A00AIII3w::Action::"V", h::A00AIII3w::Action::"::", h::A00AIII3w::Action::"&", h::A00AIII3w::Action::"=\u{e}", h::A00AIII3w::Action::"\u{1d}@J<", h::A00AIII3w::Action::"r@", h::A00AIII3w::Action::"}}", h::A00AIII3w::Action::"Ai\u{e}"];
+
+  action "\u{e}" in [h::A00AIII3w::Action::"[", h::A00AIII3w::Action::"\u{3}\u{1d}w", h::A00AIII3w::Action::"$", h::A00AIII3w::Action::"00\u{1d}@", h::A00AIII3w::Action::"e", h::A00AIII3w::Action::"V", h::A00AIII3w::Action::"::", h::A00AIII3w::Action::"&", h::A00AIII3w::Action::"=\u{e}", h::A00AIII3w::Action::"\u{1d}@J<", h::A00AIII3w::Action::"r@", h::A00AIII3w::Action::"}}", h::A00AIII3w::Action::"Ai\u{e}"];
+
+  action "\u{1d}@J<" in [h::A00AIII3w::Action::"r@", h::A00AIII3w::Action::"}}", h::A00AIII3w::Action::"Ai\u{e}"];
+
+  action "$" in [h::A00AIII3w::Action::"00\u{1d}@", h::A00AIII3w::Action::"e", h::A00AIII3w::Action::"V", h::A00AIII3w::Action::"::", h::A00AIII3w::Action::"&", h::A00AIII3w::Action::"=\u{e}", h::A00AIII3w::Action::"\u{1d}@J<", h::A00AIII3w::Action::"r@", h::A00AIII3w::Action::"}}", h::A00AIII3w::Action::"Ai\u{e}"];
+
+  action "&" in [h::A00AIII3w::Action::"=\u{e}", h::A00AIII3w::Action::"\u{1d}@J<", h::A00AIII3w::Action::"r@", h::A00AIII3w::Action::"}}", h::A00AIII3w::Action::"Ai\u{e}"];
+
+  action "00\u{1d}@" in [h::A00AIII3w::Action::"e", h::A00AIII3w::Action::"V", h::A00AIII3w::Action::"::", h::A00AIII3w::Action::"&", h::A00AIII3w::Action::"=\u{e}", h::A00AIII3w::Action::"\u{1d}@J<", h::A00AIII3w::Action::"r@", h::A00AIII3w::Action::"}}", h::A00AIII3w::Action::"Ai\u{e}"];
+
+  action "::" in [h::A00AIII3w::Action::"&", h::A00AIII3w::Action::"=\u{e}", h::A00AIII3w::Action::"\u{1d}@J<", h::A00AIII3w::Action::"r@", h::A00AIII3w::Action::"}}", h::A00AIII3w::Action::"Ai\u{e}"];
+
+  action ":~" in [h::A00AIII3w::Action::"\u{e}", h::A00AIII3w::Action::"[", h::A00AIII3w::Action::"\u{3}\u{1d}w", h::A00AIII3w::Action::"$", h::A00AIII3w::Action::"00\u{1d}@", h::A00AIII3w::Action::"e", h::A00AIII3w::Action::"V", h::A00AIII3w::Action::"::", h::A00AIII3w::Action::"&", h::A00AIII3w::Action::"=\u{e}", h::A00AIII3w::Action::"\u{1d}@J<", h::A00AIII3w::Action::"r@", h::A00AIII3w::Action::"}}", h::A00AIII3w::Action::"Ai\u{e}"];
+
+  action "=\u{e}" in [h::A00AIII3w::Action::"\u{1d}@J<", h::A00AIII3w::Action::"r@", h::A00AIII3w::Action::"}}", h::A00AIII3w::Action::"Ai\u{e}"];
+
+  action "Ai\u{e}";
+
+  action "V" in [h::A00AIII3w::Action::"::", h::A00AIII3w::Action::"&", h::A00AIII3w::Action::"=\u{e}", h::A00AIII3w::Action::"\u{1d}@J<", h::A00AIII3w::Action::"r@", h::A00AIII3w::Action::"}}", h::A00AIII3w::Action::"Ai\u{e}"];
+
+  action "[" in [h::A00AIII3w::Action::"\u{3}\u{1d}w", h::A00AIII3w::Action::"$", h::A00AIII3w::Action::"00\u{1d}@", h::A00AIII3w::Action::"e", h::A00AIII3w::Action::"V", h::A00AIII3w::Action::"::", h::A00AIII3w::Action::"&", h::A00AIII3w::Action::"=\u{e}", h::A00AIII3w::Action::"\u{1d}@J<", h::A00AIII3w::Action::"r@", h::A00AIII3w::Action::"}}", h::A00AIII3w::Action::"Ai\u{e}"];
+
+  action "e" in [h::A00AIII3w::Action::"V", h::A00AIII3w::Action::"::", h::A00AIII3w::Action::"&", h::A00AIII3w::Action::"=\u{e}", h::A00AIII3w::Action::"\u{1d}@J<", h::A00AIII3w::Action::"r@", h::A00AIII3w::Action::"}}", h::A00AIII3w::Action::"Ai\u{e}"];
+
+  action "r@" in [h::A00AIII3w::Action::"}}", h::A00AIII3w::Action::"Ai\u{e}"];
+
+  action "}}" in [h::A00AIII3w::Action::"Ai\u{e}"];
+}
+

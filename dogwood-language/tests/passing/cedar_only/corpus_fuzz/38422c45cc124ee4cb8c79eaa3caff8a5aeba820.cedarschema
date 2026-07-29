@@ -1,0 +1,16 @@
+entity P;
+
+entity RBB;
+
+entity fB;
+
+entity g_;
+
+action "" in [Action::"h"] appliesTo {
+  principal: [g_],
+  resource: [fB, g_, P, RBB],
+  context: {}
+};
+
+action "h";
+

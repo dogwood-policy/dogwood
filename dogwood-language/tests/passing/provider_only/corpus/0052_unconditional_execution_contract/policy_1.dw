@@ -1,0 +1,13 @@
+// Bare `action` scope: this rule (and its provider) covers EVERY action.
+// On Read events the provider sees the document; on Ping events the
+// document argument is absent -> Null -> the script returns its sentinel
+// { length: -1 }, and -1 < 6 holds — so Pings are permitted through the
+// SAME provider-gated rule, proving the provider executed there.
+permit (
+    principal,
+    action,
+    resource
+)
+when guardrails {
+    Strings::Length(context.input.document).length < 6
+};

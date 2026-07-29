@@ -1,0 +1,22 @@
+// Rule order: forbid then permit. Identical rules to policy_1 in
+// reversed order. expected_2.out must equal expected_1.out; any
+// divergence reveals rule index leaking into verdict semantics
+// (e.g. ordering bias in a UNION ALL row layout).
+
+forbid (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Logout"::request{ input.user: context.input.user }
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

@@ -1,0 +1,13 @@
+namespace r::r::h::r {
+  entity a;
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      @O
+      F: Set<Set<__cedar::datetime>>
+    }
+  };
+}
+

@@ -1,0 +1,18 @@
+// Permit Read or Write only when the access level (computed by a multi-arg
+// method taking the principal id and a threshold integer) is NOT equal to
+// the blocked value (42).
+//
+// Gaps covered:
+//   - literal_integer argument (42)
+//   - multi_arg_method (.checkLevel(principal.id, 42) — two args)
+//   - != comparison operator
+//   - action_in_list scope
+
+permit (
+    principal,
+    action in [Drupe::Action::"Read", Drupe::Action::"Write"],
+    resource
+)
+when guardrails {
+    Access::Level(context.input.document).checkLevel(principal.id, 42) != 42
+};

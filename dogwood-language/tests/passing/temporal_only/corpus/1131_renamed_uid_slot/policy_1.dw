@@ -1,0 +1,26 @@
+// The reserved uid slot is RENAMED to `trace_id` by the event schema
+// (event.dwschema). A Read is permitted only if the SAME user formerly
+// logged in under a specific trace id, matched by a LITERAL on the renamed
+// slot. The interpreter matches `trace_id` by descending the event's field
+// tree (`field_path`) exactly like any other field — it has no special
+// knowledge that this slot "used to be" `requestId`.
+//
+// A differential SQL backend must therefore serialize and read `trace_id`
+// as an ordinary field, regardless of the fact that the default schema
+// calls the uid slot `requestId`. A compiler that hardcodes the reserved
+// slot names (or a positional args-array that reserves the last slot for
+// "uid") mishandles the renamed slot.
+//
+// Controls:
+//   trace_1: past Login with trace_id "tr-1" (matches the literal) -> the
+//            current Read is PERMITTED.
+//   trace_2: past Login with trace_id "tr-OTHER" (does not match) -> NOT
+//            permitted (the literal genuinely constrains the match).
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user, trace_id: "tr-1" }
+};

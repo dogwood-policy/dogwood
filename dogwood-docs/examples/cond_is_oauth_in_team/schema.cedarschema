@@ -1,0 +1,19 @@
+namespace Drupe {
+  type GetStockInfoInput = { stock: String };
+  type GetStockInfoOutput = { info: String };
+  type SystemContext = { now: datetime };
+
+  entity Gateway;
+  entity Team;
+  entity OAuthUser in [Team] = { id: String } tags String;
+
+  action "GetStockInfo" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: GetStockInfoInput,
+      output?: GetStockInfoOutput,
+      system: SystemContext
+    }
+  };
+}

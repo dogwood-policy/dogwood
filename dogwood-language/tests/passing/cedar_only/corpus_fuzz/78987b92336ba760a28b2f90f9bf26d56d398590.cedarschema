@@ -1,0 +1,18 @@
+entity a = {
+  r?: {
+    @wS
+    ""?: a
+  }
+} tags Set<{}>;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: {
+      ""?: __cedar::String,
+      "3\0\0\0\0"?: __cedar::String
+    }
+  }
+};
+

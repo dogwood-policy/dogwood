@@ -1,0 +1,16 @@
+entity G enum [""];
+
+entity Q enum [""];
+
+entity gr3 enum [""];
+
+entity r enum [""];
+
+entity rUJY00000000000 enum [""];
+
+action "action" appliesTo {
+  principal: [Q],
+  resource: [Q],
+  context: {}
+};
+

@@ -1,0 +1,21 @@
+namespace rhRRR::v::v::D {
+  @r("")
+  @v("")
+  entity AR tags Set<Set<__cedar::Long>>;
+
+  entity p enum [""];
+
+  @v("")
+  entity r tags Set<Set<Set<Set<__cedar::Long>>>>;
+
+  @r("i")
+  @v("")
+  entity v tags Set<Set<Set<Set<__cedar::Long>>>>;
+
+  action "action" appliesTo {
+    principal: [v],
+    resource: [v],
+    context: {}
+  };
+}
+

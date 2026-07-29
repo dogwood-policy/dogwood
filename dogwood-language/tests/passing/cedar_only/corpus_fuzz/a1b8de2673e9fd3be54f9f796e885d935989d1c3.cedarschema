@@ -1,0 +1,23 @@
+entity a = {
+  K?: __cedar::Long,
+  O?: {
+    @PFFFFFdFF5cZgYlW("\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\0\0\0\0\0\0\0\0\0\0\0\0")
+    ""?: {    },
+    "\u{1}\u{5}"?: __cedar::String
+  },
+  UA?: {  },
+  r?: {
+    "": __cedar::Long,
+    "\0\0\0\0\0"?: __cedar::String,
+    @r("")
+    @r3333kkktr0fSS0ft
+    "\0\07"?: {    }
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

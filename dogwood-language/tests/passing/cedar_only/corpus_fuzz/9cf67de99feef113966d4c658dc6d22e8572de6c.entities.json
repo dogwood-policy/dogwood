@@ -1,0 +1,69 @@
+[
+  {
+    "uid": {
+      "type": "a",
+      "id": ""
+    },
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "Action",
+      "id": "@"
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "Action",
+        "id": "s"
+      },
+      {
+        "type": "Action",
+        "id": "A"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "Action",
+      "id": ""
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "Action",
+        "id": "s"
+      },
+      {
+        "type": "Action",
+        "id": "A"
+      },
+      {
+        "type": "Action",
+        "id": "@"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "Action",
+      "id": "s"
+    },
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "Action",
+      "id": "A"
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "Action",
+        "id": "s"
+      }
+    ]
+  }
+]

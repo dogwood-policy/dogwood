@@ -1,0 +1,18 @@
+namespace Drupe {
+    entity OAuthUser;
+    entity Gateway;
+    // A Transfer whose input carries a `recipient` (and a `user`) — the
+    // nested-exists binder `g` is restricted by `input.recipient: g`, while
+    // the outer binder `v` never appears in a positive atom.
+    type TransferInput = { user: String, recipient: String };
+    action Transfer appliesTo {
+        principal: [OAuthUser],
+        resource: [Gateway],
+        context: { input: TransferInput }
+    };
+    action Read appliesTo {
+        principal: [OAuthUser],
+        resource: [Gateway],
+        context: { input: TransferInput }
+    };
+}

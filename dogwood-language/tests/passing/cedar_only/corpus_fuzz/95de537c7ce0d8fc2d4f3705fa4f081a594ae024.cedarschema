@@ -1,0 +1,23 @@
+@B("i")
+@EW1Fnnw2nn133("")
+@P("bia \u{1}n\u{f}")
+@P2nn13("")
+@Pg("")
+@Pn
+@g("")
+@i4W33f3("")
+@iW33f33("")
+@r("")
+@r33("")
+@w
+entity s = {
+  @A
+  h: __cedar::String
+} tags s;
+
+action "action" appliesTo {
+  principal: [s],
+  resource: [s],
+  context: {}
+};
+

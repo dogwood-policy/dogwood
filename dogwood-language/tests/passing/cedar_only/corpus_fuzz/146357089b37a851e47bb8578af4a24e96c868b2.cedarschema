@@ -1,0 +1,20 @@
+namespace C {
+  entity A000000000000000 enum [""];
+
+  entity D enum [""];
+
+  entity g enum [""];
+
+  entity i enum [""];
+
+  entity p enum [""];
+
+  entity r enum [""];
+
+  action "action" appliesTo {
+    principal: [g],
+    resource: [g],
+    context: {}
+  };
+}
+

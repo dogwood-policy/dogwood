@@ -1,0 +1,16 @@
+namespace r::f::r {
+  entity D;
+
+  entity I;
+
+  entity Kq;
+
+  entity vR;
+
+  action "action" appliesTo {
+    principal: [Kq, D, I],
+    resource: [Kq, I, D],
+    context: {}
+  };
+}
+

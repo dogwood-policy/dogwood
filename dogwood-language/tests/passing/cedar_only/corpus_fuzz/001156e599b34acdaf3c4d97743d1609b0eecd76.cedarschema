@@ -1,0 +1,14 @@
+namespace A {
+  entity a;
+
+  @QK
+  action "" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      @fc("+trin")
+      A?: __cedar::String
+    }
+  };
+}
+

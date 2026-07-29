@@ -1,0 +1,32 @@
+entity a = {
+  A?: __cedar::String,
+  @A0000000("\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}")
+  B0083: a,
+  E?: {
+    @r("")
+    "": __cedar::datetime,
+    "\r"?: __cedar::String,
+    oo?: __cedar::String
+  },
+  IRbcRS3365?: __cedar::String,
+  O?: __cedar::String,
+  @lO90a
+  i00: __cedar::Long,
+  @P
+  j: __cedar::decimal,
+  r?: __cedar::String,
+  r3?: __cedar::String,
+  @A
+  rm3ukucR30: __cedar::Bool,
+  v?: __cedar::String,
+  w: __cedar::ipaddr,
+  @rQ334333333g
+  z: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

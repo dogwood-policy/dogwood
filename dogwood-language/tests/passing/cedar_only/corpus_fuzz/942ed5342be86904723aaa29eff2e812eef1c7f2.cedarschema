@@ -1,0 +1,12 @@
+namespace bo::bo::b9::wmmmo::bo::bg {
+  entity A enum [""];
+
+  entity bo enum [""];
+
+  action "action" appliesTo {
+    principal: [bo],
+    resource: [bo],
+    context: {}
+  };
+}
+

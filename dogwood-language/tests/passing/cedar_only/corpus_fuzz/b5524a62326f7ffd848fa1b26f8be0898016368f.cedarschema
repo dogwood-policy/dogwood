@@ -1,0 +1,15 @@
+@T3333333333C33("")
+@c("")
+@g("")
+@l("")
+@r("")
+@r33("")
+@r333333333J333("")
+entity a enum [""];
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

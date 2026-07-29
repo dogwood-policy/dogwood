@@ -1,0 +1,15 @@
+// Read is permitted if there's been a Login within 1h.
+// But Read is forbidden if there's been a Logout(by the same user)
+// since the Login(within 1h).
+// Kernel subset: permit + forbid + without-since + within, no from/to.
+// Resolved form on the since-left (post-alt-kernel-semantics).
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    !Drupe::Action::"Logout"::request{ input.user: context.input.user }
+    since within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

@@ -1,0 +1,56 @@
+entity a = {
+  A?: {
+    ""?: __cedar::String,
+    "\0"?: {
+      @B333("")
+      @B33344
+      @Pn("yA")
+      @g33f333("\u{13}\u{13}\u{13}:\u{b}\u{f}i")
+      @i433enw("")
+      @ne4Aeee("g")
+      @neeeAee("")
+      @r("")
+      @v
+      @vVR3T33S1Razg33("Debian \u{1}\u{b}\0\0\0\0\0\0\0")
+      @y("")
+      @ye
+      ""?: __cedar::Long,
+      "\u{3}z@"?: __cedar::String,
+      "\u{14}"?: __cedar::String,
+      "\u{1d}@gf": a,
+      "$"?: __cedar::String,
+      "N~\0\0\0\n"?: __cedar::String,
+      "["?: __cedar::String,
+      qqqqqqqqqqqqqqqqqqq?: __cedar::String,
+      @B("i")
+      @B33334("")
+      @TJJ
+      @_31Fnnw2nn1333T1("")
+      @_YlW1Fnnw2nn13("")
+      @e000000000000000
+      @eKKKKKKKZgYlW1Fn("yA")
+      @i4W33f3("")
+      @neeeAede431Fnnw2("")
+      @r
+      @r3f333333331Fg33("Debian \u{1}\u{f}")
+      @rC("")
+      "z~": Set<Set<__cedar::Long>>
+    },
+    "\0\0"?: __cedar::String,
+    "\u{1}\n\u{f}VV"?: __cedar::String,
+    "\u{3}\u{1d}w"?: __cedar::String,
+    "\u{1d}\u{3}"?: __cedar::String,
+    "\u{1d}@["?: __cedar::String,
+    "$"?: __cedar::String,
+    ":~"?: __cedar::String,
+    "=\u{e}"?: __cedar::String,
+    "["?: __cedar::String
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,189 @@
+[package]
+name = "amzn-dogwood-language"
+version = "1.0.0"
+edition = "2024"
+publish.workspace = true
+description = "The Dogwood surface language: parser, validator, interpreter, and the per-request authorizer. The single published front door; implementation modules are crate-private."
+exclude = ["/build", "/Config", "/build-tools/"]
+
+# In-source crate identifier `dogwood_language` (the published crate is
+# `amzn-dogwood-language`). The whole frontend lives in this one crate as
+# crate-private modules, so consumers can only reach the curated public
+# surface in `lib.rs`.
+[lib]
+name = "dogwood_language"
+
+[dependencies]
+pest = "2"
+pest_derive = "2"
+thiserror = "1"
+miette = { version = "7" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+cedar-policy-core = "4.11"
+# High-level Cedar API used for authorization (the public Authorizer /
+# Request / Response / Decision). Re-exported through the front door so
+# consumers don't depend on Cedar directly.
+cedar-policy = "4.11"
+smol_str = "0.3"
+# `NonEmpty<SmolStr>` is the attribute-path type Cedar's `ExprBuilder`
+# takes for the extended-`has` operator; we name it directly when lowering
+# a `has a.b.c` to loc-bearing `ast`.
+nonempty = "0.12"
+# MCP -> Cedar schema generation: a Dogwood schema is an MCP tool
+# manifest, turned into a Cedar schema via this generator.
+cedar-policy-mcp-schema-generator = "0.6"
+mcp-tools-sdk = "0.4"
+# Information-provider evaluation. A provider's implementation is a
+# sandboxed Rhai script: a bare engine has no file/network/process
+# access — capabilities are exposed only by host functions we register
+# (e.g. the `regex`-backed string helpers). `decimal` lets a script
+# return Cedar decimal-typed outputs; `sync` makes the engine Send+Sync
+# so it can live in a server's request path.
+rhai = { version = "1", features = ["decimal", "sync"] }
+regex = "1"
+rust_decimal = "1"
+# Embeds the temporal regression corpus into the crate (feature `corpus`)
+# so other packages — notably the SQL compiler — can run differential
+# tests over the same cases the in-memory engine is validated against.
+include_dir = { version = "0.7", optional = true }
+
+[features]
+# Expose the embedded temporal regression corpus via `crate::corpus`.
+# Off by default: only consumers running differential tests need the
+# ~13MB of embedded case data.
+corpus = ["dep:include_dir"]
+
+# Register a networked `http_get(url)` host function for provider scripts
+# (fetch-a-value-from-the-web, in the spirit of OPA/Rego's `http.send`).
+# OFF BY DEFAULT and deliberately so: it makes the provider engine
+# non-deterministic (a script's output then depends on the network), which
+# the default build forbids. Only turn it on when a deployment genuinely
+# wants providers to reach the network. No extra dependency — the client
+# is a minimal synchronous HTTP/1.0 GET over `std::net`.
+net = []
+
+[dev-dependencies]
+miette = { version = "7", features = ["fancy-no-backtrace"] }
+
+# ─── Reorganized integration test targets ────────────────────────────
+
+[[test]]
+name = "passing_examples"
+path = "tests/passing/examples/harness.rs"
+
+[[test]]
+name = "passing_cedar_only"
+path = "tests/passing/cedar_only/harness.rs"
+
+[[test]]
+name = "passing_temporal_only"
+path = "tests/passing/temporal_only/harness.rs"
+
+[[test]]
+name = "passing_provider_only"
+path = "tests/passing/provider_only/harness.rs"
+
+[[test]]
+name = "passing_macros"
+path = "tests/passing/macros/harness.rs"
+
+[[test]]
+name = "passing_mixed"
+path = "tests/passing/mixed/harness.rs"
+
+[[test]]
+name = "pending_fix"
+path = "tests/pending_fix/harness.rs"
+
+[[test]]
+name = "expected_failures"
+path = "tests/expected_failures/harness.rs"
+
+[[test]]
+name = "doc_engine_lifecycle"
+path = "tests/docs_as_tests/engine_lifecycle.rs"
+
+[[test]]
+name = "doc_authorize_verdict"
+path = "tests/docs_as_tests/authorize_verdict.rs"
+
+[[test]]
+name = "doc_mcp_schema_gen"
+path = "tests/docs_as_tests/mcp_schema_gen.rs"
+
+[[test]]
+name = "doc_parse_probe"
+path = "tests/docs_as_tests/parse_probe.rs"
+
+[[test]]
+name = "doc_temporal_authorize"
+path = "tests/docs_as_tests/temporal_authorize.rs"
+
+[[test]]
+name = "doc_mid_expression_marker"
+path = "tests/docs_as_tests/mid_expression_marker.rs"
+
+[[test]]
+name = "doc_authorize_request"
+path = "tests/docs_as_tests/authorize_request.rs"
+
+[[test]]
+name = "doc_build_declarations_directly"
+path = "tests/docs_as_tests/build_declarations_directly.rs"
+
+[[test]]
+name = "doc_parsed_policy_scope_and_args"
+path = "tests/docs_as_tests/parsed_policy_scope_and_args.rs"
+
+# Web-fetch provider test — only meaningful with `--features net` (which
+# registers `http_get`); a no-op stub in the default build.
+[[test]]
+name = "net_provider"
+path = "tests/net_provider.rs"
+
+# Partition-safety differential: with a universal symmetric pin, global-run
+# verdicts per key must equal sliced-run verdicts (the "pinned => safe to
+# partition" guarantee of the relativization rewrite).
+[[test]]
+name = "pin_partition_differential"
+path = "tests/pin_partition_differential.rs"
+
+# Regression: a provider that errors at runtime must fail closed (Deny).
+[[test]]
+name = "fail_closed"
+path = "tests/fail_closed.rs"
+
+# The MCP-manifest and macro-library schema-loading conveniences.
+[[test]]
+name = "schema_loading"
+path = "tests/schema_loading.rs"
+
+# Error-message differential: Dogwood (pest) vs Cedar (lalrpop) parse errors.
+[[test]]
+name = "boundary_macro_rejects"
+path = "tests/boundary_macro_rejects.rs"
+
+[[test]]
+name = "boundary_parser_rejects"
+path = "tests/boundary_parser_rejects.rs"
+
+[[test]]
+name = "boundary_validator_catches"
+path = "tests/boundary_validator_catches.rs"
+
+[[test]]
+name = "cedarify_adversarial"
+path = "tests/cedarify_adversarial.rs"
+
+[[test]]
+name = "error_message_differential"
+path = "tests/error_message_differential.rs"
+
+[[test]]
+name = "decimal_equality_matches_cedar"
+path = "tests/decimal_equality_matches_cedar.rs"
+
+[[test]]
+name = "sum_is_order_independent"
+path = "tests/sum_is_order_independent.rs"

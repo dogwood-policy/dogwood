@@ -1,0 +1,10 @@
+@A("!")
+@Z0ixxxxxxxxxxxxxx
+entity a enum ["\0g\u{c}", "@0\0\0+\0\0\0\0\0\0\0\0..B..:...@\0\0\0\0\0\0\0\0\0\n\0\0\0\06"];
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

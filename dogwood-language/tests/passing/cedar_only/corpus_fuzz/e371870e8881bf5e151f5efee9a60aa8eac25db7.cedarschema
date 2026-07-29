@@ -1,0 +1,15 @@
+@P5
+entity a = {
+  Da66666666666666: __cedar::Bool,
+  J?: __cedar::Bool,
+  JWWW?: __cedar::Bool,
+  b?: __cedar::Bool,
+  r?: __cedar::Bool
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

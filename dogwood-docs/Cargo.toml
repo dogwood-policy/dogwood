@@ -1,0 +1,21 @@
+[package]
+name = "amzn-dogwood-docs"
+version = "1.0.0"
+edition = "2024"
+# The docs + example bundles + their check harness are a reference/verification
+# target, not a library other packages consume. Not published.
+publish = false
+description = "The Dogwood documentation: the guide prose plus complete, CLI-checked example bundles. A test harness runs every bundle through the `dogwood` binary, so a doc example that no longer parses/validates/replays is a build failure."
+exclude = ["/build", "/Config", "/build-tools/"]
+
+# A near-empty lib: the crate exists to hold the guide, the example bundles
+# under examples/, and the harness under tests/. Nothing imports it.
+[lib]
+name = "dogwood_docs"
+path = "src/lib.rs"
+
+[dev-dependencies]
+# Builds and locates the `dogwood` binary from the CLI crate so the harness can
+# run each example bundle through it. `CARGO_BIN_EXE_dogwood` is not set for a
+# separate crate's tests, so we resolve the binary via escargot instead.
+escargot = "0.5"

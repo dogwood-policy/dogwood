@@ -1,0 +1,21 @@
+// The unwrapped form composes a provider output with ARBITRARY Cedar —
+// things the closed `guardrails { … }` grammar cannot express:
+//
+//   * mixing a provider atom with a plain Cedar condition on
+//     `context.input` under `&&`;
+//   * using the provider's integer output inside arithmetic
+//     (`.count + 1 <= 3`), not just a bare comparison.
+//
+// Permit Read when the request is flagged trusted AND the document has at
+// most two digits (expressed as `digitCount + 1 <= 3`), where the digit
+// count comes from the `Strings::DigitCount` provider.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when {
+    context.input.trusted == true
+    && Strings::DigitCount(context.input.document).count + 1 <= 3
+};

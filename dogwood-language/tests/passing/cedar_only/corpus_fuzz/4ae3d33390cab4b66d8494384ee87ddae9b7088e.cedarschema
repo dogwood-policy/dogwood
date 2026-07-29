@@ -1,0 +1,70 @@
+namespace t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t {
+  entity B enum [""];
+
+  entity D;
+
+  entity I;
+
+  entity N tags t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t::r;
+
+  entity f;
+
+  entity h0;
+
+  entity m3 enum ["\0\0\0\0\t:", "", "", "[\u{1d}vv"];
+
+  entity qoqqPbop333;
+
+  entity r;
+
+  entity r3;
+
+  entity ry333S3;
+
+  @A1lcR000
+  entity v;
+
+  entity vR;
+
+  entity yyqPbop3333 = {
+    w00009wpkgXVVVV?: {    }
+  };
+
+  entity z;
+
+  action "" in [t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t::Action::"0A3", t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t::Action::"o", t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t::Action::"vvvvv]["] appliesTo {
+    principal: [qoqqPbop333, v, f, yyqPbop3333, N, z, ry333S3, B, m3, vR, I, r, r3, h0],
+    resource: [B, yyqPbop3333, f, qoqqPbop333, N, z, D, v, m3, vR, r3, I, ry333S3, r, h0],
+    context: {
+      HqPbop233330pRRR: t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t::h0,
+      ry333T3?: __cedar::Bool
+    }
+  };
+
+  action "0A3" in [t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t::Action::"o", t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t::Action::"vvvvv]["] appliesTo {
+    principal: [r],
+    resource: [v, D, N, qoqqPbop333, I, h0],
+    context: {
+      B?: __cedar::datetime
+    }
+  };
+
+  action "o" in [t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t::Action::"vvvvv]["] appliesTo {
+    principal: [qoqqPbop333, v, f, N, z, yyqPbop3333, ry333S3, B, m3, vR, D, I, r3, r],
+    resource: [qoqqPbop333, ry333S3, m3, h0, z, B, I, f, vR, v, D, N, r3, r],
+    context: {}
+  };
+
+  action "vvvvv][" appliesTo {
+    principal: [qoqqPbop333, v, f, yyqPbop3333, h0, ry333S3, I, vR, D, N, B, z, r3, r],
+    resource: [qoqqPbop333, v, f, yyqPbop3333, N, z, ry333S3, B, m3, vR, D, I, r3, r],
+    context: {
+      _2?: __cedar::String,
+      booooooocc?: __cedar::String,
+      m?: __cedar::String,
+      r?: __cedar::datetime,
+      v?: __cedar::String
+    }
+  };
+}
+

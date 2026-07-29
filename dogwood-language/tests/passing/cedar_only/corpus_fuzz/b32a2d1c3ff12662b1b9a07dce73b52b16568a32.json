@@ -1,0 +1,573 @@
+{
+  "policies": "corpus-tests/b32a2d1c3ff12662b1b9a07dce73b52b16568a32.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/b32a2d1c3ff12662b1b9a07dce73b52b16568a32.entities.json",
+  "schema": "corpus-tests/b32a2d1c3ff12662b1b9a07dce73b52b16568a32.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": false,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "F": "hSSSSSSSSSSSSSSSSSSSSSSmsSSSSSSSSSSSSSSS",
+        "O": {
+          "__entity": {
+            "type": "a",
+            "id": ""
+          }
+        },
+        "O44000b4brYcrgkc4": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "P": {
+          "__entity": {
+            "type": "a",
+            "id": ""
+          }
+        },
+        "U4444w111111gppc9": {
+          "__entity": {
+            "type": "a",
+            "id": ""
+          }
+        },
+        "_YlW1Fnnw2nn1A": [
+          [
+            [
+              []
+            ]
+          ]
+        ],
+        "g3": [
+          [
+            [
+              []
+            ]
+          ]
+        ],
+        "m": [
+          [
+            [
+              []
+            ]
+          ]
+        ],
+        "r33": "SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS",
+        "vSNRc033333324": ""
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "F": "e\tian \u0001\u000f",
+        "O": {
+          "__entity": {
+            "type": "a",
+            "id": ""
+          }
+        },
+        "O44000b4brYcrgkc4": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "P": {
+          "__entity": {
+            "type": "a",
+            "id": ""
+          }
+        },
+        "U4444w111111gppc9": {
+          "__entity": {
+            "type": "a",
+            "id": ""
+          }
+        },
+        "_YlW1Fnnw2nn1A": [
+          [],
+          [
+            [
+              []
+            ]
+          ]
+        ],
+        "g3": [
+          [
+            [
+              []
+            ]
+          ]
+        ],
+        "m": [
+          [
+            [
+              []
+            ]
+          ]
+        ],
+        "r33": " ",
+        "vSNRc033333324": ""
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "F": "h",
+        "O": {
+          "__entity": {
+            "type": "a",
+            "id": ""
+          }
+        },
+        "O44000b4brYcrgkc4": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "P": {
+          "__entity": {
+            "type": "a",
+            "id": ""
+          }
+        },
+        "U4444w111111gppc9": {
+          "__entity": {
+            "type": "a",
+            "id": ""
+          }
+        },
+        "_YlW1Fnnw2nn1A": [
+          [
+            [
+              []
+            ]
+          ]
+        ],
+        "g3": [
+          [
+            [
+              []
+            ]
+          ]
+        ],
+        "m": [],
+        "r33": "W1Fn\u000fi",
+        "vSNRc033333324": ""
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "F": "",
+        "O": {
+          "__entity": {
+            "type": "a",
+            "id": ""
+          }
+        },
+        "O44000b4brYcrgkc4": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "P": {
+          "__entity": {
+            "type": "a",
+            "id": ""
+          }
+        },
+        "U4444w111111gppc9": {
+          "__entity": {
+            "type": "a",
+            "id": ""
+          }
+        },
+        "_YlW1Fnnw2nn1A": [],
+        "g3": [
+          [
+            [
+              []
+            ]
+          ]
+        ],
+        "m": [
+          [
+            [
+              []
+            ]
+          ]
+        ],
+        "r33": "",
+        "vSNRc033333324": ""
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "F": "",
+        "O": {
+          "__entity": {
+            "type": "a",
+            "id": ""
+          }
+        },
+        "O44000b4brYcrgkc4": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "P": {
+          "__entity": {
+            "type": "a",
+            "id": ""
+          }
+        },
+        "U4444w111111gppc9": {
+          "__entity": {
+            "type": "a",
+            "id": ""
+          }
+        },
+        "_YlW1Fnnw2nn1A": [
+          [
+            [
+              []
+            ]
+          ]
+        ],
+        "g3": [
+          [
+            [
+              []
+            ]
+          ]
+        ],
+        "m": [
+          [
+            [
+              []
+            ]
+          ]
+        ],
+        "r33": "\ngfg",
+        "vSNRc033333324": ""
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "F": "\u0001\u000f",
+        "O": {
+          "__entity": {
+            "type": "a",
+            "id": ""
+          }
+        },
+        "O44000b4brYcrgkc4": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "P": {
+          "__entity": {
+            "type": "a",
+            "id": ""
+          }
+        },
+        "U4444w111111gppc9": {
+          "__entity": {
+            "type": "a",
+            "id": ""
+          }
+        },
+        "_YlW1Fnnw2nn1A": [
+          [
+            [
+              []
+            ]
+          ]
+        ],
+        "g3": [
+          [
+            [
+              []
+            ]
+          ]
+        ],
+        "m": [
+          [
+            [
+              []
+            ]
+          ]
+        ],
+        "r33": "yA",
+        "vSNRc033333324": ""
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "F": "\u0001",
+        "O": {
+          "__entity": {
+            "type": "a",
+            "id": ""
+          }
+        },
+        "O44000b4brYcrgkc4": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "P": {
+          "__entity": {
+            "type": "a",
+            "id": ""
+          }
+        },
+        "U4444w111111gppc9": {
+          "__entity": {
+            "type": "a",
+            "id": ""
+          }
+        },
+        "_YlW1Fnnw2nn1A": [
+          [
+            [],
+            [
+              []
+            ]
+          ],
+          [
+            [
+              []
+            ]
+          ]
+        ],
+        "g3": [
+          [
+            [
+              []
+            ]
+          ]
+        ],
+        "m": [
+          [
+            [
+              []
+            ]
+          ]
+        ],
+        "r33": "SSS",
+        "vSNRc033333324": ""
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "F": "",
+        "O": {
+          "__entity": {
+            "type": "a",
+            "id": ""
+          }
+        },
+        "O44000b4brYcrgkc4": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "P": {
+          "__entity": {
+            "type": "a",
+            "id": ""
+          }
+        },
+        "U4444w111111gppc9": {
+          "__entity": {
+            "type": "a",
+            "id": ""
+          }
+        },
+        "_YlW1Fnnw2nn1A": [
+          [
+            [
+              []
+            ]
+          ]
+        ],
+        "g3": [
+          [
+            [
+              []
+            ]
+          ]
+        ],
+        "m": [
+          [
+            [
+              []
+            ]
+          ]
+        ],
+        "r33": "SS\u0002SSSSSSSSSSSSSSSSSSSSSSSSSSSSSS",
+        "vSNRc033333324": ""
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    }
+  ]
+}

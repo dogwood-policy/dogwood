@@ -1,0 +1,11 @@
+// Permit Read when content risk is below 0.5 (guardrail decimal),
+// unless the user is "restricted" (Cedar unless clause)
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Content::Risk(context.input.document).severityScore.lessThan(decimal("0.5"))
+}
+unless { context.input.user == "restricted" };

@@ -1,0 +1,13 @@
+entity a = {
+  @A0000000000000000
+  @p("")
+  @r
+  A: __cedar::Bool
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

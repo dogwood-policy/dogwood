@@ -1,0 +1,13 @@
+entity a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    K0000000qo3gD?: __cedar::ipaddr,
+    O?: __cedar::Bool,
+    W3F0?: __cedar::Bool,
+    m: __cedar::Bool
+  }
+};
+

@@ -1,0 +1,31 @@
+@A
+@m("")
+@rN13000000000
+namespace r::r::h::r {
+  @J
+  @r("")
+  entity a = {
+    @r
+    A?: __cedar::String,
+    @L3("")
+    @LS("")
+    @m("\u{1d}")
+    r?: __cedar::datetime
+  } tags r::r::h::r::a;
+
+  @r
+  @rN130000RRwnT("")
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      @A("")
+      @Fn7RcST3
+      @h
+      @r("\0\0")
+      @rN1300100RRwn("")
+      F: Set<Set<__cedar::datetime>>
+    }
+  };
+}
+

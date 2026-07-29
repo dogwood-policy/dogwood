@@ -1,0 +1,12 @@
+// Edge case: same provider invoked twice in one clause with different args.
+// Both must evaluate independently.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Strings::Matches(context.input.document, "^[A-Z]").matched == true
+    && Strings::Matches(context.input.document, "[0-9]$").matched == true
+};

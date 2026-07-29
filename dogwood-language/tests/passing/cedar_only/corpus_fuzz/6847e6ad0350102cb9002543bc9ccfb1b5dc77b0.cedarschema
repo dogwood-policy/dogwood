@@ -1,0 +1,53 @@
+entity a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @A
+    r: {
+      ""?: __cedar::String,
+      "\0"?: __cedar::String,
+      "\0\0"?: __cedar::String,
+      "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"?: __cedar::String,
+      "\u{3}\u{1d}w"?: __cedar::String,
+      "\n\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"?: __cedar::String,
+      "\u{1d}"?: __cedar::String,
+      "\u{1d}\u{3}"?: __cedar::String,
+      "\u{1d}@["?: __cedar::String,
+      "\u{1d}Debian "?: {
+        ""?: __cedar::String,
+        "\0"?: __cedar::String,
+        "\0\0"?: __cedar::String,
+        "\0\0\u{1d}"?: __cedar::String,
+        "\u{3}\u{1d}w"?: __cedar::String,
+        @r
+        "\u{1d}": __cedar::Long,
+        "\u{1d}\u{3}"?: __cedar::String,
+        "\u{1d}@["?: __cedar::String,
+        "$"?: __cedar::String,
+        ":p"?: __cedar::String,
+        ":pVV"?: __cedar::String,
+        ":~"?: __cedar::String,
+        "=\u{e}"?: __cedar::String,
+        "?\0\0\0"?: __cedar::String,
+        @L3("\0\0\0\0\0")
+        @r
+        "V@": __cedar::Long,
+        "["?: __cedar::String
+      },
+      "\u{1f}\u{1d}@["?: __cedar::String,
+      "$"?: __cedar::String,
+      ":pVV"?: __cedar::String,
+      ":~"?: __cedar::String,
+      "=\u{e}"?: __cedar::String,
+      "?\0\0\0"?: __cedar::String,
+      "?\0\0\0\0\0"?: __cedar::String,
+      "V@"?: __cedar::String,
+      "V@[\u{1d}"?: __cedar::String,
+      "[@["?: __cedar::String,
+      "d~\u{1d}"?: __cedar::String
+    }
+  }
+};
+

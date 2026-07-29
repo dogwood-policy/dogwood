@@ -1,0 +1,10 @@
+entity a = {
+  z_?: Set<{  }>
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

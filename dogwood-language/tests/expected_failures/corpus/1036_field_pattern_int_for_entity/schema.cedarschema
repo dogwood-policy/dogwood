@@ -1,0 +1,21 @@
+namespace Drupe {
+    entity OAuthUser;
+    entity Gateway;
+
+    // `input.mode` on Tool2 is an enum entity type.
+    entity Tool2_Input_mode enum ["read", "write"];
+
+    type Tool1Input = { user: String };
+    type Tool2Input = { user: String, mode: Drupe::Tool2_Input_mode };
+
+    action Tool1 appliesTo {
+        principal: [OAuthUser],
+        resource: [Gateway],
+        context: { input: Tool1Input }
+    };
+    action Tool2 appliesTo {
+        principal: [OAuthUser],
+        resource: [Gateway],
+        context: { input: Tool2Input }
+    };
+}

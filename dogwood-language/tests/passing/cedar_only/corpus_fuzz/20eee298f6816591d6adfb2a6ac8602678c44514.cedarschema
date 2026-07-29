@@ -1,0 +1,12 @@
+@r
+entity a = {
+  Qdd?: __cedar::datetime,
+  r00?: __cedar::datetime
+} tags __cedar::datetime;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

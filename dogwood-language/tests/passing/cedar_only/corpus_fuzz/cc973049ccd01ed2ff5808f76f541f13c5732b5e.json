@@ -1,0 +1,546 @@
+{
+  "policies": "corpus-tests/cc973049ccd01ed2ff5808f76f541f13c5732b5e.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/cc973049ccd01ed2ff5808f76f541f13c5732b5e.entities.json",
+  "schema": "corpus-tests/cc973049ccd01ed2ff5808f76f541f13c5732b5e.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "r33",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "v",
+        "id": ""
+      },
+      "context": {
+        "C333333": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "F": {
+          "__entity": {
+            "type": "g3",
+            "id": "\u0000\u0000\u0000\u0000\u0000ttt"
+          }
+        },
+        "Krrrr3333333343": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "e": {
+          "__entity": {
+            "type": "g3",
+            "id": "\u0000\u0000\u0000\u0000\u0000ttt"
+          }
+        },
+        "iOO": [],
+        "j343i33lRZNNgR0w": {},
+        "r": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "r33RpZ343333l333": {
+          "__entity": {
+            "type": "Mnn",
+            "id": ""
+          }
+        },
+        "w": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "r33",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "v",
+        "id": ""
+      },
+      "context": {
+        "C333333": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "F": {
+          "__entity": {
+            "type": "g3",
+            "id": "\u0000\u0000\u0000\u0000\u0000ttt"
+          }
+        },
+        "Krrrr3333333343": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "e": {
+          "__entity": {
+            "type": "g3",
+            "id": "\u0000\u0000\u0000\u0000\u0000ttt"
+          }
+        },
+        "iOO": [],
+        "j343i33lRZNNgR0w": {},
+        "r": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "r33RpZ343333l333": {
+          "__entity": {
+            "type": "Mnn",
+            "id": ""
+          }
+        },
+        "w": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "r33",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "v",
+        "id": ""
+      },
+      "context": {
+        "C333333": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "F": {
+          "__entity": {
+            "type": "g3",
+            "id": "\u0000\u0000\u0000\u0000\u0000ttt"
+          }
+        },
+        "Krrrr3333333343": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "e": {
+          "__entity": {
+            "type": "g3",
+            "id": "\u0000\u0000\u0000\u0000\u0000ttt"
+          }
+        },
+        "iOO": [],
+        "j343i33lRZNNgR0w": {},
+        "r": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "r33RpZ343333l333": {
+          "__entity": {
+            "type": "Mnn",
+            "id": ""
+          }
+        },
+        "w": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "r33",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "v",
+        "id": ""
+      },
+      "context": {
+        "C333333": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "F": {
+          "__entity": {
+            "type": "g3",
+            "id": "\u0000\u0000\u0000\u0000\u0000ttt"
+          }
+        },
+        "Krrrr3333333343": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "e": {
+          "__entity": {
+            "type": "g3",
+            "id": "\u0000\u0000\u0000\u0000\u0000ttt"
+          }
+        },
+        "iOO": [],
+        "j343i33lRZNNgR0w": {},
+        "r": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "r33RpZ343333l333": {
+          "__entity": {
+            "type": "Mnn",
+            "id": ""
+          }
+        },
+        "w": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "r33",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "v",
+        "id": ""
+      },
+      "context": {
+        "C333333": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "F": {
+          "__entity": {
+            "type": "g3",
+            "id": "\u0000\u0000\u0000\u0000\u0000ttt"
+          }
+        },
+        "Krrrr3333333343": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "e": {
+          "__entity": {
+            "type": "g3",
+            "id": "\u0000\u0000\u0000\u0000\u0000ttt"
+          }
+        },
+        "iOO": [],
+        "j343i33lRZNNgR0w": {},
+        "r": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "r33RpZ343333l333": {
+          "__entity": {
+            "type": "Mnn",
+            "id": ""
+          }
+        },
+        "w": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "r33",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "v",
+        "id": ""
+      },
+      "context": {
+        "C333333": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "F": {
+          "__entity": {
+            "type": "g3",
+            "id": "\u0000\u0000\u0000\u0000\u0000ttt"
+          }
+        },
+        "Krrrr3333333343": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "e": {
+          "__entity": {
+            "type": "g3",
+            "id": "\u0000\u0000\u0000\u0000\u0000ttt"
+          }
+        },
+        "iOO": [],
+        "j343i33lRZNNgR0w": {},
+        "r": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "r33RpZ343333l333": {
+          "__entity": {
+            "type": "Mnn",
+            "id": ""
+          }
+        },
+        "w": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "r33",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "v",
+        "id": ""
+      },
+      "context": {
+        "C333333": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "F": {
+          "__entity": {
+            "type": "g3",
+            "id": "\u0000\u0000\u0000\u0000\u0000ttt"
+          }
+        },
+        "Krrrr3333333343": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "e": {
+          "__entity": {
+            "type": "g3",
+            "id": "\u0000\u0000\u0000\u0000\u0000ttt"
+          }
+        },
+        "iOO": [],
+        "j343i33lRZNNgR0w": {},
+        "r": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "r33RpZ343333l333": {
+          "__entity": {
+            "type": "Mnn",
+            "id": ""
+          }
+        },
+        "w": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "r33",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "v",
+        "id": ""
+      },
+      "context": {
+        "C333333": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "F": {
+          "__entity": {
+            "type": "g3",
+            "id": "\u0000\u0000\u0000\u0000\u0000ttt"
+          }
+        },
+        "Krrrr3333333343": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "e": {
+          "__entity": {
+            "type": "g3",
+            "id": "\u0000\u0000\u0000\u0000\u0000ttt"
+          }
+        },
+        "iOO": [],
+        "j343i33lRZNNgR0w": {},
+        "r": {
+          "__extn": {
+            "fn": "ip",
+            "arg": "0.0.0.0"
+          }
+        },
+        "r33RpZ343333l333": {
+          "__entity": {
+            "type": "Mnn",
+            "id": ""
+          }
+        },
+        "w": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

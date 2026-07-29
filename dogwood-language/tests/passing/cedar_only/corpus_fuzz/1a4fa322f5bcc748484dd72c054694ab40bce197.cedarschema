@@ -1,0 +1,20 @@
+entity a = {
+  A?: __cedar::Long,
+  Q?: {  },
+  h?: __cedar::decimal,
+  r?: {
+    ""?: {    },
+    "\u{3}\u{1d}\u{18}@"?: {    },
+    "\u{e}"?: {    },
+    V6?: {    },
+    "["?: a,
+    e?: {    }
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

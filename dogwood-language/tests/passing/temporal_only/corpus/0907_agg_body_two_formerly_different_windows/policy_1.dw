@@ -1,0 +1,7 @@
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    exists (n: Long). ((count for (t1: Timepoint), (t2: Timepoint). where ((formerly within 10m (Drupe::Action::"Transfer"::request{ input.user: context.input.user } && tp(t1))) && (formerly within 1h (Drupe::Action::"Transfer"::request{ input.user: context.input.user } && tp(t2))))) == n && n >= 2)};

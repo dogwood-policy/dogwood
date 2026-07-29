@@ -1,0 +1,9 @@
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    !Drupe::Action::"Revoke"::request{ input.user: context.input.user }
+    since within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

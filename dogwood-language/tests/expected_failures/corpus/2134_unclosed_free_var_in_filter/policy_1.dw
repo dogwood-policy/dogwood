@@ -1,0 +1,16 @@
+// UNSOUNDNESS repro (U3a): a temporal leaf with a FREE variable shared
+// between a restrictor conjunct and a filter, with no `exists` binder. The
+// conjunct-order check models safe-range semantics (the `formerly` restricts
+// `a`, then `a > 100` filters), but the top-level boolean evaluator does not
+// implement that semantics: bindings from a non-bare-predicate left conjunct
+// are discarded, so the accepted policy evaluates to FALSE on every trace —
+// including one containing a 150-amount transfer. A `when` guard that never
+// fires; on a `forbid`, fail-open.
+//
+// Expected: rejected at parse-time binding checks — temporal leaves must be
+// closed; wrap the variable: `exists (a: Long). (…)`.
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Transfer"::request{ input.amount: a }
+    && a > 100
+};

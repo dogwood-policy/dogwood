@@ -1,0 +1,26 @@
+entity B;
+
+entity C;
+
+entity KgmljKx99999999;
+
+entity Mppp;
+
+entity r;
+
+entity r3333;
+
+entity r33333k;
+
+action "" in [Action::"\u{12}"] appliesTo {
+  principal: [r3333, r33333k, r],
+  resource: [r3333, r33333k, r],
+  context: {}
+};
+
+action "\u{12}" appliesTo {
+  principal: [r3333, r33333k, r],
+  resource: [r3333, r33333k, r],
+  context: {}
+};
+

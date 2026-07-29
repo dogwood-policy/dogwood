@@ -1,0 +1,30 @@
+entity a tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: {
+      ""?: {      },
+      "\0\0\0A"?: {      },
+      "\r"?: {      },
+      "####################": {      },
+      "########u#####"?: {      },
+      "####/333336"?: {
+        "\0\0\0A"?: __cedar::ipaddr,
+        "\r\r\r\r\r\r\r\r\r\r\r\r\r\r\r\0\0\0A"?: __cedar::ipaddr,
+        "########## \'\0\0\0r333/333336"?: __cedar::ipaddr,
+        "############################"?: __cedar::ipaddr,
+        "##(###########################u###\"#"?: __cedar::ipaddr,
+        "3"?: __cedar::ipaddr,
+        ">3"?: __cedar::ipaddr,
+        A?: __cedar::ipaddr
+      },
+      "3"?: {      },
+      "33/333336"?: {      },
+      ">3"?: {      },
+      A?: {      }
+    }
+  }
+};
+

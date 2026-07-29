@@ -1,0 +1,37 @@
+entity a;
+
+@A
+action "" in [Action::":", Action::"\u{e}", Action::"[", Action::"\u{3}@", Action::"V", Action::"W", Action::"g"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @A00N1RiSDDDDDsr
+    @EWclgk33333NN("\0\0\02")
+    @F
+    @m("\u{1d}")
+    ARR3L3: __cedar::Long,
+    @v3ERS1MT("")
+    @vNSTcR5cZgY
+    Kjrrrg0RRR0w03E: __cedar::String,
+    L?: __cedar::ipaddr,
+    LMT3339: __cedar::Long,
+    dcR5cZgYlWclbY?: __cedar::String,
+    hDDD?: __cedar::Long,
+    r?: __cedar::Long
+  }
+};
+
+action "\u{3}@" in [Action::"V", Action::"W", Action::"g"];
+
+action "\u{e}" in [Action::"[", Action::"\u{3}@", Action::"V", Action::"W", Action::"g"];
+
+action ":" in [Action::"\u{e}", Action::"[", Action::"\u{3}@", Action::"V", Action::"W", Action::"g"];
+
+action "V" in [Action::"W", Action::"g"];
+
+action "W" in [Action::"g"];
+
+action "[" in [Action::"\u{3}@", Action::"V", Action::"W", Action::"g"];
+
+action "g";
+

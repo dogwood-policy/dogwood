@@ -1,0 +1,1 @@
+@100 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { user: "alice", document: "doc1" }) Drupe::Action::"Read"::request(input: { user: "alice", document: "doc1" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u0")

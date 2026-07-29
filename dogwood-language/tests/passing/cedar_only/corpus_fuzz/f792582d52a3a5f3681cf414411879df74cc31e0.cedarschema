@@ -1,0 +1,21 @@
+entity a = {
+  r?: {
+    @E330000000
+    "": __cedar::decimal,
+    e?: __cedar::String
+  },
+  @A0wOONO33mm
+  @i3
+  z: {
+    @r3mm
+    "": __cedar::decimal,
+    e?: __cedar::String
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

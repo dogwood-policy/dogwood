@@ -1,0 +1,14 @@
+namespace P0 {
+  entity A enum [""];
+
+  entity Aaaaaaa1F1F00 enum [""];
+
+  entity X enum [""];
+
+  action "action" appliesTo {
+    principal: [X],
+    resource: [X],
+    context: {}
+  };
+}
+

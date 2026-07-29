@@ -1,0 +1,14 @@
+namespace A {
+  entity a enum ["\0\0\0\0"];
+
+  action "" in [A::Action::"lll", A::Action::"p"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "lll" in [A::Action::"p"];
+
+  action "p";
+}
+

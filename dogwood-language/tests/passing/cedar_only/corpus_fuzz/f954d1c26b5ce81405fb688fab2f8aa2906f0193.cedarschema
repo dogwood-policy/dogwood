@@ -1,0 +1,20 @@
+entity BFf enum [""];
+
+entity Pd enum [""];
+
+entity _0000000000000 enum [""];
+
+entity g3 enum ["\0\0\0\0\0,gg\0\0\0\0\0\0\0\0\0g\u{1}\u{f}?ƚ\0\0\0a"];
+
+entity l enum [""];
+
+entity n enum [""];
+
+entity r enum [""];
+
+action "action" appliesTo {
+  principal: [g3],
+  resource: [g3],
+  context: {}
+};
+

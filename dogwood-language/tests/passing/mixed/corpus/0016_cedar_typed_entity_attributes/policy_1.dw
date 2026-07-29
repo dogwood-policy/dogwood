@@ -1,0 +1,19 @@
+// Pure-Cedar reads of principal entity attributes of every core type, to
+// exercise the Value -> Cedar RestrictedExpression conversion and Cedar schema
+// conformance for each type (Long, Bool, decimal, Set<String>) — the attribute
+// values are supplied per event via the `.log` entities(...) envelope.
+//
+// The four conjuncts each read one type; a trace flips exactly one condition
+// per timepoint, so the verdict stream isolates whether each type round-trips.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when {
+    principal.level >= 3
+    && principal.active == true
+    && principal.score.greaterThan(decimal("0.5"))
+    && principal.roles.contains("admin")
+};

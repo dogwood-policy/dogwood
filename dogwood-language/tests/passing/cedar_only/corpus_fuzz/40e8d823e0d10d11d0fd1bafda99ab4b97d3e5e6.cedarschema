@@ -1,0 +1,22 @@
+entity A1f;
+
+entity Pf;
+
+entity g3;
+
+entity l;
+
+entity l2aHHH;
+
+entity n;
+
+entity q2222222222222222 = {
+  B?: __cedar::String
+} tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [l, q2222222222222222, l2aHHH, g3, A1f],
+  resource: [Pf, q2222222222222222, l],
+  context: {}
+};
+

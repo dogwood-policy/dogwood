@@ -1,0 +1,43 @@
+entity A00RRwnRR00T3 enum [""];
+
+entity g3 = {
+  A?: {
+    ""?: __cedar::String,
+    "\u{1}"?: __cedar::String,
+    "\u{1}\u{f}"?: __cedar::String,
+    "\u{13}\u{13}\u{13}\u{13}:\u{b}\u{f}i"?: __cedar::String,
+    "\u{13}\u{13}\u{13}:\u{b}\u{f}"?: __cedar::String,
+    "\u{1d}\u{3}"?: __cedar::String,
+    " "?: __cedar::String,
+    "\'"?: __cedar::String,
+    "\'ggg-\ng\u{3}gg"?: __cedar::String,
+    "*\0\0\0SSSSSSS"?: __cedar::String,
+    "*\0\0\0SSSSSSSSSSSPSS"?: __cedar::String,
+    "-"?: __cedar::String,
+    "::"?: __cedar::String,
+    "=SS\u{1a}SSSSSSSSSSSSSSSSXSS"?: __cedar::String,
+    SSS?: __cedar::String,
+    SSSSS?: __cedar::String,
+    SSSSSSSS?: __cedar::String,
+    SSSSSSSSSSSS?: __cedar::String,
+    SSSSXSSSSSSSSSSSSSSS?: __cedar::String,
+    "]"?: __cedar::String,
+    h?: __cedar::String,
+    yA?: __cedar::String
+  },
+  X0q?: __cedar::String,
+  i?: __cedar::String,
+  r?: __cedar::String,
+  s?: __cedar::String
+};
+
+entity r enum [""];
+
+entity rN1 enum [""];
+
+action "action" appliesTo {
+  principal: [g3],
+  resource: [g3],
+  context: {}
+};
+

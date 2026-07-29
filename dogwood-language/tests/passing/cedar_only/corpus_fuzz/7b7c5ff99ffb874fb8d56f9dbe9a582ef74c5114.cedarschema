@@ -1,0 +1,12 @@
+namespace r::r::Q::r {
+  entity a tags __cedar::String;
+
+  action "" in [r::r::Q::r::Action::"Q"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "Q";
+}
+

@@ -1,0 +1,31 @@
+entity a = {
+  @J("")
+  @p("")
+  @r("")
+  @w("")
+  @xT3("")
+  @xTT("")
+  B0083: __cedar::Long,
+  i00?: __cedar::String,
+  @A
+  @EWSRRRRRR1333("")
+  @J("")
+  @JWW333333("")
+  @r("")
+  @r3333WWWWWW("")
+  @rWWWWWWWW33333("")
+  @w
+  @z("333333333")
+  j: __cedar::Bool,
+  r?: __cedar::String,
+  rm3ukucR30?: __cedar::String,
+  w?: __cedar::String,
+  z?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,13 @@
+entity a = {
+  A?: __cedar::Bool,
+  F?: __cedar::Bool,
+  x?: __cedar::Bool,
+  xdddddd?: __cedar::Bool
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

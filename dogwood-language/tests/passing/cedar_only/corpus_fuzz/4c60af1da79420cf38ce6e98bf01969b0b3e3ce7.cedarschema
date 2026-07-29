@@ -1,0 +1,46 @@
+entity a tags __cedar::String;
+
+@m("")
+@v3T33S1Raz
+@vbbERRS33bbbbbbb
+action "" in [Action::";~", Action::"\u{1d}[\u{1d}", Action::"@\u{3}w", Action::"$", Action::"=\u{e}", Action::"\u{17}\u{3}", Action::"[@["] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    x: __cedar::ipaddr
+  }
+};
+
+action "\u{17}\u{3}" in [Action::"[@["];
+
+action "\u{1d}[\u{1d}" in [Action::"@\u{3}w", Action::"$", Action::"=\u{e}", Action::"\u{17}\u{3}", Action::"[@["] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "$" in [Action::"=\u{e}", Action::"\u{17}\u{3}", Action::"[@["] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    g?: __cedar::ipaddr,
+    r?: __cedar::String
+  }
+};
+
+action ";~" in [Action::"\u{1d}[\u{1d}", Action::"@\u{3}w", Action::"$", Action::"=\u{e}", Action::"\u{17}\u{3}", Action::"[@["] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "=\u{e}" in [Action::"\u{17}\u{3}", Action::"[@["];
+
+action "@\u{3}w" in [Action::"$", Action::"=\u{e}", Action::"\u{17}\u{3}", Action::"[@["] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "[@[";
+

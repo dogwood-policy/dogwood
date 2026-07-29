@@ -1,0 +1,12 @@
+@A000000
+@B("")
+@Q6("")
+@v("")
+entity a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

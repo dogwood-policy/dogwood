@@ -1,0 +1,8 @@
+entity w tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [w],
+  resource: [w],
+  context: {}
+};
+

@@ -1,0 +1,20 @@
+entity a = {
+  G: __cedar::Long,
+  M?: __cedar::String,
+  @A
+  @r3m("l")
+  j: __cedar::decimal,
+  p: __cedar::decimal,
+  r: __cedar::decimal,
+  @E
+  r333l?: __cedar::decimal,
+  v3: Set<__cedar::Long>,
+  z?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

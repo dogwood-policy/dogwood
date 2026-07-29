@@ -1,0 +1,28 @@
+entity Blf;
+
+entity Hf enum [""];
+
+entity Y4542491W33f;
+
+entity g3;
+
+entity l enum ["\0\u{7f}#"];
+
+entity n;
+
+entity z317f33_33HH44 enum [""];
+
+action "" in [Action::"\u{17}"] appliesTo {
+  principal: [z317f33_33HH44, Hf, n, g3, Y4542491W33f, l, Blf],
+  resource: [z317f33_33HH44, Hf, n, g3, Y4542491W33f, l, Blf],
+  context: {}
+};
+
+action "\u{17}" appliesTo {
+  principal: [z317f33_33HH44, g3, Y4542491W33f, Hf, l, Blf, n],
+  resource: [l, Hf, g3, z317f33_33HH44, n],
+  context: {
+    YH000000?: __cedar::String
+  }
+};
+

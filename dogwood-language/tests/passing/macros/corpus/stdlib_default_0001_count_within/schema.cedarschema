@@ -1,0 +1,394 @@
+// Shared superset schema for the temporal_only corpus.
+// Guardrail finding types aligned with drupe.cedarschema (canonical stub).
+// Cases that need a different shape keep their own schema.cedarschema override.
+
+namespace Drupe {
+  // --- Input types (most-common variant for each action) ---
+
+  type AccessInput = {
+    resource: String,
+    user: String
+  };
+
+  type AccessOutput = {  };
+
+  type AlertInput = {
+    level: Long,
+    server: String
+  };
+
+  type AlertOutput = {  };
+
+  type ApproveInput = {
+    approver: String,
+    request_id: String
+  };
+
+  type ApproveOutput = {  };
+
+  type ComputeInput = {
+    user: String
+  };
+
+  type ComputeOutput = {  };
+
+  type ErrorInput = {
+    code: Long,
+    user: String
+  };
+
+  type ErrorOutput = {  };
+
+  type FlagInput = {
+    reason: String,
+    user: String
+  };
+
+  type FlagOutput = {  };
+
+  type GrantInput = {
+    role: String,
+    user: String
+  };
+
+  type GrantOutput = {  };
+
+  type HeartbeatInput = {
+    server: String
+  };
+
+  type HeartbeatOutput = {  };
+
+  type LoginInput = {
+    server: String,
+    user: String
+  };
+
+  type LoginOutput = {  };
+
+  type LogoutInput = {
+    server: String,
+    user: String
+  };
+
+  type LogoutOutput = {  };
+
+  type ReadInput = {
+    document: String,
+    user: String
+  };
+
+  type ReadOutput = {  };
+
+  type RevokeInput = {
+    user: String
+  };
+
+  type RevokeOutput = {  };
+
+  type SubmitInput = {
+    request_id: String,
+    user: String
+  };
+
+  type SubmitOutput = {  };
+
+  type SuspendInput = {
+    reason: String,
+    user: String
+  };
+
+  type SuspendOutput = {  };
+
+  type SyncInput = {
+    user: String
+  };
+
+  type SyncOutput = {  };
+
+  type TransferInput = {
+    amount: Long,
+    user: String
+  };
+
+  type TransferOutput = {  };
+
+  type VerifyInput = {
+    user: String
+  };
+
+  type VerifyOutput = {  };
+
+  type WriteInput = {
+    document: String,
+    user: String
+  };
+
+  type WriteOutput = {  };
+
+  // --- Guardrail finding types ---
+
+  type ContentFilterFinding = {
+    confidenceScore: decimal
+  };
+
+  type PromptAttackFinding = {
+    confidenceScore: decimal
+  };
+
+  type SensitiveInfoFinding = {
+    confidenceScore: decimal
+  };
+
+  // --- System context ---
+
+  type SystemContext = {
+    now: datetime
+  };
+
+  // --- Entities ---
+
+  entity Gateway;
+
+  entity IamEntity = {
+    id: String
+  };
+
+  entity OAuthUser = {
+    id: String
+  } tags String;
+
+  entity UnauthenticatedUser;
+
+  // --- Actions ---
+
+  action "Access" in [Action::"CallTool"] appliesTo {
+    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      input: AccessInput,
+      output?: AccessOutput,
+      system: SystemContext
+    }
+  };
+
+  action "Alert" in [Action::"CallTool"] appliesTo {
+    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      input: AlertInput,
+      output?: AlertOutput,
+      system: SystemContext
+    }
+  };
+
+  action "Approve" in [Action::"CallTool"] appliesTo {
+    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      input: ApproveInput,
+      output?: ApproveOutput,
+      system: SystemContext
+    }
+  };
+
+  action "CallTool" in [Action::"Mcp"] appliesTo {
+    principal: [OAuthUser, IamEntity, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      system: SystemContext
+    }
+  };
+
+  action "Compute" in [Action::"CallTool"] appliesTo {
+    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      input: ComputeInput,
+      output?: ComputeOutput,
+      system: SystemContext
+    }
+  };
+
+  action "Error" in [Action::"CallTool"] appliesTo {
+    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      input: ErrorInput,
+      output?: ErrorOutput,
+      system: SystemContext
+    }
+  };
+
+  action "Flag" in [Action::"CallTool"] appliesTo {
+    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      input: FlagInput,
+      output?: FlagOutput,
+      system: SystemContext
+    }
+  };
+
+  action "Grant" in [Action::"CallTool"] appliesTo {
+    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      input: GrantInput,
+      output?: GrantOutput,
+      system: SystemContext
+    }
+  };
+
+  action "Heartbeat" in [Action::"CallTool"] appliesTo {
+    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      input: HeartbeatInput,
+      output?: HeartbeatOutput,
+      system: SystemContext
+    }
+  };
+
+  action "Http" appliesTo {
+    principal: [OAuthUser, IamEntity, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      system: SystemContext
+    }
+  };
+
+  action "InvokeAgent" in [Action::"Http"] appliesTo {
+    principal: [OAuthUser, IamEntity, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      input?: {      },
+      system: SystemContext
+    }
+  };
+
+  action "InvokeLLM" in [Action::"Http"] appliesTo {
+    principal: [OAuthUser, IamEntity, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      input?: {      },
+      system: SystemContext
+    }
+  };
+
+  action "Login" in [Action::"CallTool"] appliesTo {
+    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      input: LoginInput,
+      output?: LoginOutput,
+      system: SystemContext
+    }
+  };
+
+  action "Logout" in [Action::"CallTool"] appliesTo {
+    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      input: LogoutInput,
+      output?: LogoutOutput,
+      system: SystemContext
+    }
+  };
+
+  action "Mcp" appliesTo {
+    principal: [OAuthUser, IamEntity, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      system: SystemContext
+    }
+  };
+
+  action "Read" in [Action::"CallTool"] appliesTo {
+    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      input: ReadInput,
+      output?: ReadOutput,
+      system: SystemContext
+    }
+  };
+
+  action "Revoke" in [Action::"CallTool"] appliesTo {
+    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      input: RevokeInput,
+      output?: RevokeOutput,
+      system: SystemContext
+    }
+  };
+
+  action "Submit" in [Action::"CallTool"] appliesTo {
+    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      input: SubmitInput,
+      output?: SubmitOutput,
+      system: SystemContext
+    }
+  };
+
+  action "Suspend" in [Action::"CallTool"] appliesTo {
+    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      input: SuspendInput,
+      output?: SuspendOutput,
+      system: SystemContext
+    }
+  };
+
+  action "Sync" in [Action::"CallTool"] appliesTo {
+    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      input: SyncInput,
+      output?: SyncOutput,
+      system: SystemContext
+    }
+  };
+
+  action "Transfer" in [Action::"CallTool"] appliesTo {
+    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      input: TransferInput,
+      output?: TransferOutput,
+      system: SystemContext
+    }
+  };
+
+  action "UnknownTool" in [Action::"CallTool"] appliesTo {
+    principal: [OAuthUser, IamEntity, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      system: SystemContext
+    }
+  };
+
+  action "Verify" in [Action::"CallTool"] appliesTo {
+    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      input: VerifyInput,
+      output?: VerifyOutput,
+      system: SystemContext
+    }
+  };
+
+  action "Write" in [Action::"CallTool"] appliesTo {
+    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      input: WriteInput,
+      output?: WriteOutput,
+      system: SystemContext
+    }
+  };
+}

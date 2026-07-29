@@ -1,0 +1,13 @@
+entity q5cZg0 = {
+  g?: {
+    ""?: __cedar::String,
+    "3"?: __cedar::String
+  }
+};
+
+action "action" appliesTo {
+  principal: [q5cZg0],
+  resource: [q5cZg0],
+  context: {}
+};
+

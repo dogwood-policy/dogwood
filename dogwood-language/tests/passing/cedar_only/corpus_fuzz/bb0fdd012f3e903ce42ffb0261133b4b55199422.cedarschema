@@ -1,0 +1,10 @@
+entity a = {
+  F?: __cedar::ipaddr
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

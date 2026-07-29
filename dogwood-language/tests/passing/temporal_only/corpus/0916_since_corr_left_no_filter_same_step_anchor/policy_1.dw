@@ -1,0 +1,29 @@
+// Adjacent to 0904: the same current-request correlation on the left, but
+// with NO rigid filter (`C`) — so the §5.3 `((A S B) ∧ C) ∨ B` rewrite does
+// NOT fire (there are no lifted left units) and the backend alone must handle
+// the SAME-STEP anchor: at the anchor's own timepoint the left is checked
+// over the empty range `(i, i]` and is vacuously true, so the verdict is
+// PERMIT regardless of the correlation.
+//
+// This exposes the DSQL same-step compensation gap: the verdict read UNIONs
+// an inline evaluation of the anchor subplan (the just-inserted anchor row is
+// snapshot-invisible), and that compensation projected the correlation
+// column as raw NULL — which the outer strict join against the current
+// request's binding rejects → wrong DENY at @0. In 0904 the rigid `C` made
+// the §5.3 vacuity disjunct supply the row instead, masking this.
+//
+// @10 pins the history path (guard streak for dave holds over (0,1]) and
+// @20 is the deny control (dave's event breaks eve's streak).
+//
+// Interpreter is the oracle (see expected_1.out). Found by differential
+// review of the temporal-compiler since compensation paths.
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    Drupe::Action::"Transfer"::request{ input.user: context.input.user }
+    since within 1h
+    Drupe::Action::"Transfer"::request{ input.user: "carol" }
+};

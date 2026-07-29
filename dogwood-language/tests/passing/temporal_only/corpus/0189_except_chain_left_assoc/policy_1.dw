@@ -1,0 +1,16 @@
+// `A except B except C` == `(A except B) except C` == `A ∧ ¬B ∧ ¬C`
+//
+// On a trace where all three hold at the current tp, left-associative
+// parse says NO fire (both exceptions subtract). A right-associative
+// parse would say FIRE because `C` "cancels the cancellation" of B.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+    && !(formerly within 1h Drupe::Action::"Logout"::request{ input.user: context.input.user })
+    && !(formerly within 1h Drupe::Action::"Banned"::request{ input.user: context.input.user })
+};

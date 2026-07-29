@@ -1,0 +1,18 @@
+entity A enum ["", ""];
+
+entity m enum [" ", ""];
+
+entity r enum ["\0", ""];
+
+entity v enum ["\0\u{4}", "", "", "", "+\0\0\0"];
+
+@m1
+@r("")
+entity wR enum ["\0\0\0", ""];
+
+action "action" appliesTo {
+  principal: [wR],
+  resource: [wR],
+  context: {}
+};
+

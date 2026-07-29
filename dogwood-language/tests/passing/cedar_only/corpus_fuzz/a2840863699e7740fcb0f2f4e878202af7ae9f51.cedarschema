@@ -1,0 +1,47 @@
+entity a = {
+  r?: {
+    ""?: __cedar::String,
+    "\0"?: {
+      ""?: __cedar::String,
+      "\u{1}"?: __cedar::String,
+      "\u{1}\u{f}"?: __cedar::String,
+      "\u{1}\u{f}i"?: __cedar::String,
+      "\u{5}\u{2}\0#\0g"?: __cedar::String,
+      "\u{e}\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\u{1}\0\0\0\0\0\0\u{18}\0\0\0\0\u{13}:\u{b}\u{f}i"?: __cedar::String,
+      "\u{f}"?: __cedar::String,
+      "\u{13}\u{13}\u{13}\0\0\0\u{1}\0\0\0\0\0\0\u{11}\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"?: __cedar::String,
+      "\u{13}\u{13}\u{13}\0\0\0\u{1}\0\0\0\0\u{1d}ggg"?: __cedar::String,
+      "\u{13}\u{13}\u{13}\u{13}:\u{b}\u{f}i"?: __cedar::String,
+      "\u{14}g\nggg"?: __cedar::String,
+      " "?: __cedar::String,
+      "#"?: __cedar::String,
+      "&[\u{1d}v"?: __cedar::String,
+      "\'ggg\nggg"?: __cedar::String,
+      "*\0\0\0SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSJS"?: __cedar::String,
+      "-************************************=*********\t\u{1} "?: __cedar::String,
+      "0\'ggg\ngfg"?: __cedar::String,
+      "1\'ggg\nSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"?: __cedar::String,
+      "1\'ggg\ngfg"?: __cedar::String,
+      ":p"?: __cedar::String,
+      A?: __cedar::String,
+      B?: __cedar::String,
+      "Debian \u{1}\u{f}"?: __cedar::String,
+      "P "?: __cedar::String,
+      "P S"?: __cedar::String,
+      "SSSSSS\u{3}"?: __cedar::String,
+      SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS?: __cedar::String,
+      g?: __cedar::String,
+      h?: __cedar::String,
+      hSSSSSSSSSSSSSSSSSSSSSSSSSSSS?: __cedar::String,
+      hSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS?: __cedar::String,
+      yA?: __cedar::String
+    }
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

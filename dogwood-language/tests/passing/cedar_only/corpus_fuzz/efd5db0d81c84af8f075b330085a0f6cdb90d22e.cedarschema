@@ -1,0 +1,23 @@
+entity a tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: {
+      ""?: __cedar::String,
+      "\u{3}\u{3}\u{3}\u{3}\u{3}\u{3}"?: __cedar::String,
+      ".6\u{3}"?: __cedar::String,
+      ".a;8"?: __cedar::String,
+      D?: __cedar::String,
+      bia?: __cedar::String,
+      "n\u{1}\0 \0 "?: {
+        @U000
+        "$EWpc8xJ2\u{3}____________\0\0\0\0__________": __cedar::Bool,
+        "3"?: __cedar::String,
+        "_________\u{b}\0\0\0_____________\u{12}\u{12}\u{12}\u{12}\u{12}\u{12}\u{12}\u{12}\u{12}\u{12}\u{12}\u{12}\u{12}\u{12}\u{12}\u{12}\0"?: __cedar::String
+      }
+    }
+  }
+};
+

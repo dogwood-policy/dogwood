@@ -1,0 +1,11 @@
+// Edge case: deeply nested context path context.input.nested.deep.value
+// Tests multi-level attribute resolution.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Strings::Matches(context.input.nested.deep.value, "^[A-Z]+$").matched == true
+};

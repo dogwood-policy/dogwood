@@ -1,0 +1,610 @@
+{
+  "policies": "corpus-tests/e2c693faaa2f23d5626fd7dad8caa192fadea5c1.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/e2c693faaa2f23d5626fd7dad8caa192fadea5c1.entities.json",
+  "schema": "corpus-tests/e2c693faaa2f23d5626fd7dad8caa192fadea5c1.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "context": {
+        "A300": {
+          "__entity": {
+            "type": "a",
+            "id": "\u0000ve&\u0000"
+          }
+        },
+        "M": 0,
+        "Mj": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "RSj333": {
+          "__entity": {
+            "type": "a",
+            "id": "\u0000ve&\u0000"
+          }
+        },
+        "X": 0,
+        "in_": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "r3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3n3Oa3000P": false,
+        "r6Ona3Rjjjj": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "rA": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "v": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "w": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "context": {
+        "A300": {
+          "__entity": {
+            "type": "a",
+            "id": "\u0000ve&\u0000"
+          }
+        },
+        "M": 0,
+        "Mj": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "RSj333": {
+          "__entity": {
+            "type": "a",
+            "id": "\u0000ve&\u0000"
+          }
+        },
+        "X": 0,
+        "in_": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "r3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3n3Oa3000P": false,
+        "r6Ona3Rjjjj": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "rA": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "v": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "w": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "context": {
+        "A300": {
+          "__entity": {
+            "type": "a",
+            "id": "\u0000ve&\u0000"
+          }
+        },
+        "M": 0,
+        "Mj": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "RSj333": {
+          "__entity": {
+            "type": "a",
+            "id": "\u0000ve&\u0000"
+          }
+        },
+        "X": 0,
+        "in_": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "r3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3n3Oa3000P": false,
+        "r6Ona3Rjjjj": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "rA": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "v": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "w": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "context": {
+        "A300": {
+          "__entity": {
+            "type": "a",
+            "id": "\u0000ve&\u0000"
+          }
+        },
+        "M": 0,
+        "Mj": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "RSj333": {
+          "__entity": {
+            "type": "a",
+            "id": "\u0000ve&\u0000"
+          }
+        },
+        "X": 0,
+        "in_": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "r3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3n3Oa3000P": false,
+        "r6Ona3Rjjjj": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "rA": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "v": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "w": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "context": {
+        "A300": {
+          "__entity": {
+            "type": "a",
+            "id": "\u0000ve&\u0000"
+          }
+        },
+        "M": 0,
+        "Mj": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "RSj333": {
+          "__entity": {
+            "type": "a",
+            "id": "\u0000ve&\u0000"
+          }
+        },
+        "X": 0,
+        "in_": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "r3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3n3Oa3000P": false,
+        "r6Ona3Rjjjj": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "rA": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "v": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "w": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "context": {
+        "A300": {
+          "__entity": {
+            "type": "a",
+            "id": "\u0000ve&\u0000"
+          }
+        },
+        "M": 0,
+        "Mj": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "RSj333": {
+          "__entity": {
+            "type": "a",
+            "id": "\u0000ve&\u0000"
+          }
+        },
+        "X": 0,
+        "in_": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "r3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3n3Oa3000P": false,
+        "r6Ona3Rjjjj": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "rA": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "v": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "w": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "context": {
+        "A300": {
+          "__entity": {
+            "type": "a",
+            "id": "\u0000ve&\u0000"
+          }
+        },
+        "M": 0,
+        "Mj": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "RSj333": {
+          "__entity": {
+            "type": "a",
+            "id": "\u0000ve&\u0000"
+          }
+        },
+        "X": 0,
+        "in_": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "r3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3n3Oa3000P": false,
+        "r6Ona3Rjjjj": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "rA": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "v": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "w": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "action": {
+        "type": "Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "a",
+        "id": "\u0000ve&\u0000"
+      },
+      "context": {
+        "A300": {
+          "__entity": {
+            "type": "a",
+            "id": "\u0000ve&\u0000"
+          }
+        },
+        "M": 0,
+        "Mj": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "RSj333": {
+          "__entity": {
+            "type": "a",
+            "id": "\u0000ve&\u0000"
+          }
+        },
+        "X": 0,
+        "in_": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "r3": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "r3n3Oa3000P": false,
+        "r6Ona3Rjjjj": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "rA": {
+          "__extn": {
+            "fn": "decimal",
+            "arg": "0.0"
+          }
+        },
+        "v": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "w": ""
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

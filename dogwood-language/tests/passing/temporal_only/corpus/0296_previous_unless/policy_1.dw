@@ -1,0 +1,8 @@
+permit (
+    principal,
+    action == Drupe::Action::"Write",
+    resource
+)
+unless temporal {
+    previous within 1h Drupe::Action::"Logout"::request{ input.user: context.input.user }
+};

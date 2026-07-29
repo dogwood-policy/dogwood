@@ -1,0 +1,16 @@
+// Macro-form rewrite of 0274_count_agg_containing_previous.
+//
+// Like count_formerly but using `previous within W` (checks ONLY the
+// immediately preceding in-window timepoint, not the whole window).
+
+def temporal count_previous(?w, ?s) {
+    count for ($t: Timepoint). where (previous within ?w (?s && tp($t)))
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    exists (n: Long). ((count_previous(1h, Drupe::Action::"Login"::request{ input.user: context.input.user })) == n && n > 0)};

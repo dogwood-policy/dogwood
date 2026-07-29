@@ -1,0 +1,12 @@
+entity a tags {
+  ""?: {  },
+  "\u{3}"?: {  },
+  "333Dean"?: {  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

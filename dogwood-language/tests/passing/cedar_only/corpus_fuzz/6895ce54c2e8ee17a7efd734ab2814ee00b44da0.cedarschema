@@ -1,0 +1,18 @@
+entity g;
+
+entity j;
+
+entity r tags g;
+
+entity v enum ["", ""];
+
+entity ye;
+
+action "" in [Action::"1"] appliesTo {
+  principal: [g],
+  resource: [g],
+  context: {}
+};
+
+action "1";
+

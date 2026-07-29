@@ -1,0 +1,148 @@
+@P4
+@xaaaa
+entity A tags __cedar::Long;
+
+entity AOm3m3uk = {
+  A00?: __cedar::duration,
+  @DaaR1x4Jaa
+  C333333: {  },
+  @B("")
+  @O575RS33654R355c5
+  F?: __cedar::datetime,
+  Krrrr3333333343?: __cedar::datetime,
+  @EOO90aaamcRJJJRt("")
+  e: __cedar::Bool,
+  hN?: __cedar::decimal,
+  j: __cedar::Bool,
+  @H777772l("")
+  kQQ33: z,
+  r?: __cedar::String,
+  @l("")
+  @w
+  ri33l?: __cedar::String,
+  @r43333NNg00cc0R("")
+  w: __cedar::Long
+};
+
+entity AcRp enum [""];
+
+entity E;
+
+entity Fjj3333333 enum [""];
+
+entity Krrrr3333333 enum [""];
+
+entity _ = {
+  @x0aaR
+  @x1x_4
+  Cj33333333: __cedar::datetime,
+  E?: __cedar::Bool,
+  @B("")
+  @K
+  @O575RaaR333j1033O("")
+  @r("")
+  @r33("")
+  @r333l("")
+  @z("")
+  P?: __cedar::datetime,
+  Q54R?: __cedar::String,
+  @D
+  r?: __cedar::String,
+  r3lRZNNg5RS?: __cedar::datetime,
+  v: __cedar::datetime,
+  z?: r3333
+} tags __cedar::ipaddr;
+
+@Q54R("DD&D")
+entity _YlWtlB93333uc tags __cedar::Long;
+
+@B("")
+@O575RaaR333j1033O("WW")
+@r
+@r33RpZ343333l333("")
+entity i;
+
+entity iOO = {
+  @Cj333QQQQQQQ00
+  AA: Set<Set<Set<AOm3m3uk>>>,
+  kQQQQ: __cedar::ipaddr,
+  @F("")
+  @g8
+  kQQQa: r33340aax133333,
+  r?: __cedar::Bool
+};
+
+entity r;
+
+@G
+entity r3;
+
+entity r3333 enum [""];
+
+entity r33340aax133333 enum [""];
+
+entity r33RpZ343333l333 enum [""];
+
+entity rm3ukucR30 = {
+  @E("")
+  @r("")
+  @v("")
+  A00: {
+    @AcRp("")
+    @B0083("")
+    @J3("")
+    @NukRcRpZ34(",")
+    @NukucR30cR("#")
+    @X
+    @i("\0Wo")
+    @iOO("")
+    @r("")
+    @v("#")
+    ""?: __cedar::ipaddr,
+    "\0\0\0\0\0\0\0/"?: {    }
+  },
+  @q("\u{5}")
+  C333333: i,
+  F?: __cedar::ipaddr,
+  @mRS35cZgYlW3654R("DD")
+  @r("\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}")
+  Kr333333QQQQQ33?: A,
+  Krrrr3333333343?: Set<i>,
+  @D("D\u{4}")
+  e: __cedar::datetime,
+  @A
+  @EOO90aaamcRJJJRt("")
+  @l("\u{1d}")
+  @r333N
+  @v(":p\u{b}\0\0\0")
+  @wS("")
+  hN: __cedar::Bool,
+  j?: __cedar::datetime,
+  @Y
+  @r("")
+  @r3("")
+  r?: Set<__cedar::Bool>,
+  @DaaR1x4Jaa
+  ri33l: {  },
+  w?: i
+};
+
+entity v tags Set<__cedar::datetime>;
+
+entity vRcRpZ343i33lRZN enum [""];
+
+entity vpZ343i33lRZR333j = {
+  @Occ3rrbR3aa
+  r?: __cedar::ipaddr
+} tags __cedar::ipaddr;
+
+entity z = {
+  EJa5cZgYlWa5?: __cedar::datetime
+};
+
+action "" appliesTo {
+  principal: [r33RpZ343333l333, r3333, rm3ukucR30, _YlWtlB93333uc, E, vpZ343i33lRZR333j, i, r3, Fjj3333333, AcRp, Krrrr3333333],
+  resource: [AcRp, _YlWtlB93333uc],
+  context: {}
+};
+

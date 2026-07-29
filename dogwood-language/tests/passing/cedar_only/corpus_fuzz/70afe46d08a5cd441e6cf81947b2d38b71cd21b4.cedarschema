@@ -1,0 +1,10 @@
+@A0000000000000000
+@g22gD
+entity a tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

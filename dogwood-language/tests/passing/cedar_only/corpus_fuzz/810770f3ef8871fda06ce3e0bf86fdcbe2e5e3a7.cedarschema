@@ -1,0 +1,21 @@
+entity H = {
+  A?: __cedar::String
+} tags __cedar::datetime;
+
+entity P5 = {
+  B9000000000?: __cedar::String,
+  LBBBBB5555f3?: __cedar::String,
+  LBBBBBBBBBBB?: __cedar::String,
+  b?: __cedar::String
+};
+
+entity fB;
+
+entity g_;
+
+action "action" appliesTo {
+  principal: [g_],
+  resource: [g_],
+  context: {}
+};
+

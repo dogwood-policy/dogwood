@@ -1,0 +1,33 @@
+namespace A::A {
+  entity a;
+
+  action "" in [A::A::Action::":~", A::A::Action::"\u{e}", A::A::Action::"[", A::A::Action::"\u{3}\u{1d}w", A::A::Action::"Debian $", A::A::Action::"VV~", A::A::Action::"                           "] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      J9199nWW0n?: __cedar::decimal,
+      J999999999?: __cedar::Bool
+    }
+  };
+
+  action "\u{3}\u{1d}w" in [A::A::Action::"Debian $", A::A::Action::"VV~", A::A::Action::"                           "];
+
+  action "\u{e}" in [A::A::Action::"[", A::A::Action::"\u{3}\u{1d}w", A::A::Action::"Debian $", A::A::Action::"VV~", A::A::Action::"                           "];
+
+  action "                           ";
+
+  action ":~" in [A::A::Action::"\u{e}", A::A::Action::"[", A::A::Action::"\u{3}\u{1d}w", A::A::Action::"Debian $", A::A::Action::"VV~", A::A::Action::"                           "];
+
+  action "Debian $" in [A::A::Action::"VV~", A::A::Action::"                           "];
+
+  action "V" in [A::A::Action::"", A::A::Action::":~", A::A::Action::"\u{e}", A::A::Action::"[", A::A::Action::"\u{3}\u{1d}w", A::A::Action::"Debian $", A::A::Action::"VV~", A::A::Action::"                           "] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "VV~" in [A::A::Action::"                           "];
+
+  action "[" in [A::A::Action::"\u{3}\u{1d}w", A::A::Action::"Debian $", A::A::Action::"VV~", A::A::Action::"                           "];
+}
+

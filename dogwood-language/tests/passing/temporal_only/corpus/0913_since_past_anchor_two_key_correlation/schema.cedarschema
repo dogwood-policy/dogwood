@@ -1,0 +1,24 @@
+namespace Drupe {
+  type TransferInput = {
+    amount: Long,
+    region: String,
+    user: String
+  };
+
+  type TransferOutput = {  };
+
+  entity Gateway;
+
+  entity OAuthUser = {
+    id: String
+  };
+
+  action "Transfer" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: TransferInput,
+      output?: TransferOutput
+    }
+  };
+}

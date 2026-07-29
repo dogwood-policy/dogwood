@@ -1,0 +1,13 @@
+namespace r::V::aN::r {
+  entity A = {
+    @h
+    GRRmST3N: r::V::aN::r::A
+  };
+
+  action "action" appliesTo {
+    principal: [A],
+    resource: [A],
+    context: {}
+  };
+}
+

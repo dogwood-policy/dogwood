@@ -1,0 +1,29 @@
+entity N = {
+  r: {  }
+};
+
+entity UA;
+
+@Szz
+@r("")
+entity r;
+
+action "" appliesTo {
+  principal: [r],
+  resource: [UA],
+  context: {
+    ARr?: __cedar::String,
+    Arr?: __cedar::String,
+    Art?: __cedar::String,
+    B?: __cedar::String,
+    D?: __cedar::String,
+    I?: __cedar::String,
+    Szz2iz?: __cedar::String,
+    f?: __cedar::String,
+    h?: __cedar::String,
+    p2?: {    },
+    r?: __cedar::String,
+    v?: __cedar::String
+  }
+};
+

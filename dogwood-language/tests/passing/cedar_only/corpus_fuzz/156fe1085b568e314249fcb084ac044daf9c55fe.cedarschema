@@ -1,0 +1,27 @@
+namespace A::A {
+  entity a = {
+    A?: __cedar::String,
+    J?: __cedar::String,
+    X?: __cedar::String,
+    @A
+    @J("")
+    @JWW333333("")
+    @r("")
+    @r3("")
+    @r3333WWWWWW("")
+    @rWWWWWWWW33333("")
+    @z("333333333")
+    fWWW33: Set<Set<Set<Set<__cedar::Long>>>>,
+    @r("Debian ")
+    fsssss: A::A::a,
+    r?: __cedar::String,
+    r3333WWWWW3?: __cedar::String
+  };
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

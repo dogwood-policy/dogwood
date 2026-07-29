@@ -1,0 +1,22 @@
+@h
+namespace LS::rN130000RRwnN::T0::A0RRw03T::m33Tu5cZgYlWRa::I::w0004233 {
+  entity a = {
+    D?: __cedar::Bool,
+    D3S1S3T1edtb0?: __cedar::String,
+    vVR3X33B1RaEzRR?: __cedar::String
+  } tags LS::rN130000RRwnN::T0::A0RRw03T::m33Tu5cZgYlWRa::I::w0004233::a;
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      A?: __cedar::Long,
+      r: Set<Set<LS::rN130000RRwnN::T0::A0RRw03T::m33Tu5cZgYlWRa::I::w0004233::a>>,
+      rN13Q000RRwnR: LS::rN130000RRwnN::T0::A0RRw03T::m33Tu5cZgYlWRa::I::w0004233::a,
+      @F
+      @_YlW1Sp3N13000
+      w?: Set<LS::rN130000RRwnN::T0::A0RRw03T::m33Tu5cZgYlWRa::I::w0004233::a>
+    }
+  };
+}
+

@@ -1,0 +1,12 @@
+entity a enum [""];
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @L
+    A: Set<__cedar::ipaddr>,
+    r?: a
+  }
+};
+

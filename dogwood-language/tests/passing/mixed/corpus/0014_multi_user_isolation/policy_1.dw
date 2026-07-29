@@ -1,0 +1,12 @@
+// Permit Read: requires user's OWN login within 1h (temporal user isolation)
+// AND user is not "guest" (Cedar when clause)
+// Key test: alice's login should NOT satisfy bob's temporal check
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when { context.input.user != "guest" }
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

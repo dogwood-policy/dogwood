@@ -1,0 +1,51 @@
+namespace W::A {
+  entity a;
+
+  action "" in [W::A::Action::"VV", W::A::Action::":~", W::A::Action::"\u{e}", W::A::Action::"[", W::A::Action::"\u{3}\u{1d}w", W::A::Action::"$", W::A::Action::"00\u{1d}", W::A::Action::"@", W::A::Action::"e", W::A::Action::"V", W::A::Action::"::", W::A::Action::"&", W::A::Action::"=\u{e}!", W::A::Action::"\u{1d}@J<", W::A::Action::"r@"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{3}\u{1d}w" in [W::A::Action::"$", W::A::Action::"00\u{1d}", W::A::Action::"@", W::A::Action::"e", W::A::Action::"V", W::A::Action::"::", W::A::Action::"&", W::A::Action::"=\u{e}!", W::A::Action::"\u{1d}@J<", W::A::Action::"r@"];
+
+  action "\u{e}" in [W::A::Action::"[", W::A::Action::"\u{3}\u{1d}w", W::A::Action::"$", W::A::Action::"00\u{1d}", W::A::Action::"@", W::A::Action::"e", W::A::Action::"V", W::A::Action::"::", W::A::Action::"&", W::A::Action::"=\u{e}!", W::A::Action::"\u{1d}@J<", W::A::Action::"r@"];
+
+  action "\u{1d}@J<" in [W::A::Action::"r@"];
+
+  action "$" in [W::A::Action::"00\u{1d}", W::A::Action::"@", W::A::Action::"e", W::A::Action::"V", W::A::Action::"::", W::A::Action::"&", W::A::Action::"=\u{e}!", W::A::Action::"\u{1d}@J<", W::A::Action::"r@"];
+
+  action "&" in [W::A::Action::"=\u{e}!", W::A::Action::"\u{1d}@J<", W::A::Action::"r@"];
+
+  action "00\u{1d}" in [W::A::Action::"@", W::A::Action::"e", W::A::Action::"V", W::A::Action::"::", W::A::Action::"&", W::A::Action::"=\u{e}!", W::A::Action::"\u{1d}@J<", W::A::Action::"r@"];
+
+  action "::" in [W::A::Action::"&", W::A::Action::"=\u{e}!", W::A::Action::"\u{1d}@J<", W::A::Action::"r@"];
+
+  action ":~" in [W::A::Action::"\u{e}", W::A::Action::"[", W::A::Action::"\u{3}\u{1d}w", W::A::Action::"$", W::A::Action::"00\u{1d}", W::A::Action::"@", W::A::Action::"e", W::A::Action::"V", W::A::Action::"::", W::A::Action::"&", W::A::Action::"=\u{e}!", W::A::Action::"\u{1d}@J<", W::A::Action::"r@"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      oUUUUU000?: __cedar::String,
+      oUUUUUUUU?: __cedar::String
+    }
+  };
+
+  action "=\u{e}!" in [W::A::Action::"\u{1d}@J<", W::A::Action::"r@"];
+
+  action "@" in [W::A::Action::"e", W::A::Action::"V", W::A::Action::"::", W::A::Action::"&", W::A::Action::"=\u{e}!", W::A::Action::"\u{1d}@J<", W::A::Action::"r@"];
+
+  action "V" in [W::A::Action::"::", W::A::Action::"&", W::A::Action::"=\u{e}!", W::A::Action::"\u{1d}@J<", W::A::Action::"r@"];
+
+  action "VV" in [W::A::Action::":~", W::A::Action::"\u{e}", W::A::Action::"[", W::A::Action::"\u{3}\u{1d}w", W::A::Action::"$", W::A::Action::"00\u{1d}", W::A::Action::"@", W::A::Action::"e", W::A::Action::"V", W::A::Action::"::", W::A::Action::"&", W::A::Action::"=\u{e}!", W::A::Action::"\u{1d}@J<", W::A::Action::"r@"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "[" in [W::A::Action::"\u{3}\u{1d}w", W::A::Action::"$", W::A::Action::"00\u{1d}", W::A::Action::"@", W::A::Action::"e", W::A::Action::"V", W::A::Action::"::", W::A::Action::"&", W::A::Action::"=\u{e}!", W::A::Action::"\u{1d}@J<", W::A::Action::"r@"];
+
+  action "e" in [W::A::Action::"V", W::A::Action::"::", W::A::Action::"&", W::A::Action::"=\u{e}!", W::A::Action::"\u{1d}@J<", W::A::Action::"r@"];
+
+  action "r@";
+}
+

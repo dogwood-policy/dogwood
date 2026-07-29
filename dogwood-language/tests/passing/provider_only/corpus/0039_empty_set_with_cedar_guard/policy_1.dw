@@ -1,0 +1,13 @@
+// Empty set provider (always count=0) combined with a Cedar guard.
+// The provider part always passes; the Cedar condition gates the result.
+// Produces true when document != "blocked", false otherwise.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Tags::Count(context.input.document, []).count == 0
+    && context.input.document != "blocked"
+};

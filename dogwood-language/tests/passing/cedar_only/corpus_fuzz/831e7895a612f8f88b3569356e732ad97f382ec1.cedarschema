@@ -1,0 +1,23 @@
+entity B0001Ng000RRwnRRm tags __cedar::duration;
+
+entity IppT3N13;
+
+@r
+entity h enum ["", "", ""];
+
+entity r;
+
+@A
+@F
+action "" in [Action::"\u{8}0[\u{1d}", Action::"V~", Action::"\u{7f}"] appliesTo {
+  principal: [B0001Ng000RRwnRRm],
+  resource: [h, IppT3N13, r, B0001Ng000RRwnRRm],
+  context: {}
+};
+
+action "\u{8}0[\u{1d}" in [Action::"V~", Action::"\u{7f}"];
+
+action "V~" in [Action::"\u{7f}"];
+
+action "\u{7f}";
+

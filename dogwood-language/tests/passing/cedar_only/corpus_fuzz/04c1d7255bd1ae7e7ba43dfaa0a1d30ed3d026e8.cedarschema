@@ -1,0 +1,47 @@
+entity a = {
+  r?: {
+    ""?: __cedar::String,
+    "\0"?: {
+      ""?: __cedar::String,
+      "\u{1}"?: __cedar::String,
+      "\u{8}"?: __cedar::String,
+      " "?: __cedar::String,
+      "-************************************=*********\t\u{1} "?: {
+        ""?: a,
+        "\u{1}"?: __cedar::String,
+        ":"?: __cedar::Bool,
+        AX?: __cedar::String,
+        @EW1Fnnw23Y335("bian \u{1}\u{f}")
+        @P2nn13("")
+        @TJJ
+        @_31Fnnw2nn133340
+        @_YlW1Fn31Fg333
+        @_YlW1Fnnw2nn13("")
+        @eK333g000KKKKKKK("SSSSSSSSSSSSSSSSSSSSSSSSJSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS")
+        @eKKKKKKKKKKKKKKK("SSSSSSSSSS")
+        @i44W33f3333_D333("\u{1}\u{f}i")
+        @i4W33f3("")
+        @r
+        @w
+        XX: __cedar::Bool,
+        "cti>>P "?: __cedar::String
+      },
+      ":"?: __cedar::String,
+      B?: __cedar::String,
+      "Debian \u{1}\u{f}"?: __cedar::String,
+      V?: __cedar::String,
+      g?: __cedar::String,
+      "gg\nggg"?: __cedar::String,
+      h?: __cedar::String,
+      yA?: __cedar::String,
+      yAV?: __cedar::String
+    }
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

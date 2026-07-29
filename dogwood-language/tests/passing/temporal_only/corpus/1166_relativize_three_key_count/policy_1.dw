@@ -1,0 +1,36 @@
+// Relativization / partition-safety, `count >= 2`, with THREE keys interleaved.
+//
+// Extends 1157 (2-key count) to two DISTINCT foreign principals. The count
+// encoding tallies mine-positions in a range; this exercises it when bob AND
+// carol both have Logins interspersed among alice's — the case that would
+// expose a range-count that miscounts (over- or under-counts) when multiple
+// distinct foreign keys populate the scan range.
+//
+// The count body does not correlate on user (`Login{ input.user: _ }`), so the
+// pin is the only thing confining the count. Two pairs, each with/without the
+// foreign events:
+//
+//   DENY pair — alice has ONE own Login; bob and carol have logins too. A
+//   correct key-local count = 1 (< 2) -> DENY. A global (or leak) count would
+//   tally alice+bob+carol -> >= 2 -> permit.
+//     trace_1: alice Login, BOB Login, CAROL Login, alice Read.
+//     trace_2: alice Login,                         alice Read.
+//
+//   PERMIT pair — alice has TWO own Logins; bob and carol interleaved are inert.
+//     trace_3: alice Login, BOB Login, alice Login, CAROL Login, alice Read.
+//     trace_4: alice Login,            alice Login,              alice Read.
+//   Correct key-local count = 2 (>= 2) -> PERMIT in both; two distinct foreign
+//   keys neither add to nor block alice's tally.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    exists (n: Long). (
+        (count for (t: Timepoint). where (
+            formerly within 1h (Drupe::Action::"Login"::request{ input.user: _ } && tp(t))
+        )) == n && n >= 2
+    )
+};

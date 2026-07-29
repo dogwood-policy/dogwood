@@ -1,0 +1,30 @@
+entity a;
+
+action "" in [Action::"[&:\u{1d}", Action::"p", Action::"\'V"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    n?: {
+      ""?: {      }
+    }
+  }
+};
+
+action "\'V" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "[&:\u{1d}" in [Action::"p", Action::"\'V"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "p" in [Action::"\'V"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

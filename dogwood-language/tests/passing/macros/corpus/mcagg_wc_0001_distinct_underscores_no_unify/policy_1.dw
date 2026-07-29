@@ -1,0 +1,23 @@
+// Regression: two `_` wildcards in one predicate must be INDEPENDENT.
+//
+// `Login{user: _, server: _}` means "any user, any server" — it must NOT
+// require `user == server`. Before the fix, `_` parsed as `Var("_")`, so
+// the second `_` equality-checked against the first binding, forcing
+// `user == server` and dropping any Login whose user and server differ.
+//
+// The latent bug was invisible in the corpus because every multi-`_`
+// case asserted `count == 0` over traces with no Login at all, so the
+// predicate never actually bound. This case has one Login whose
+// `user` ("alice") differs from its `server` ("s1"), so a true wildcard
+// counts it (n == 1) while the unify-bug would count 0.
+def temporal let_(?n, ?A, ?B) {
+    exists (?n: Long). (?A == ?n && ?B)
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    let_(n, count for (t: Timepoint). where (formerly within 1h (Drupe::Action::"Login"::request{ input.user: _, input.server: _ } && tp(t))), n == 1)};

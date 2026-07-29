@@ -1,0 +1,362 @@
+{
+  "policies": "corpus-tests/09220da1671c92dea2748689709f63577b3401ca.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/09220da1671c92dea2748689709f63577b3401ca.entities.json",
+  "schema": "corpus-tests/09220da1671c92dea2748689709f63577b3401ca.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": false,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "Gdddddddddddd::GdddddducRcRo::Gd::M",
+        "id": ""
+      },
+      "action": {
+        "type": "Gdddddddddddd::GdddddducRcRo::Gd::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Gdddddddddddd::GdddddducRcRo::Gd::j",
+        "id": ""
+      },
+      "context": {
+        "J": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "dTTTTTT333333": 0,
+        "dTTTTTTTTTTTT": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "deTTTTT": {
+          "__entity": {
+            "type": "Gdddddddddddd::GdddddducRcRo::Gd::j",
+            "id": ""
+          }
+        },
+        "r": false,
+        "wMMMMMMCCTTTTTTT": "bian \u001d"
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "Gdddddddddddd::GdddddducRcRo::Gd::M",
+        "id": ""
+      },
+      "action": {
+        "type": "Gdddddddddddd::GdddddducRcRo::Gd::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Gdddddddddddd::GdddddducRcRo::Gd::j",
+        "id": ""
+      },
+      "context": {
+        "J": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "dTTTTTT333333": 0,
+        "dTTTTTTTTTTTT": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "deTTTTT": {
+          "__entity": {
+            "type": "Gdddddddddddd::GdddddducRcRo::Gd::j",
+            "id": ""
+          }
+        },
+        "r": false,
+        "wMMMMMMCCTTTTTTT": "bian \u001d"
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "Gdddddddddddd::GdddddducRcRo::Gd::M",
+        "id": ""
+      },
+      "action": {
+        "type": "Gdddddddddddd::GdddddducRcRo::Gd::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Gdddddddddddd::GdddddducRcRo::Gd::j",
+        "id": ""
+      },
+      "context": {
+        "J": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "dTTTTTT333333": 0,
+        "dTTTTTTTTTTTT": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "deTTTTT": {
+          "__entity": {
+            "type": "Gdddddddddddd::GdddddducRcRo::Gd::j",
+            "id": ""
+          }
+        },
+        "r": false,
+        "wMMMMMMCCTTTTTTT": "bian \u001d"
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "Gdddddddddddd::GdddddducRcRo::Gd::M",
+        "id": ""
+      },
+      "action": {
+        "type": "Gdddddddddddd::GdddddducRcRo::Gd::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Gdddddddddddd::GdddddducRcRo::Gd::j",
+        "id": ""
+      },
+      "context": {
+        "J": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "dTTTTTT333333": 0,
+        "dTTTTTTTTTTTT": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "deTTTTT": {
+          "__entity": {
+            "type": "Gdddddddddddd::GdddddducRcRo::Gd::j",
+            "id": ""
+          }
+        },
+        "r": false,
+        "wMMMMMMCCTTTTTTT": "bian \u001d"
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "Gdddddddddddd::GdddddducRcRo::Gd::M",
+        "id": ""
+      },
+      "action": {
+        "type": "Gdddddddddddd::GdddddducRcRo::Gd::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Gdddddddddddd::GdddddducRcRo::Gd::j",
+        "id": ""
+      },
+      "context": {
+        "J": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "dTTTTTT333333": 0,
+        "dTTTTTTTTTTTT": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "deTTTTT": {
+          "__entity": {
+            "type": "Gdddddddddddd::GdddddducRcRo::Gd::j",
+            "id": ""
+          }
+        },
+        "r": false,
+        "wMMMMMMCCTTTTTTT": "bian \u001d"
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "Gdddddddddddd::GdddddducRcRo::Gd::M",
+        "id": ""
+      },
+      "action": {
+        "type": "Gdddddddddddd::GdddddducRcRo::Gd::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Gdddddddddddd::GdddddducRcRo::Gd::j",
+        "id": ""
+      },
+      "context": {
+        "J": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "dTTTTTT333333": 0,
+        "dTTTTTTTTTTTT": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "deTTTTT": {
+          "__entity": {
+            "type": "Gdddddddddddd::GdddddducRcRo::Gd::j",
+            "id": ""
+          }
+        },
+        "r": false,
+        "wMMMMMMCCTTTTTTT": "bian \u001d"
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "Gdddddddddddd::GdddddducRcRo::Gd::M",
+        "id": ""
+      },
+      "action": {
+        "type": "Gdddddddddddd::GdddddducRcRo::Gd::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Gdddddddddddd::GdddddducRcRo::Gd::j",
+        "id": ""
+      },
+      "context": {
+        "J": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "dTTTTTT333333": 0,
+        "dTTTTTTTTTTTT": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "deTTTTT": {
+          "__entity": {
+            "type": "Gdddddddddddd::GdddddducRcRo::Gd::j",
+            "id": ""
+          }
+        },
+        "r": false,
+        "wMMMMMMCCTTTTTTT": "bian \u001d"
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "Gdddddddddddd::GdddddducRcRo::Gd::M",
+        "id": ""
+      },
+      "action": {
+        "type": "Gdddddddddddd::GdddddducRcRo::Gd::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Gdddddddddddd::GdddddducRcRo::Gd::j",
+        "id": ""
+      },
+      "context": {
+        "J": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "dTTTTTT333333": 0,
+        "dTTTTTTTTTTTT": {
+          "__extn": {
+            "fn": "datetime",
+            "arg": "0000-01-01"
+          }
+        },
+        "deTTTTT": {
+          "__entity": {
+            "type": "Gdddddddddddd::GdddddducRcRo::Gd::j",
+            "id": ""
+          }
+        },
+        "r": false,
+        "wMMMMMMCCTTTTTTT": "bian \u001d"
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": [
+        "policy0"
+      ]
+    }
+  ]
+}

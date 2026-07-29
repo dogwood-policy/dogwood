@@ -1,0 +1,1 @@
+cannot sum `t`: sum requires a `Long` summand, but `t` is `Timepoint`. Timepoints are ordinal positions, not quantities — use a Timepoint in the `for (…)` binders to keep per-timepoint rows, not as the value being summed.

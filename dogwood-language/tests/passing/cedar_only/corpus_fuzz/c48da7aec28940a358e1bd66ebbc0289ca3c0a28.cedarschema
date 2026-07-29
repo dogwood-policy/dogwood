@@ -1,0 +1,10 @@
+entity A enum [""];
+
+entity p3 enum [""];
+
+action "action" appliesTo {
+  principal: [p3],
+  resource: [p3],
+  context: {}
+};
+

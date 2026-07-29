@@ -1,0 +1,37 @@
+namespace A::A {
+  entity a;
+
+  action "" in [A::A::Action::"V", A::A::Action::":~", A::A::Action::"\u{e}", A::A::Action::"\u{3}", A::A::Action::"w\u{1d}[", A::A::Action::"$", A::A::Action::"=\u{e}", A::A::Action::"[", A::A::Action::"@J<", A::A::Action::"r@", A::A::Action::"}}", A::A::Action::":"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      A?: __cedar::datetime,
+      vVR3T33S1RhzEnn?: __cedar::String
+    }
+  };
+
+  action "\u{3}" in [A::A::Action::"w\u{1d}[", A::A::Action::"$", A::A::Action::"=\u{e}", A::A::Action::"[", A::A::Action::"@J<", A::A::Action::"r@", A::A::Action::"}}", A::A::Action::":"];
+
+  action "\u{e}" in [A::A::Action::"\u{3}", A::A::Action::"w\u{1d}[", A::A::Action::"$", A::A::Action::"=\u{e}", A::A::Action::"[", A::A::Action::"@J<", A::A::Action::"r@", A::A::Action::"}}", A::A::Action::":"];
+
+  action "$" in [A::A::Action::"=\u{e}", A::A::Action::"[", A::A::Action::"@J<", A::A::Action::"r@", A::A::Action::"}}", A::A::Action::":"];
+
+  action ":";
+
+  action ":~" in [A::A::Action::"\u{e}", A::A::Action::"\u{3}", A::A::Action::"w\u{1d}[", A::A::Action::"$", A::A::Action::"=\u{e}", A::A::Action::"[", A::A::Action::"@J<", A::A::Action::"r@", A::A::Action::"}}", A::A::Action::":"];
+
+  action "=\u{e}" in [A::A::Action::"[", A::A::Action::"@J<", A::A::Action::"r@", A::A::Action::"}}", A::A::Action::":"];
+
+  action "@J<" in [A::A::Action::"r@", A::A::Action::"}}", A::A::Action::":"];
+
+  action "V" in [A::A::Action::":~", A::A::Action::"\u{e}", A::A::Action::"\u{3}", A::A::Action::"w\u{1d}[", A::A::Action::"$", A::A::Action::"=\u{e}", A::A::Action::"[", A::A::Action::"@J<", A::A::Action::"r@", A::A::Action::"}}", A::A::Action::":"];
+
+  action "[" in [A::A::Action::"@J<", A::A::Action::"r@", A::A::Action::"}}", A::A::Action::":"];
+
+  action "r@" in [A::A::Action::"}}", A::A::Action::":"];
+
+  action "w\u{1d}[" in [A::A::Action::"$", A::A::Action::"=\u{e}", A::A::Action::"[", A::A::Action::"@J<", A::A::Action::"r@", A::A::Action::"}}", A::A::Action::":"];
+
+  action "}}" in [A::A::Action::":"];
+}
+

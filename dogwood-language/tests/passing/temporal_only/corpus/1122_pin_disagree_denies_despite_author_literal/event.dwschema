@@ -1,0 +1,30 @@
+// Same PINNED schema as case 1118: the nested leaf `__drupe.session_id`
+// is pinned to `context.__drupe.session_id` on every predicate.
+//
+// This case proves the "disagree -> unsatisfiable" half of the pin contract
+// END TO END. The policy (policy_1.dw) writes the pinned leaf itself, as a
+// concrete string LITERAL ("sess-1") equal to the historical Login's session.
+// That author-written literal, on its own, would permit BOTH traces (the
+// past Login's session is "sess-1" in both). The pin, injected on top, adds
+// `__drupe.session_id: context.__drupe.session_id` — forcing the past
+// Login's session to equal the CURRENT request's session. When they differ
+// (trace_2) the two constraints on the one field disagree, the predicate is
+// unsatisfiable, and the Read is denied. The verdict flip between the two
+// traces is caused by the pin alone.
+
+decision event <A>::request {
+    ...inputs(A),
+    callerPrincipal: principalType(A),
+    callerResource:  resourceType(A),
+    requestId:       String,
+    __drupe: { pin session_id: String = context.__drupe.session_id },
+}
+
+event <A>::response {
+    ...inputs(A),
+    ...outputs(A),
+    callerPrincipal: principalType(A),
+    callerResource:  resourceType(A),
+    requestId:       String,
+    __drupe: { pin session_id: String = context.__drupe.session_id },
+}

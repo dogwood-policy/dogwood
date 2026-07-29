@@ -1,0 +1,18 @@
+{
+  "availableProviders": {
+    "Risk::Score": {
+      "argumentTypes": [{ "paramType": "string" }],
+      "outputType": {
+        "paramType": "record",
+        "fields": { "score": { "paramType": "decimal" } },
+        "required": ["score"]
+      },
+      "availableMethods": {
+        "contains": {
+          "argumentTypes": [{ "paramType": "string" }],
+          "outputType": { "paramType": "bool" }
+        }
+      }
+    }
+  }
+}

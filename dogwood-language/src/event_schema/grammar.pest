@@ -1,0 +1,136 @@
+// =============================================================================
+// Event-schema DSL grammar (pest)
+// =============================================================================
+//
+// The event schema is a generic, schema-independent description of how to
+// derive event signatures from an action schema. It is a sequence of event
+// declarations, each naming an event kind for *any* action `<A>` and listing
+// the fields that kind carries — either spliced from the action (`...inputs(A)`)
+// or injected with an explicit type (`__cedar_principal: principalType(A)`).
+//
+// Example (reproduces the request/resolution convention):
+//
+//   decision event <A>::request {
+//       ...inputs(A),
+//       __cedar_principal: principalType(A),
+//       __cedar_resource:  resourceType(A),
+//       __cedar_uid:       String,
+//   }
+//
+//   event <A>::resolution {
+//       ...inputs(A),
+//       ...outputs(A),
+//       __cedar_principal: principalType(A),
+//       __cedar_resource:  resourceType(A),
+//       __cedar_uid:       String,
+//   }
+//
+// This grammar is purely syntactic: it does not consult any action schema. The
+// selectors (`inputs`/`outputs`/`principalType`/`resourceType`) and the binder
+// `<A>` are symbolic; binding them to a concrete schema happens in a later
+// derivation pass.
+//
+// A schema may open with an optional `max_window = <interval>` directive that
+// caps how far back any temporal `within` window in a policy may look (the
+// validator enforces it; absent → a 24h default):
+//
+//   max_window = 24h
+//
+//   decision event <A>::request { ...inputs(A), __cedar_uid: String }
+
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+COMMENT    = _{ "//" ~ (!("\n" | "\r") ~ ANY)* }
+
+ident = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
+
+// ── Entry ──────────────────────────────────────────────────────────
+// An optional `max_window` directive, then the event declarations.
+schema_entry = { SOI ~ max_window_decl? ~ event_decl* ~ EOI }
+
+// `max_window = <n><unit>` — the maximum temporal look-back window any policy
+// `within` clause may use. At most one, at the top of the file. The interval
+// shape (`integer time_unit`) mirrors the temporal sublanguage's window.
+max_window_decl = { kw_max_window ~ "=" ~ interval }
+kw_max_window   = @{ "max_window" ~ !(ASCII_ALPHANUMERIC | "_") }
+interval        = { integer ~ time_unit }
+integer         = @{ ASCII_DIGIT+ }
+time_unit       = { "s" | "m" | "h" | "d" }
+
+// `[decision] event <A>::kind { fields }`
+event_decl = {
+    decision_marker? ~ kw_event ~ "<" ~ binder ~ ">" ~ "::" ~ event_kind ~ "{" ~ field_list? ~ "}"
+}
+
+decision_marker = { kw_decision }
+kw_decision     = @{ "decision" ~ !(ASCII_ALPHANUMERIC | "_") }
+kw_event        = @{ "event" ~ !(ASCII_ALPHANUMERIC | "_") }
+
+// The action binder (`<A>`) and the event kind segment.
+binder     = { ident }
+event_kind = { ident }
+
+// ── Fields ─────────────────────────────────────────────────────────
+// A trailing comma is allowed (the example uses one).
+field_list = { field ~ ("," ~ field)* ~ ","? }
+field      = { spread | named_field }
+
+// `...inputs(A)` — splice every field the selector yields for the action.
+spread = { "..." ~ selector ~ "(" ~ binder_ref ~ ")" }
+
+// `[pin] name: <type> [= <pin_rhs>]` — inject a single field with an
+// explicit type. A `pin` prefix marks the field as *pinned*: on every
+// predicate for this event, the field is implicitly conjoined to the
+// `pin_rhs` value (a correlation against the decision request). `pin` and the
+// `= <pin_rhs>` clause must appear together; a pinned field must be a leaf
+// (a `type_expr` that is a `selector_call` or `concrete_type`, never a
+// `record_type` — pinning a whole group is out of scope, enforced in the
+// parser).
+named_field = { pin_marker? ~ ident ~ ":" ~ type_expr ~ pin_rhs? }
+// `pin` is a *contextual* keyword: it is the pin prefix only when a field
+// declaration (`ident ":"`) actually follows it. Otherwise `pin` is an
+// ordinary identifier — so a field may still be named `pin` (`pin: String`,
+// or even a pinned field named `pin`: `pin pin: T = context.x`). The
+// positive lookahead `&(ident ~ ":")` is what makes it contextual rather
+// than globally reserved.
+pin_marker  = { kw_pin ~ &(ident ~ ":") }
+kw_pin      = @{ "pin" ~ !(ASCII_ALPHANUMERIC | "_") }
+
+// `= <ref>` — the value a pinned field is forced to match, resolved against
+// the decision request. Two reference shapes, mirroring the temporal terms a
+// pin lowers to:
+//   * `principal` / `resource` (± an attribute tail: `principal.dept`) — the
+//     request **scope** entity or one of its attributes (Cedar's `principal` /
+//     `resource` variable);
+//   * `context.<path>` — a field of the request **context** record
+//     (`context.input.user`, `context.__session.id`).
+// `pin_scope` precedes `pin_context` so a `principal` / `resource` head is a
+// scope reference, not mistaken for a context field.
+pin_rhs      = { "=" ~ (pin_scope | pin_context) }
+pin_scope    = { pin_scope_root ~ ("." ~ ident)* }
+pin_scope_root = @{ ("principal" | "resource") ~ !(ASCII_ALPHANUMERIC | "_") }
+pin_context  = { "context" ~ ("." ~ ident)+ }
+
+// A field type is a selector applied to the binder (`principalType(A)`), a
+// nested record (`{ … }` — the injected field becomes a group whose members
+// are addressed as `name.member`), or a concrete (possibly qualified) Cedar
+// type name (`String`, `Long`, `MyApp::OAuthUser`). The record form is
+// how an author opts a named field into hierarchy; a plain type stays flat.
+type_expr     = { selector_call | record_type | concrete_type }
+selector_call = { selector ~ "(" ~ binder_ref ~ ")" }
+record_type   = { "{" ~ field_list? ~ "}" }
+concrete_type = { ident ~ ("::" ~ ident)* }
+
+// The four selectors that read from an action. Each is a whole token (a
+// trailing `(` follows in every use, but the boundary guard keeps
+// `inputsX` from matching `inputs`).
+selector = {
+    sel_inputs | sel_outputs | sel_principal_type | sel_resource_type
+}
+sel_inputs         = @{ "inputs"        ~ !(ASCII_ALPHANUMERIC | "_") }
+sel_outputs        = @{ "outputs"       ~ !(ASCII_ALPHANUMERIC | "_") }
+sel_principal_type = @{ "principalType" ~ !(ASCII_ALPHANUMERIC | "_") }
+sel_resource_type  = @{ "resourceType"  ~ !(ASCII_ALPHANUMERIC | "_") }
+
+// A reference to the action binder inside a selector argument; checked
+// against the enclosing declaration's `<binder>` at build time.
+binder_ref = { ident }

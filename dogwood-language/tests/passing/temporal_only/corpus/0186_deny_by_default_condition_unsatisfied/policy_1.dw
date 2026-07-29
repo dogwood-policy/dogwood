@@ -1,0 +1,11 @@
+// Reads are permitted only if the user logged in within the last hour.
+// No Login ever happens — every Read is denied by default.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

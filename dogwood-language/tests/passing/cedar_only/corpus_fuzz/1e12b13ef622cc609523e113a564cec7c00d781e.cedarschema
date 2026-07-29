@@ -1,0 +1,18 @@
+entity a tags a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @sFFF
+    @v3ERRjTV("")
+    F: __cedar::String,
+    ORRVTVSg2?: {
+      "\0\0\0\0\0\0\0\0\0\0\0"?: __cedar::String,
+      "\u{3}"?: __cedar::String,
+      "\u{18}@"?: __cedar::String,
+      "-\\^["?: __cedar::String
+    }
+  }
+};
+

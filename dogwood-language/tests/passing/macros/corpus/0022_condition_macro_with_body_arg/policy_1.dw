@@ -1,0 +1,22 @@
+// Temporal-condition macro that takes another condition as an
+// argument: `once(?w, ?s)` thinly wraps `formerly within ?w ?s`,
+// where the call-site passes a parameterized condition (a Read
+// predicate) as `?s`. Exercises the SigilRef → splice-condition-AST
+// substitution path at the macro call site within a temporal block.
+//
+// Macro-form rewrite of 0004_write_after_read, but the
+// `formerly within …` is itself produced by macro expansion of
+// `once`, not written inline.
+
+def temporal once(?w, ?s) {
+    formerly within ?w ?s
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Write",
+    resource
+)
+when temporal {
+    once(1h, Drupe::Action::"Read"::request{ input.user: context.input.user, input.document: context.input.document })
+};

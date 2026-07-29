@@ -1,0 +1,21 @@
+// A Read is permitted if there was formerly a Login. The policy predicate
+// mentions only `input.user` — it never writes the session id. The event
+// schema PINS the NESTED leaf `__drupe.session_id` to
+// `context.__drupe.session_id` (see event.dwschema), so the pin forces
+// the past Login to share the current Read's session. Proves pins work on a
+// nested (dotted) field path, and cannot be bypassed by a directly-written
+// predicate.
+//
+// Positive/negative control across two traces:
+//   trace_1: prior Login shares the Read's session id → permitted.
+//   trace_2: IDENTICAL except the prior Login's session id differs → the
+//            injected nested pin forces a mismatch → NOT permitted.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

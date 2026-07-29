@@ -1,0 +1,38 @@
+[
+  {
+    "uid": {
+      "type": "a",
+      "id": ""
+    },
+    "attrs": {
+      "A000002l03I3l": {
+        "__extn": {
+          "fn": "ip",
+          "arg": "0.0.0.0"
+        }
+      }
+    },
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "Action",
+      "id": ""
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "Action",
+        "id": "A"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "Action",
+      "id": "A"
+    },
+    "attrs": {},
+    "parents": []
+  }
+]

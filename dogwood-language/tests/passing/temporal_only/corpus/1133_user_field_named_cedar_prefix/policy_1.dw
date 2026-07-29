@@ -1,0 +1,28 @@
+// A USER input field literally named `__cedar_flag` (declared in LoginInput).
+// It nests to `input.__cedar_flag`, distinct from the reserved `__cedar_*`
+// slots which live at the top level — so a name beginning with `__cedar_`
+// is NOT automatically "reserved"; reserved-ness is a matter of where the
+// schema places the field, not a prefix test on its name.
+//
+// A Read is permitted only if the SAME user formerly logged in with
+// `input.__cedar_flag == "on"`, matched by a LITERAL. The interpreter
+// resolves `input.__cedar_flag` by descending the `input` group; it has no
+// prefix rule that would drop or specially treat the field. A differential
+// SQL backend that skips any `__cedar_`-prefixed arg (treating it as a
+// reserved positional slot) would fail to serialize / read this field.
+//
+// Uses the DEFAULT event schema (no per-case override): the field is an
+// ordinary spliced input field that merely happens to be named oddly.
+//
+// Controls:
+//   trace_1: past Login with input.__cedar_flag "on" (matches) -> PERMITTED.
+//   trace_2: past Login with input.__cedar_flag "off" (does not match) -> NOT
+//            permitted (the literal genuinely constrains the match).
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user, input.__cedar_flag: "on" }
+};

@@ -1,0 +1,176 @@
+{
+  "policies": "corpus-tests/345e61ca8af409741fe589abd4d3f298a0f29fdc.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/345e61ca8af409741fe589abd4d3f298a0f29fdc.entities.json",
+  "schema": "corpus-tests/345e61ca8af409741fe589abd4d3f298a0f29fdc.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "A::A::A::A::A::A::A::A::A0::a",
+        "id": ""
+      },
+      "action": {
+        "type": "A::A::A::A::A::A::A::A::A0::Action",
+        "id": "\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007"
+      },
+      "resource": {
+        "type": "A::A::A::A::A::A::A::A::A0::a",
+        "id": ""
+      },
+      "context": {
+        "FS": {}
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "A::A::A::A::A::A::A::A::A0::a",
+        "id": ""
+      },
+      "action": {
+        "type": "A::A::A::A::A::A::A::A::A0::Action",
+        "id": "\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007"
+      },
+      "resource": {
+        "type": "A::A::A::A::A::A::A::A::A0::a",
+        "id": ""
+      },
+      "context": {
+        "FS": {
+          "": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "A::A::A::A::A::A::A::A::A0::a",
+        "id": ""
+      },
+      "action": {
+        "type": "A::A::A::A::A::A::A::A::A0::Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "A::A::A::A::A::A::A::A::A0::a",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "A::A::A::A::A::A::A::A::A0::a",
+        "id": ""
+      },
+      "action": {
+        "type": "A::A::A::A::A::A::A::A::A0::Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "A::A::A::A::A::A::A::A::A0::a",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "A::A::A::A::A::A::A::A::A0::a",
+        "id": ""
+      },
+      "action": {
+        "type": "A::A::A::A::A::A::A::A::A0::Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "A::A::A::A::A::A::A::A::A0::a",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "A::A::A::A::A::A::A::A::A0::a",
+        "id": ""
+      },
+      "action": {
+        "type": "A::A::A::A::A::A::A::A::A0::Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "A::A::A::A::A::A::A::A::A0::a",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "A::A::A::A::A::A::A::A::A0::a",
+        "id": ""
+      },
+      "action": {
+        "type": "A::A::A::A::A::A::A::A::A0::Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "A::A::A::A::A::A::A::A::A0::a",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "A::A::A::A::A::A::A::A::A0::a",
+        "id": ""
+      },
+      "action": {
+        "type": "A::A::A::A::A::A::A::A::A0::Action",
+        "id": ""
+      },
+      "resource": {
+        "type": "A::A::A::A::A::A::A::A::A0::a",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}

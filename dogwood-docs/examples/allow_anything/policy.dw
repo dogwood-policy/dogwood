@@ -1,0 +1,7 @@
+// A rule with all three scope slots bare matches every request.
+@id("allow_anything")
+permit (
+    principal,
+    action,
+    resource
+);

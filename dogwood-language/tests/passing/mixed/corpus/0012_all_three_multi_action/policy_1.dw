@@ -1,0 +1,7 @@
+// Permit Login when user is not "banned" (Cedar only)
+permit (
+    principal,
+    action == Drupe::Action::"Login",
+    resource
+)
+when { context.input.user != "banned" };

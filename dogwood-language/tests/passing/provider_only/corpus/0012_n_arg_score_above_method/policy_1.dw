@@ -1,0 +1,21 @@
+// Forbid Read when the content-risk score is *above* 0.5, as decided by
+// the `Risk::Score` information provider (implemented in risk.rhai).
+//
+// Unlike 0003 (which compared the provider's decimal output with Cedar's
+// `.lessThan(decimal(...))` extension method), here the threshold check is
+// pushed *inside the provider* as a declared **method**: `.above(thr)`
+// takes a decimal argument and returns a Bool. The clause body is then a
+// plain boolean comparison, `… .above(decimal("0.5")) == true`.
+//
+// The clause is an `unless` guardrail: the permit applies *unless* the
+// body is true, so a high score (above 0.5) suppresses the permit -> Deny,
+// and a low score leaves the permit in force -> Allow.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+unless guardrails {
+    Risk::Score(context.input.document).above(decimal("0.5")) == true
+};

@@ -1,0 +1,14 @@
+// Gateway reads permit only when the gateway's owner name is short. Under
+// unconditional provider execution this provider ALSO runs on Bucket reads
+// (where `resource.owner` resolves to Null and the defensive script
+// returns its sentinel); the rule's `resource is Gateway` scope head means
+// Cedar never lets it fire there — the Bucket verdicts are governed
+// entirely by the other policy.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource is Drupe::Gateway
+)
+when guardrails {
+    Strings::Length(resource.owner).length < 6
+};

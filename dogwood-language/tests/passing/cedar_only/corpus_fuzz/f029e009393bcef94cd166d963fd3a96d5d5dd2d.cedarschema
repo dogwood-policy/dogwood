@@ -1,0 +1,10 @@
+namespace K::r::r::e::r::r::r::w::r {
+  entity a;
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

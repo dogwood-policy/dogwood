@@ -1,0 +1,21 @@
+// An action with MULTIPLE resource types: Read applies to both Gateway
+// and Bucket. The policies discriminate by resource type (`resource is`),
+// so identical Read events receive different verdicts purely by the
+// resource's entity type.
+namespace Drupe {
+    entity OAuthUser;
+    entity Gateway;
+    entity Bucket;
+    type LoginInput = { user: String };
+    type ReadInput = { document: String, user: String };
+    action Login appliesTo {
+        principal: [OAuthUser],
+        resource: [Gateway],
+        context: { input: LoginInput }
+    };
+    action Read appliesTo {
+        principal: [OAuthUser],
+        resource: [Gateway, Bucket],
+        context: { input: ReadInput }
+    };
+}

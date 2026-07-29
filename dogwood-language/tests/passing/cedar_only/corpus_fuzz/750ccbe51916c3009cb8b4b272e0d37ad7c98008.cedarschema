@@ -1,0 +1,22 @@
+namespace NwXp3W3 {
+  entity a enum [":"];
+
+  action "" in [NwXp3W3::Action::"~s"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "W" in [NwXp3W3::Action::"", NwXp3W3::Action::"~s"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "~s" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

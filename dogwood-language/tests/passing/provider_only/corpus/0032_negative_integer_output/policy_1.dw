@@ -1,0 +1,11 @@
+// Edge case: provider returns a negative integer.
+// Tests that negative comparisons work correctly.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Num::Diff(context.input.document).diff > 0
+};

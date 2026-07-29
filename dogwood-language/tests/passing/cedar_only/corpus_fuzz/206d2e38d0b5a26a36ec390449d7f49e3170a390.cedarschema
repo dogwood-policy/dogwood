@@ -1,0 +1,16 @@
+namespace r::r::j::r {
+  entity b enum [""];
+
+  entity j enum [""];
+
+  entity r = {
+    A0000000000000000?: __cedar::String
+  };
+
+  action "action" appliesTo {
+    principal: [r],
+    resource: [r],
+    context: {}
+  };
+}
+

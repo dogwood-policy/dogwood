@@ -1,0 +1,12 @@
+// Permit Read when VIOLENCE score is below 0.5 (guardrail index projection),
+// AND user is not "banned" (Cedar when), AND document doesn't start with PRIVATE_ (Cedar unless)
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Content::Filter(context.input.document, ["VIOLENCE", "HATE"])["VIOLENCE"].severityScore.lessThan(decimal("0.5"))
+}
+when { context.input.user != "banned" }
+unless { context.input.document like "PRIVATE_*" };

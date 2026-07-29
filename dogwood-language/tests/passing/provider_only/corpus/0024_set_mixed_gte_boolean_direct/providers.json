@@ -1,0 +1,22 @@
+{
+  "availableProviders": {
+    "Policy::Check": {
+      "argumentTypes": [
+        { "paramType": "string" },
+        { "paramType": "set", "items": { "paramType": "string" } }
+      ],
+      "outputType": {
+        "paramType": "record",
+        "fields": {
+          "confidence": { "paramType": "decimal" },
+          "approved": { "paramType": "bool" }
+        },
+        "required": ["confidence", "approved"]
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "policy_check.rhai"
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "availableProviders": {
+    "Regex::Analyze": {
+      "argumentTypes": [
+        { "paramType": "string" },
+        { "paramType": "string" }
+      ],
+      "outputType": {
+        "paramType": "record",
+        "fields": {
+          "is_match":    { "paramType": "bool" },
+          "first_match": { "paramType": "string" },
+          "count":       { "paramType": "integer" }
+        },
+        "required": ["is_match", "first_match", "count"]
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "analyze.rhai"
+      }
+    }
+  }
+}

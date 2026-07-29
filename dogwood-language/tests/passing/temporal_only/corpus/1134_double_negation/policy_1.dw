@@ -1,0 +1,14 @@
+// Edge: !(!(formerly within 1h P{})) — double negation. Semantically
+// equivalent to `formerly within 1h P{}` alone. The valid nesting is
+// negation of a negated temporal expression, not `!!P{}` directly.
+// Verifies the evaluator doesn't accidentally collapse the double
+// negation incorrectly.
+
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    !(!(formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }))
+};

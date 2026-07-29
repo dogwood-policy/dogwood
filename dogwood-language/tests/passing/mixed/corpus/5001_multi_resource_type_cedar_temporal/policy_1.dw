@@ -1,0 +1,8 @@
+// Cedar half: permit reads of SAFE_-prefixed documents on EITHER resource
+// type (bare `resource` scope spans the [Gateway, Bucket] union).
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when { context.input.document like "SAFE_*" };

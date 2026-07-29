@@ -1,0 +1,61 @@
+namespace r::f::g04uq1233 {
+  entity D;
+
+  entity I enum ["\'", "", ":~"];
+
+  entity h2;
+
+  entity r;
+
+  entity vR;
+
+  @r
+  @v("[")
+  @yWS33qPpqb3
+  action "" in [r::f::g04uq1233::Action::"\u{3}", r::f::g04uq1233::Action::"\u{e}", r::f::g04uq1233::Action::"^", r::f::g04uq1233::Action::"ffd~", r::f::g04uq1233::Action::"\u{1d}\u{3}", r::f::g04uq1233::Action::"[@", r::f::g04uq1233::Action::"$=\u{e}", r::f::g04uq1233::Action::"\u{1f}"] appliesTo {
+    principal: [I],
+    resource: [h2, D, r, vR],
+    context: {}
+  };
+
+  action "\u{3}" in [r::f::g04uq1233::Action::"\u{e}", r::f::g04uq1233::Action::"^", r::f::g04uq1233::Action::"ffd~", r::f::g04uq1233::Action::"\u{1d}\u{3}", r::f::g04uq1233::Action::"[@", r::f::g04uq1233::Action::"$=\u{e}", r::f::g04uq1233::Action::"\u{1f}"];
+
+  action "\u{e}" in [r::f::g04uq1233::Action::"^", r::f::g04uq1233::Action::"ffd~", r::f::g04uq1233::Action::"\u{1d}\u{3}", r::f::g04uq1233::Action::"[@", r::f::g04uq1233::Action::"$=\u{e}", r::f::g04uq1233::Action::"\u{1f}"] appliesTo {
+    principal: [I],
+    resource: [I, vR, r, D],
+    context: {}
+  };
+
+  action "\u{1d}\u{3}" in [r::f::g04uq1233::Action::"[@", r::f::g04uq1233::Action::"$=\u{e}", r::f::g04uq1233::Action::"\u{1f}"] appliesTo {
+    principal: [h2, vR, D, I],
+    resource: [h2, vR, D, I],
+    context: {}
+  };
+
+  action "\u{1f}";
+
+  action "$=\u{e}" in [r::f::g04uq1233::Action::"\u{1f}"] appliesTo {
+    principal: [h2, vR, D, I],
+    resource: [h2, vR, D, I],
+    context: {}
+  };
+
+  action "[@" in [r::f::g04uq1233::Action::"$=\u{e}", r::f::g04uq1233::Action::"\u{1f}"] appliesTo {
+    principal: [h2, vR, D, I],
+    resource: [h2, vR, D, I],
+    context: {}
+  };
+
+  action "^" in [r::f::g04uq1233::Action::"ffd~", r::f::g04uq1233::Action::"\u{1d}\u{3}", r::f::g04uq1233::Action::"[@", r::f::g04uq1233::Action::"$=\u{e}", r::f::g04uq1233::Action::"\u{1f}"] appliesTo {
+    principal: [I],
+    resource: [r, D],
+    context: {}
+  };
+
+  action "ffd~" in [r::f::g04uq1233::Action::"\u{1d}\u{3}", r::f::g04uq1233::Action::"[@", r::f::g04uq1233::Action::"$=\u{e}", r::f::g04uq1233::Action::"\u{1f}"] appliesTo {
+    principal: [h2, vR, D, I],
+    resource: [h2, vR, D, I],
+    context: {}
+  };
+}
+

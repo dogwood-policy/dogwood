@@ -1,0 +1,9 @@
+@P
+entity a tags Set<Set<__cedar::datetime>>;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

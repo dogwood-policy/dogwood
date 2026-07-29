@@ -1,0 +1,18 @@
+// 0115 — forbid with `unless`
+//
+// New idea: `unless` is sugar for `when !`. Pairing it with a
+// `forbid` reads naturally in English: "forbid this action
+// unless the request is small."
+//
+// This rule alone never permits anything (see 0003 for the
+// deny-overrides + default-deny rules). Its only job is to
+// veto SellShares requests with more than 100 shares. A
+// separate `permit` (such as 0001) is still required for the
+// request to actually be allowed.
+
+forbid (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+)
+unless { context.input.shares <= 100 };

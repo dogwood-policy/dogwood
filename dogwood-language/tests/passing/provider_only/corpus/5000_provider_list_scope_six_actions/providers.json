@@ -1,0 +1,19 @@
+{
+  "availableProviders": {
+    "Strings::Length": {
+      "argumentTypes": [
+        { "paramType": "string" }
+      ],
+      "outputType": {
+        "paramType": "record",
+        "fields": { "length": { "paramType": "integer" } },
+        "required": ["length"]
+      },
+      "availableMethods": {},
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "length.rhai"
+      }
+    }
+  }
+}

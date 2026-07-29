@@ -1,0 +1,16 @@
+// UNSOUNDNESS repro (reviewer finding A2): a `since` whose LEFT operand
+// reads `u`, where `u` is restricted only by a LATER conjunct. The since's
+// anchor (`Login{}`) restricts nothing about `u`, so evaluation checks the
+// left per step with `u` unbound — independent re-quantification per step.
+// The same formula changes verdict under `&&`-commutation: on {Transfer
+// carol, Login, Read bob, Read alice} this order evaluates TRUE while the
+// restrictor-first order (and MFOTL) gives FALSE. The safety condition requires
+// free(left) ⊆ free(right) for β S γ; Dogwood relaxes that to "or restricted
+// by a PRECEDING conjunct" — this policy satisfies neither.
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    exists (u: String). (
+        (Drupe::Action::"Read"::request{ input.user: u } since within 1h Drupe::Action::"Login"::request{})
+        && formerly within 1h Drupe::Action::"Transfer"::request{ input.user: u }
+    )
+};

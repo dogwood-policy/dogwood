@@ -1,0 +1,24 @@
+namespace r::V::h::r {
+  entity a;
+
+  action "" in [r::V::h::r::Action::":p", r::V::h::r::Action::"0[VV", r::V::h::r::Action::":", r::V::h::r::Action::"X?", r::V::h::r::Action::"t", r::V::h::r::Action::"Acon\u{3}\u{1d}@", r::V::h::r::Action::"e"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "0[VV" in [r::V::h::r::Action::":", r::V::h::r::Action::"X?", r::V::h::r::Action::"t", r::V::h::r::Action::"Acon\u{3}\u{1d}@", r::V::h::r::Action::"e"];
+
+  action ":" in [r::V::h::r::Action::"X?", r::V::h::r::Action::"t", r::V::h::r::Action::"Acon\u{3}\u{1d}@", r::V::h::r::Action::"e"];
+
+  action ":p" in [r::V::h::r::Action::"0[VV", r::V::h::r::Action::":", r::V::h::r::Action::"X?", r::V::h::r::Action::"t", r::V::h::r::Action::"Acon\u{3}\u{1d}@", r::V::h::r::Action::"e"];
+
+  action "Acon\u{3}\u{1d}@" in [r::V::h::r::Action::"e"];
+
+  action "X?" in [r::V::h::r::Action::"t", r::V::h::r::Action::"Acon\u{3}\u{1d}@", r::V::h::r::Action::"e"];
+
+  action "e";
+
+  action "t" in [r::V::h::r::Action::"Acon\u{3}\u{1d}@", r::V::h::r::Action::"e"];
+}
+

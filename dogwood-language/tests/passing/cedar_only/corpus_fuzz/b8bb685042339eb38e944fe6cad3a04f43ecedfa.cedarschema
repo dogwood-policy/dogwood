@@ -1,0 +1,47 @@
+entity a = {
+  A?: {
+    ""?: __cedar::String,
+    "\0mSSS"?: __cedar::String,
+    "\u{1}"?: __cedar::String,
+    @eKKK000000000000
+    @eKKKKKKKKKKKKKKK("SS")
+    "\u{1}\n\u{f}VV\n\ne?\0:\u{f}ee~"?: Set<Set<Set<__cedar::Long>>>,
+    "\u{1}\u{f}"?: __cedar::String,
+    "\u{1}\u{f}i"?: __cedar::String,
+    "\u{3}"?: __cedar::String,
+    "\u{3}\u{1d}@"?: __cedar::String,
+    "\u{3}\u{1d}w"?: __cedar::String,
+    "\u{e}"?: __cedar::String,
+    "\u{f}i"?: __cedar::String,
+    "\u{14}"?: __cedar::String,
+    "\u{1d}\u{3}"?: __cedar::String,
+    "\u{1d}@["?: __cedar::String,
+    "\u{1d}@gf"?: __cedar::String,
+    " "?: __cedar::String,
+    "$"?: __cedar::String,
+    "\'ggg\nggg"?: __cedar::String,
+    "\'ggg\ngggSSSSRSSSSSSSSSSSSSSSSSSSSSS"?: __cedar::String,
+    ":~"?: __cedar::String,
+    "=\u{e}"?: __cedar::String,
+    A?: __cedar::String,
+    B?: __cedar::String,
+    "Debian \u{1}\u{f}"?: __cedar::String,
+    "N~\u{1f}"?: __cedar::String,
+    SSSSSSSSSSS?: __cedar::String,
+    SSSSSSSSSSSSSSSS?: __cedar::String,
+    "["?: __cedar::String,
+    "[@["?: __cedar::String,
+    h?: __cedar::String,
+    "qqqqq\0\0!"?: __cedar::String,
+    y?: __cedar::String,
+    yA?: __cedar::String,
+    "z~"?: __cedar::String
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

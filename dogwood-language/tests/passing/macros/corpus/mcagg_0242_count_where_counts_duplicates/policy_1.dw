@@ -1,0 +1,15 @@
+// Demonstrates that `count where φ` counts occurrences (distinct
+// tps), not distinct values. This trace has the user re-reading the
+// same document repeatedly; an equivalent `count d where Read(...,
+// document: d)` would top out at the number of distinct documents
+// (1), so the rate limit would never engage. With `count where`
+// every Read tp counts separately, so the limit kicks in.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

@@ -1,0 +1,12 @@
+// Gateway reads are temporally gated: the same user must have logged in
+// within the last hour. Scoped by resource TYPE (`resource is`), which
+// only has discriminating power because Read applies to two resource
+// types.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource is Drupe::Gateway
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

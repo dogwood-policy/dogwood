@@ -1,0 +1,94 @@
+[
+  {
+    "uid": {
+      "type": "Action",
+      "id": "A"
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "Action",
+        "id": ">3"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "a",
+      "id": ""
+    },
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "Action",
+      "id": ""
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "Action",
+        "id": "3"
+      },
+      {
+        "type": "Action",
+        "id": ">3"
+      },
+      {
+        "type": "Action",
+        "id": "A"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "Action",
+      "id": ">3"
+    },
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "Action",
+      "id": "3"
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "Action",
+        "id": "A"
+      },
+      {
+        "type": "Action",
+        "id": ">3"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "Action",
+      "id": ":"
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "Action",
+        "id": ">3"
+      },
+      {
+        "type": "Action",
+        "id": ""
+      },
+      {
+        "type": "Action",
+        "id": "A"
+      },
+      {
+        "type": "Action",
+        "id": "3"
+      }
+    ]
+  }
+]

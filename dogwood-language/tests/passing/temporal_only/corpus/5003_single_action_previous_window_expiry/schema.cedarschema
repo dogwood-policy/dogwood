@@ -1,0 +1,12 @@
+// A schema with exactly one action: the temporal predicate necessarily
+// references the SAME action as the decision (self-referential history).
+namespace Drupe {
+    entity OAuthUser;
+    entity Gateway;
+    type TransferInput = { amount: Long, user: String };
+    action Transfer appliesTo {
+        principal: [OAuthUser],
+        resource: [Gateway],
+        context: { input: TransferInput }
+    };
+}

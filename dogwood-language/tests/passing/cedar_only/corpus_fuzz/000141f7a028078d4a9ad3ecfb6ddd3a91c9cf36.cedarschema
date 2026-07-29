@@ -1,0 +1,14 @@
+entity a tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: {
+      @hXXXXtAqcXXXXXXXX("")
+      @wmmmmmXXXSXXXXXXX("!!!!!!!!!!")
+      "": Set<Set<Set<__cedar::Long>>>
+    }
+  }
+};
+

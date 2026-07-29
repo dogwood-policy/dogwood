@@ -1,0 +1,15 @@
+def temporal count_within(?w, ?s) {
+    count for ($t: Timepoint). where (formerly within ?w (?s && tp($t)))
+};
+
+def temporal sum_within(?a, ?w, ?body) {
+    sum ?a for (?a: Long), ($t: Timepoint). where (formerly within ?w (?body && tp($t)))
+};
+
+def temporal count_distinct_within(?k, ?w, ?s) {
+    count for (?k: String). where (formerly within ?w ?s)
+};
+
+def temporal bind(?n, ?A, ?B) {
+    exists (?n: Long). (?A == ?n && ?B)
+};

@@ -1,0 +1,16 @@
+entity a = {
+  @A00000000000
+  r?: {
+    @TU_1m1XD
+    ""?: __cedar::datetime,
+    @I0
+    "73\0\0\0\0": __cedar::ipaddr
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

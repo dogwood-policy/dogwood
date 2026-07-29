@@ -1,0 +1,38 @@
+entity a enum [""];
+
+action "" in [Action::"8p", Action::"0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", Action::"aaaaaaaaaaaaaaaaaaaaaaaaa[M3"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1b}\u{1}" in [Action::"8p", Action::"0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "8p" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "VV" in [Action::"8p"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "aaaaaaaaaaaaaaaaaaaaaaaaa[M3" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,27 @@
+// A Read is permitted if there was formerly a Login whose session id is the
+// literal "sess-1". The author WRITES the pinned leaf themselves, as a
+// concrete literal (`__drupe.session_id: "sess-1"`). On its own this
+// author constraint matches the past Login in BOTH traces (its session is
+// "sess-1" in both), so without the pin both traces would permit.
+//
+// The schema PINS the same leaf to `context.__drupe.session_id` (see
+// event.dwschema). Because the pin is injected unconditionally, the predicate
+// carries `__drupe.session_id` twice: the author's literal "sess-1" AND
+// the pin's `context.__drupe.session_id` (the current Read's session).
+// Both must hold. This is the "disagree -> unsatisfiable" contract:
+//   trace_1: current Read's session is "sess-1" → pin agrees with the literal
+//            → past Login matches → permitted.
+//   trace_2: current Read's session is "sess-OTHER" → the pin requires the
+//            past Login's session to equal "sess-OTHER", but the literal
+//            requires "sess-1"; the two disagree, the predicate is
+//            unsatisfiable → NOT permitted.
+// The author-written literal cannot relax the pin; it can only add to it.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user, __drupe.session_id: "sess-1" }
+};

@@ -1,0 +1,20 @@
+entity a;
+
+action "" in [Action::"\u{4}", Action::"***", Action::"\u{4}AX"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{2}" in [Action::"", Action::"\u{4}", Action::"***", Action::"\u{4}AX"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{4}" in [Action::"***", Action::"\u{4}AX"];
+
+action "\u{4}AX";
+
+action "***" in [Action::"\u{4}AX"];
+

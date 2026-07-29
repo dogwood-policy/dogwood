@@ -1,0 +1,27 @@
+entity a tags {
+  ""?: __cedar::String,
+  "\u{3}"?: __cedar::String,
+  "\u{3}\u{1d}w"?: __cedar::String,
+  "\u{3}ddddddddfdd\u{1d}A"?: __cedar::String,
+  "\u{e}\u{1d}"?: __cedar::String,
+  "\u{1d}\u{3}"?: __cedar::String,
+  "\u{1d}@["?: __cedar::String,
+  "\u{1d}@gffd~"?: __cedar::String,
+  "$"?: __cedar::String,
+  "$=\u{e}"?: __cedar::String,
+  ":~"?: __cedar::String,
+  "=\u{e}"?: __cedar::String,
+  "["?: __cedar::String,
+  "[@"?: __cedar::String,
+  "[@["?: __cedar::String,
+  "\\\\": __cedar::Long,
+  "\\\\\\"?: __cedar::String,
+  "t/ionebian\\\\\\"?: __cedar::Bool
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

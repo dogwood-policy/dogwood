@@ -1,0 +1,17 @@
+namespace K {
+  entity a = {
+    e?: __cedar::String,
+    p?: __cedar::String,
+    r?: __cedar::String,
+    r3?: __cedar::String,
+    v?: __cedar::String,
+    vRR?: __cedar::String
+  };
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

@@ -1,0 +1,10 @@
+// VACUITY repro (final review): `tp(x)` binds `x` to the current TIMEPOINT
+// index, but `x` is declared `String` and used against a String field. The
+// conjunction can never hold — `tp(x)` yields an integer index, the field a
+// string — so this forbid guard is permanently false: a validated dead deny
+// rule (fail-open by vacuity). The type check must require a `tp` binder's
+// declared type to be `Timepoint`.
+forbid (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    exists (x: String). (tp(x) && formerly within 1h Drupe::Action::"Login"::request{ input.user: x })
+};

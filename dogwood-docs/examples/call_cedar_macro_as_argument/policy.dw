@@ -1,0 +1,8 @@
+// A macro call passed as an ARGUMENT to another macro call: the inner
+// semver(...) records are expanded first, then spliced into semverGT.
+// (RFC-0061 semantic-versioning macros, translated to Dogwood.)
+@id("gate_on_semver_compare")
+permit (principal, action == Drupe::Action::"GetStockInfo", resource)
+when {
+    semverGT(semver(2, 1, 1), semver(2, 1, 0))
+};

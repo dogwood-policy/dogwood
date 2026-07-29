@@ -1,0 +1,10 @@
+entity A;
+
+entity r;
+
+action "action" appliesTo {
+  principal: [A, r],
+  resource: [r, A],
+  context: {}
+};
+

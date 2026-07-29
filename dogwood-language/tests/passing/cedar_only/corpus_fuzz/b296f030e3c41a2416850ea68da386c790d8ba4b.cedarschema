@@ -1,0 +1,9 @@
+@sA000Qii0HHHHHHHH
+entity a tags Set<__cedar::String>;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

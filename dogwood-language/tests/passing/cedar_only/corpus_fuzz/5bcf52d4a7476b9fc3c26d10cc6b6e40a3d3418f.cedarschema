@@ -1,0 +1,12 @@
+entity v;
+
+entity w;
+
+entity z06R33;
+
+action "action" appliesTo {
+  principal: [v],
+  resource: [v],
+  context: {}
+};
+

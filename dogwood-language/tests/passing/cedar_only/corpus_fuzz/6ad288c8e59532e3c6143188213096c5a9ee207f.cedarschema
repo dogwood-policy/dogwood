@@ -1,0 +1,14 @@
+namespace iOO {
+  entity A enum [""];
+
+  entity iOO enum [""];
+
+  entity izK enum [""];
+
+  action "action" appliesTo {
+    principal: [iOO],
+    resource: [iOO],
+    context: {}
+  };
+}
+

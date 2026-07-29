@@ -1,0 +1,90 @@
+namespace A {
+  entity B;
+
+  @B("")
+  @r
+  @r3z0333SRRReX0p("")
+  entity D enum ["Debian \n\n\n\n\n\n\n\n\n\n\n\n\u{14}\n\n\n\n\n\n\n\n\n\n\n\n\n\n", " ", ""];
+
+  entity I;
+
+  @B("")
+  @r
+  @r3z0333SRRReW1p("")
+  entity N enum ["\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", ""];
+
+  entity Qw2nn1;
+
+  entity f;
+
+  entity h0;
+
+  entity iW12333;
+
+  entity m3;
+
+  @B("")
+  @r
+  @r3z0333SRRReX0p("")
+  entity r enum ["\n\n\n\n\niDe bna\n\n\n\n\n\n\n\n\n\n\n", ""];
+
+  entity v;
+
+  entity vR = {
+    P?: __cedar::Bool,
+    _YlW1Fnnw2nn13?: __cedar::String,
+    @B("")
+    @r
+    @z("")
+    g123333: __cedar::String,
+    g3?: __cedar::Bool,
+    i?: __cedar::String,
+    m3333333333333333?: __cedar::Bool,
+    m33z0333SRRReX0?: __cedar::Bool,
+    r33?: __cedar::Bool,
+    v?: __cedar::Bool
+  };
+
+  entity z = {
+    P?: __cedar::Bool,
+    _YlW1Fvnw2nn13?: __cedar::Bool,
+    g123333?: __cedar::Bool,
+    g3?: __cedar::Bool,
+    i?: __cedar::Bool,
+    r33?: __cedar::Bool,
+    r333333?: __cedar::String,
+    r3z0333SRRReX0p?: __cedar::String,
+    v?: __cedar::String
+  };
+
+  action "" in [A::Action::"\u{1f}", A::Action::"=?", A::Action::"\u{3}"] appliesTo {
+    principal: [v, N, m3, z, r, B, Qw2nn1, iW12333, h0, D, I],
+    resource: [v, h0, iW12333, Qw2nn1, r, B, m3, N, z, D, vR],
+    context: {}
+  };
+
+  action "\u{3}" appliesTo {
+    principal: [v, N, m3, z, r, B, Qw2nn1, iW12333, h0, D, vR],
+    resource: [v, N, m3, z, r, B, Qw2nn1, iW12333, h0, D, vR],
+    context: {}
+  };
+
+  @EW1Fnnw2nn133("")
+  @iW12333("")
+  @m33z0333SRRReX0("")
+  @r
+  @v("[")
+  @w
+  action "\u{1f}" in [A::Action::"=?", A::Action::"\u{3}"] appliesTo {
+    principal: [r, D, B, f, Qw2nn1, v, vR, z, iW12333, N, m3],
+    resource: [v, N, m3, z, r, B, Qw2nn1, h0, iW12333, vR, f],
+    context: {}
+  };
+
+  action "=?" in [A::Action::"\u{3}"] appliesTo {
+    principal: [v, z, f, B, Qw2nn1, m3, vR, iW12333, D, h0, r],
+    resource: [v, z, f, B, Qw2nn1, m3, vR, D, h0, N, I],
+    context: {}
+  };
+}
+

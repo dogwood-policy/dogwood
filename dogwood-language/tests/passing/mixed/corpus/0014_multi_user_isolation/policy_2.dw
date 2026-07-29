@@ -1,0 +1,10 @@
+// Forbid Read if the same user has logged out after their login (session invalidated).
+// alice's logout should NOT affect bob's active session.
+forbid (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Logout"::request{ input.user: context.input.user }
+};

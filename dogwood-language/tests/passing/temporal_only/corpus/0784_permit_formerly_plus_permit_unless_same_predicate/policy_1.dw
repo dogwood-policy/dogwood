@@ -1,0 +1,22 @@
+// Two complementary permits over the same predicate:
+//  (1) permit Read when temporal { formerly within 1h Login{user} }
+//  (2) permit Read unless temporal { formerly within 1h Login{user} }
+// Expectation: at every Read tp, exactly one of the two permits fires.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+unless temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

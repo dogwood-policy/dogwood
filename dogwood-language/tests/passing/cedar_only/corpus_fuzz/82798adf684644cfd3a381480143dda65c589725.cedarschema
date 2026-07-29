@@ -1,0 +1,14 @@
+entity h0X00600y0 enum ["\0\0\0", ""];
+
+action "" appliesTo {
+  principal: [h0X00600y0],
+  resource: [h0X00600y0],
+  context: {}
+};
+
+action "\u{10}>" appliesTo {
+  principal: [h0X00600y0],
+  resource: [h0X00600y0],
+  context: {}
+};
+

@@ -1,0 +1,18 @@
+// UNSOUNDNESS repro (reviewer finding A1): a correlated aggregate reached
+// through a BINDING EQUALITY whose correlating variable `u` is restricted
+// only by a LATER conjunct. The equality `(count …) == n` produces `n` but
+// also CONSUMES `u` (free in the aggregate body, not in its `for` list): the
+// chain evaluates left-to-right, so the count runs with `u` unbound and
+// tallies ALL logins globally instead of per-`u` — on {Login alice, Login
+// bob, Read} the evaluator says TRUE (global count 2 >= 2) where the
+// per-user reading is FALSE (each count is 1). The old rule classified a
+// binding equality as a pure restrictor and never charged its value side's
+// demands. Restrictor-first is the accepted spelling.
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    exists (u: String). exists (n: Long). (
+        (count for (t: Timepoint). where (formerly within 1h (Drupe::Action::"Login"::request{ input.user: u } && tp(t)))) == n
+        && n >= 2
+        && formerly within 1h Drupe::Action::"Login"::request{ input.user: u }
+    )
+};

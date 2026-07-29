@@ -1,0 +1,29 @@
+// Relativization / partition-safety, `previous` operator, keyed by a CONTEXT
+// field (`tenant_id`).
+//
+// A Read is permitted iff THIS tenant's immediately preceding own event (within
+// 1h) was a Login. The event schema pins `tenant_id = context.tenant_id`
+// universally (see event.dwschema) with NO scope pin, so `previous` means "this
+// tenant's previous event" and the ONLY thing confining evaluation is the
+// context-field pin.
+//
+// Principal AND resource are held constant (alice / gw1) across every event, so
+// neither scope entity can distinguish "mine" from "foreign" — only the tenant
+// context field can. The differential pair for tenant t1's Read at @3:
+//   trace_1: t1 Login, T2 Transfer (foreign tenant, same principal+resource), t1 Read.
+//   trace_2: t1 Login,                                                         t1 Read.
+// Under tenant-local semantics the t2 Transfer is invisible to t1, so t1's
+// previous own event is the Login in BOTH traces -> PERMIT in both. Under
+// (incorrect) global semantics -- or a bug that keyed on scope (principal and
+// resource are identical everywhere), or that mis-resolved the context pin --
+// trace_1's previous event would be the t2 Transfer -> deny, diverging from
+// trace_2. The context pin is what excludes it.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    previous within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

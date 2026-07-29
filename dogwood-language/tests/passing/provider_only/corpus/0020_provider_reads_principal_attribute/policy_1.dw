@@ -1,0 +1,18 @@
+// Permit Read only when the requesting principal's `dept` attribute is "eng",
+// as decided by the `Access::ByDept` information provider.
+//
+// The novel shape: the provider argument is `principal.dept` — a principal
+// *entity attribute*, not `.id`/`.type` and not a context field. The
+// attribute is supplied per event via the `.log` `entities(...)` envelope and
+// resolved from the decision's entity store before the provider runs.
+// (Contrast `0015_principal_id_arg`, which reads `principal.id` — recovered
+// from the uid, needing no envelope.)
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Access::ByDept(principal.dept).allowed == true
+};

@@ -1,0 +1,22 @@
+// Permit Read if an Alert with level exactly 3 happened within the
+// last hour for the same principal. The predicate pins `level` to
+// the integer literal `3` and omits `server` (which should be
+// wildcarded). This exercises:
+//   1. Integer-literal constant matching in the SQL WHERE clause.
+//   2. Omission of the `server` field as a wildcard.
+//
+// trace_1: Three principals with different alert levels (1, 3, 5).
+//          Only the principal who got level 3 has the Read permitted.
+// trace_2: All alerts are non-3 (level 1, 5). No Read is permitted.
+// trace_3: Alert fields in non-alphabetical order (server before
+//          level). Verifies field-order independence for integer
+//          literals.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Alert"::request{ input.level: 3 }
+};

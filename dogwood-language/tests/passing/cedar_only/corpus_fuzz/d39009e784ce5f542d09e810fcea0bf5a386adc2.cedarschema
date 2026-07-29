@@ -1,0 +1,16 @@
+entity a tags a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    O?: __cedar::datetime,
+    p?: __cedar::ipaddr,
+    vw?: {
+      ""?: __cedar::ipaddr,
+      "\0\0\0\0\0\0\0\u{8}"?: __cedar::datetime,
+      "Adata\0\0"?: __cedar::datetime
+    }
+  }
+};
+

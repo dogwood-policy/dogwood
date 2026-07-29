@@ -1,0 +1,38 @@
+// Relativization / partition-safety, POSITIVE-left `since` — the count-equality
+// encoding in `rewrite_since`, exercised over a NON-DEGENERATE range with an
+// interior FOREIGN event, in a shape where a foreign miscount FLIPS the verdict.
+//
+// `rewrite_since`'s general path encodes "left held at every mine position in
+// (tj, ti]" as `n1 == n2` (n1 = all mine positions in the range, n2 = those
+// also satisfying the left). The subtlety this bundle targets: when the left
+// and right of `since` are the SAME predicate and the decision point satisfies
+// it, the empty-range anchor (tj = ti) trivially gives n1 == n2 == 0, so the
+// count is never decisive (the existing pos-since test hits exactly this). To
+// make the count-equality decisive we use DISTINCT left/right:
+//
+//   permit a Login iff  `Login since 1h Grant`  — i.e. this principal has been
+//   continuously "logged in" (every own event a Login) since an own Grant.
+//
+// The decision is a Login (satisfies the LEFT) but NOT a Grant, so tj = ti is
+// not an anchor — the encoding must count the real interior range (Grant, now].
+//
+//   PERMIT pair — every own event in the range is a Login; a foreign interior
+//   Transfer must not be counted:
+//     trace_1: alice Grant @1 (anchor), BOB Transfer @2 (foreign interior),
+//              alice Login @3, alice Login @4 (decision).
+//     trace_2: alice Grant @1,                     alice Login @3, alice Login @4.
+//   Key-local: range (@1, @4] over alice = {@3 Login, @4 Login} -> n1 == n2 == 2
+//   -> PERMIT in both. A leak that counted bob@2 (a Transfer) into n1 would give
+//   n1 = 3, n2 = 2 -> n1 != n2 -> DENY — so the foreign event flips the verdict,
+//   which is exactly what partition-safety must prevent.
+
+permit (
+    principal,
+    action == Drupe::Action::"Login",
+    resource
+)
+when temporal {
+    Drupe::Action::"Login"::request{ input.user: context.input.user }
+    since within 1h
+    Drupe::Action::"Grant"::request{ input.user: context.input.user }
+};

@@ -1,0 +1,170 @@
+{
+  "policies": "corpus-tests/b68544d3288b10ecdae3400c80ed16f1ad6846f5.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/b68544d3288b10ecdae3400c80ed16f1ad6846f5.entities.json",
+  "schema": "corpus-tests/b68544d3288b10ecdae3400c80ed16f1ad6846f5.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": false,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "Pf::A00191W33f00f3::n",
+        "id": ""
+      },
+      "action": {
+        "type": "Pf::A00191W33f00f3::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Pf::A00191W33f00f3::n",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "Pf::A00191W33f00f3::n",
+        "id": "\u0004\u0004\u0010\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u00006\u0000DD"
+      },
+      "action": {
+        "type": "Pf::A00191W33f00f3::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Pf::A00191W33f00f3::n",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "Pf::A00191W33f00f3::n",
+        "id": ""
+      },
+      "action": {
+        "type": "Pf::A00191W33f00f3::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Pf::A00191W33f00f3::n",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "Pf::A00191W33f00f3::n",
+        "id": ""
+      },
+      "action": {
+        "type": "Pf::A00191W33f00f3::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Pf::A00191W33f00f3::n",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "Pf::A00191W33f00f3::n",
+        "id": ""
+      },
+      "action": {
+        "type": "Pf::A00191W33f00f3::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Pf::A00191W33f00f3::n",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "Pf::A00191W33f00f3::n",
+        "id": ""
+      },
+      "action": {
+        "type": "Pf::A00191W33f00f3::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Pf::A00191W33f00f3::n",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "Pf::A00191W33f00f3::n",
+        "id": ""
+      },
+      "action": {
+        "type": "Pf::A00191W33f00f3::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Pf::A00191W33f00f3::n",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "Pf::A00191W33f00f3::n",
+        "id": ""
+      },
+      "action": {
+        "type": "Pf::A00191W33f00f3::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "Pf::A00191W33f00f3::n",
+        "id": ""
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}

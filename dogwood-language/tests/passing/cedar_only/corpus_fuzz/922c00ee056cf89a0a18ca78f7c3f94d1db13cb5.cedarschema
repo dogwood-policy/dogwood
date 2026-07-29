@@ -1,0 +1,10 @@
+namespace K::mSSSN04 {
+  entity a tags K::mSSSN04::a;
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

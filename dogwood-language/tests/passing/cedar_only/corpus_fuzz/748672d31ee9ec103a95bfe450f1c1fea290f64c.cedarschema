@@ -1,0 +1,28 @@
+@h
+@r("")
+@r3("")
+@v
+@z("")
+entity a = {
+  A: a,
+  @K("")
+  @R
+  @r("")
+  @v("")
+  P: __cedar::String,
+  r?: __cedar::String,
+  u?: __cedar::String,
+  v?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @FlS33TT1R("")
+    @T3("")
+    @r("")
+    A: Set<Set<Set<Set<__cedar::Long>>>>
+  }
+};
+

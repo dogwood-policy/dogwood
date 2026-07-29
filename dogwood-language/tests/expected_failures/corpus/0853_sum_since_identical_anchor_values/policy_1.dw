@@ -1,0 +1,8 @@
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    let total = sum a where (without (Drupe::Action::"Logout"::request{ input.user: context.input.user }) since within 1h (Drupe::Action::"Transfer"::response{ input.user: context.input.user, output.amount: a })) in total >= 120
+};

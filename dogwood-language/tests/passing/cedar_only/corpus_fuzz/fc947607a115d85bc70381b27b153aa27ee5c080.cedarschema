@@ -1,0 +1,39 @@
+namespace A::A {
+  entity a;
+
+  @A
+  @r("")
+  @v("")
+  action "" in [A::A::Action::"VV", A::A::Action::"\u{e}", A::A::Action::"["] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      r: __cedar::Long,
+      r333333?: __cedar::Long,
+      @B("CCC")
+      @EWidddRRRRRRR("")
+      @p("")
+      @r("\u{1d}w")
+      @r3("")
+      @rmm("@")
+      @v("")
+      @vNTwwR3c331AERRS3("@\n~")
+      @w
+      v: __cedar::Long
+    }
+  };
+
+  action "\u{e}" in [A::A::Action::"["];
+
+  action "VV" in [A::A::Action::"\u{e}", A::A::Action::"["] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      r?: __cedar::String,
+      v?: __cedar::Long
+    }
+  };
+
+  action "[";
+}
+

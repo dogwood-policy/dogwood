@@ -1,0 +1,14 @@
+namespace eR::vR::w::F {
+  entity A enum [""];
+
+  entity f enum [""];
+
+  entity r enum [""];
+
+  action "action" appliesTo {
+    principal: [f],
+    resource: [f],
+    context: {}
+  };
+}
+

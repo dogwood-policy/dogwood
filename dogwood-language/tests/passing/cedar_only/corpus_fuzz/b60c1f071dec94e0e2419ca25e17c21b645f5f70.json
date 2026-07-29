@@ -1,0 +1,298 @@
+{
+  "policies": "corpus-tests/b60c1f071dec94e0e2419ca25e17c21b645f5f70.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/b60c1f071dec94e0e2419ca25e17c21b645f5f70.entities.json",
+  "schema": "corpus-tests/b60c1f071dec94e0e2419ca25e17c21b645f5f70.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "eKKKKKKKKKKaKKKK",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "iHW33fK",
+        "id": ""
+      },
+      "context": {
+        "TJJ": "hSSSSSSSSSSSSSSSSSSSSSS",
+        "iW33f33": {
+          "__entity": {
+            "type": "EW1FeeeAeee44",
+            "id": ""
+          }
+        },
+        "r": {
+          "__entity": {
+            "type": "TJw",
+            "id": ""
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "eKKKKKKKKKKaKKKK",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "ideeeAe",
+        "id": ""
+      },
+      "context": {
+        "TJJ": "",
+        "iW33f33": {
+          "__entity": {
+            "type": "EW1FeeeAeee44",
+            "id": ""
+          }
+        },
+        "r": {
+          "__entity": {
+            "type": "TJw",
+            "id": ""
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "eKKKKKKKKEKKKKKK",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "eKKKKKKKKEKKKKKK",
+        "id": ""
+      },
+      "context": {
+        "TJJ": "",
+        "iW33f33": {
+          "__entity": {
+            "type": "EW1FeeeAeee44",
+            "id": ""
+          }
+        },
+        "r": {
+          "__entity": {
+            "type": "TJw",
+            "id": ""
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "ideeeAe",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "ideeeAe",
+        "id": ""
+      },
+      "context": {
+        "TJJ": "",
+        "iW33f33": {
+          "__entity": {
+            "type": "EW1FeeeAeee44",
+            "id": ""
+          }
+        },
+        "r": {
+          "__entity": {
+            "type": "TJw",
+            "id": ""
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "yeeAee",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "i",
+        "id": ""
+      },
+      "context": {
+        "TJJ": "SSSSSSSSSSSSSSSSSSSS",
+        "iW33f33": {
+          "__entity": {
+            "type": "EW1FeeeAeee44",
+            "id": ""
+          }
+        },
+        "r": {
+          "__entity": {
+            "type": "TJw",
+            "id": ""
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "yeeAee",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "i",
+        "id": ""
+      },
+      "context": {
+        "TJJ": "SSSSSSSSSSSSSSSSSSSS",
+        "iW33f33": {
+          "__entity": {
+            "type": "EW1FeeeAeee44",
+            "id": ""
+          }
+        },
+        "r": {
+          "__entity": {
+            "type": "TJw",
+            "id": ""
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "yeeAee",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "i",
+        "id": ""
+      },
+      "context": {
+        "TJJ": "SSSSSSSSSSSSSSSSSSSS",
+        "iW33f33": {
+          "__entity": {
+            "type": "EW1FeeeAeee44",
+            "id": ""
+          }
+        },
+        "r": {
+          "__entity": {
+            "type": "TJw",
+            "id": ""
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "yeeAee",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "i",
+        "id": ""
+      },
+      "context": {
+        "TJJ": "SSSSSSSSSSSSSSSSSSSS",
+        "iW33f33": {
+          "__entity": {
+            "type": "EW1FeeeAeee44",
+            "id": ""
+          }
+        },
+        "r": {
+          "__entity": {
+            "type": "TJw",
+            "id": ""
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

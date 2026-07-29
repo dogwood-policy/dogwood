@@ -1,0 +1,13 @@
+// Permit Approve: all three dialects together
+permit (
+    principal,
+    action == Drupe::Action::"Approve",
+    resource
+)
+when { context.input.approver != "suspended" }
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.approver }
+}
+when guardrails {
+    Strings::Matches(context.input.request_id, "^REQ-[0-9]+$").matched == true
+};

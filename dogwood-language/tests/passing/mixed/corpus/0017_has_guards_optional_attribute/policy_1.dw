@@ -1,0 +1,18 @@
+// The idiomatic safe-read pattern for an OPTIONAL entity attribute: guard the
+// read with `has`, so an absent attribute yields a plain `false` rather than
+// an evaluation error. Permit Read only for a principal whose (optional)
+// `clearance` attribute is present and equal to "high".
+//
+// `principal has clearance` short-circuits `&&`: when the attribute is absent
+// the read `principal.clearance` is never reached, so the clause is false with
+// no error (a bare `principal.clearance == "high"` would error instead).
+// `clearance` is supplied per event via the `.log` entities(...) envelope.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when {
+    principal has clearance && principal.clearance == "high"
+};

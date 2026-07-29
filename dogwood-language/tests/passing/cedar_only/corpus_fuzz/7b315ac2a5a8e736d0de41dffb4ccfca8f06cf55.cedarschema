@@ -1,0 +1,17 @@
+entity D1 enum [""];
+
+entity is_ enum [""];
+
+entity o01 enum [""];
+
+entity s7YuFo = {
+  @o
+  is_?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [s7YuFo],
+  resource: [s7YuFo],
+  context: {}
+};
+

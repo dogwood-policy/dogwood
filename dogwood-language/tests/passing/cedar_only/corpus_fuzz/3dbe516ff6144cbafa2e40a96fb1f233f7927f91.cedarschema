@@ -1,0 +1,14 @@
+entity J3 = {
+  HZgY: __cedar::Bool
+};
+
+entity r = {
+  A00000000000?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [J3],
+  resource: [J3],
+  context: {}
+};
+

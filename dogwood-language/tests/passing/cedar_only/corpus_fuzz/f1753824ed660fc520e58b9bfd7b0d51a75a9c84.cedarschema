@@ -1,0 +1,53 @@
+entity a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    r?: {
+      ""?: __cedar::Bool,
+      "\0"?: __cedar::Bool,
+      "\0\0\0"?: __cedar::Bool,
+      "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0qqqaqqq?????????\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\u{1f}\t\u{3}"?: __cedar::Bool,
+      "\0\0\'z"?: __cedar::Bool,
+      "\u{3}\u{1d}@"?: __cedar::Bool,
+      "\u{3}\u{1d}w"?: __cedar::Bool,
+      "\t\u{3}"?: __cedar::Bool,
+      "\u{e}"?: __cedar::Bool,
+      "\u{14}"?: __cedar::Bool,
+      "\u{1d}"?: __cedar::Bool,
+      "\u{1d}\u{3}"?: __cedar::Bool,
+      "\u{1d}@\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0["?: __cedar::Bool,
+      "$"?: __cedar::Bool,
+      ":\0\0\0\0\0\0\0\0\0qqqaqqq?????VV"?: __cedar::Bool,
+      ":pVV"?: __cedar::Bool,
+      ":pVV@["?: __cedar::Bool,
+      ":~"?: __cedar::Bool,
+      "=\u{e}"?: __cedar::Bool,
+      "=XX\u{e}"?: __cedar::Bool,
+      "?\0\0\0": __cedar::Bool,
+      "????????????????????????????\u{3}\u{1d}@"?: __cedar::Bool,
+      "?VV"?: __cedar::Bool,
+      "Debian "?: __cedar::Bool,
+      "N~"?: __cedar::Bool,
+      "N~\u{1f}"?: __cedar::Bool,
+      "V\0\0\0\0\0\0\0\0\0\0\0\0<\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0#\0\0\0\0\0\0\0\0\0\0\0"?: __cedar::Bool,
+      "V@"?: __cedar::Bool,
+      "V@[\u{1d}"?: __cedar::Bool,
+      "["?: __cedar::Bool,
+      "[@["?: __cedar::Bool,
+      "[@[\u{1d}"?: __cedar::Bool,
+      "qqqqqqqq\0\0\0"?: __cedar::Bool,
+      @A("")
+      @B("")
+      @B4444R3("")
+      @r
+      @r3R333S("")
+      @v("")
+      @vRRRR("")
+      z?: __cedar::Bool,
+      "z~"?: __cedar::Bool
+    }
+  }
+};
+

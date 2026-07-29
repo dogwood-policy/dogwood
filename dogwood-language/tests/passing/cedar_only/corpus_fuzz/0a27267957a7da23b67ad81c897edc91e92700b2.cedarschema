@@ -1,0 +1,11 @@
+@T("\u{12}\u{12}")
+namespace h::T0::A01000000 {
+  entity a enum ["", "", ":V", "::", "", "&", "", "", "9\u{e}", "", "[", "<", "?!@\u{1d}<Jr@", "}}", "", "", ":~", "\u{e}0^", "", "", "", "", "[@", "$=\u{e}pp\u{1}\0\0\0\0\0\0\u{8}pppppppppppppppp\0\0pppppppppp"];
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

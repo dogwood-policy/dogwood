@@ -1,0 +1,22 @@
+entity A1f tags {};
+
+entity E;
+
+entity Pf;
+
+entity g3;
+
+entity l;
+
+entity lH40003;
+
+entity n;
+
+entity r;
+
+action "action" appliesTo {
+  principal: [g3],
+  resource: [g3],
+  context: {}
+};
+

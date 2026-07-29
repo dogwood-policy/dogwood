@@ -1,0 +1,12 @@
+namespace Svc {
+  entity Gateway;
+  entity User = {
+    id: String,
+    dept: String
+  };
+  action "Read" appliesTo {
+    principal: [User],
+    resource: [Gateway],
+    context: { input: { doc: String } }
+  };
+}

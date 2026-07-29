@@ -1,0 +1,12 @@
+namespace ue::ye::yR::ye::ye {
+  entity A0000000000 enum [""];
+
+  entity ye enum [""];
+
+  action "action" appliesTo {
+    principal: [ye],
+    resource: [ye],
+    context: {}
+  };
+}
+

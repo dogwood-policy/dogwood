@@ -1,0 +1,8 @@
+entity a enum ["\0\0\0\0\0\0\0\0", "\r\0"];
+
+action "R," appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

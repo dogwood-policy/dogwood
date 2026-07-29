@@ -1,0 +1,48 @@
+entity a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    r?: {
+      ""?: __cedar::String,
+      "\u{1d}"?: {
+        "": a,
+        "\0"?: __cedar::String,
+        "\0\0"?: __cedar::String,
+        "\0\0\0"?: __cedar::String,
+        "\0qqqqq\0\0\0"?: __cedar::String,
+        "\u{3}\u{1d}w"?: __cedar::String,
+        "\t\u{3}"?: __cedar::String,
+        "\u{e}"?: __cedar::String,
+        "\u{14}"?: __cedar::String,
+        "\u{1d}"?: __cedar::String,
+        "\u{1d}@["?: __cedar::String,
+        "$"?: __cedar::String,
+        ":pVV"?: __cedar::String,
+        ":~"?: __cedar::String,
+        "=XX\u{e}"?: __cedar::String,
+        "?\0\0\0"?: __cedar::String,
+        "???????"?: __cedar::String,
+        @A("")
+        @D3S1S3TN331ST("")
+        @U3T1S33T("")
+        @rzE("")
+        "????????????????????\u{3}\u{1d}@"?: __cedar::String,
+        @A0
+        "N~\u{1f}": __cedar::Long,
+        "V@"?: __cedar::String,
+        @J("")
+        @LST3N13("")
+        @d("")
+        @r("")
+        VV?: __cedar::datetime,
+        "["?: __cedar::String,
+        "[@[\u{1d}"?: __cedar::String,
+        "qqqqqqqq\0\0\0"?: __cedar::String,
+        "z~": a
+      }
+    }
+  }
+};
+

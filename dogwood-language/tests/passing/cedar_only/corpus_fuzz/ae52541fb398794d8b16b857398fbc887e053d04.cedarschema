@@ -1,0 +1,11 @@
+entity a = {
+  A0?: __cedar::datetime
+};
+
+@LM32310
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

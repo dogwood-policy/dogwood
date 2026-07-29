@@ -1,0 +1,18 @@
+entity a = {
+  @S0200120
+  m?: __cedar::String,
+  @x
+  r?: Set<__cedar::duration>,
+  @v("A\0")
+  @vR("")
+  @wRR("")
+  vR: Set<Set<Set<Set<__cedar::Long>>>>,
+  x?: {  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

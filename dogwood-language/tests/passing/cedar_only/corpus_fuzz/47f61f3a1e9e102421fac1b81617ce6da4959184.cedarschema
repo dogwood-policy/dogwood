@@ -1,0 +1,42 @@
+entity a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    r?: {
+      ""?: __cedar::String,
+      "\u{1d}"?: {
+        @m335cZgYlWRRT3("")
+        @m3T33N1ST3N000
+        "": __cedar::ipaddr,
+        "\0"?: __cedar::String,
+        "\0\0"?: __cedar::String,
+        "\0\0\0"?: __cedar::String,
+        "\0~"?: __cedar::String,
+        "\u{3}\u{1d}w"?: __cedar::String,
+        "\t\u{3}"?: __cedar::String,
+        @A
+        "\u{e}"?: __cedar::String,
+        "\u{14}"?: __cedar::String,
+        "\u{1d}"?: __cedar::String,
+        "\u{1d}De"?: __cedar::String,
+        "$"?: __cedar::String,
+        ":\0\0\u{1d}@["?: __cedar::String,
+        ":pVV"?: __cedar::String,
+        "=XX\u{e}"?: __cedar::String,
+        "?\0\0\0"?: __cedar::String,
+        "????????????????????????????\u{3}\u{1d}@"?: __cedar::String,
+        "N~\u{1f}"?: __cedar::String,
+        "V@"?: __cedar::String,
+        VV?: __cedar::String,
+        "["?: __cedar::String,
+        "[@[\u{1d}"?: __cedar::String,
+        "qqqqqqqq\0\0\0"?: __cedar::String,
+        z?: __cedar::String,
+        "~"?: __cedar::String
+      }
+    }
+  }
+};
+

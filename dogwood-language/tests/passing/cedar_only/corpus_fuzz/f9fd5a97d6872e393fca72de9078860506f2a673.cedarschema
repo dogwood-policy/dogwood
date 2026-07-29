@@ -1,0 +1,15 @@
+entity a tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: {
+      "333666r"?: {
+        ""?: __cedar::String,
+        "6sDebi E\0\0\0\0\00ct\nsssss;ss\u{1d}\n\0"?: __cedar::String
+      }
+    }
+  }
+};
+

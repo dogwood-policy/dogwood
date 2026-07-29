@@ -1,0 +1,14 @@
+entity a = {
+  r?: __cedar::datetime,
+  v: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @V4442mmgdFFF
+    YkVbcagqgmld?: __cedar::datetime
+  }
+};
+

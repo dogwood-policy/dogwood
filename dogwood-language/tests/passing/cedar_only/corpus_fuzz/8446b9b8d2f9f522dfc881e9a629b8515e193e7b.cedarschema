@@ -1,0 +1,22 @@
+entity a tags __cedar::String;
+
+action "" in [Action::"[@", Action::"$=\u{e}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    rkkkkkk: __cedar::Bool
+  }
+};
+
+action "$=\u{e}" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "[@" in [Action::"$=\u{e}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

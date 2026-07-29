@@ -1,0 +1,21 @@
+entity a;
+
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @f11c
+    f111?: __cedar::String
+  }
+};
+
+action ":" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    Viiirc13MzMMM: __cedar::String,
+    g?: __cedar::String,
+    snYX?: __cedar::String
+  }
+};
+

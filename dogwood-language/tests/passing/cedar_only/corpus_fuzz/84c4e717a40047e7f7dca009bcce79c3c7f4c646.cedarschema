@@ -1,0 +1,18 @@
+namespace rR3::v0R {
+  entity A enum [""];
+
+  entity Lg enum [""];
+
+  entity r enum [""];
+
+  entity r3m333D enum [""];
+
+  entity x enum [""];
+
+  action "action" appliesTo {
+    principal: [x],
+    resource: [x],
+    context: {}
+  };
+}
+

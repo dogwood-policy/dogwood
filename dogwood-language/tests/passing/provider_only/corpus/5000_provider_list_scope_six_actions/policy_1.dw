@@ -1,0 +1,11 @@
+// Provider under a LIST action scope spanning three of the six actions.
+// `context.input.document` must resolve against every pinned action
+// (Read, Write, Delete all carry DocInput).
+permit (
+    principal,
+    action in [Drupe::Action::"Read", Drupe::Action::"Write", Drupe::Action::"Delete"],
+    resource
+)
+when guardrails {
+    Strings::Length(context.input.document).length < 6
+};

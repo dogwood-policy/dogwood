@@ -1,0 +1,16 @@
+// A top-level `previous && (open-session)` chain. Permit a Read only if the
+// same user computed at the immediately preceding timepoint AND has an open
+// session -- no Logout since their Login within 24h. The since-clause is
+// parenthesized so && (loosest) groups the two conjuncts, not the since.
+@id("read_prev_compute_open_session")
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    previous within 1h Drupe::Action::"Compute"::request{ input.user: context.input.user }
+    && (!Drupe::Action::"Logout"::request{ input.user: context.input.user }
+        since within 24h
+        Drupe::Action::"Login"::request{ input.user: context.input.user })
+};

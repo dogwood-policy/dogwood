@@ -1,0 +1,22 @@
+// Cedar-macro rewrite of documentation_0112_if_then_else.
+//
+// `within_cap(?stock, ?shares)` encapsulates the per-stock cap rule
+// inside an `if/then/else` expression. Two macro parameters of
+// different types (String, Long) are spliced; an `if/then/else` is
+// inside the macro body, exercising substitution through that node
+// shape.
+
+def cedar within_cap(?stock, ?shares) {
+    if ?stock == "FOO"
+    then ?shares <= 10
+    else ?shares <= 1000
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+)
+when {
+    within_cap(context.input.stock, context.input.shares)
+};

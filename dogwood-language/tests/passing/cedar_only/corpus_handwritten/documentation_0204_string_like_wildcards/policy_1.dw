@@ -1,0 +1,14 @@
+// Permit GetStockInfo only for tickers that start with the letter "A".
+//
+// New idea: Cedar's `like` operator does string pattern matching
+// with `*` as a wildcard for any number of characters. Here we use
+// it as a prefix match.
+
+permit(
+    principal,
+    action == Drupe::Action::"GetStockInfo",
+    resource
+)
+when {
+    context.input.stock like "A*"
+};

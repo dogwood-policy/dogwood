@@ -1,0 +1,21 @@
+// An action with MULTIPLE resource types in the mixed (Cedar + temporal)
+// corpus: Read applies to [Gateway, Bucket]. The Cedar policy spans both
+// types uniformly; the temporal forbid is scoped to Gateway only — the two
+// dialects cut the type union differently.
+namespace Drupe {
+    entity OAuthUser;
+    entity Gateway;
+    entity Bucket;
+    type LoginInput = { user: String };
+    type ReadInput = { document: String, user: String };
+    action Login appliesTo {
+        principal: [OAuthUser],
+        resource: [Gateway],
+        context: { input: LoginInput }
+    };
+    action Read appliesTo {
+        principal: [OAuthUser],
+        resource: [Gateway, Bucket],
+        context: { input: ReadInput }
+    };
+}

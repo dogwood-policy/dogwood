@@ -1,0 +1,11 @@
+// Match an enum-typed output. Read permitted only when Check
+// returned status "approved".
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Check"::response{ input.user: context.input.user, output.status: Drupe::Check_Output_status::"approved" }
+};

@@ -1,0 +1,13 @@
+entity F = {
+  F: T8,
+  j?: F
+};
+
+entity T8 enum [""];
+
+action "action" appliesTo {
+  principal: [F],
+  resource: [F],
+  context: {}
+};
+

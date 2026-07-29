@@ -1,0 +1,34 @@
+entity a tags __cedar::decimal;
+
+@IER("[")
+@vbbb
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: {
+      "n\u{1}\0"?: {
+        "": a,
+        "\0\0"?: __cedar::String,
+        @vRT33198Ld00000
+        "\u{3}\u{1d}w"?: a,
+        "\u{3}ddddd\0"?: __cedar::String,
+        "\u{e}": __cedar::Long,
+        "\u{1d}"?: Set<Set<__cedar::Long>>,
+        @gx("")
+        "\u{1d}@["?: __cedar::duration,
+        "$\0["?: __cedar::String,
+        "$=\u{e}"?: __cedar::Long,
+        @h
+        @vRei33p_a3c3732("$\u{3}\u{3}VV")
+        "&": __cedar::Long,
+        @g
+        ":~"?: __cedar::decimal,
+        "["?: __cedar::Long,
+        @NRa3zERRT3300("")
+        l: __cedar::Long
+      }
+    }
+  }
+};
+

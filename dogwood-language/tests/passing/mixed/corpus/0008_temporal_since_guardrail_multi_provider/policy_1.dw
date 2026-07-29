@@ -1,0 +1,9 @@
+// Permit Read when the user has not logged out since their login within 1h
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    !(Drupe::Action::"Logout"::request{ input.user: context.input.user }) since within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

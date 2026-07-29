@@ -1,0 +1,12 @@
+namespace w {
+  entity a enum ["@x"];
+
+  action "B\u{11}" in [w::Action::"x"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "x";
+}
+

@@ -1,0 +1,61 @@
+namespace A::A {
+  entity a;
+
+  action "" in [A::A::Action::"VV", A::A::Action::":~", A::A::Action::"\u{e}", A::A::Action::"[", A::A::Action::"\u{3}\u{1d}w", A::A::Action::"$", A::A::Action::"00\u{1d}@", A::A::Action::"e", A::A::Action::"V", A::A::Action::"::", A::A::Action::"&", A::A::Action::"\u{1}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{1}";
+
+  action "\u{3}\u{1d}w" in [A::A::Action::"$", A::A::Action::"00\u{1d}@", A::A::Action::"e", A::A::Action::"V", A::A::Action::"::", A::A::Action::"&", A::A::Action::"\u{1}"];
+
+  action "\u{e}" in [A::A::Action::"[", A::A::Action::"\u{3}\u{1d}w", A::A::Action::"$", A::A::Action::"00\u{1d}@", A::A::Action::"e", A::A::Action::"V", A::A::Action::"::", A::A::Action::"&", A::A::Action::"\u{1}"];
+
+  action "$" in [A::A::Action::"00\u{1d}@", A::A::Action::"e", A::A::Action::"V", A::A::Action::"::", A::A::Action::"&", A::A::Action::"\u{1}"];
+
+  action "&" in [A::A::Action::"\u{1}"];
+
+  action "00\u{1d}@" in [A::A::Action::"e", A::A::Action::"V", A::A::Action::"::", A::A::Action::"&", A::A::Action::"\u{1}"];
+
+  action "::" in [A::A::Action::"&", A::A::Action::"\u{1}"];
+
+  action ":~" in [A::A::Action::"\u{e}", A::A::Action::"[", A::A::Action::"\u{3}\u{1d}w", A::A::Action::"$", A::A::Action::"00\u{1d}@", A::A::Action::"e", A::A::Action::"V", A::A::Action::"::", A::A::Action::"&", A::A::Action::"\u{1}"];
+
+  action "V" in [A::A::Action::"::", A::A::Action::"&", A::A::Action::"\u{1}"];
+
+  @A
+  @B("CCC")
+  @EWidddRRRRRRR("")
+  @RS3333("")
+  @p("")
+  @r("")
+  @r3("")
+  @v("")
+  @w
+  action "VV" in [A::A::Action::":~", A::A::Action::"\u{e}", A::A::Action::"[", A::A::Action::"\u{3}\u{1d}w", A::A::Action::"$", A::A::Action::"00\u{1d}@", A::A::Action::"e", A::A::Action::"V", A::A::Action::"::", A::A::Action::"&", A::A::Action::"\u{1}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      @A("\u{5}")
+      @B("CCC")
+      @EWidddRRRRRRR("")
+      @p("")
+      @r("")
+      @r3("")
+      @v("")
+      @w
+      r: __cedar::Long,
+      @m("")
+      @r("")
+      @v("")
+      v?: __cedar::Bool
+    }
+  };
+
+  action "[" in [A::A::Action::"\u{3}\u{1d}w", A::A::Action::"$", A::A::Action::"00\u{1d}@", A::A::Action::"e", A::A::Action::"V", A::A::Action::"::", A::A::Action::"&", A::A::Action::"\u{1}"];
+
+  action "e" in [A::A::Action::"V", A::A::Action::"::", A::A::Action::"&", A::A::Action::"\u{1}"];
+}
+

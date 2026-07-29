@@ -1,0 +1,10 @@
+entity a = {
+  _YlWpor0spbcrc: __cedar::duration
+} tags __cedar::Long;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,11 @@
+@A
+namespace A2_0000000HRO00::A {
+  entity a;
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

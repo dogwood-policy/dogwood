@@ -1,0 +1,13 @@
+// Edge case: boundary value comparisons.
+// Permit only when doubled length is strictly > 0 AND <= 20.
+// Tests the boundaries: 0 fails (not > 0), 20 passes (== boundary), 24 fails (> 20).
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Num::Base(context.input.document).double() > 0
+    && Num::Base(context.input.document).double() <= 20
+};

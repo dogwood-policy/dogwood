@@ -1,0 +1,11 @@
+// Scope: resource is Gateway in Org (type + group).
+// Only Gateways in the "acme" org are accessible.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource is Drupe::Gateway in Drupe::Org::"acme"
+)
+when guardrails {
+    Strings::Matches(context.input.document, "^[A-Z]+$").matched == true
+};

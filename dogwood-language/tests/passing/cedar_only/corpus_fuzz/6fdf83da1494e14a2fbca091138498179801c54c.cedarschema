@@ -1,0 +1,59 @@
+entity A3SS50;
+
+entity B;
+
+entity LAAdg___503p;
+
+entity Mnn;
+
+entity N;
+
+entity P;
+
+entity _3335cZgYlW1Fn31 = {
+  r?: i
+};
+
+entity _YlW1Fnnw2nn13;
+
+entity g3 enum ["\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\u{e}\u{e}\u{e}\u{e}\u{e}\u{e}\u{e}\u{e}\u{e}"];
+
+@OE
+entity g33f333 tags __cedar::String;
+
+entity i;
+
+entity iW3Lf33;
+
+entity ixdeeeA;
+
+entity r tags __cedar::Long;
+
+entity r1Fn;
+
+entity r33 = {
+  OEEEEErqqzS503S?: {  },
+  r?: {  },
+  wS8S00gSSSS8___?: {  }
+};
+
+entity r335 enum ["\0*"];
+
+entity wj;
+
+entity y;
+
+@OE
+@wS8S00gSSSS8___("\0")
+action "" in [Action::"\u{e}"] appliesTo {
+  principal: [r335],
+  resource: [ixdeeeA, y, LAAdg___503p, A3SS50, wj, g3, r33, P, _YlW1Fnnw2nn13, B, _3335cZgYlW1Fn31, r1Fn, iW3Lf33, N, Mnn],
+  context: {}
+};
+
+action "\u{e}" appliesTo {
+  principal: [ixdeeeA, LAAdg___503p, wj, A3SS50, y, N, _3335cZgYlW1Fn31, g33f333, _YlW1Fnnw2nn13, g3, Mnn, P, B, r1Fn, i],
+  resource: [ixdeeeA, LAAdg___503p, r, wj, y, g3, _YlW1Fnnw2nn13, P, r1Fn, N, iW3Lf33, A3SS50, Mnn, B, i],
+  context: {}
+};
+

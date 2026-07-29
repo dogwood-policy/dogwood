@@ -1,0 +1,13 @@
+entity r;
+
+@hwj00000
+entity t tags __cedar::Bool;
+
+entity x tags __cedar::Bool;
+
+action "action" appliesTo {
+  principal: [r],
+  resource: [r],
+  context: {}
+};
+

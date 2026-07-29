@@ -1,0 +1,14 @@
+@A
+@A0
+@A00333303333i333("")
+@L("")
+@p("")
+@r("")
+entity a tags a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

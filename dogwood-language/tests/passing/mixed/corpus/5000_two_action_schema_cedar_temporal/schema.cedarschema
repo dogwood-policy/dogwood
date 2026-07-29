@@ -1,0 +1,18 @@
+// A two-action schema: the minimal shape that still allows cross-action
+// temporal correlation alongside a plain Cedar clause.
+namespace Drupe {
+    entity OAuthUser;
+    entity Gateway;
+    type LoginInput = { server: String, user: String };
+    type ReadInput = { document: String, user: String };
+    action Login appliesTo {
+        principal: [OAuthUser],
+        resource: [Gateway],
+        context: { input: LoginInput }
+    };
+    action Read appliesTo {
+        principal: [OAuthUser],
+        resource: [Gateway],
+        context: { input: ReadInput }
+    };
+}

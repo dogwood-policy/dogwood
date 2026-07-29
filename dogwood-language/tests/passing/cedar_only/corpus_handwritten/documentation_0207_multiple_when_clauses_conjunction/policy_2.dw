@@ -1,0 +1,11 @@
+// Equivalent shape using a single `when` clause with `&&`.
+//
+// Same semantics as policy_1.dw — the choice between these two
+// shapes is a matter of style, not meaning.
+
+permit(
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+)
+when { context.input.shares < 100 && context.input.stock == "AMZN" };

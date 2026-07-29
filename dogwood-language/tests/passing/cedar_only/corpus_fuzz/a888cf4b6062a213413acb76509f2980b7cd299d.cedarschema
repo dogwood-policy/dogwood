@@ -1,0 +1,14 @@
+entity a tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @jZ("############")
+    A?: {
+      "3\0\0>de\u{1}\0\0rim\u{16}n+++++++++++++3"?: __cedar::ipaddr,
+      "33/3333\06"?: __cedar::Bool
+    }
+  }
+};
+

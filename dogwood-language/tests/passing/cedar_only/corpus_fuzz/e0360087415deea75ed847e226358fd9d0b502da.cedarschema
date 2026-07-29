@@ -1,0 +1,11 @@
+entity a = {
+  r?: {  },
+  rbBf3f?: {  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

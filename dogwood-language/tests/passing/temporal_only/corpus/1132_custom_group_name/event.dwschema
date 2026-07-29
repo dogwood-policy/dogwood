@@ -1,0 +1,30 @@
+// Custom event schema declaring a group whose name is NEITHER `input` NOR
+// `output`: `meta` is a named record group with a `region` member, addressed
+// as `meta.region`.
+//
+// NOTE on scope: the dwschema spread selectors (`...inputs(A)` / `...outputs(A)`)
+// are fixed to the group names `input` / `output` by construction (they splice
+// the action's `context.input` / `context.output` records), so a spread cannot
+// be re-homed under a differently-named group. What the surface DOES support —
+// and what this case exercises — is an author-declared *named record* group
+// with an arbitrary name (the same mechanism `__drupe` uses in 1123).
+// This is the substance of "a group other than input/output": the compiler and
+// encoder must resolve `meta.region` by its dotted path, with no hardcoded
+// assumption that the only groups are `input`/`output`.
+
+decision event <A>::request {
+    ...inputs(A),
+    callerPrincipal: principalType(A),
+    callerResource:  resourceType(A),
+    requestId:       String,
+    meta:              { region: String },
+}
+
+event <A>::response {
+    ...inputs(A),
+    ...outputs(A),
+    callerPrincipal: principalType(A),
+    callerResource:  resourceType(A),
+    requestId:       String,
+    meta:              { region: String },
+}

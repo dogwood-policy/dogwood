@@ -1,0 +1,8 @@
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    let n = count where ((formerly within 1h Drupe::Action::"Transfer"::request{ input.user: context.input.user, input.amount: _ }) && (without (Drupe::Action::"Logout"::request{ input.user: context.input.user }) since within 1h Drupe::Action::"Transfer"::request{ input.user: context.input.user })) in n >= 9
+};

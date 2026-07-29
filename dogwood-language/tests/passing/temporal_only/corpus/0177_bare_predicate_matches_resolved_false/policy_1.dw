@@ -1,0 +1,14 @@
+// Bare `Drupe::Action::"Login"{...}` (no `= { ... }` constraint) matches
+// a Login regardless of its resolution outcome — including resolutions whose
+// application-defined `result` is `false`. The bare form asserts only
+// that the request happened; output-field semantics live in the
+// constrained form `Login(...) = { result: ... }`.
+
+permit (
+    principal,
+    action == Drupe::Action::"Logout",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

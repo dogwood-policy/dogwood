@@ -1,0 +1,12 @@
+// Edge: (count for ...) > 0 — direct aggregate compared to literal.
+// Tests agg_vs_literal operand type. At tp0 no prior Logins exist so
+// count=0, 0>0=false. At tp2 one Login exists, 1>0=true.
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    (count for (t: Timepoint). where (formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.server } && tp(t))) > 0
+};

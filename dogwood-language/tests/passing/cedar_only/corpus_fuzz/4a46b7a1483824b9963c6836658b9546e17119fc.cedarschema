@@ -1,0 +1,29 @@
+entity a = {
+  Ov?: Set<{
+    @A
+    @O0033000000035
+    ""?: {    },
+    @j
+    "\0\0       "?: {
+      "": a
+    },
+    "\0\0   !@"?: __cedar::Bool,
+    @r3p3KOOOOOI
+    "\0\0VV": a,
+    "\0   \0\0\0r2"?: __cedar::String,
+    "\u{1b}\u{5}\0\0\0\0\0\0\0$$$$$": a,
+    "$$$$$"?: {
+      "\0"?: {      }
+    },
+    ">": __cedar::String,
+    w00000?: __cedar::Bool,
+    "x  !@\0": a
+  }>
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

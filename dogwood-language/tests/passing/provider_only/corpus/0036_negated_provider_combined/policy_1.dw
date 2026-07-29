@@ -1,0 +1,12 @@
+// Edge case: !(provider == true) && provider == true
+// Negated provider result combined with a positive provider check.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    !(Strings::Matches(context.input.document, "^DENY").matched == true)
+    && Strings::Matches(context.input.document, "^[A-Z]").matched == true
+};

@@ -1,0 +1,34 @@
+entity a = {
+  @A
+  @J("")
+  @m("")
+  @r("")
+  r: {
+    @H("")
+    @J("----")
+    @L
+    @O("")
+    @T("")
+    @U33o0Y3WWWW("")
+    @r("ww")
+    @r33("")
+    @sZHgYlWXjjjj("")
+    @t("-----")
+    @wS
+    @xTT("")
+    @z("333333333")
+    @zpM0rIoppMMppp333("")
+    "": __cedar::String,
+    @V("")
+    @r
+    @tjjjjjVjjjij("")
+    "\0": __cedar::datetime
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,22 @@
+// Edge: a positive `since` whose guard (left arm) streak is broken mid-window,
+// wrapped in `previous` so the broken timepoint is the one evaluated. The inner
+// `Heartbeat since within 2h Login` requires a Login at some past j AND a
+// Heartbeat at EVERY timepoint in (j, now] — one non-Heartbeat step breaks the
+// streak, and the since stays false until a fresh Login restarts it.
+//
+// Trace: Login(@0) -> Heartbeat(@10) -> Transfer(@20) -> Alert(@30).
+// The Transfer at tp2 breaks the Heartbeat streak, so the since is false at
+// tp2. `previous within 2h (...)` at the Alert (tp3) reads the prior timepoint
+// (tp2), where the since is false -> the Alert is denied. (Positive control:
+// with a Heartbeat instead of the Transfer at tp2 the streak is intact, the
+// since holds at tp2, and the Alert is allowed — so the denial here is due to
+// the streak break, not a vacuous body.)
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    previous within 2h (Drupe::Action::"Heartbeat"::request{ input.server: context.input.server } since within 2h Drupe::Action::"Login"::request{ input.server: context.input.server })
+};

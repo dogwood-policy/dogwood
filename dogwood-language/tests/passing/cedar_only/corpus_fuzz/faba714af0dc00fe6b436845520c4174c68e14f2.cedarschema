@@ -1,0 +1,14 @@
+entity a = {
+  A: __cedar::decimal
+} tags __cedar::Long;
+
+action "" in [Action::" "] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: __cedar::String
+  }
+};
+
+action " ";
+

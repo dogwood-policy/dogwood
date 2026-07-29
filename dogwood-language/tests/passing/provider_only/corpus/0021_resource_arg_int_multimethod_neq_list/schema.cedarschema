@@ -1,0 +1,32 @@
+namespace Drupe {
+  type ReadInput = {
+    document: String
+  };
+  type WriteInput = {
+    document: String
+  };
+
+  entity Gateway = {
+    owner: String
+  };
+
+  entity OAuthUser = {
+    id: String
+  } tags String;
+
+  action "Read" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: ReadInput
+    }
+  };
+
+  action "Write" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: WriteInput
+    }
+  };
+}

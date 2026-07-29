@@ -1,0 +1,14 @@
+def temporal let_(?n, ?A, ?B) {
+    exists (?n: Long). (?A == ?n && ?B)
+};
+
+
+forbid (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    let_(total, sum a for (a: Long), (t: Timepoint). where
+        ((formerly within 1h (Drupe::Action::"Transfer"::request{ input.user: context.input.user, input.amount: a } && tp(t)))
+         && !(formerly within 1h Drupe::Action::"Cancel"::request{ input.user: context.input.user })), total > 1000)};

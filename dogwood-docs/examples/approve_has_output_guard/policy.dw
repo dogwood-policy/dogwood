@@ -1,0 +1,7 @@
+// `has` tests optional-attribute presence; && short-circuits so the guard on
+// the left protects the attribute read on the right.
+@id("approve_when_approved")
+permit ( principal, action == Drupe::Action::"ApproveSale", resource )
+when {
+    context has output && context.output.approved == true
+};

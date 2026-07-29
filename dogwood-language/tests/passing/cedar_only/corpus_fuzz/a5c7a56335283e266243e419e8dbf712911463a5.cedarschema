@@ -1,0 +1,18 @@
+@ORRVTVSgR("\u{e}")
+@t
+entity a;
+
+action "" in [Action::"\u{3}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+@L35EjTVS("\0\0\0\0\0\0\0\0\0\u{3}")
+@t
+action "\u{3}" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,167 @@
+entity a = {
+  C?: __cedar::String,
+  r?: {
+    @r("\0\u{1d}Debian ")
+    @vRT30qdVR35cZgY
+    "": {
+      ""?: Set<Set<__cedar::Long>>,
+      "\u{1d}"?: __cedar::String,
+      "V@"?: Set<Set<__cedar::Long>>
+    },
+    @A
+    @_YlW3ORRT30qdV
+    @d
+    @r("")
+    "\0"?: Set<Set<__cedar::datetime>>,
+    "\0\0"?: __cedar::String,
+    "\u{3}\u{1d}wDebian ": a,
+    "\u{3}ddddddffd~\u{1d}"?: __cedar::String,
+    "\u{1d}\u{3}"?: a,
+    @r
+    "\u{1d}@["?: __cedar::Bool,
+    @r("\0\u{1d}Debian ")
+    @vRT30qdVW000000
+    "\u{1d}@gfrm3ukucR30\u{3}": {
+      ""?: __cedar::Bool,
+      @s
+      @v("")
+      "\0": {
+        @A("")
+        @r("\0\u{1d}")
+        "": __cedar::Bool,
+        "\u{1d}"?: __cedar::String,
+        "V@": Set<__cedar::Long>
+      },
+      "\0\0": __cedar::ipaddr,
+      @LST3N13Q0
+      "\u{3}": __cedar::ipaddr,
+      "\u{3}\u{1d}w": a,
+      @D3SwnNNg0u0100000
+      @LS3T1ed
+      @d("")
+      @r3TuRa3("\u{e}")
+      "\u{1d}": Set<{      }>,
+      "\u{1d}@["?: Set<Set<__cedar::Long>>,
+      "\u{1d}@gffd~"?: Set<Set<__cedar::Long>>,
+      ":pVV": __cedar::duration,
+      ":~"?: a,
+      "=\u{e}"?: __cedar::Bool,
+      @D3S1RaEzRRS31VazE("")
+      @rubbbbb
+      "?\0\0\0": Set<{      }>,
+      "V@": __cedar::ipaddr,
+      @r("")
+      @v
+      "[@["?: Set<__cedar::String>,
+      @EWRa3zERRT33S
+      @U3ERVR3X33Sw1("")
+      @d
+      @du5c
+      @r("")
+      @s("aaaa]aayAaaaaaaaK\0aۑ[@gffd~")
+      @vVR3X33S1RaEzRR("")
+      @vbbb
+      "^$": __cedar::Long
+    },
+    @F
+    "$"?: __cedar::String,
+    "$\u{e}=": __cedar::ipaddr,
+    @LST3N13Q0
+    ":pVV": __cedar::ipaddr,
+    ":~"?: __cedar::String,
+    "=\u{e}": __cedar::ipaddr,
+    "?\0\0\0"?: __cedar::Bool,
+    @D3S1S3T133333("")
+    @r("gffd~")
+    @rzE("")
+    @v3X33Sw1S3("\u{1d}wDebian ")
+    @vVR3X33S1RaEzRR("")
+    @vbbb
+    "V@"?: a,
+    @duRV
+    @eYRT33S1S3T
+    @x
+    "V@[\u{1d}": {
+      @EW3ORRT30qdVR("Debian @[3")
+      @F
+      @L3("\0\0\0")
+      @r
+      @w
+      "": __cedar::duration,
+      @A("")
+      @r("")
+      "\0": __cedar::datetime,
+      "\0\0"?: {      },
+      @TJJ
+      @h
+      "\u{3}\u{1d}w": __cedar::String,
+      "\u{1d}\u{3}"?: Set<Set<__cedar::Long>>,
+      "\u{1d}@[": {      },
+      "\u{1d}@gffd\u{1d}": a,
+      "1"?: __cedar::String,
+      ":pVV"?: __cedar::Long,
+      @AfBgff
+      ":~"?: {      },
+      @h
+      "=\u{e}"?: {
+        "\u{1d}": __cedar::String,
+        @Q
+        V?: __cedar::String
+      },
+      "?\0\0\0"?: Set<Set<__cedar::Long>>,
+      @AfBgff
+      "V\0"?: __cedar::String,
+      "V@"?: Set<Set<__cedar::Long>>,
+      "V@[\u{1d}"?: {      },
+      "[@["?: Set<Set<__cedar::Long>>,
+      "^$": a,
+      "zpV\0"?: __cedar::String
+    },
+    "["?: Set<{
+      ""?: __cedar::String,
+      @LST3N13Q0
+      "\0": __cedar::ipaddr,
+      "\0\u{1}\0\0\0\0\0\0\u{5}[": Set<__cedar::Long>,
+      @A("")
+      @r("\0\u{1d}")
+      "\u{3}\u{1d}w": __cedar::Bool,
+      @m3000000000000
+      "\u{e}": __cedar::ipaddr,
+      "\u{1d}\u{3}": __cedar::ipaddr,
+      "\u{1d}@gffd~": Set<__cedar::Long>,
+      "!\u{3}"?: __cedar::String,
+      "$": Set<__cedar::Long>,
+      "$\u{e}="?: __cedar::String,
+      "$=\u{e}"?: __cedar::String,
+      @s
+      "=\u{e}": Set<__cedar::Long>,
+      "@"?: __cedar::String,
+      "["?: __cedar::String,
+      "[:pVV"?: __cedar::Bool,
+      "[@"?: __cedar::String,
+      "[@["?: a,
+      "^"?: __cedar::String
+    }>,
+    @LS3T1ed
+    @m33TuRVa3zERRT("")
+    "[@": {
+      ""?: Set<Set<__cedar::Long>>,
+      @A("")
+      @F
+      @L3("\0\0\0")
+      @LS("")
+      "2"?: __cedar::Long,
+      ":pV"?: Set<Set<__cedar::Long>>,
+      "?\0\0\0"?: a,
+      "V@": __cedar::ipaddr
+    },
+    "[@[": a
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

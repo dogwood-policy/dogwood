@@ -1,0 +1,28 @@
+entity a tags __cedar::String;
+
+action "" in [Action::"[\u{1d}", Action::"V", Action::"\u{e}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{e}";
+
+action ":p" in [Action::"[\u{1d}", Action::"V", Action::"@V(\u{1d}@*", Action::"\u{e}"];
+
+action "@V(\u{1d}@*" in [Action::"\u{e}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    j2Jq?: __cedar::Bool
+  }
+};
+
+action "V" in [Action::"@V(\u{1d}@*", Action::"\u{e}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "[\u{1d}" in [Action::"V", Action::"@V(\u{1d}@*", Action::"\u{e}"];
+

@@ -1,0 +1,59 @@
+entity a tags __cedar::String;
+
+action "" in [Action::":~", Action::"\u{1d}@[", Action::"\u{3}\u{1d}$w", Action::"$", Action::"=\u{e}", Action::"\u{1d}", Action::"\u{3}[", Action::"@T", Action::"\u{1d}@gf\u{e}fd", Action::"~", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::":~$"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{3}\u{1d}$w" in [Action::"$", Action::"=\u{e}", Action::"\u{1d}", Action::"\u{3}[", Action::"@T", Action::"\u{1d}@gf\u{e}fd", Action::"~", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::":~$"];
+
+action "\u{3}[" in [Action::"@T", Action::"\u{1d}@gf\u{e}fd", Action::"~", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::":~$"];
+
+action "\u{1d}" in [Action::"\u{3}[", Action::"@T", Action::"\u{1d}@gf\u{e}fd", Action::"~", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::":~$"];
+
+action "\u{1d}\u{3}" in [Action::"[@", Action::":~$"];
+
+action "\u{1d}@[" in [Action::"\u{3}\u{1d}$w", Action::"$", Action::"=\u{e}", Action::"\u{1d}", Action::"\u{3}[", Action::"@T", Action::"\u{1d}@gf\u{e}fd", Action::"~", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::":~$"];
+
+action "\u{1d}@gf\u{e}fd" in [Action::"~", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::":~$"];
+
+@DkkkPPPO
+action "$" in [Action::"=\u{e}", Action::"\u{1d}", Action::"\u{3}[", Action::"@T", Action::"\u{1d}@gf\u{e}fd", Action::"~", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::":~$"];
+
+action ":~" in [Action::"\u{1d}@[", Action::"\u{3}\u{1d}$w", Action::"$", Action::"=\u{e}", Action::"\u{1d}", Action::"\u{3}[", Action::"@T", Action::"\u{1d}@gf\u{e}fd", Action::"~", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::":~$"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: {    },
+    D3S1SW044kVOO?: {    },
+    H?: {    },
+    LS33TuRp3zERR?: {    },
+    M?: {    },
+    VLLLL?: {    },
+    XcRcRiZ343?: {    },
+    iO000000O33?: {    },
+    j?: {    },
+    m?: {    },
+    q?: {    },
+    r?: {    },
+    r333l?: {    },
+    rj3333333KQTRRlw0?: {    },
+    v3?: {    },
+    vbpp?: {    },
+    z000uaRcRpZ?: {    }
+  }
+};
+
+action ":~$";
+
+action "=\u{e}" in [Action::"\u{1d}", Action::"\u{3}[", Action::"@T", Action::"\u{1d}@gf\u{e}fd", Action::"~", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::":~$"];
+
+action "@T" in [Action::"\u{1d}@gf\u{e}fd", Action::"~", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::":~$"];
+
+action "[@" in [Action::":~$"];
+
+action "^" in [Action::"\u{1d}\u{3}", Action::"[@", Action::":~$"];
+
+action "~" in [Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::":~$"];
+

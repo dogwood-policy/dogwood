@@ -1,0 +1,40 @@
+entity a enum ["\0\0\0&\0"];
+
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @A("")
+    @Bj(">")
+    @EWjjjjj5cZgYl
+    @K("EWpc")
+    @K3("Wpc")
+    @M("")
+    @Mj("")
+    @_YlWjjjnjjjjjj("")
+    @g7ZY
+    @in("")
+    @r3("")
+    @rj("")
+    @w
+    K: __cedar::Long,
+    M3?: __cedar::String,
+    Mj?: __cedar::String,
+    RSj333?: __cedar::duration,
+    @A("")
+    @K0
+    @K3("Wpc")
+    @M("")
+    @M3("")
+    @Mj("")
+    @Mn("")
+    @in("")
+    @r
+    @rj("\n")
+    in_: __cedar::decimal,
+    @EWjjjnjjjjjjj("")
+    @Mj("Deb")
+    v: __cedar::Long
+  }
+};
+

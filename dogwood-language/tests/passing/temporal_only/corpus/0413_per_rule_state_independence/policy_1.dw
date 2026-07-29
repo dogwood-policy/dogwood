@@ -1,0 +1,23 @@
+// Two stateful permits with different windows on the same predicate.
+// Each rule maintains its own `Since` state under the per-rule SQL
+// prefix scheme (`mid || ':pol{j}:opN'`). The trace exercises many
+// timepoints to verify the per-rule state tables stay independent
+// step over step.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 30m Drupe::Action::"Login"::request{ input.user: context.input.user }
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 2h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

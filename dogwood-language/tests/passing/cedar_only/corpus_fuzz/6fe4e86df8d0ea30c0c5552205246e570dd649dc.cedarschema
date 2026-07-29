@@ -1,0 +1,10 @@
+namespace A {
+  entity a enum ["\0))))))", ")))))))))))))))))))))))))))))))))))))))))", "))))))))))))))))))w00000))\0֙", ""];
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

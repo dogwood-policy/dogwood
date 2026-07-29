@@ -1,0 +1,28 @@
+// TWO universal symmetric pins → the partition key is the TUPLE (principal,
+// session), not either field alone. Both are pinned on every event kind:
+//   * `callerPrincipal = principal`                 (scope root)
+//   * `__drupe.session_id = context.__drupe.session_id` (context root)
+//
+// An event is "mine" (counts toward this request's key-local evaluation) only
+// if it agrees with the current request on BOTH pins. The differential traces
+// include foreign events that match on exactly ONE pin (same principal but a
+// different session, or the same session but a different principal); a correct
+// implementation must exclude them. A bug that relativized on only one pin
+// would wrongly include them and flip the verdict — see policy_1.dw.
+
+decision event <A>::request {
+    ...inputs(A),
+    pin callerPrincipal: principalType(A) = principal,
+    callerResource:  resourceType(A),
+    requestId:       String,
+    __drupe: { pin session_id: String = context.__drupe.session_id },
+}
+
+event <A>::response {
+    ...inputs(A),
+    ...outputs(A),
+    pin callerPrincipal: principalType(A) = principal,
+    callerResource:  resourceType(A),
+    requestId:       String,
+    __drupe: { pin session_id: String = context.__drupe.session_id },
+}

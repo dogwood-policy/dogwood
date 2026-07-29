@@ -1,0 +1,9 @@
+// The `if C has attr then ... else false` idiom guards an optional field,
+// falling back to false when the output record is absent.
+@id("approve_zero_proceeds")
+permit ( principal, action == Drupe::Action::"SellShares", resource )
+when {
+    if context has output
+    then context.output.proceeds == decimal("0.0")
+    else false
+};

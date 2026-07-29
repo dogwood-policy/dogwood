@@ -1,0 +1,17 @@
+@r("")
+entity a tags __cedar::duration;
+
+action "" in [Action::"@", Action::"z", Action::"Ai "] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: __cedar::String
+  }
+};
+
+action "@" in [Action::"z", Action::"Ai "];
+
+action "Ai ";
+
+action "z" in [Action::"Ai "];
+

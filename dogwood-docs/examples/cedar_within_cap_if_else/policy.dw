@@ -1,0 +1,15 @@
+// `within_cap(?stock, ?shares)` encapsulates a per-stock cap inside an
+// if/then/else expression; two params of different types are spliced.
+def cedar within_cap(?stock, ?shares) {
+    if ?stock == "FOO" then ?shares <= 10 else ?shares <= 1000
+};
+
+@id("sell_within_cap")
+permit (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+)
+when {
+    within_cap(context.input.stock, context.input.shares)
+};

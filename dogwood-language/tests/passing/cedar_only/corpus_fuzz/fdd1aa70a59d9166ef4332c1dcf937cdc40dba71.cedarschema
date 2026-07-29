@@ -1,0 +1,8 @@
+entity a tags __cedar::datetime;
+
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

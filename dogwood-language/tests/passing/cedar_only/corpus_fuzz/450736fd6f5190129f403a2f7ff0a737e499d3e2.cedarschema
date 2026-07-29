@@ -1,0 +1,11 @@
+@r("")
+entity a enum ["\n\nVUUUUUU\u{5}\n\n\n\n~\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"];
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    y33000000?: __cedar::String
+  }
+};
+

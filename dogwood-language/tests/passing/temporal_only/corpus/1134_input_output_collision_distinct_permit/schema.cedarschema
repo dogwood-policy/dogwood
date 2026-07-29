@@ -1,0 +1,46 @@
+namespace Drupe {
+  type ReviewInput = {
+    verdict: String,
+    user: String
+  };
+
+  type ReviewOutput = {
+    verdict: String
+  };
+
+  type PublishInput = {
+    user: String
+  };
+
+  type PublishOutput = {  };
+
+  type SystemContext = {
+    now: datetime
+  };
+
+  entity Gateway;
+
+  entity OAuthUser = {
+    id: String
+  };
+
+  action "Review" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: ReviewInput,
+      output?: ReviewOutput,
+      system: SystemContext
+    }
+  };
+
+  action "Publish" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: PublishInput,
+      output?: PublishOutput,
+      system: SystemContext
+    }
+  };
+}

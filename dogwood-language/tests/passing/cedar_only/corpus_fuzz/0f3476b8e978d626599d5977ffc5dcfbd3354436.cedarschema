@@ -1,0 +1,12 @@
+entity a = {
+  @Ar0
+  @Arr("5")
+  w: __cedar::Long
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

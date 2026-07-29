@@ -1,0 +1,12 @@
+namespace bo::bo::bo::bo::bo::bo {
+  entity bo enum [""];
+
+  entity r0 enum [""];
+
+  action "action" appliesTo {
+    principal: [bo],
+    resource: [bo],
+    context: {}
+  };
+}
+

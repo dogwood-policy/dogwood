@@ -1,0 +1,59 @@
+entity A0033333333333 enum ["######"];
+
+entity NR;
+
+entity j;
+
+entity jZ;
+
+entity r;
+
+@R0rrr
+action "" in [Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"$=\u{e}", Action::"[", Action::"\u{3}dddd"] appliesTo {
+  principal: [jZ, r, A0033333333333, j, NR],
+  resource: [jZ, j, A0033333333333, r],
+  context: {}
+};
+
+action "\u{3}dddd";
+
+action "\u{e}" in [Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"$=\u{e}", Action::"[", Action::"\u{3}dddd"] appliesTo {
+  principal: [j, NR, jZ],
+  resource: [j, NR, jZ],
+  context: {}
+};
+
+action "\u{1d}\u{3}" in [Action::"[@", Action::"$=\u{e}", Action::"[", Action::"\u{3}dddd"] appliesTo {
+  principal: [A0033333333333, j, r],
+  resource: [j, NR, jZ],
+  context: {}
+};
+
+action "$=\u{e}" in [Action::"[", Action::"\u{3}dddd"] appliesTo {
+  principal: [j, NR, jZ],
+  resource: [j, NR, jZ],
+  context: {}
+};
+
+action "[" in [Action::"\u{3}dddd"] appliesTo {
+  principal: [j, NR, jZ],
+  resource: [j, NR, jZ],
+  context: {
+    j0?: __cedar::String
+  }
+};
+
+action "[@" in [Action::"$=\u{e}", Action::"[", Action::"\u{3}dddd"] appliesTo {
+  principal: [r, jZ],
+  resource: [NR, A0033333333333],
+  context: {}
+};
+
+action "^" in [Action::"\u{1d}\u{3}", Action::"[@", Action::"$=\u{e}", Action::"[", Action::"\u{3}dddd"] appliesTo {
+  principal: [j, NR, r],
+  resource: [j, NR, jZ],
+  context: {
+    errrr?: __cedar::Bool
+  }
+};
+

@@ -1,0 +1,9 @@
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    previous within 1h Drupe::Action::"Compute"::request{ input.user: context.input.user }
+    && (!Drupe::Action::"Logout"::request{ input.user: context.input.user } since within 24h Drupe::Action::"Login"::request{ input.user: context.input.user })
+};

@@ -1,0 +1,11 @@
+// Requires a resolution with result == true. An in-flight request
+// has no resolution at all — should NOT fire.
+
+permit (
+    principal,
+    action == Drupe::Action::"Logout",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::response{ input.user: context.input.user, output.result: true }
+};

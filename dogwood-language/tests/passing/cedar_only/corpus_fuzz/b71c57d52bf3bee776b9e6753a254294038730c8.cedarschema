@@ -1,0 +1,11 @@
+namespace r0 {
+  @A
+  entity a tags r0::a;
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

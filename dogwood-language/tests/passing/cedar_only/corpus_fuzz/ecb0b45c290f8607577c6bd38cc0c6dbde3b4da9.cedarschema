@@ -1,0 +1,8 @@
+entity A tags Set<Set<__cedar::Long>>;
+
+action "action" appliesTo {
+  principal: [A],
+  resource: [A],
+  context: {}
+};
+

@@ -1,0 +1,11 @@
+entity a;
+
+@H
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    L: Set<__cedar::Long>
+  }
+};
+

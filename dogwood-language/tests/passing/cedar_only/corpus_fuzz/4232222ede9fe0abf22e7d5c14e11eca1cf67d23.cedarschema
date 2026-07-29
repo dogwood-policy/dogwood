@@ -1,0 +1,12 @@
+@r("\u{f}:")
+entity h tags Set<v>;
+
+@A
+entity v tags Set<Set<__cedar::String>>;
+
+action "action" appliesTo {
+  principal: [h],
+  resource: [h],
+  context: {}
+};
+

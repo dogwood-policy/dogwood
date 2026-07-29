@@ -1,0 +1,13 @@
+entity a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @F
+    GRRcSTwn?: __cedar::ipaddr,
+    m?: Set<__cedar::datetime>,
+    rhuRNag3ENNg3?: __cedar::String
+  }
+};
+

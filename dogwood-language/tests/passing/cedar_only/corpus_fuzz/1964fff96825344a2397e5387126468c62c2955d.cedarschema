@@ -1,0 +1,8 @@
+entity a;
+
+action "bian " appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,16 @@
+namespace A::A::A::J::J::n::gv {
+  entity A enum [""];
+
+  entity J enum [""];
+
+  entity X enum [""];
+
+  entity r enum [""];
+
+  action "action" appliesTo {
+    principal: [r],
+    resource: [r],
+    context: {}
+  };
+}
+

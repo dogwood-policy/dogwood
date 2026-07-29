@@ -1,0 +1,19 @@
+entity a tags __cedar::duration;
+
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    D?: {    },
+    I?: {    },
+    N?: {    },
+    a?: {    },
+    booS?: {    },
+    f?: {    },
+    h0?: {    },
+    m3?: {    },
+    q?: {    },
+    vR?: {    }
+  }
+};
+

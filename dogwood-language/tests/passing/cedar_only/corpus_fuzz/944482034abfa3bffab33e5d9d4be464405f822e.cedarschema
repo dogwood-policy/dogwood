@@ -1,0 +1,46 @@
+entity BFf enum [""];
+
+@DkkkkkkL
+@Q6("")
+@r("")
+entity PFdFFFFFFFFFFW24 enum [""];
+
+entity Pf enum [""];
+
+entity WMMFFFFFFFEF000F enum ["", ""];
+
+entity g3 enum [""];
+
+action "" in [Action::"########", Action::"\u{f}h", Action::"mmmmmm\u{f}mmmmm\u{f}h", Action::"\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h", Action::"f", Action::"\u{1}\u{f}h", Action::"\u{f}\u{f}\u{f}\u{f}h", Action::"\u{1}", Action::"h", Action::"###\'###\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}"] appliesTo {
+  principal: [PFdFFFFFFFFFFW24, BFf, WMMFFFFFFFEF000F, Pf, g3],
+  resource: [PFdFFFFFFFFFFW24, BFf, WMMFFFFFFFEF000F, Pf, g3],
+  context: {
+    DkkkMMMM?: __cedar::Bool
+  }
+};
+
+action "\u{1}" in [Action::"h", Action::"###\'###\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}"];
+
+action "\u{1}\u{f}h" in [Action::"\u{f}\u{f}\u{f}\u{f}h", Action::"\u{1}", Action::"h", Action::"###\'###\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}"];
+
+action "\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h" in [Action::"f", Action::"\u{1}\u{f}h", Action::"\u{f}\u{f}\u{f}\u{f}h", Action::"\u{1}", Action::"h", Action::"###\'###\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}"];
+
+action "\u{f}\u{f}\u{f}\u{f}h" in [Action::"\u{1}", Action::"h", Action::"###\'###\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}"];
+
+action "\u{f}h" in [Action::"mmmmmm\u{f}mmmmm\u{f}h", Action::"\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h", Action::"f", Action::"\u{1}\u{f}h", Action::"\u{f}\u{f}\u{f}\u{f}h", Action::"\u{1}", Action::"h", Action::"###\'###\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}"];
+
+@B0000000
+action "########" in [Action::"\u{f}h", Action::"mmmmmm\u{f}mmmmm\u{f}h", Action::"\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h", Action::"f", Action::"\u{1}\u{f}h", Action::"\u{f}\u{f}\u{f}\u{f}h", Action::"\u{1}", Action::"h", Action::"###\'###\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}"] appliesTo {
+  principal: [WMMFFFFFFFEF000F],
+  resource: [Pf, PFdFFFFFFFFFFW24, BFf],
+  context: {}
+};
+
+action "###\'###\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}";
+
+action "f" in [Action::"\u{1}\u{f}h", Action::"\u{f}\u{f}\u{f}\u{f}h", Action::"\u{1}", Action::"h", Action::"###\'###\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}"];
+
+action "h" in [Action::"###\'###\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}"];
+
+action "mmmmmm\u{f}mmmmm\u{f}h" in [Action::"\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h", Action::"f", Action::"\u{1}\u{f}h", Action::"\u{f}\u{f}\u{f}\u{f}h", Action::"\u{1}", Action::"h", Action::"###\'###\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}\u{16}"];
+

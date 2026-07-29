@@ -1,0 +1,10 @@
+// Guardrail forbid: block Read when the risk score is high.
+// Tests that even when temporal is satisfied, guardrail forbid still wins.
+forbid (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Content::Risk(context.input.document).severityScore.greaterThan(decimal("0.7"))
+};

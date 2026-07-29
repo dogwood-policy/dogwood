@@ -1,0 +1,11 @@
+// `previous Login` requires a PRECEDING time point. At tp 0 there is
+// no predecessor, so the rule never fires at tp 0.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    previous within 1h Drupe::Action::"Login"::response{ input.user: context.input.user, output.result: true }
+};

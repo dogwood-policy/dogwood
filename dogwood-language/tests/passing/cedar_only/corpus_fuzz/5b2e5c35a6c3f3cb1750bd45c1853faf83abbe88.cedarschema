@@ -1,0 +1,16 @@
+namespace m::r::r::r {
+  entity I enum [""];
+
+  entity Kr0000000 enum [""];
+
+  entity r enum [""];
+
+  entity u enum [""];
+
+  action "action" appliesTo {
+    principal: [u],
+    resource: [u],
+    context: {}
+  };
+}
+

@@ -1,0 +1,47 @@
+entity a = {
+  @O575RaaR333n3333O("WW")
+  @r
+  @r33RpZ343333l333("")
+  A: __cedar::Long,
+  @r3654R3
+  B0Z33?: Set<__cedar::String>,
+  C333333?: Set<__cedar::Long>,
+  E?: {  },
+  @I10A8O90aa
+  F: __cedar::duration,
+  Krrrr3333333343?: {  },
+  M?: __cedar::Bool,
+  _?: __cedar::datetime,
+  e?: __cedar::String,
+  i: __cedar::ipaddr,
+  iOO?: {  },
+  j: a,
+  r?: {  },
+  r3?: __cedar::datetime,
+  r33RpZ343333l333?: {  },
+  r3lRZNNg200?: {  },
+  rRo5So5S00: {  },
+  @k("YYYYYYYYYYYYYYY@\n\0\0\0\0\0\0?\0")
+  @r("")
+  ri33l?: __cedar::ipaddr,
+  rm3ukRcRpZ: __cedar::ipaddr,
+  @A
+  @xJJ1x
+  v: __cedar::duration,
+  @VBBDDDD
+  v3: {  },
+  @AcRRD3mmj
+  @Szzzzz
+  @k("")
+  @r3333("")
+  w: __cedar::decimal,
+  x?: {  },
+  z?: __cedar::Bool
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

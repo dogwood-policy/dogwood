@@ -1,0 +1,66 @@
+entity a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    r?: {
+      ""?: {      },
+      "\0"?: {      },
+      "\0\0"?: {      },
+      "\u{3}\u{1d}wDebian "?: {      },
+      "\u{3}ddddddffd~\u{1d}"?: {      },
+      "\u{e}"?: {      },
+      @r("\0\u{1d}Debian ")
+      @vRT30qdVR35cZgY
+      "\u{1d}": {
+        ""?: Set<Set<__cedar::Long>>,
+        "\u{1d}"?: __cedar::String,
+        "V@"?: Set<Set<__cedar::Long>>
+      },
+      "\u{1d}\u{3}"?: {      },
+      "\u{1d}@["?: {      },
+      "\u{1d}@gffd~"?: {      },
+      "!\u{3}"?: {      },
+      "$"?: {      },
+      "$\u{e}="?: {      },
+      ":pVV"?: {      },
+      ":~"?: {      },
+      "=\u{e}"?: {      },
+      "?\0\0\0"?: {      },
+      "V@"?: {
+        "": __cedar::ipaddr,
+        "\0": a,
+        "\0\0": {
+          @rS1S("")
+          @yddb03ERVR3X33("")
+          "": Set<__cedar::Long>,
+          @D3Sw1S33Tu5cZgYlW("")
+          "\u{1d}": __cedar::String,
+          "V@"?: a
+        },
+        @r
+        "3"?: {
+          @A("")
+          @r("\0\u{1d}Debian ")
+          @vRT30qdVR35cZgY
+          "": __cedar::Bool,
+          "\u{1d}"?: __cedar::String,
+          "V@": Set<__cedar::Long>
+        },
+        ":pVV"?: a,
+        @F
+        "?\0\0\0"?: __cedar::String,
+        "V@": a,
+        "V@[fd~\u{1d}"?: {
+          ""?: __cedar::String
+        }
+      },
+      "["?: {      },
+      "[@"?: {      },
+      "[@["?: {      },
+      "^"?: {      }
+    }
+  }
+};
+

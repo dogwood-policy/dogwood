@@ -1,0 +1,16 @@
+{
+  "availableProviders": {
+    "Scoring::Compute": {
+      "argumentTypes": [
+        { "paramType": "string" },
+        { "paramType": "bool" },
+        { "paramType": "decimal" }
+      ],
+      "outputType": { "paramType": "integer" },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "scoring.rhai"
+      }
+    }
+  }
+}

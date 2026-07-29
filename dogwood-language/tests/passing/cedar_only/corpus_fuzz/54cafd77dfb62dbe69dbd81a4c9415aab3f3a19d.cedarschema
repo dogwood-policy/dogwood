@@ -1,0 +1,35 @@
+entity a;
+
+action "" in [Action::":", Action::"\u{e}", Action::"+r", Action::"d&", Action::"[", Action::"\u{3}ED\u{4}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    H7777777?: __cedar::String,
+    P?: Set<a>,
+    r?: __cedar::datetime
+  }
+};
+
+action "\u{3}ED\u{4}";
+
+action "\u{e}" in [Action::"+r", Action::"d&", Action::"[", Action::"\u{3}ED\u{4}"];
+
+action "+r" in [Action::"d&", Action::"[", Action::"\u{3}ED\u{4}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+@x
+action ":" in [Action::"\u{e}", Action::"+r", Action::"d&", Action::"[", Action::"\u{3}ED\u{4}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    r2l57555O?: __cedar::ipaddr
+  }
+};
+
+action "[" in [Action::"\u{3}ED\u{4}"];
+
+action "d&" in [Action::"[", Action::"\u{3}ED\u{4}"];
+

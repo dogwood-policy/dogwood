@@ -1,0 +1,8 @@
+// Logical connectives with explicit grouping: && binds tighter than ||, so
+// parenthesize to get the intended grouping.
+@id("sell_small_or_amzn_not_blocked")
+permit ( principal, action == Drupe::Action::"SellShares", resource )
+when {
+    (context.input.shares < 100 || context.input.stock == "AMZN")
+    && !(context.input.stock == "BLOCKED")
+};

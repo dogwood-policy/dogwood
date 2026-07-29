@@ -1,0 +1,15 @@
+// A referenced context whose record carries an OPTIONAL ref-typed
+// attribute (`note?: NoteT` — the required flag must survive inlining)
+// and FOUR sibling references to one common type (per-chain, not global,
+// substitution budgets).
+namespace Drupe {
+  type B = Long;
+  type NoteT = { text: String };
+  type Ctx = { input: { document: String }, note?: NoteT, a: B, b: B, c: B, d: B };
+  entity OAuthUser;
+  entity Gateway;
+  action "Read" appliesTo {
+    principal: [OAuthUser], resource: [Gateway],
+    context: Ctx
+  };
+}

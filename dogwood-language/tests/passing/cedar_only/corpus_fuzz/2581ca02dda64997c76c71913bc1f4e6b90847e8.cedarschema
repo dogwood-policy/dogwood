@@ -1,0 +1,15 @@
+entity D1 enum [""];
+
+entity is_ enum [""];
+
+entity o01 enum [""];
+
+@A00000000000
+entity s7YuFo enum [""];
+
+action "action" appliesTo {
+  principal: [s7YuFo],
+  resource: [s7YuFo],
+  context: {}
+};
+

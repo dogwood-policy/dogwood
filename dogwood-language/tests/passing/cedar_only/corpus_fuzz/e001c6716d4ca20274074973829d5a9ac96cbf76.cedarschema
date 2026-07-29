@@ -1,0 +1,14 @@
+entity VL5cc33;
+
+entity ri;
+
+action "\u{f}" in [Action::"S", Action::":B"] appliesTo {
+  principal: [ri, VL5cc33],
+  resource: [ri],
+  context: {}
+};
+
+action ":B";
+
+action "S" in [Action::":B"];
+

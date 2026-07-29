@@ -1,0 +1,54 @@
+// A six-action schema for providers under a multi-action list scope:
+//   - Read/Write/Delete share DocInput and are pinned by the guardrail's
+//     list scope (context resolution against EVERY pinned action);
+//   - Ping ALSO has DocInput but is deliberately NOT in the guardrail
+//     scope (guardrails bind by action, not by field presence);
+//   - Login/Alert have unrelated context shapes.
+namespace Drupe {
+  type DocInput = {
+    document: String
+  };
+  type LoginInput = {
+    user: String
+  };
+  type AlertInput = {
+    level: Long
+  };
+
+  entity Gateway;
+
+  entity OAuthUser = {
+    id: String
+  };
+
+  action "Read" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: { input: DocInput }
+  };
+  action "Write" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: { input: DocInput }
+  };
+  action "Delete" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: { input: DocInput }
+  };
+  action "Ping" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: { input: DocInput }
+  };
+  action "Login" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: { input: LoginInput }
+  };
+  action "Alert" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: { input: AlertInput }
+  };
+}

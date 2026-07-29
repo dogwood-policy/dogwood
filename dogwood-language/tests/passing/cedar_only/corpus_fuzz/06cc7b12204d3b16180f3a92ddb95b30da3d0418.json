@@ -1,0 +1,186 @@
+{
+  "policies": "corpus-tests/06cc7b12204d3b16180f3a92ddb95b30da3d0418.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/06cc7b12204d3b16180f3a92ddb95b30da3d0418.entities.json",
+  "schema": "corpus-tests/06cc7b12204d3b16180f3a92ddb95b30da3d0418.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "p::a",
+        "id": ",\u0002"
+      },
+      "action": {
+        "type": "p::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "p::a",
+        "id": ",\u0002"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "p::a",
+        "id": ",\u0002"
+      },
+      "action": {
+        "type": "p::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "p::a",
+        "id": ",\u0002"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "p::a",
+        "id": ",\u0002"
+      },
+      "action": {
+        "type": "p::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "p::a",
+        "id": ",\u0002"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "p::a",
+        "id": ",\u0002"
+      },
+      "action": {
+        "type": "p::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "p::a",
+        "id": ",\u0002"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "p::a",
+        "id": ",\u0002"
+      },
+      "action": {
+        "type": "p::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "p::a",
+        "id": ",\u0002"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "p::a",
+        "id": ",\u0002"
+      },
+      "action": {
+        "type": "p::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "p::a",
+        "id": ",\u0002"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "p::a",
+        "id": ",\u0002"
+      },
+      "action": {
+        "type": "p::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "p::a",
+        "id": ",\u0002"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "p::a",
+        "id": ",\u0002"
+      },
+      "action": {
+        "type": "p::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "p::a",
+        "id": ",\u0002"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

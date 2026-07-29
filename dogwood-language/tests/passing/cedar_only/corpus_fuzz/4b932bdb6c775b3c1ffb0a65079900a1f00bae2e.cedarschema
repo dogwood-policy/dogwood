@@ -1,0 +1,26 @@
+entity a;
+
+action "" in [Action::":~", Action::"\u{e}", Action::"[", Action::"\u{3}\u{1d}w", Action::"$", Action::"=\u{e}", Action::"[/\u{1d}@", Action::"^"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{3}\u{1d}w" in [Action::"$", Action::"=\u{e}", Action::"[/\u{1d}@", Action::"^"];
+
+action "\u{e}" in [Action::"[", Action::"\u{3}\u{1d}w", Action::"$", Action::"=\u{e}", Action::"[/\u{1d}@", Action::"^"];
+
+action "$" in [Action::"=\u{e}", Action::"[/\u{1d}@", Action::"^"];
+
+action ":~" in [Action::"\u{e}", Action::"[", Action::"\u{3}\u{1d}w", Action::"$", Action::"=\u{e}", Action::"[/\u{1d}@", Action::"^"];
+
+action "=\u{e}" in [Action::"[/\u{1d}@", Action::"^"];
+
+action "[" in [Action::"\u{3}\u{1d}w", Action::"$", Action::"=\u{e}", Action::"[/\u{1d}@", Action::"^"];
+
+@O
+action "[/\u{1d}@" in [Action::"^"];
+
+@vRSlT1000000000
+action "^";
+

@@ -1,0 +1,10 @@
+namespace k::A::A::A::b3::G {
+  entity A enum [""];
+
+  action "action" appliesTo {
+    principal: [A],
+    resource: [A],
+    context: {}
+  };
+}
+

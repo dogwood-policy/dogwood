@@ -1,0 +1,16 @@
+// stdlib `count_unresolved_within` (schema-conditional): count Transfer
+// requests within the window whose `requestId` has no matching Transfer
+// resolution in the window. Permit an Alert when there is at least one such
+// unresolved (pending) transfer in the last hour.
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (n: Long). (
+        (count_unresolved_within(1h, Drupe::Action::"Transfer"::request{}, Drupe::Action::"Transfer"::response{})) == n
+        && n > 0
+    )
+};

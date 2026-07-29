@@ -1,0 +1,12 @@
+// Edge: (sum amount for ...) == n where n is bound by exists and equals 0.
+// Tests agg_vs_var operand type. The sum of amounts is 0 only when no
+// events match; n must equal that sum for the existential to succeed.
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (n: Long). ((sum amt for (t: Timepoint), (amt: Long). where (formerly within 1h Drupe::Action::"Transfer"::request{ input.user: context.input.server, input.amount: amt } && tp(t))) == n && n >= 0)
+};

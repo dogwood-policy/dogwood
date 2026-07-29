@@ -1,0 +1,21 @@
+// §1.2 example 4 — restrict the aggregation to one user, also new:
+//   sum a for (a: Long), (p: String), (t: Timepoint).
+//     where formerly within 1h (Withdraw(user: p, amount: a) ∧ tp(t) ∧ p = "alice")
+//
+// Bind `p` (the withdrawing user) in the `for` list and constrain it
+// with a comparison, so only alice's withdrawals contribute.
+//
+// Trace (decision at the Alert, ts=3700; window 1h): rows in window are
+// (5,alice,t1),(9,bob,t2),(4,alice,t3); the `p == "alice"` filter keeps
+// (5,alice,t1),(4,alice,t3) → 5 + 4 = 9.
+def temporal let_(?n, ?A, ?B) {
+    exists (?n: Long). (?A == ?n && ?B)
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    let_(total, sum a for (a: Long), (p: String), (t: Timepoint). where (formerly within 1h (Drupe::Action::"Transfer"::request{ input.user: p, input.amount: a } && tp(t) && p == "alice")), total == 9)};

@@ -1,0 +1,11 @@
+entity a enum ["\0\0\0g\u{c}", "@0\0\0\0\0\0"];
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @K("")
+    r33: __cedar::Bool
+  }
+};
+

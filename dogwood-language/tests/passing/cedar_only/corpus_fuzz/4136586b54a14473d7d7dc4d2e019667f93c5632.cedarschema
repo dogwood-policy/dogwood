@@ -1,0 +1,10 @@
+namespace A::w3 {
+  entity wS;
+
+  action "action" appliesTo {
+    principal: [wS],
+    resource: [wS],
+    context: {}
+  };
+}
+

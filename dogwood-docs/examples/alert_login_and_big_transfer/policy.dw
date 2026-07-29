@@ -1,0 +1,19 @@
+// Nested existentials: the inner `exists (a: Long)` is scoped by the outer
+// user `u`, combining a predicate-field restrictor with a comparison filter
+// (restrictor before filter). Permit an Alert if the same user logged in AND
+// made a transfer over 100 within the last hour.
+@id("alert_login_and_big_transfer")
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (u: String). (
+        formerly within 1h Drupe::Action::"Login"::request{ input.user: u }
+        && exists (a: Long). (
+            formerly within 1h Drupe::Action::"Transfer"::request{ input.user: u, input.amount: a }
+            && a > 100
+        )
+    )
+};

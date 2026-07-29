@@ -1,0 +1,14 @@
+namespace Yvv0X2333F333c::r::r::r::r::Lf::F020vvvv {
+  entity a = {
+    A: Yvv0X2333F333c::r::r::r::r::Lf::F020vvvv::a
+  };
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      A000000000000000?: __cedar::String
+    }
+  };
+}
+

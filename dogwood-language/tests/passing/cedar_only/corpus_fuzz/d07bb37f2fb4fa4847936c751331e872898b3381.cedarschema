@@ -1,0 +1,66 @@
+entity a tags __cedar::String;
+
+action "" in [Action::"[@[~", Action::"\u{1d}@g"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{3}\u{1d}w" in [Action::"$", Action::"=\u{e}", Action::"\u{1d}\u{3}", Action::"[@[~", Action::"[@[", Action::"\u{1d}@g"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1d}\u{3}" in [Action::"[@[~", Action::"[@[", Action::"\u{1d}@g"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+@LRazEKR("")
+@Nkk
+@d("")
+action "\u{1d}@[" in [Action::"\u{3}\u{1d}w", Action::"$", Action::"=\u{e}", Action::"\u{1d}\u{3}", Action::"[@[~", Action::"[@[", Action::"\u{1d}@g"];
+
+action "\u{1d}@g" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    jPPP?: __cedar::String
+  }
+};
+
+action "$" in [Action::"=\u{e}", Action::"\u{1d}\u{3}", Action::"[@[~", Action::"[@[", Action::"\u{1d}@g"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+@jPPP
+action ":~" in [Action::"\u{3}\u{1d}w", Action::"$", Action::"[@[", Action::"\u{1d}@g"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "=\u{e}" in [Action::"\u{1d}\u{3}", Action::"[@[~", Action::"[@[", Action::"\u{1d}@g"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+@d
+@x
+action "[@[" in [Action::"\u{1d}@g"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "[@[~" in [Action::"\u{1d}@g"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

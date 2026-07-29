@@ -1,0 +1,13 @@
+// Permit SellShares only when the requested trade is small.
+// The `when { ... }` clause narrows the permit: the rule grants
+// only those SellShares invocations whose `shares` input is
+// less than 100.
+
+permit (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+)
+when {
+    context.input.shares < 100
+};

@@ -1,0 +1,73 @@
+@B33nnn
+@i433mnw("")
+@r("")
+@rXeeAeee444d("gg\nggg")
+namespace A::A {
+  entity a;
+
+  action "" in [A::A::Action::":~", A::A::Action::"\u{e}", A::A::Action::"\u{3}", A::A::Action::"w\u{1d}[", A::A::Action::"$", A::A::Action::"=\u{e}", A::A::Action::"[", A::A::Action::"\u{1f}\u{1d}@J<", A::A::Action::"r@"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      h?: __cedar::Long
+    }
+  };
+
+  action "\u{3}" in [A::A::Action::"w\u{1d}[", A::A::Action::"$", A::A::Action::"=\u{e}", A::A::Action::"[", A::A::Action::"\u{1f}\u{1d}@J<", A::A::Action::"r@"];
+
+  action "\u{e}" in [A::A::Action::"\u{3}", A::A::Action::"w\u{1d}[", A::A::Action::"$", A::A::Action::"=\u{e}", A::A::Action::"[", A::A::Action::"\u{1f}\u{1d}@J<", A::A::Action::"r@"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      rMA?: __cedar::String,
+      ruTS?: __cedar::String
+    }
+  };
+
+  action "\u{1f}\u{1d}@J<" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "$" in [A::A::Action::"=\u{e}", A::A::Action::"[", A::A::Action::"\u{1f}\u{1d}@J<", A::A::Action::"r@"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action ":~" in [A::A::Action::"\u{e}", A::A::Action::"\u{3}", A::A::Action::"w\u{1d}[", A::A::Action::"$", A::A::Action::"=\u{e}", A::A::Action::"[", A::A::Action::"\u{1f}\u{1d}@J<", A::A::Action::"r@"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "=\u{e}" in [A::A::Action::"[", A::A::Action::"\u{1f}\u{1d}@J<"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "[" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "r@" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      Kg3XXX0XXXX?: __cedar::ipaddr,
+      T____8_?: __cedar::ipaddr,
+      T_____3?: __cedar::ipaddr
+    }
+  };
+
+  action "w\u{1d}[" in [A::A::Action::"$", A::A::Action::"=\u{e}", A::A::Action::"[", A::A::Action::"\u{1f}\u{1d}@J<", A::A::Action::"r@"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

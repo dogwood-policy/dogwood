@@ -1,0 +1,93 @@
+entity A000000xf12f3xf15;
+
+entity B9333333333 enum ["\u{f}", "\u{f}\u{f}"];
+
+entity BxB enum [""];
+
+entity PcZgYlW = {
+  L?: __cedar::String,
+  fB?: __cedar::String
+};
+
+entity _YlW3Zx3319SSQ enum [""];
+
+entity dSSSSSS enum [""];
+
+entity f1;
+
+@B9333333333("")
+@EW3Zx3319SSQS("[\0[[[[[[[R[[[[[[[[[[[[[[[[[[[_[[[[[[[\u{1} ")
+@S15c
+@fB("\u{f}")
+@p("")
+@r("")
+@z("")
+entity fBBh enum [""];
+
+entity m0SSSSS enum [""];
+
+entity m1W_3f1 enum [""];
+
+entity mSSSJSS = {
+  @Q3333333333333(")")
+  @Q_("")
+  @f("")
+  @fF
+  @r("")
+  @rxf15cZgYl
+  A0000001W_3f1xBBB?: __cedar::String,
+  ff?: __cedar::String,
+  r1G0?: __cedar::String,
+  rB?: __cedar::String,
+  rD3?: __cedar::String
+};
+
+entity mSSSS1W enum [""];
+
+entity mSSSSSS enum [""];
+
+entity mSSSSSW enum [""];
+
+entity mSWSSSS enum ["\u{f}"];
+
+@fBBXXXXXX
+entity r tags z;
+
+entity rB enum [""];
+
+entity rD3 = {
+  A000000xf12f3xf15?: __cedar::String,
+  BxB?: __cedar::String,
+  _YlW3Zx3333333?: __cedar::String,
+  f1?: __cedar::String,
+  @fF
+  fh: __cedar::Long,
+  r?: __cedar::String,
+  r3333333?: __cedar::String,
+  rB?: __cedar::String,
+  rD3?: __cedar::String,
+  z3D31G00000001W_?: __cedar::String
+};
+
+entity z enum ["[[[[[R[[[[[[[[[[[[[[[[[[[_[[[[[[[\u{1} ", "", "h\u{1}z", "", "", "+", "\u{f}h", "\r", "\u{1}\u{10}\0\0\0\0\0\0\0\u{1} ", "", "h\u{1}z", "", "", "+", "", "h", "\r", "\u{1}\u{10}\0\0\0\0\0\0\0z"];
+
+entity z3D31G00000001W_ enum [""];
+
+action "" in [Action::"\u{1}z", Action::"\u{f}"] appliesTo {
+  principal: [m1W_3f1, PcZgYlW, mSSSS1W, BxB, _YlW3Zx3319SSQ, mSSSJSS, fBBh, A000000xf12f3xf15, B9333333333, rD3, m0SSSSS, mSWSSSS, f1, rB, z3D31G00000001W_, dSSSSSS, r],
+  resource: [rD3, r, BxB, PcZgYlW, f1, z, fBBh, A000000xf12f3xf15, mSSSS1W, mSWSSSS, m0SSSSS],
+  context: {}
+};
+
+action "\u{1}z" appliesTo {
+  principal: [m1W_3f1, PcZgYlW, mSSSS1W, BxB, _YlW3Zx3319SSQ, z, mSSSSSS, mSSSJSS, m0SSSSS, dSSSSSS, r, f1, A000000xf12f3xf15, z3D31G00000001W_, fBBh, rB, rD3],
+  resource: [m1W_3f1, PcZgYlW, mSSSS1W, BxB, _YlW3Zx3319SSQ, mSSSJSS, fBBh, A000000xf12f3xf15, B9333333333, rD3, m0SSSSS, mSWSSSS, f1, rB, z3D31G00000001W_, dSSSSSS, r],
+  context: {}
+};
+
+action "\u{f}" appliesTo {
+  principal: [rD3, r, dSSSSSS, m0SSSSS, f1, z, mSSSSSS, mSSSJSS, m1W_3f1, B9333333333, PcZgYlW],
+  resource: [rD3, r, BxB, PcZgYlW, f1, z, mSSSSSS, mSSSJSS, m0SSSSS, dSSSSSS, m1W_3f1],
+  context: {}
+};
+

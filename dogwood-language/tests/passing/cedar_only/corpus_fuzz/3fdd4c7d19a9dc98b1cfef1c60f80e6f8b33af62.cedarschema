@@ -1,0 +1,10 @@
+entity a enum [""];
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A0000000000000000?: __cedar::String
+  }
+};
+

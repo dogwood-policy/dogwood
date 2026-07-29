@@ -1,0 +1,17 @@
+@A
+entity a tags {
+  ""?: __cedar::Bool,
+  "\u{e}S"?: __cedar::Bool,
+  F?: __cedar::Bool,
+  in1?: __cedar::Bool,
+  ing: __cedar::Bool,
+  tb?: __cedar::Bool,
+  tr?: __cedar::Bool
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

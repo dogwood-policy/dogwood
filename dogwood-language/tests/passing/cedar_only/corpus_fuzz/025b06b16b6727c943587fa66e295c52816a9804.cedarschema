@@ -1,0 +1,12 @@
+entity I_;
+
+entity f;
+
+entity r;
+
+action "" appliesTo {
+  principal: [r],
+  resource: [r],
+  context: {}
+};
+

@@ -1,0 +1,34 @@
+entity a = {
+  @Hooooooooooo("q\u{1}\0\0,qqqq\u{1}\u{4}qqqqqqqqqqqqqq\u{1}\u{4}qfd~")
+  @O("")
+  @aQQq4odb03EQQQq
+  @r3T1Ra3
+  A?: {
+    ""?: {    },
+    "\u{1}\n\u{f}VV\n\ne?\0:\u{f}ee~"?: {    },
+    "\u{3}\u{1d}@"?: {    },
+    "\u{3}\u{1d}w"?: {    },
+    "\u{e}"?: {    },
+    "\u{14}"?: {    },
+    "\u{1d}\u{3}"?: {    },
+    "\u{1d}@["?: {    },
+    "\u{1d}@gf"?: {    },
+    "$"?: {    },
+    ":~": {
+      "\u{1d}@g"?: Set<Set<__cedar::Long>>
+    },
+    "=\u{e}"?: __cedar::String,
+    "N~\u{1f}"?: {    },
+    "["?: {    },
+    "[@["?: {    },
+    "qqqqq\0\0!"?: {    },
+    "z~"?: {    }
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

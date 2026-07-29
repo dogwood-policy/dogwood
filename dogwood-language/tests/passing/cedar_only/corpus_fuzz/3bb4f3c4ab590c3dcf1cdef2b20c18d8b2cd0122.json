@@ -1,0 +1,1006 @@
+{
+  "policies": "corpus-tests/3bb4f3c4ab590c3dcf1cdef2b20c18d8b2cd0122.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/3bb4f3c4ab590c3dcf1cdef2b20c18d8b2cd0122.entities.json",
+  "schema": "corpus-tests/3bb4f3c4ab590c3dcf1cdef2b20c18d8b2cd0122.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": false,
+          "\u0000": false,
+          "\u0000\u001d@gffd~": false,
+          "\u001d": {
+            "": []
+          },
+          "\u001d\u0003": {
+            "__entity": {
+              "type": "a",
+              "id": ""
+            }
+          },
+          "V@": {}
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "\u001d": {
+            "": [
+              []
+            ],
+            "\u001d": "\u0012\u0012\u0012\u0012\u0012\u0012\u0012\u0012\u0012\u0012\u0012\u0012\u0012\u0012\u0012\u0012\u0012\u0012",
+            "V@": [
+              []
+            ]
+          },
+          "\u001d\u0003": {
+            "__entity": {
+              "type": "a",
+              "id": ""
+            }
+          },
+          "!\u0003": false,
+          "$": [
+            "\u0012\u0012\u0012\u0012\u0012\u0012\u0012\u0012\u0012\u0012\u0012\u0012\u0012\u0012\u0012\u0012\u0012\u0012"
+          ],
+          "$\u000e=": false,
+          ":pVV": false,
+          "=\u000e": false,
+          "?\u0000\u0000\u0000": false,
+          "@[": false,
+          "V@": {
+            "": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "\u0000": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "\u0000\u0000": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "\u0000\u0000\u0000": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "\u0003\u001dw": false,
+            "\u000e": false,
+            "\u001apVV": {
+              "__extn": {
+                "fn": "ip",
+                "arg": "0.0.0.0"
+              }
+            },
+            "\u001d\u0003": false,
+            "\u001d@[": false,
+            "\u001d@gffd~": false,
+            "!\u0003": false,
+            "2": {
+              "__extn": {
+                "fn": "ip",
+                "arg": "0.0.0.0"
+              }
+            },
+            ":pVV": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            ":~": false,
+            "=\u000e": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "?": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "?\u0000\u0000\u0000": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "V@": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "V@[\u001d": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "[:@[": false,
+            "[@[": false,
+            "^": false,
+            "^$": false
+          },
+          "[": false,
+          "[\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0003@": false,
+          "[@": false,
+          "^": false,
+          "ddddddffd~\u001d": "",
+          "~:\u0000\u001d": false
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": false,
+          "\u0000": false,
+          "\u0000\u001d@gffd~": false,
+          "\u0003\u001dwDebian ": false,
+          "\u000e": false,
+          "\u001d": {
+            "": [],
+            "\u001d": "",
+            "V@": []
+          },
+          "\u001d\u0003": {
+            "__entity": {
+              "type": "a",
+              "id": ""
+            }
+          },
+          "!\u0003": false,
+          "$": [],
+          "$\u000e=": false,
+          ":pVV": false,
+          "=\u000e": false,
+          "?\u0000\u0000\u0000": false,
+          "@[": false,
+          "V@": {
+            "": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "\u0000": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "\u0000\u0000": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "\u0000\u0000\u0000": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "\u0003\u001dw": false,
+            "\u000e": false,
+            "\u001apVV": {
+              "__extn": {
+                "fn": "ip",
+                "arg": "0.0.0.0"
+              }
+            },
+            "\u001d\u0003": false,
+            "\u001d@[": false,
+            "\u001d@gffd~": false,
+            "!\u0003": false,
+            "2": {
+              "__extn": {
+                "fn": "ip",
+                "arg": "0.0.0.0"
+              }
+            },
+            ":pVV": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            ":~": false,
+            "=\u000e": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "?": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "?\u0000\u0000\u0000": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "V@": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "V@[\u001d": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "[:@[": false,
+            "[@[": false,
+            "^": false,
+            "^$": false
+          },
+          "[": false,
+          "[\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0003@": false,
+          "[@": false,
+          "^": false,
+          "ddddddffd~\u001d": "",
+          "~:\u0000\u001d": false
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": false,
+          "\u0000": false,
+          "\u0000\u001d@gffd~": false,
+          "\u0003\u001dwDebian ": false,
+          "\u000e": false,
+          "\u001d": {
+            "": [],
+            "\u001d": "",
+            "V@": []
+          },
+          "\u001d\u0003": {
+            "__entity": {
+              "type": "a",
+              "id": ""
+            }
+          },
+          "!\u0003": false,
+          "$": [],
+          "$\u000e=": false,
+          ":pVV": false,
+          "=\u000e": false,
+          "?\u0000\u0000\u0000": false,
+          "@[": false,
+          "V@": {
+            "": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "\u0000": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "\u0000\u0000": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "\u0000\u0000\u0000": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "\u0003\u001dw": false,
+            "\u000e": false,
+            "\u001apVV": {
+              "__extn": {
+                "fn": "ip",
+                "arg": "0.0.0.0"
+              }
+            },
+            "\u001d\u0003": false,
+            "\u001d@[": false,
+            "\u001d@gffd~": false,
+            "!\u0003": false,
+            "2": {
+              "__extn": {
+                "fn": "ip",
+                "arg": "0.0.0.0"
+              }
+            },
+            ":pVV": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            ":~": false,
+            "=\u000e": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "?": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "?\u0000\u0000\u0000": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "V@": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "V@[\u001d": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "[:@[": false,
+            "[@[": false,
+            "^": false,
+            "^$": false
+          },
+          "[": false,
+          "[\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0003@": false,
+          "[@": false,
+          "^": false,
+          "ddddddffd~\u001d": "",
+          "~:\u0000\u001d": false
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": false,
+          "\u0000": false,
+          "\u0000\u001d@gffd~": false,
+          "\u0003\u001dwDebian ": false,
+          "\u000e": false,
+          "\u001d": {
+            "": [],
+            "\u001d": "",
+            "V@": []
+          },
+          "\u001d\u0003": {
+            "__entity": {
+              "type": "a",
+              "id": ""
+            }
+          },
+          "!\u0003": false,
+          "$": [],
+          "$\u000e=": false,
+          ":pVV": false,
+          "=\u000e": false,
+          "?\u0000\u0000\u0000": false,
+          "@[": false,
+          "V@": {
+            "": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "\u0000": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "\u0000\u0000": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "\u0000\u0000\u0000": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "\u0003\u001dw": false,
+            "\u000e": false,
+            "\u001apVV": {
+              "__extn": {
+                "fn": "ip",
+                "arg": "0.0.0.0"
+              }
+            },
+            "\u001d\u0003": false,
+            "\u001d@[": false,
+            "\u001d@gffd~": false,
+            "!\u0003": false,
+            "2": {
+              "__extn": {
+                "fn": "ip",
+                "arg": "0.0.0.0"
+              }
+            },
+            ":pVV": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            ":~": false,
+            "=\u000e": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "?": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "?\u0000\u0000\u0000": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "V@": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "V@[\u001d": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "[:@[": false,
+            "[@[": false,
+            "^": false,
+            "^$": false
+          },
+          "[": false,
+          "[\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0003@": false,
+          "[@": false,
+          "^": false,
+          "ddddddffd~\u001d": "",
+          "~:\u0000\u001d": false
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": false,
+          "\u0000": false,
+          "\u0000\u001d@gffd~": false,
+          "\u0003\u001dwDebian ": false,
+          "\u000e": false,
+          "\u001d": {
+            "": [],
+            "\u001d": "",
+            "V@": []
+          },
+          "\u001d\u0003": {
+            "__entity": {
+              "type": "a",
+              "id": ""
+            }
+          },
+          "!\u0003": false,
+          "$": [],
+          "$\u000e=": false,
+          ":pVV": false,
+          "=\u000e": false,
+          "?\u0000\u0000\u0000": false,
+          "@[": false,
+          "V@": {
+            "": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "\u0000": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "\u0000\u0000": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "\u0000\u0000\u0000": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "\u0003\u001dw": false,
+            "\u000e": false,
+            "\u001apVV": {
+              "__extn": {
+                "fn": "ip",
+                "arg": "0.0.0.0"
+              }
+            },
+            "\u001d\u0003": false,
+            "\u001d@[": false,
+            "\u001d@gffd~": false,
+            "!\u0003": false,
+            "2": {
+              "__extn": {
+                "fn": "ip",
+                "arg": "0.0.0.0"
+              }
+            },
+            ":pVV": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            ":~": false,
+            "=\u000e": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "?": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "?\u0000\u0000\u0000": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "V@": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "V@[\u001d": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "[:@[": false,
+            "[@[": false,
+            "^": false,
+            "^$": false
+          },
+          "[": false,
+          "[\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0003@": false,
+          "[@": false,
+          "^": false,
+          "ddddddffd~\u001d": "",
+          "~:\u0000\u001d": false
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": false,
+          "\u0000": false,
+          "\u0000\u001d@gffd~": false,
+          "\u0003\u001dwDebian ": false,
+          "\u000e": false,
+          "\u001d": {
+            "": [],
+            "\u001d": "",
+            "V@": []
+          },
+          "\u001d\u0003": {
+            "__entity": {
+              "type": "a",
+              "id": ""
+            }
+          },
+          "!\u0003": false,
+          "$": [],
+          "$\u000e=": false,
+          ":pVV": false,
+          "=\u000e": false,
+          "?\u0000\u0000\u0000": false,
+          "@[": false,
+          "V@": {
+            "": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "\u0000": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "\u0000\u0000": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "\u0000\u0000\u0000": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "\u0003\u001dw": false,
+            "\u000e": false,
+            "\u001apVV": {
+              "__extn": {
+                "fn": "ip",
+                "arg": "0.0.0.0"
+              }
+            },
+            "\u001d\u0003": false,
+            "\u001d@[": false,
+            "\u001d@gffd~": false,
+            "!\u0003": false,
+            "2": {
+              "__extn": {
+                "fn": "ip",
+                "arg": "0.0.0.0"
+              }
+            },
+            ":pVV": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            ":~": false,
+            "=\u000e": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "?": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "?\u0000\u0000\u0000": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "V@": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "V@[\u001d": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "[:@[": false,
+            "[@[": false,
+            "^": false,
+            "^$": false
+          },
+          "[": false,
+          "[\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0003@": false,
+          "[@": false,
+          "^": false,
+          "ddddddffd~\u001d": "",
+          "~:\u0000\u001d": false
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": false,
+          "\u0000": false,
+          "\u0000\u001d@gffd~": false,
+          "\u0003\u001dwDebian ": false,
+          "\u000e": false,
+          "\u001d": {
+            "": [],
+            "\u001d": "",
+            "V@": []
+          },
+          "\u001d\u0003": {
+            "__entity": {
+              "type": "a",
+              "id": ""
+            }
+          },
+          "!\u0003": false,
+          "$": [],
+          "$\u000e=": false,
+          ":pVV": false,
+          "=\u000e": false,
+          "?\u0000\u0000\u0000": false,
+          "@[": false,
+          "V@": {
+            "": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "\u0000": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "\u0000\u0000": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "\u0000\u0000\u0000": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "\u0003\u001dw": false,
+            "\u000e": false,
+            "\u001apVV": {
+              "__extn": {
+                "fn": "ip",
+                "arg": "0.0.0.0"
+              }
+            },
+            "\u001d\u0003": false,
+            "\u001d@[": false,
+            "\u001d@gffd~": false,
+            "!\u0003": false,
+            "2": {
+              "__extn": {
+                "fn": "ip",
+                "arg": "0.0.0.0"
+              }
+            },
+            ":pVV": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            ":~": false,
+            "=\u000e": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "?": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "?\u0000\u0000\u0000": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "V@": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "V@[\u001d": {
+              "__extn": {
+                "fn": "datetime",
+                "arg": "0000-01-01"
+              }
+            },
+            "[:@[": false,
+            "[@[": false,
+            "^": false,
+            "^$": false
+          },
+          "[": false,
+          "[\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0003@": false,
+          "[@": false,
+          "^": false,
+          "ddddddffd~\u001d": "",
+          "~:\u0000\u001d": false
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}

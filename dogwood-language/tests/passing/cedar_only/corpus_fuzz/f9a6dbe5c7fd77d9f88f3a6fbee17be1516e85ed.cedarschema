@@ -1,0 +1,13 @@
+namespace t::A::A::A::A::A::A::A::A {
+  entity a = {
+    A00?: __cedar::String,
+    R: t::A::A::A::A::A::A::A::A::a
+  };
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

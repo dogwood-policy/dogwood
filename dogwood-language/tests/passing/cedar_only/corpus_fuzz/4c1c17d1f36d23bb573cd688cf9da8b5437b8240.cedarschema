@@ -1,0 +1,13 @@
+entity a = {
+  r?: __cedar::duration,
+  yA: __cedar::Long,
+  yb?: __cedar::String,
+  yd?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

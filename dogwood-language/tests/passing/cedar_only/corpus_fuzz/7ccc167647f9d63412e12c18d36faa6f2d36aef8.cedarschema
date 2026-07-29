@@ -1,0 +1,52 @@
+namespace A {
+  entity B;
+
+  entity D;
+
+  entity I;
+
+  entity N;
+
+  entity Qw2nn1;
+
+  entity f;
+
+  entity h0;
+
+  entity iW12333;
+
+  entity m3;
+
+  entity r;
+
+  entity v;
+
+  entity vR;
+
+  entity z = {
+    D?: __cedar::ipaddr,
+    I?: __cedar::ipaddr,
+    P?: __cedar::ipaddr,
+    _lYlW1Fnnw2nn1?: __cedar::ipaddr,
+    f?: __cedar::ipaddr,
+    g3?: __cedar::ipaddr,
+    h3?: __cedar::ipaddr,
+    iW12333?: __cedar::ipaddr,
+    r?: __cedar::ipaddr,
+    r33?: __cedar::ipaddr,
+    vR?: __cedar::ipaddr
+  };
+
+  action "action" appliesTo {
+    principal: [vR, Qw2nn1, h0, f, m3, v, z, N, D],
+    resource: [v, N, m3, z, r, B, Qw2nn1, vR, iW12333, I, h0],
+    context: {
+      N?: __cedar::String,
+      h0?: __cedar::Bool,
+      m3?: __cedar::String,
+      v?: __cedar::Bool,
+      vR?: __cedar::Bool
+    }
+  };
+}
+

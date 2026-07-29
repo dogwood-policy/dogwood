@@ -1,0 +1,13 @@
+namespace r {
+  @A
+  entity A tags __cedar::Long;
+
+  entity r tags __cedar::Long;
+
+  action "action" appliesTo {
+    principal: [r],
+    resource: [r],
+    context: {}
+  };
+}
+

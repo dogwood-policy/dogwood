@@ -1,0 +1,57 @@
+namespace vR::h4::g04uRS133 {
+  entity N;
+
+  entity d;
+
+  entity d999999999999z033;
+
+  entity f;
+
+  entity h0;
+
+  entity imOKppooHZmnp;
+
+  entity m3;
+
+  entity p2 = {
+    Mtttttttttttttttt?: __cedar::datetime,
+    N?: __cedar::datetime,
+    d99999999z0333SRR?: __cedar::datetime,
+    @_mlttttttttttt
+    h0: __cedar::datetime,
+    m3?: __cedar::datetime,
+    qoqqPbop3qu?: __cedar::datetime,
+    r?: __cedar::datetime,
+    r3333S3?: __cedar::datetime,
+    v?: __cedar::datetime,
+    wpppppppmw99999?: __cedar::datetime,
+    yWS33qqPbop?: __cedar::datetime
+  };
+
+  entity r;
+
+  entity v;
+
+  entity vR;
+
+  action "" in [vR::h4::g04uRS133::Action::"\u{1f}", vR::h4::g04uRS133::Action::"=?", vR::h4::g04uRS133::Action::"\u{3}"] appliesTo {
+    principal: [h0, r, f, imOKppooHZmnp, v, d999999999999z033],
+    resource: [imOKppooHZmnp, d, d999999999999z033, r, h0, m3, N, f, v, p2, vR],
+    context: {}
+  };
+
+  action "\u{3}" appliesTo {
+    principal: [f, d, N, imOKppooHZmnp, h0, m3, vR, d999999999999z033, p2],
+    resource: [N, vR, d, imOKppooHZmnp],
+    context: {}
+  };
+
+  action "\u{1f}" in [vR::h4::g04uRS133::Action::"=?", vR::h4::g04uRS133::Action::"\u{3}"] appliesTo {
+    principal: [m3, imOKppooHZmnp, r, h0, v, d999999999999z033, d, f, N],
+    resource: [m3, imOKppooHZmnp, r, h0, v, d999999999999z033, d, f, N],
+    context: {}
+  };
+
+  action "=?" in [vR::h4::g04uRS133::Action::"\u{3}"];
+}
+

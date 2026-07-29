@@ -1,0 +1,11 @@
+// Scope: resource is Gateway (type constraint).
+// Any Gateway resource is accessible if document matches.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource is Drupe::Gateway
+)
+when guardrails {
+    Strings::Matches(context.input.document, "^[A-Z]+$").matched == true
+};

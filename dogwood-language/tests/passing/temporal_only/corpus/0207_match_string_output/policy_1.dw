@@ -1,0 +1,10 @@
+// Permit Read only if a prior Greet returned the literal "hello".
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Greet"::response{ input.name: context.input.user, output.greeting: "hello" }
+};

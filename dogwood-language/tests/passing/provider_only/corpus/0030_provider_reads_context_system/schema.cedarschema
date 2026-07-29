@@ -1,0 +1,24 @@
+namespace Drupe {
+  type ReadInput = {
+    document: String
+  };
+
+  type SystemContext = {
+    hour: Long
+  };
+
+  entity Gateway;
+
+  entity OAuthUser = {
+    id: String
+  } tags String;
+
+  action "Read" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: ReadInput,
+      system: SystemContext
+    }
+  };
+}

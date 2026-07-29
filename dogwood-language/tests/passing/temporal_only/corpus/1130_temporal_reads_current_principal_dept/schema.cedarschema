@@ -1,0 +1,32 @@
+namespace Drupe {
+  type LoginInput = {
+    user: String
+  };
+
+  type ReadInput = {
+    user: String
+  };
+
+  entity Gateway;
+
+  entity OAuthUser = {
+    id: String,
+    dept: String
+  };
+
+  action "Login" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: LoginInput
+    }
+  };
+
+  action "Read" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: ReadInput
+    }
+  };
+}

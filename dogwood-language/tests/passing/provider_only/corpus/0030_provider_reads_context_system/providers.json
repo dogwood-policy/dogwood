@@ -1,0 +1,18 @@
+{
+  "availableProviders": {
+    "Time::WithinHours": {
+      "argumentTypes": [
+        { "paramType": "integer" }
+      ],
+      "outputType": {
+        "paramType": "record",
+        "fields": { "ok": { "paramType": "bool" } },
+        "required": ["ok"]
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "within_hours.rhai"
+      }
+    }
+  }
+}

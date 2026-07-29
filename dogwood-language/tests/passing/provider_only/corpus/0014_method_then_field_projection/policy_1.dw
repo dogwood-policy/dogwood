@@ -1,0 +1,18 @@
+// Permit Read only when the document's VIOLENCE score is below 50, as
+// decided by the `Content::Classify` information provider (implemented in
+// classify.rhai).
+//
+// This case combines a method with a trailing field projection: the
+// `.classify()` method runs eagerly in Rhai (it returns the base record
+// unchanged), and the `.violence` field access AFTER the method is plain
+// native Cedar over the pipeline's result. Because `violence` is a Long,
+// the comparison uses the bare `<` operator.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Content::Classify(context.input.document).classify().violence < 50
+};

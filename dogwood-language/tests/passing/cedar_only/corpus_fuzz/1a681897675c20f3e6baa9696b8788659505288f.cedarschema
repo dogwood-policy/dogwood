@@ -1,0 +1,152 @@
+entity A = {
+  F: Set<__cedar::String>
+} tags Set<{
+  @D("")
+  "": __cedar::datetime
+}>;
+
+@r3eaa56
+@y4("")
+entity B tags Set<__cedar::String>;
+
+entity B0083 tags __cedar::duration;
+
+entity E enum ["", "", "", "", ""];
+
+@r("")
+entity M enum ["", "", "", "", "", "", ""];
+
+@r
+@r2l575Raa("")
+@r33RpZ343333l333("")
+entity Mnn tags __cedar::datetime;
+
+@B("")
+@O575RS33654R355c5
+entity P tags {
+  "\u{3}ED\u{4}"?: __cedar::ipaddr,
+  @r("\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}")
+  "+r"?: g3,
+  "["?: __cedar::datetime,
+  "d&"?: Set<g3>
+};
+
+@xaaaa
+entity W tags __cedar::Long;
+
+entity _YlW1Fnnw2nn13 tags __cedar::String;
+
+entity g3 enum ["\0\0\0\0"];
+
+entity g33f333 = {
+  BF4OO90?: __cedar::Bool
+} tags Set<__cedar::datetime>;
+
+@EJaaaaaiz11
+@G3("")
+@r("")
+entity i;
+
+@r3eaa55
+@y4("")
+entity i02 tags Set<__cedar::String>;
+
+entity i4deeeA enum [""];
+
+entity i4deucR enum ["Bool\u{1}\u{f}\u{4}"];
+
+@j("")
+entity iOO = {
+  @F
+  r: __cedar::String,
+  @iOO("")
+  @r("")
+  @r3("")
+  @ri33l("")
+  @z("")
+  vZ3333333p33OO: __cedar::Bool
+} tags v;
+
+entity j tags Set<__cedar::datetime>;
+
+entity neeeAee;
+
+entity neucR30 = {
+  @F
+  r: __cedar::String,
+  @iOO("B")
+  @r
+  @r4("")
+  @ri33l("#")
+  @z("")
+  vZ3333333p33OO: __cedar::Bool
+};
+
+entity p = {
+  Kr333333QQQQQQe?: __cedar::String,
+  kQQQQ?: __cedar::String
+};
+
+entity r tags __cedar::duration;
+
+entity r1Fn enum [""];
+
+entity r3 enum [""];
+
+@A
+@r("S")
+@r3333("ooll")
+@ri33l("#VV")
+@w("1#")
+entity r33 tags v;
+
+entity r33RpZ343333l331 enum ["", "", "", "", "", "", "", ""];
+
+@r
+@r2l575Raa("")
+entity ri33l tags __cedar::datetime;
+
+entity rm3ukRcRpZ enum [""];
+
+entity rm3ukucR30 tags __cedar::datetime;
+
+@E
+@P
+@r2l575RS3("")
+entity v = {
+  H7777777?: __cedar::ipaddr,
+  P?: Set<g3>,
+  r?: __cedar::datetime
+} tags __cedar::datetime;
+
+@iOO("")
+@r3("")
+entity v3 enum ["", "", "", ""];
+
+entity w;
+
+@Cj33333333("")
+@r("")
+@r3333("")
+@r4("")
+@w("")
+entity x tags v;
+
+@j341
+@rm3ukucR30("")
+entity y4 enum ["\0\0\0\0\0\0\0\0\0\0\0"];
+
+entity z enum ["\t\0"];
+
+action "" in [Action::"/", Action::"ttt/ttt", Action::"YYYYYYgYYYYYYY"] appliesTo {
+  principal: [g3],
+  resource: [g3],
+  context: {}
+};
+
+action "/" in [Action::"ttt/ttt", Action::"YYYYYYgYYYYYYY"];
+
+action "YYYYYYgYYYYYYY";
+
+action "ttt/ttt" in [Action::"YYYYYYgYYYYYYY"];
+

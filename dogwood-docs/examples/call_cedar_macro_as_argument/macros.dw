@@ -1,0 +1,17 @@
+// RFC-0061 semantic-versioning macros (lifted verbatim from macros corpus
+// 0036_semver_rfc0061/policy_1.dw): a record-building macro `semver` and a
+// comparing macro `semverGT`. `semver(...)` may be passed as an argument to
+// `semverGT(...)` — the inner calls expand first, then splice in.
+def cedar semver(?major, ?minor, ?patch) {
+    { major: ?major, minor: ?minor, patch: ?patch }
+};
+
+def cedar semverGT(?lhs, ?rhs) {
+    if ?lhs.major == ?rhs.major then
+        if ?lhs.minor == ?rhs.minor then
+            ?lhs.patch > ?rhs.patch
+        else
+            ?lhs.minor > ?rhs.minor
+    else
+        ?lhs.major > ?rhs.major
+};

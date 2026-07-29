@@ -1,0 +1,26 @@
+entity A enum [""];
+
+entity C enum [""];
+
+entity d000333 = {
+  A?: __cedar::String
+};
+
+entity j55r00m3 enum [""];
+
+entity r enum [""];
+
+entity r333 enum [""];
+
+entity r3333 enum [""];
+
+entity u enum [""];
+
+entity v enum [""];
+
+action "action" appliesTo {
+  principal: [d000333],
+  resource: [d000333],
+  context: {}
+};
+

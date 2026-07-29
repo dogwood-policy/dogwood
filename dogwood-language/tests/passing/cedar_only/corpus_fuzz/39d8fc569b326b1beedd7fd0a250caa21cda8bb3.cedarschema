@@ -1,0 +1,36 @@
+namespace A::A {
+  entity a;
+
+  action "" in [A::A::Action::"VV", A::A::Action::":~", A::A::Action::"\u{e}", A::A::Action::"\u{3}", A::A::Action::"w\u{1d}[", A::A::Action::"$", A::A::Action::"r@", A::A::Action::"}", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}", A::A::Action::"[@", A::A::Action::"$=\u{e}p"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      A?: __cedar::String
+    }
+  };
+
+  action "\u{3}" in [A::A::Action::"w\u{1d}[", A::A::Action::"$", A::A::Action::"r@", A::A::Action::"}", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}", A::A::Action::"[@", A::A::Action::"$=\u{e}p"];
+
+  action "\u{e}" in [A::A::Action::"\u{3}", A::A::Action::"w\u{1d}[", A::A::Action::"$", A::A::Action::"r@", A::A::Action::"}", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}", A::A::Action::"[@", A::A::Action::"$=\u{e}p"];
+
+  action "\u{1d}\u{3}" in [A::A::Action::"[@", A::A::Action::"$=\u{e}p"];
+
+  action "$" in [A::A::Action::"r@", A::A::Action::"}", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}", A::A::Action::"[@", A::A::Action::"$=\u{e}p"];
+
+  action "$=\u{e}p";
+
+  action ":~" in [A::A::Action::"\u{e}", A::A::Action::"\u{3}", A::A::Action::"w\u{1d}[", A::A::Action::"$", A::A::Action::"r@", A::A::Action::"}", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}", A::A::Action::"[@", A::A::Action::"$=\u{e}p"];
+
+  action "VV" in [A::A::Action::":~", A::A::Action::"\u{e}", A::A::Action::"\u{3}", A::A::Action::"w\u{1d}[", A::A::Action::"$", A::A::Action::"r@", A::A::Action::"}", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}", A::A::Action::"[@", A::A::Action::"$=\u{e}p"];
+
+  action "[@" in [A::A::Action::"$=\u{e}p"];
+
+  action "^" in [A::A::Action::"\u{1d}\u{3}", A::A::Action::"[@", A::A::Action::"$=\u{e}p"];
+
+  action "r@" in [A::A::Action::"}", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}", A::A::Action::"[@", A::A::Action::"$=\u{e}p"];
+
+  action "w\u{1d}[" in [A::A::Action::"$", A::A::Action::"r@", A::A::Action::"}", A::A::Action::"^", A::A::Action::"\u{1d}\u{3}", A::A::Action::"[@", A::A::Action::"$=\u{e}p"];
+
+  action "}" in [A::A::Action::"^", A::A::Action::"\u{1d}\u{3}", A::A::Action::"[@", A::A::Action::"$=\u{e}p"];
+}
+

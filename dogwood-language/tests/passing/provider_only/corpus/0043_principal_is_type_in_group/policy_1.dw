@@ -1,0 +1,11 @@
+// Scope: principal is OAuthUser in Team (type + group).
+// Only OAuthUsers in the "engineering" team can read.
+
+permit (
+    principal is Drupe::OAuthUser in Drupe::Team::"engineering",
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Strings::Matches(context.input.document, "^[A-Z]+$").matched == true
+};

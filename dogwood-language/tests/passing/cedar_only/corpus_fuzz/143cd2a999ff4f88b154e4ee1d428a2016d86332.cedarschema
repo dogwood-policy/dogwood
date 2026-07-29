@@ -1,0 +1,19 @@
+namespace w {
+  entity a enum ["\0", ""];
+
+  action "" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      N0?: __cedar::String,
+      r?: __cedar::String
+    }
+  };
+
+  action "-----------------" in [w::Action::""] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

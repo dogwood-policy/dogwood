@@ -1,0 +1,11 @@
+// Permit Withdraw if a successful Transfer from the same account
+// happened in the last hour.
+
+permit (
+    principal,
+    action == Drupe::Action::"Withdraw",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Transfer"::response{ input.from_account: context.input.account, output.ok: true }
+};

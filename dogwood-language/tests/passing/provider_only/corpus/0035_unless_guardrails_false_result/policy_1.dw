@@ -1,0 +1,12 @@
+// Edge case: `unless guardrails` where the provider returns false.
+// unless { P == true } means: permit UNLESS P is true → deny when true.
+// When P returns false, the unless doesn't fire → permit stands.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+unless guardrails {
+    Strings::Matches(context.input.document, "^BLOCKED").matched == true
+};

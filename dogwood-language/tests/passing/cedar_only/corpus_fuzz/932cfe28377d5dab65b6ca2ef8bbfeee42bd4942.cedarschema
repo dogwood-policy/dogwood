@@ -1,0 +1,36 @@
+entity a = {
+  @NukRcRpZ34(",")
+  @i("\0\0Wo")
+  @r("4")
+  @r3("")
+  @r3j333377("\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}")
+  @r4("\0\0G")
+  @v("#")
+  A0000: __cedar::Long,
+  B0083?: __cedar::Long,
+  @NukRcRpZ34(",")
+  @i("\0\0Wo")
+  @j("")
+  @r("4")
+  @r3("")
+  @r3j3333OO("W")
+  @r4("\0\0G")
+  @v("#")
+  j: __cedar::Long,
+  @R5So5S
+  @i("\0\0Wo")
+  @r("3")
+  @x3("")
+  r: __cedar::Long,
+  @R5So5S
+  @i("\0\0Wo")
+  @r3333("3")
+  w: __cedar::String
+} tags a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

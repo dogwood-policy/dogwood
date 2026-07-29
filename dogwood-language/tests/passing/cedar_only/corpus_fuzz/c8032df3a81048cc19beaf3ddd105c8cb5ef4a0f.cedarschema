@@ -1,0 +1,8 @@
+entity A000000 enum [""];
+
+action "action" appliesTo {
+  principal: [A000000],
+  resource: [A000000],
+  context: {}
+};
+

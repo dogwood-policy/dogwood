@@ -1,0 +1,39 @@
+entity a = {
+  A0?: {
+    ""?: __cedar::String,
+    @A0
+    @A1S0000002m1RRR("\u{1}")
+    @B00("")
+    @C("")
+    @GYbb
+    @_M11111n("u3VV\0\0\u{5}")
+    @m3("")
+    @r("")
+    @r000000
+    @r33("Ac")
+    @vR("")
+    @x("")
+    @x2aR100RRw3
+    "\u{1}"?: __cedar::String,
+    @A0
+    @A1S0000002m1RRR("\u{1}")
+    @Apwn3aw1M("")
+    @B00("")
+    @f1111ncs("VV\0\0\u{5}")
+    @hN("\0\0")
+    @m3("")
+    @m333
+    @r("")
+    @r33("Ac")
+    @vR("")
+    @x("")
+    "A\0\u{1}[\0\0\0\0\0\0\u{1}": Set<Set<Set<__cedar::Long>>>
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

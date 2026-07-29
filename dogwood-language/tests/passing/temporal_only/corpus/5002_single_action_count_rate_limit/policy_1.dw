@@ -1,0 +1,22 @@
+// Single-action schema, aggregation flavor: a rate limit where the counted
+// history predicate IS the decision action. "Permit a transfer only if this
+// user has made fewer than 3 transfers in the last hour (including this
+// one)." The count uses the 0179 shape (`formerly ... && tp(t)` inside the
+// `where`) so it counts history, and `formerly` inclusivity means the
+// current transfer counts toward its own limit.
+//
+// Trace: alice(@0), alice(@10), alice(@20), bob(@30), alice(@40).
+// tp0: alice count 1  -> true
+// tp1: alice count 2  -> true
+// tp2: alice count 3  -> false
+// tp3: bob   count 1  -> true  (user pin excludes alice's transfers)
+// tp4: alice count 4  -> false
+
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    exists (n: Long). ((count for (t: Timepoint). where (formerly within 1h (Drupe::Action::"Transfer"::request{ input.user: context.input.user } && tp(t)))) == n && n < 3)
+};

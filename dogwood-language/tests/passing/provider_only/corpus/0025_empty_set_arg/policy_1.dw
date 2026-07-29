@@ -1,0 +1,11 @@
+// Edge case: provider receives an empty set [] as an argument.
+// The Rhai script should handle an empty array gracefully.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Tags::Count(context.input.document, []).count == 0
+};

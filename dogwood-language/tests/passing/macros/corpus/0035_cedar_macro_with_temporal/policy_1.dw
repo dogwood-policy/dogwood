@@ -1,0 +1,23 @@
+// Cedar macro called mid-expression alongside a temporal { … } leaf.
+//
+// `level_ok(?n)` is a cedar boolean; the policy conjoins its
+// expansion with a temporal block. This exercises the
+// mid-expression marker path (Phase 2b earlier) and the macro
+// expansion pass together: the cedar macro must expand BEFORE the
+// expression is lowered (which hoists the temporal leaf).
+
+def cedar level_ok(?n) {
+    ?n >= 2
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when {
+    level_ok(context.input.level)
+    && temporal {
+        formerly within 1h Drupe::Action::"Login"::request{ input.user: _, input.server: context.input.server }
+    }
+};

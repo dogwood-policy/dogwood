@@ -1,0 +1,30 @@
+// `count_unresolved_transfer_within(?w)` counts distinct Transfer requests
+// in the last `?w` that have NO matching resolution — i.e. still-pending
+// transfers. It correlates a request with its resolution by the shared
+// `requestId`, and expresses "no matching resolution" with a negated
+// inner `exists`:
+//
+//   count for ($q: String).
+//     where ( formerly within ?w Transfer::request{ requestId: $q }
+//             && !exists ($r: Timepoint).
+//                   formerly within ?w (Transfer::response{ requestId: $q } && tp($r)) )
+//
+// The left conjunct enumerates each Transfer request, binding the uid `$q`
+// (uid varies per request, so it plays the per-occurrence role). The right
+// conjunct keeps a row only when NO past in-window resolution carries that
+// same uid — the `!exists`/negation the correlation needs. `tp($r)`
+// range-restricts the inner existential (the §7-safe negated-exists shape).
+//
+// This policy permits the Alert when >= 2 transfers are still unresolved.
+
+def temporal count_unresolved_transfer_within(?w) {
+    count for ($q: String). where (formerly within ?w Drupe::Action::"Transfer"::request{ requestId: $q } && !exists ($r: Timepoint). formerly within ?w (Drupe::Action::"Transfer"::response{ requestId: $q } && tp($r)))
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (n: Long). ((count_unresolved_transfer_within(1h)) == n && n >= 2)};

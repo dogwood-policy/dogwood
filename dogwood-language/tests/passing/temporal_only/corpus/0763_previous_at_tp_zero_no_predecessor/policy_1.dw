@@ -1,0 +1,17 @@
+// Probe: `previous` at the very first time point of the trace.
+//
+// At time-point 0 there is no predecessor, so `previous` must be false
+// regardless of what events occur at tp 0. The single Read event in
+// the trace is itself at tp 0; it is also a Login candidate's
+// "current tp", not a predecessor.
+//
+// Expectation (Lean): no permits fire.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    previous within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

@@ -1,0 +1,21 @@
+// Edge: 0 < count ... with both permit and forbid. Proves that literal-on-left
+// aggregate comparison works in forbid too (forbid overrides permit).
+// Both fire at every time point → forbid overrides → false (deny).
+
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    0 < count for (t: Timepoint). where (formerly within 1h Drupe::Action::"Transfer"::request{ input.user: context.input.user } && tp(t))
+};
+
+forbid (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    0 < count for (t: Timepoint). where (formerly within 1h Drupe::Action::"Transfer"::request{ input.user: context.input.user } && tp(t))
+};

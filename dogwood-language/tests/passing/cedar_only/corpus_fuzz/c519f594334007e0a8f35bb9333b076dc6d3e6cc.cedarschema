@@ -1,0 +1,13 @@
+entity a tags {
+  ""?: __cedar::datetime,
+  "\0": __cedar::Bool,
+  "\u{16}i~": __cedar::Bool,
+  "\u{18}\u{18}4\u{18}"?: __cedar::Bool
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

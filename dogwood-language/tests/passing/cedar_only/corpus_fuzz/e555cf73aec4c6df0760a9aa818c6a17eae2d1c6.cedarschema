@@ -1,0 +1,10 @@
+namespace A0000000000000000::A::A::_2k {
+  entity a enum [""];
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

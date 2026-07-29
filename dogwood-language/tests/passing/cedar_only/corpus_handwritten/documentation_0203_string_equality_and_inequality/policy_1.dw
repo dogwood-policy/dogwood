@@ -1,0 +1,13 @@
+// Permit GetStockInfo for any ticker except a single blocked one.
+// New idea: string equality with `==` and `!=`. The `when` body
+// compares `context.input.stock` (a String input) against a
+// string literal, which must be written in double quotes.
+
+permit (
+    principal,
+    action == Drupe::Action::"GetStockInfo",
+    resource
+)
+when {
+    context.input.stock != "BLOCKED"
+};

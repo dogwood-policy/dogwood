@@ -1,0 +1,10 @@
+namespace V::S::SI::r {
+  entity a;
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

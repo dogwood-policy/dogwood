@@ -1,0 +1,23 @@
+// Macro-expanded aggregate with context.input.* — permit only.
+//
+// Tests that a macro-expanded count aggregate referencing `context.input.user`
+// correctly counts distinct time points when `tp($t)` is inside `formerly`.
+//
+// With permit-only:
+//   tp0: count=1, 1>=3=false → no permit → false (deny-by-default)
+//   tp1: count=2, 2>=3=false → same → false
+//   tp2: count=3, 3>=3=true → permit fires → true (allow)
+//   tp3: count=4, 4>=3=true → permit fires → true (allow)
+
+def temporal transfer_count(?w) {
+    count for ($t: Timepoint). where (formerly within ?w (Drupe::Action::"Transfer"::request{ input.user: context.input.user } && tp($t)))
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    exists (n: Long). ((transfer_count(1h)) == n && n >= 3)
+};

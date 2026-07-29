@@ -1,0 +1,474 @@
+{
+  "policies": "corpus-tests/40cc648d5c4a830640f3dd2588b89c8dbed7b516.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/40cc648d5c4a830640f3dd2588b89c8dbed7b516.entities.json",
+  "schema": "corpus-tests/40cc648d5c4a830640f3dd2588b89c8dbed7b516.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": "",
+          "\u0000": "",
+          "\u0003\u001dw": "",
+          "\u001d": {
+            "": "",
+            "\u001d": {
+              "\u0000\u0000": "",
+              "\u001d": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              }
+            },
+            "\u001d@[": "",
+            ":~": "",
+            "?\u0000\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\b\b\b\b\b\b\b\b\b\b\b\u0000": "",
+            "V@": "",
+            "d~\u001d": ""
+          },
+          "\u001d\u0003": "",
+          "\u001d@[": "",
+          "$": "",
+          ":pVV": "",
+          ":~": "",
+          "=\u000e": "",
+          "?\u0000\u0000\u0000": "",
+          "V@": "",
+          "V@[\u001d": "",
+          "[@[": "",
+          "d~\u001d": "",
+          "r@\u0000\u0000": "",
+          "~": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": "",
+          "\u0000": "",
+          "\u0003\u001dw": "",
+          "\u001d": {
+            "": "",
+            "\u001d": {
+              "\u0000\u0000": "",
+              "\u001d": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              }
+            },
+            "\u001d@[": "",
+            ":~": "",
+            "?\u0000\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\b\b\b\b\b\b\b\b\b\b\b\u0000": "",
+            "V@": "",
+            "d~\u001d": ""
+          },
+          "\u001d\u0003": "",
+          "\u001d@[": "",
+          "$": "",
+          ":pVV": "",
+          ":~": "",
+          "=\u000e": "",
+          "?\u0000\u0000\u0000": "",
+          "V@": "",
+          "V@[\u001d": "",
+          "[@[": "",
+          "d~\u001d": "",
+          "r@\u0000\u0000": "",
+          "~": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": "",
+          "\u0000": "",
+          "\u0003\u001dw": "",
+          "\u001d": {
+            "": "",
+            "\u001d": {
+              "\u0000\u0000": "",
+              "\u001d": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              }
+            },
+            "\u001d@[": "",
+            ":~": "",
+            "?\u0000\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\b\b\b\b\b\b\b\b\b\b\b\u0000": "",
+            "V@": "",
+            "d~\u001d": ""
+          },
+          "\u001d\u0003": "",
+          "\u001d@[": "",
+          "$": "",
+          ":pVV": "",
+          ":~": "",
+          "=\u000e": "",
+          "?\u0000\u0000\u0000": "",
+          "V@": "",
+          "V@[\u001d": "",
+          "[@[": "",
+          "d~\u001d": "",
+          "r@\u0000\u0000": "",
+          "~": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": "",
+          "\u0000": "",
+          "\u0003\u001dw": "",
+          "\u001d": {
+            "": "",
+            "\u001d": {
+              "\u0000\u0000": "",
+              "\u001d": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              }
+            },
+            "\u001d@[": "",
+            ":~": "",
+            "?\u0000\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\b\b\b\b\b\b\b\b\b\b\b\u0000": "",
+            "V@": "",
+            "d~\u001d": ""
+          },
+          "\u001d\u0003": "",
+          "\u001d@[": "",
+          "$": "",
+          ":pVV": "",
+          ":~": "",
+          "=\u000e": "",
+          "?\u0000\u0000\u0000": "",
+          "V@": "",
+          "V@[\u001d": "",
+          "[@[": "",
+          "d~\u001d": "",
+          "r@\u0000\u0000": "",
+          "~": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": "",
+          "\u0000": "",
+          "\u0003\u001dw": "",
+          "\u001d": {
+            "": "",
+            "\u001d": {
+              "\u0000\u0000": "",
+              "\u001d": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              }
+            },
+            "\u001d@[": "",
+            ":~": "",
+            "?\u0000\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\b\b\b\b\b\b\b\b\b\b\b\u0000": "",
+            "V@": "",
+            "d~\u001d": ""
+          },
+          "\u001d\u0003": "",
+          "\u001d@[": "",
+          "$": "",
+          ":pVV": "",
+          ":~": "",
+          "=\u000e": "",
+          "?\u0000\u0000\u0000": "",
+          "V@": "",
+          "V@[\u001d": "",
+          "[@[": "",
+          "d~\u001d": "",
+          "r@\u0000\u0000": "",
+          "~": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": "",
+          "\u0000": "",
+          "\u0003\u001dw": "",
+          "\u001d": {
+            "": "",
+            "\u001d": {
+              "\u0000\u0000": "",
+              "\u001d": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              }
+            },
+            "\u001d@[": "",
+            ":~": "",
+            "?\u0000\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\b\b\b\b\b\b\b\b\b\b\b\u0000": "",
+            "V@": "",
+            "d~\u001d": ""
+          },
+          "\u001d\u0003": "",
+          "\u001d@[": "",
+          "$": "",
+          ":pVV": "",
+          ":~": "",
+          "=\u000e": "",
+          "?\u0000\u0000\u0000": "",
+          "V@": "",
+          "V@[\u001d": "",
+          "[@[": "",
+          "d~\u001d": "",
+          "r@\u0000\u0000": "",
+          "~": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": "",
+          "\u0000": "",
+          "\u0003\u001dw": "",
+          "\u001d": {
+            "": "",
+            "\u001d": {
+              "\u0000\u0000": "",
+              "\u001d": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              }
+            },
+            "\u001d@[": "",
+            ":~": "",
+            "?\u0000\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\b\b\b\b\b\b\b\b\b\b\b\u0000": "",
+            "V@": "",
+            "d~\u001d": ""
+          },
+          "\u001d\u0003": "",
+          "\u001d@[": "",
+          "$": "",
+          ":pVV": "",
+          ":~": "",
+          "=\u000e": "",
+          "?\u0000\u0000\u0000": "",
+          "V@": "",
+          "V@[\u001d": "",
+          "[@[": "",
+          "d~\u001d": "",
+          "r@\u0000\u0000": "",
+          "~": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "r": {
+          "": "",
+          "\u0000": "",
+          "\u0003\u001dw": "",
+          "\u001d": {
+            "": "",
+            "\u001d": {
+              "\u0000\u0000": "",
+              "\u001d": {
+                "__entity": {
+                  "type": "a",
+                  "id": ""
+                }
+              }
+            },
+            "\u001d@[": "",
+            ":~": "",
+            "?\u0000\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\u0002\u0000\u0000\u0000\u0000\u0000\u0000\u0000\b\b\b\b\b\b\b\b\b\b\b\u0000": "",
+            "V@": "",
+            "d~\u001d": ""
+          },
+          "\u001d\u0003": "",
+          "\u001d@[": "",
+          "$": "",
+          ":pVV": "",
+          ":~": "",
+          "=\u000e": "",
+          "?\u0000\u0000\u0000": "",
+          "V@": "",
+          "V@[\u001d": "",
+          "[@[": "",
+          "d~\u001d": "",
+          "r@\u0000\u0000": "",
+          "~": ""
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

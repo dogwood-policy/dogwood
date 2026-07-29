@@ -1,0 +1,22 @@
+// Rule order: permit then forbid. Verdicts must depend only on the
+// SET of rules, not their textual order. Compare with policy_2 where
+// the order is reversed; expected_1.out and expected_2.out must be
+// identical.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};
+
+forbid (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Logout"::request{ input.user: context.input.user }
+};

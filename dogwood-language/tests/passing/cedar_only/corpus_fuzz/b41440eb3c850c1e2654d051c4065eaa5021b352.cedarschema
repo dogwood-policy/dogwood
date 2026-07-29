@@ -1,0 +1,11 @@
+entity a tags a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @nVSg200RR0
+    M: Set<a>
+  }
+};
+

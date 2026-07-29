@@ -1,0 +1,20 @@
+entity a = {
+  Y?: __cedar::String
+};
+
+action "e\u{16}" in [Action::"pVVan 0"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    F?: __cedar::Bool
+  }
+};
+
+action "pVVan 0" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    rDppHS44?: __cedar::Bool
+  }
+};
+

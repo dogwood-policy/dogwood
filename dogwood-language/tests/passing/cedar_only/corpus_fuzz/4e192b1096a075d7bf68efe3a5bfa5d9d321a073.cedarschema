@@ -1,0 +1,30 @@
+@c("")
+@g("")
+@l("\0\0\0")
+@r("")
+@r33("")
+@r33333333333l3("\u{13}")
+@r3333333333zzz("")
+entity a enum [""];
+
+action "" in [Action::"\u{1}", Action::"/", Action::"\u{13}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: __cedar::String,
+    c?: __cedar::String,
+    r?: __cedar::String,
+    @T3333333340003("")
+    @c("")
+    @czzzzznzzzzzzzzzz("")
+    @r("/")
+    r3: __cedar::decimal
+  }
+};
+
+action "\u{1}" in [Action::"/", Action::"\u{13}"];
+
+action "\u{13}";
+
+action "/" in [Action::"\u{13}"];
+

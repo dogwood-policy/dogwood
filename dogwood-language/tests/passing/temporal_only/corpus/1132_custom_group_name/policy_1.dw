@@ -1,0 +1,23 @@
+// A custom event-schema group `meta` (NOT `input`/`output`) carries a
+// `region` member. A Read is permitted only if the SAME user formerly
+// logged in from region "us-east", matched by a LITERAL on the nested path
+// `meta.region`.
+//
+// The interpreter descends `meta.region` via `field_path` exactly like
+// `input.user` — it has no privileged set of group names. A differential
+// SQL backend that hardcodes `input`/`output` as the only field groups
+// would fail to serialize / read `meta.region`, so the compiled filter
+// would see NULL and wrongly deny.
+//
+// Controls:
+//   trace_1: past Login with meta.region "us-east" (matches) -> PERMITTED.
+//   trace_2: past Login with meta.region "eu-west" (does not match) -> NOT
+//            permitted (the literal genuinely constrains the match).
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user, meta.region: "us-east" }
+};

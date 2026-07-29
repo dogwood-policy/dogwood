@@ -1,0 +1,186 @@
+{
+  "policies": "corpus-tests/1d968f49b17b5e43392df12adc56bab8a072484b.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/1d968f49b17b5e43392df12adc56bab8a072484b.entities.json",
+  "schema": "corpus-tests/1d968f49b17b5e43392df12adc56bab8a072484b.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "gM::f::A",
+        "id": "\u0000\u0000"
+      },
+      "action": {
+        "type": "gM::f::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "gM::f::A",
+        "id": "\u0000\u0000"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "gM::f::A",
+        "id": "\u0000\u0000"
+      },
+      "action": {
+        "type": "gM::f::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "gM::f::A",
+        "id": "\u0000\u0000"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "gM::f::A",
+        "id": "\u0000\u0000"
+      },
+      "action": {
+        "type": "gM::f::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "gM::f::A",
+        "id": "\u0000\u0000"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "gM::f::A",
+        "id": "\u0000\u0000"
+      },
+      "action": {
+        "type": "gM::f::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "gM::f::A",
+        "id": "\u0000\u0000"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "gM::f::A",
+        "id": "\u0000\u0000"
+      },
+      "action": {
+        "type": "gM::f::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "gM::f::A",
+        "id": "\u0000\u0000"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "gM::f::A",
+        "id": "\u0000\u0000"
+      },
+      "action": {
+        "type": "gM::f::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "gM::f::A",
+        "id": "\u0000\u0000"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "gM::f::A",
+        "id": "\u0000\u0000"
+      },
+      "action": {
+        "type": "gM::f::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "gM::f::A",
+        "id": "\u0000\u0000"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "gM::f::A",
+        "id": "\u0000\u0000"
+      },
+      "action": {
+        "type": "gM::f::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "gM::f::A",
+        "id": "\u0000\u0000"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

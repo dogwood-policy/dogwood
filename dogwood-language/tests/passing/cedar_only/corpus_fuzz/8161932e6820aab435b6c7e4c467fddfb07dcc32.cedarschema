@@ -1,0 +1,17 @@
+entity a;
+
+action "" in [Action::"[&:\u{1d}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @FcR3SSSSSSSSSSS
+    h: a
+  }
+};
+
+action "[&:\u{1d}" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

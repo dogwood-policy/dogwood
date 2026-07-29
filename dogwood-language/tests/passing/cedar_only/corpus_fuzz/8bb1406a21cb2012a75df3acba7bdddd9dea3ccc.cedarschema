@@ -1,0 +1,12 @@
+entity a;
+
+@P
+@r("")
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    j?: Set<a>
+  }
+};
+

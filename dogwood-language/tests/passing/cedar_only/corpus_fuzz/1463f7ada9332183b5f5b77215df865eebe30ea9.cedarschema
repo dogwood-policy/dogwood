@@ -1,0 +1,46 @@
+entity a tags __cedar::String;
+
+action "" in [Action::":~", Action::"\u{1d}@[", Action::"\u{3}\u{1d}w", Action::"$", Action::"=\u{e}", Action::"\u{1d}\u{3}", Action::"[@[", Action::"\u{1d}@gffd~", Action::"\u{e}", Action::"^", Action::"\u{1c}\u{3}", Action::"[@", Action::"$="] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    m?: __cedar::String,
+    vbbb?: __cedar::String
+  }
+};
+
+action "\u{3}\u{1d}w" in [Action::"$", Action::"=\u{e}", Action::"\u{1d}\u{3}", Action::"[@[", Action::"\u{1d}@gffd~", Action::"\u{e}", Action::"^", Action::"\u{1c}\u{3}", Action::"[@", Action::"$="];
+
+action "\u{e}" in [Action::"^", Action::"\u{1c}\u{3}", Action::"[@", Action::"$="];
+
+action "\u{1c}\u{3}" in [Action::"[@", Action::"$="];
+
+action "\u{1d}\u{3}" in [Action::"[@[", Action::"\u{1d}@gffd~", Action::"\u{e}", Action::"^", Action::"\u{1c}\u{3}", Action::"[@", Action::"$="];
+
+action "\u{1d}@[" in [Action::"\u{3}\u{1d}w", Action::"$", Action::"=\u{e}", Action::"\u{1d}\u{3}", Action::"[@[", Action::"\u{1d}@gffd~", Action::"\u{e}", Action::"^", Action::"\u{1c}\u{3}", Action::"[@", Action::"$="];
+
+action "\u{1d}@gffd~" in [Action::"\u{e}", Action::"^", Action::"\u{1c}\u{3}", Action::"[@", Action::"$="];
+
+action "$" in [Action::"=\u{e}", Action::"\u{1d}\u{3}", Action::"[@[", Action::"\u{1d}@gffd~", Action::"\u{e}", Action::"^", Action::"\u{1c}\u{3}", Action::"[@", Action::"$="];
+
+action "$=";
+
+action ":~" in [Action::"\u{1d}@[", Action::"\u{3}\u{1d}w", Action::"$", Action::"=\u{e}", Action::"\u{1d}\u{3}", Action::"[@[", Action::"\u{1d}@gffd~", Action::"\u{e}", Action::"^", Action::"\u{1c}\u{3}", Action::"[@", Action::"$="] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    U3T1S33u?: __cedar::String,
+    k?: __cedar::String,
+    nddd1R?: __cedar::String,
+    nddddd?: __cedar::String
+  }
+};
+
+action "=\u{e}" in [Action::"\u{1d}\u{3}", Action::"[@[", Action::"\u{1d}@gffd~", Action::"\u{e}", Action::"^", Action::"\u{1c}\u{3}", Action::"[@", Action::"$="];
+
+action "[@" in [Action::"$="];
+
+action "[@[" in [Action::"\u{1d}@gffd~", Action::"\u{e}", Action::"^", Action::"\u{1c}\u{3}", Action::"[@", Action::"$="];
+
+action "^" in [Action::"\u{1c}\u{3}", Action::"[@", Action::"$="];
+

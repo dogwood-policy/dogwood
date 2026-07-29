@@ -1,0 +1,10 @@
+entity _300000 enum [""];
+
+entity r333mmj enum [""];
+
+action "action" appliesTo {
+  principal: [r333mmj],
+  resource: [r333mmj],
+  context: {}
+};
+

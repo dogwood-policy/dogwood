@@ -1,0 +1,66 @@
+@NRN
+@m("\u{1d}")
+entity a;
+
+action "" in [Action::"V", Action::"&[\u{1d}:p", Action::"&[\u{1d}", Action::":"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{e}VV" in [Action::"&[\u{1d}:p", Action::"&[\u{1d}", Action::"+w", Action::":"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+@LR
+action "\u{e}VV*" in [Action::"\u{e}VV", Action::"&[\u{1d}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "&[\u{1d}" in [Action::"+w", Action::"V$*"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "&[\u{1d}:p" in [Action::"&[\u{1d}", Action::"+w", Action::"V$*", Action::":"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "+w" in [Action::":"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action ":" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action ":p" in [Action::"&[\u{1d}:p", Action::"&[\u{1d}", Action::"+w", Action::"V$*", Action::":"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "V" in [Action::":p", Action::"&[\u{1d}:p", Action::"&[\u{1d}", Action::"+w", Action::"V$*", Action::":"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+@O
+action "V$*" in [Action::":"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

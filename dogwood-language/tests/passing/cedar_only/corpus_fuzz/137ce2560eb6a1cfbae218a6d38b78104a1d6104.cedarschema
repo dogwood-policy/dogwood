@@ -1,0 +1,12 @@
+entity l tags __cedar::Bool;
+
+entity r tags v;
+
+entity v enum [""];
+
+action "action" appliesTo {
+  principal: [l, v, r],
+  resource: [l, v, r],
+  context: {}
+};
+

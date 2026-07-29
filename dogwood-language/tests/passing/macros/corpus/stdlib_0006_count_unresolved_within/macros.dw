@@ -1,0 +1,21 @@
+// Schema-conditional stdlib macros: require an event schema where a
+// `::request` and its matching `::response` share a `requestId` (the
+// request/resolution convention). "Unresolved" = a request whose uid has no
+// matching resolution in the window. `sum_unresolved_within` reads the summed
+// value from whatever field the CALLER injects onto `?req` at the call site
+// (e.g. `Transfer::request{ input.amount: a }`), so the value field is not
+// baked into the macro.
+
+def temporal count_unresolved_within(?w, ?req, ?res) {
+    count for ($q: String). where (
+        formerly within ?w ?req{ requestId: $q }
+        && !exists ($r: Timepoint). formerly within ?w (?res{ requestId: $q } && tp($r))
+    )
+};
+
+def temporal sum_unresolved_within(?a, ?w, ?req, ?res) {
+    sum ?a for (?a: Long), ($q: String). where (
+        formerly within ?w ?req{ requestId: $q }
+        && !exists ($r: Timepoint). formerly within ?w (?res{ requestId: $q } && tp($r))
+    )
+};

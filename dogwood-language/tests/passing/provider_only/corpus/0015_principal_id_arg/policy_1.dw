@@ -1,0 +1,24 @@
+// Permit Read only when the requesting principal is on the provider's
+// allowlist, as decided by the `Access::Allowed` information provider
+// (implemented in allowed.rhai).
+//
+// The novel shape here is the *argument*: the provider is passed
+// `principal.id` — an attribute path rooted at `principal`, not `context`.
+// Provider arguments are resolved pre-Cedar against the request event, and
+// `principal` / `resource` roots resolve to the request scope entity (a
+// trailing `.id` / `.type` projects the entity's id / type). This is the
+// the temporal-logic argument rule (context / principal / resource paths + literals +
+// sets); before the provider-path unification only `context.<field>` paths
+// were accepted.
+//
+// `Access::Allowed(principal.id).allowed == true` — the provider returns
+// `{ allowed: bool }`; `alice` is allowlisted, `mallory` is not.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Access::Allowed(principal.id).allowed == true
+};

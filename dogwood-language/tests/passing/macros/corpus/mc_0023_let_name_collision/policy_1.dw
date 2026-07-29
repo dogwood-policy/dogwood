@@ -1,0 +1,26 @@
+// `let_` result-name collision is SAFE because the scopes are disjoint.
+// The caller names the result `t` — the SAME identifier the aggregate uses
+// for its `for`-binder. This is fine: `let_(?n, ?A, ?B)` expands to
+// `exists (?n: Long). (?A == ?n && ?B)`, and the result `?n = t` scopes
+// over the BODY (`?B`), not over the aggregate `?A`. The aggregate's own
+// `t` (a Timepoint) lives and dies inside `count for (t: Timepoint). where
+// (…)`, so the two `t`s never interact:
+//
+//   exists (t: Long). ((count for (t: Timepoint). where (…)) == t && t == 1)
+//                ^ Long, scopes over `== t && t == 1`
+//                                 ^ Timepoint, scoped to the count's parens
+//
+// This mirrors mc_0004 (exactly one Login in the window) — the verdict MUST
+// match (`@2: true`), proving the colliding name changes nothing.
+
+def temporal let_(?n, ?A, ?B) {
+    exists (?n: Long). (?A == ?n && ?B)
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    let_(t, count for (t: Timepoint). where (formerly within 1h (Drupe::Action::"Login"::request{ input.user: _, input.server: context.input.server } && tp(t))), t == 1)};

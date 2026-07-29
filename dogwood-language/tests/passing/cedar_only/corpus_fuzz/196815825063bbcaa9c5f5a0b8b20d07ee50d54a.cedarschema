@@ -1,0 +1,23 @@
+entity a = {
+  G: __cedar::Long,
+  M?: __cedar::String,
+  @VLLLL("\u{15}\u{15}\u{15}\u{15}\u{15}\u{15}\u{15}\u{15}\u{15}")
+  R0003: __cedar::decimal,
+  @r33("")
+  j: __cedar::decimal,
+  p: __cedar::decimal,
+  r: a,
+  r3: __cedar::decimal,
+  @E
+  r333l?: __cedar::decimal,
+  v3: Set<__cedar::Long>,
+  wmmmmmmmmmmmjlR?: __cedar::String,
+  z?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,10 @@
+entity Aif;
+
+entity K tags {};
+
+action "action" appliesTo {
+  principal: [K],
+  resource: [K],
+  context: {}
+};
+

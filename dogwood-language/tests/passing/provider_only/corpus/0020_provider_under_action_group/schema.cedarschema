@@ -1,0 +1,39 @@
+namespace Drupe {
+  type ReadInput = {
+    document: String
+  };
+  type PostInput = {
+    document: String
+  };
+
+  entity Gateway;
+
+  entity OAuthUser = {
+    id: String
+  } tags String;
+
+  // An action group hierarchy: `CallTool` is a parent group; `Read` and
+  // `Post` are both members of it. A policy scoped `action in [CallTool]`
+  // must reach both leaf actions.
+  action "CallTool" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: { }
+  };
+
+  action "Read" in [Action::"CallTool"] appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: ReadInput
+    }
+  };
+
+  action "Post" in [Action::"CallTool"] appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: PostInput
+    }
+  };
+}

@@ -1,0 +1,24 @@
+namespace A::A {
+  entity a;
+
+  action "" in [A::A::Action::"\u{1}<", A::A::Action::"r@", A::A::Action::"@", A::A::Action::"}}}}}}}}}}B", A::A::Action::"}}}", A::A::Action::"}})}}", A::A::Action::"r}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{1}<" in [A::A::Action::"r@", A::A::Action::"@", A::A::Action::"}}}}}}}}}}B", A::A::Action::"}}}", A::A::Action::"}})}}", A::A::Action::"r}"];
+
+  action "@" in [A::A::Action::"}}}}}}}}}}B", A::A::Action::"}}}", A::A::Action::"}})}}", A::A::Action::"r}"];
+
+  action "r@" in [A::A::Action::"@", A::A::Action::"}}}}}}}}}}B", A::A::Action::"}}}", A::A::Action::"}})}}", A::A::Action::"r}"];
+
+  action "r}";
+
+  action "}})}}" in [A::A::Action::"r}"];
+
+  action "}}}" in [A::A::Action::"}})}}", A::A::Action::"r}"];
+
+  action "}}}}}}}}}}B" in [A::A::Action::"}}}", A::A::Action::"}})}}", A::A::Action::"r}"];
+}
+

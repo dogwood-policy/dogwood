@@ -1,0 +1,222 @@
+{
+  "policies": "corpus-tests/b04492e19e02f5a382163795b935c9267b702001.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/b04492e19e02f5a382163795b935c9267b702001.entities.json",
+  "schema": "corpus-tests/b04492e19e02f5a382163795b935c9267b702001.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "a",
+        "id": "A"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "A"
+      },
+      "context": {
+        "A": {
+          "33Debian '\u0000\u0000\u0000r3333": false
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "a",
+        "id": "A"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "A"
+      },
+      "context": {
+        "A": {
+          "": {
+            "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!0000!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00180000!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n,": false,
+            "!!!!b0000000000!!!!!!!!!!000000000": false
+          },
+          "33Debian '\u0000\u0000\u0000r3333": false
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "a",
+        "id": "A"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "A"
+      },
+      "context": {
+        "A": {
+          "": {
+            "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!0000!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00180000!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n,": false,
+            "!!!!b0000000000!!!!!!!!!!000000000": false
+          },
+          "33Debian '\u0000\u0000\u0000r3333": false
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "a",
+        "id": "A"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "A"
+      },
+      "context": {
+        "A": {
+          "": {
+            "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!0000!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00180000!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n,": false,
+            "!!!!b0000000000!!!!!!!!!!000000000": false
+          },
+          "33Debian '\u0000\u0000\u0000r3333": false
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "a",
+        "id": "A"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "A"
+      },
+      "context": {
+        "A": {
+          "": {
+            "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!0000!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00180000!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n,": false,
+            "!!!!b0000000000!!!!!!!!!!000000000": false
+          },
+          "33Debian '\u0000\u0000\u0000r3333": false
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "a",
+        "id": "A"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "A"
+      },
+      "context": {
+        "A": {
+          "": {
+            "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!0000!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u00180000!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n,": false,
+            "!!!!b0000000000!!!!!!!!!!000000000": false
+          },
+          "33Debian '\u0000\u0000\u0000r3333": false
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "a",
+        "id": "A"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "A"
+      },
+      "context": {
+        "A": {
+          "33Debian '\u0000\u0000\u0000r3333": true
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "a",
+        "id": "A"
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": "A"
+      },
+      "context": {
+        "A": {
+          "33Debian '\u0000\u0000\u0000r3333": true
+        }
+      },
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}

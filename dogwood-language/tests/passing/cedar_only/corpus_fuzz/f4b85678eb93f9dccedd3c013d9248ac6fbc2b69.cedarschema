@@ -1,0 +1,14 @@
+entity m enum ["\0", ""];
+
+entity q43RRRh000_ enum [""];
+
+entity r enum ["-", ""];
+
+entity vR enum ["\u{1f}", ""];
+
+action "action" appliesTo {
+  principal: [vR],
+  resource: [vR],
+  context: {}
+};
+

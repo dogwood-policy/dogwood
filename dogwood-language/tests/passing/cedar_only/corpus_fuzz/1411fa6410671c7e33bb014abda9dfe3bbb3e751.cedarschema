@@ -1,0 +1,35 @@
+@A10S("H\t\u{1} ")
+@B("i")
+@B333("")
+@B33344
+@B3991W("")
+@EW1Fnnw2nn133("B")
+@P("bian \u{1}\u{f}")
+@P2nl33("")
+@Pg("")
+@Pn("yA")
+@_YlW1Fnnw2nn13("")
+@_YlWBFg0000000
+@g33f333("\u{13}\u{13}\u{13}:\u{b}\u{f}i")
+@i433enw("")
+@i4W33f3
+@iW33f33("")
+@ideeeAe("g")
+@neeeAee("")
+@r
+@r33("")
+@w
+@y("")
+@ye
+@z("")
+entity a = {
+  @ATrwJrrrrrrrrq
+  A?: __cedar::String
+} tags Set<__cedar::String>;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

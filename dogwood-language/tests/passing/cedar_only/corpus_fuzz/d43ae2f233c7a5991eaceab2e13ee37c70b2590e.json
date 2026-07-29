@@ -1,0 +1,170 @@
+{
+  "policies": "corpus-tests/d43ae2f233c7a5991eaceab2e13ee37c70b2590e.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/d43ae2f233c7a5991eaceab2e13ee37c70b2590e.entities.json",
+  "schema": "corpus-tests/d43ae2f233c7a5991eaceab2e13ee37c70b2590e.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": false,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "jO::a",
+        "id": "\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u001c\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018"
+      },
+      "action": {
+        "type": "jO::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "jO::a",
+        "id": "\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u001c\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "jO::a",
+        "id": "\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u001c\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018"
+      },
+      "action": {
+        "type": "jO::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "jO::a",
+        "id": "\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u001c\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "jO::a",
+        "id": "\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u001c\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018"
+      },
+      "action": {
+        "type": "jO::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "jO::a",
+        "id": "\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u001c\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "jO::a",
+        "id": "\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u001c\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018"
+      },
+      "action": {
+        "type": "jO::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "jO::a",
+        "id": "\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u001c\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "jO::a",
+        "id": "\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u001c\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018"
+      },
+      "action": {
+        "type": "jO::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "jO::a",
+        "id": "\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u001c\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "jO::a",
+        "id": "\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u001c\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018"
+      },
+      "action": {
+        "type": "jO::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "jO::a",
+        "id": "\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u001c\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "jO::a",
+        "id": "\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u001c\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018"
+      },
+      "action": {
+        "type": "jO::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "jO::a",
+        "id": "\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u001c\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "jO::a",
+        "id": "\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u001c\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018"
+      },
+      "action": {
+        "type": "jO::Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "jO::a",
+        "id": "\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u001c\u0018\u0018\u0018\u00182\u0018\u0018\u0018\u0018\u0018\u0018\u0018\u0018"
+      },
+      "context": {},
+      "validateRequest": true,
+      "decision": "deny",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}

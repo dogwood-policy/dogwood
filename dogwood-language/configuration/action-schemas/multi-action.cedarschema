@@ -1,0 +1,62 @@
+// Multi-action schema: the default action schema for Dogwood examples and tests.
+// Covers common patterns: authentication (Login), data access (Read/Write),
+// financial operations (Transfer), monitoring (Alert/Heartbeat).
+
+namespace Drupe {
+    entity User;
+    entity Gateway;
+
+    type LoginInput = { server: String, user: String };
+    type LoginOutput = { result: Bool };
+
+    type ReadInput = { document: String, user: String };
+    type ReadOutput = { content: String };
+
+    type WriteInput = { document: String, user: String, content: String };
+    type WriteOutput = { success: Bool };
+
+    type TransferInput = { amount: Long, user: String };
+    type TransferOutput = { balance: Long };
+
+    type AlertInput = { level: Long, server: String };
+    type AlertOutput = { acknowledged: Bool };
+
+    type HeartbeatInput = { server: String };
+    type HeartbeatOutput = { status: String };
+
+    action "Login" appliesTo {
+        principal: [User],
+        resource: [Gateway],
+        context: { input: LoginInput, output: LoginOutput }
+    };
+
+    action "Read" appliesTo {
+        principal: [User],
+        resource: [Gateway],
+        context: { input: ReadInput, output: ReadOutput }
+    };
+
+    action "Write" appliesTo {
+        principal: [User],
+        resource: [Gateway],
+        context: { input: WriteInput, output: WriteOutput }
+    };
+
+    action "Transfer" appliesTo {
+        principal: [User],
+        resource: [Gateway],
+        context: { input: TransferInput, output: TransferOutput }
+    };
+
+    action "Alert" appliesTo {
+        principal: [User],
+        resource: [Gateway],
+        context: { input: AlertInput, output: AlertOutput }
+    };
+
+    action "Heartbeat" appliesTo {
+        principal: [User],
+        resource: [Gateway],
+        context: { input: HeartbeatInput, output: HeartbeatOutput }
+    };
+}

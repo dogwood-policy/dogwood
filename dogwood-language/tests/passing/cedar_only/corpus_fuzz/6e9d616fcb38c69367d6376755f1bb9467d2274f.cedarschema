@@ -1,0 +1,10 @@
+entity a enum ["\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}\u{1e}"];
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    hXX90039iJJJ10000: a
+  }
+};
+

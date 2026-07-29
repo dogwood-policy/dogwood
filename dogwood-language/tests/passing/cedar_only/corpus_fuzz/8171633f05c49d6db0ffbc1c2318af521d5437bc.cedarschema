@@ -1,0 +1,23 @@
+@A
+entity B;
+
+entity M3333 = {
+  Q?: __cedar::ipaddr
+};
+
+entity N = {
+  A?: {
+    ""?: __cedar::String
+  }
+};
+
+entity wL0Reng2pR = {
+  A?: __cedar::ipaddr
+};
+
+action "action" appliesTo {
+  principal: [M3333],
+  resource: [M3333],
+  context: {}
+};
+

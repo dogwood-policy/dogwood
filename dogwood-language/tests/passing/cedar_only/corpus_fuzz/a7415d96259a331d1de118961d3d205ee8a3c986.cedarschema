@@ -1,0 +1,12 @@
+entity a tags __cedar::String;
+
+@i
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @GRRcST3h("")
+    F: Set<Set<__cedar::datetime>>
+  }
+};
+

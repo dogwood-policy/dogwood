@@ -1,0 +1,26 @@
+// Relativization / partition-safety, `previous` operator, keyed by RESOURCE.
+//
+// A Read is permitted iff THIS resource's immediately preceding own event
+// (within 1h) was a Login. The event schema pins `callerResource` universally
+// (see event.dwschema), so `previous` means "this resource's previous event",
+// not "the previous event in the global trace".
+//
+// The principal is held constant (alice) across every event, so ONLY the
+// resource pin distinguishes "mine" from "foreign". The differential pair for
+// alice's Read on gw1 at @3:
+//   trace_1: alice Login on gw1, alice Transfer on GW2 (foreign resource), alice Read on gw1.
+//   trace_2: alice Login on gw1,                                            alice Read on gw1.
+// Under resource-local semantics the gw2 Transfer is invisible to gw1, so
+// gw1's previous own event is the Login in BOTH traces → PERMIT in both. Under
+// (incorrect) global semantics — or a bug that keyed on principal (alice is the
+// same everywhere) — trace_1's previous event would be the gw2 Transfer → deny,
+// diverging from trace_2. The resource pin is what excludes it.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    previous within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

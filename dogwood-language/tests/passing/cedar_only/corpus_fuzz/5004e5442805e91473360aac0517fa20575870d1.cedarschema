@@ -1,0 +1,106 @@
+entity BFf;
+
+entity G;
+
+entity P;
+
+entity P6RKR06666666666;
+
+entity PFFFFF;
+
+entity PFFFFFFFF000FFFF;
+
+entity PFb244v000000004;
+
+entity Pf;
+
+entity Q3;
+
+entity Q6;
+
+entity Y4466666666666666;
+
+entity g3;
+
+entity r;
+
+entity r333;
+
+action "" in [Action::":~", Action::"\u{1d}@[", Action::"\u{3}\u{1d}w", Action::"$", Action::"=\u{e}", Action::"\u{1d}\u{3}fD~", Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"$=2", Action::"[", Action::"\u{3}dddddddddddddd\u{1d}A"] appliesTo {
+  principal: [PFFFFF, r, Q6, r333, P, P6RKR06666666666, PFFFFFFFF000FFFF, Y4466666666666666, Pf, BFf, PFb244v000000004, G, g3, Q3],
+  resource: [G, r333, Pf, Q3, Y4466666666666666, P6RKR06666666666, r, Q6, BFf, PFFFFF, PFFFFFFFF000FFFF],
+  context: {}
+};
+
+action "\u{3}\u{1d}w" in [Action::"$", Action::"=\u{e}", Action::"\u{1d}\u{3}fD~", Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"$=2", Action::"[", Action::"\u{3}dddddddddddddd\u{1d}A"] appliesTo {
+  principal: [Y4466666666666666, G, Pf, Q6, r333, Q3, P6RKR06666666666],
+  resource: [Y4466666666666666, G, Pf, Q6, r333, Q3, P6RKR06666666666],
+  context: {}
+};
+
+action "\u{3}dddddddddddddd\u{1d}A";
+
+action "\u{e}" in [Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"$=2", Action::"[", Action::"\u{3}dddddddddddddd\u{1d}A"] appliesTo {
+  principal: [Y4466666666666666, G, Pf, Q6, r333, Q3, P6RKR06666666666],
+  resource: [Y4466666666666666, G, Pf, Q6, r333, Q3, P6RKR06666666666],
+  context: {
+    A?: __cedar::String,
+    r?: __cedar::String,
+    r333?: __cedar::String
+  }
+};
+
+action "\u{1d}\u{3}" in [Action::"[@", Action::"$=2", Action::"[", Action::"\u{3}dddddddddddddd\u{1d}A"];
+
+action "\u{1d}\u{3}fD~" in [Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"$=2", Action::"[", Action::"\u{3}dddddddddddddd\u{1d}A"] appliesTo {
+  principal: [Y4466666666666666, G, Pf, Q6, r333, Q3, P6RKR06666666666],
+  resource: [Y4466666666666666, G, Pf, Q6, r333, Q3, P6RKR06666666666],
+  context: {}
+};
+
+@Q6("EEEEEEEEEEEEEEEE")
+@r("\u{f}\u{f}\u{f}\u{f}E")
+@r333("")
+@v066666666666666
+action "\u{1d}@[" in [Action::"\u{3}\u{1d}w", Action::"$", Action::"=\u{e}", Action::"\u{1d}\u{3}fD~", Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"$=2", Action::"[", Action::"\u{3}dddddddddddddd\u{1d}A"] appliesTo {
+  principal: [Y4466666666666666, BFf, PFFFFFFFF000FFFF, PFb244v000000004],
+  resource: [G, r333, Pf, Q6, r, PFFFFF, PFFFFFFFF000FFFF, Y4466666666666666, BFf, Q3, P6RKR06666666666],
+  context: {
+    PFFFFF000FFFFFdF: __cedar::String,
+    PFFFFFFb244v0000?: __cedar::String,
+    hFF?: __cedar::String
+  }
+};
+
+action "$" in [Action::"=\u{e}", Action::"\u{1d}\u{3}fD~", Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"$=2", Action::"[", Action::"\u{3}dddddddddddddd\u{1d}A"] appliesTo {
+  principal: [Y4466666666666666, G, Pf, Q6, r333, Q3, P6RKR06666666666],
+  resource: [Y4466666666666666, G, Pf, Q6, r333, Q3, P6RKR06666666666],
+  context: {}
+};
+
+action "$=2" in [Action::"[", Action::"\u{3}dddddddddddddd\u{1d}A"];
+
+action ":~" in [Action::"\u{1d}@[", Action::"\u{3}\u{1d}w", Action::"$", Action::"=\u{e}", Action::"\u{1d}\u{3}fD~", Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"$=2", Action::"[", Action::"\u{3}dddddddddddddd\u{1d}A"] appliesTo {
+  principal: [G, r333, Pf, Q3, Y4466666666666666, P6RKR06666666666, r, PFFFFFFFF000FFFF, P, BFf, PFb244v000000004],
+  resource: [G, r333, Pf, Q3, Y4466666666666666, P6RKR06666666666, r, PFFFFFFFF000FFFF, P, BFf, PFb244v000000004],
+  context: {}
+};
+
+action "=\u{e}" in [Action::"\u{1d}\u{3}fD~", Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"$=2", Action::"[", Action::"\u{3}dddddddddddddd\u{1d}A"] appliesTo {
+  principal: [Y4466666666666666, G, Pf, Q6, r333, Q3, P6RKR06666666666],
+  resource: [Y4466666666666666, G, Pf, Q6, r333, Q3, P6RKR06666666666],
+  context: {}
+};
+
+action "?y\u{f}" in [Action::"", Action::":~", Action::"\u{1d}@[", Action::"\u{3}\u{1d}w", Action::"$", Action::"=\u{e}", Action::"\u{1d}\u{3}fD~", Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}", Action::"[@", Action::"$=2", Action::"[", Action::"\u{3}dddddddddddddd\u{1d}A"] appliesTo {
+  principal: [r, r333, PFFFFFFFF000FFFF, PFFFFF, Pf, G, Q3, BFf, P6RKR06666666666, Y4466666666666666],
+  resource: [r, Pf, Q3, PFFFFF, P6RKR06666666666, PFFFFFFFF000FFFF, r333, P, Q6, G],
+  context: {}
+};
+
+action "[" in [Action::"\u{3}dddddddddddddd\u{1d}A"];
+
+action "[@" in [Action::"$=2", Action::"[", Action::"\u{3}dddddddddddddd\u{1d}A"];
+
+action "^" in [Action::"\u{1d}\u{3}", Action::"[@", Action::"$=2", Action::"[", Action::"\u{3}dddddddddddddd\u{1d}A"];
+

@@ -1,0 +1,18 @@
+entity a = {
+  @A
+  @A3333333("")
+  @H
+  @n("")
+  @r("")
+  @r33333333("ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggdecisiongggggggggggggggggggg")
+  @r3333333333333("")
+  r?: {  },
+  t?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

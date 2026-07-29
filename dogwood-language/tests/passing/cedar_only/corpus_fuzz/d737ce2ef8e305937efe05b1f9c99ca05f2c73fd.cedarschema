@@ -1,0 +1,12 @@
+entity Ic7777777;
+
+entity r;
+
+entity y;
+
+action "action" appliesTo {
+  principal: [y, r],
+  resource: [r, Ic7777777],
+  context: {}
+};
+

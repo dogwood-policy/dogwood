@@ -1,0 +1,14 @@
+namespace r::r::r::r::r::A::V::r {
+  entity r = {
+    Ap000000000?: __cedar::String
+  };
+
+  entity zzf enum [""];
+
+  action "action" appliesTo {
+    principal: [r],
+    resource: [r],
+    context: {}
+  };
+}
+

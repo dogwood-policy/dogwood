@@ -1,0 +1,22 @@
+// Same intent as policy_1.dw, but using two rules instead of
+// one inline conditional. Both shapes validate; the inline form
+// is usually shorter once the predicate is more than a binary
+// split.
+
+permit (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+)
+when {
+    context.input.stock == "AMZN" && context.input.shares <= 10
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+)
+when {
+    context.input.stock != "AMZN" && context.input.shares <= 1000
+};

@@ -1,0 +1,17 @@
+// BUG REPRO (String summand): the aggregation summand must be a `Long`. Here
+// `sum r` adds together `r`, bound to the String field `input.label`. A String
+// is not a quantity and cannot be summed at all.
+//
+// The summand's type was never checked (`collect_declared_binders` records only
+// the `for_vars`, and `term_type(Agg)` hard-codes the aggregate to `int`), so a
+// non-numeric summand validated cleanly. This should be rejected by the
+// temporal type-checker.
+//
+// Expected: rejected at `validate`.
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    exists (n: Long). (
+        (sum r for (r: String). where (Drupe::Action::"Charge"::request{ input.label: r })) == n
+        && n > 0
+    )
+};

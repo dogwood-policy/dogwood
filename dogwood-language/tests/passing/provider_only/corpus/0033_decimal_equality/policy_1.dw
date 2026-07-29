@@ -1,0 +1,11 @@
+// Edge case: exact decimal equality comparison (== decimal("0.5")).
+// Not lessThan/greaterThan, but direct ==.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when guardrails {
+    Score::Exact(context.input.document).score == decimal("0.5")
+};

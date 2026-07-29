@@ -1,0 +1,48 @@
+@B("")
+@B33344
+@EW1Fnnw2nn133("B")
+@P("bian \u{1}\u{f}")
+@P2nl13("")
+@Pg("")
+@Pn("yA")
+@g33f333("\u{13}\u{13}\u{3}:\u{b}\u{f}i")
+@i433enw("")
+@i4deeeA("gg")
+@iW33f33("")
+@ideeeAe("g")
+@r("")
+@tgYlW1Fnnw2nn("")
+@vR3E3T1("e")
+@w
+@y("")
+@ye("ggAgggggggggggggggggggggggggggggggggggggggggggg\0ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg\0")
+entity a;
+
+action "" in [Action::"hSSSSSSSS", Action::"g", Action::"yAA", Action::"\u{1}", Action::"yA", Action::"P ", Action::"hSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS", Action::"\u{1}\u{f}", Action::"SSSSSSSS", Action::"\u{1}\u{f}i", Action::"y"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1}" in [Action::"yA", Action::"P ", Action::"hSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS", Action::"\u{1}\u{f}", Action::"SSSSSSSS", Action::"\u{1}\u{f}i", Action::"y"];
+
+action "\u{1}\u{f}" in [Action::"SSSSSSSS", Action::"\u{1}\u{f}i", Action::"y"];
+
+action "\u{1}\u{f}i" in [Action::"y"];
+
+action "P " in [Action::"hSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS", Action::"\u{1}\u{f}", Action::"SSSSSSSS", Action::"\u{1}\u{f}i", Action::"y"];
+
+action "SSSSSSSS" in [Action::"\u{1}\u{f}i", Action::"y"];
+
+action "g" in [Action::"yAA", Action::"\u{1}", Action::"yA", Action::"P ", Action::"hSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS", Action::"\u{1}\u{f}", Action::"SSSSSSSS", Action::"\u{1}\u{f}i", Action::"y"];
+
+action "hSSSSSSSS" in [Action::"g", Action::"yAA", Action::"\u{1}", Action::"yA", Action::"P ", Action::"hSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS", Action::"\u{1}\u{f}", Action::"SSSSSSSS", Action::"\u{1}\u{f}i", Action::"y"];
+
+action "hSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS" in [Action::"\u{1}\u{f}", Action::"SSSSSSSS", Action::"\u{1}\u{f}i", Action::"y"];
+
+action "y";
+
+action "yA" in [Action::"P ", Action::"hSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS", Action::"\u{1}\u{f}", Action::"SSSSSSSS", Action::"\u{1}\u{f}i", Action::"y"];
+
+action "yAA" in [Action::"\u{1}", Action::"yA", Action::"P ", Action::"hSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS", Action::"\u{1}\u{f}", Action::"SSSSSSSS", Action::"\u{1}\u{f}i", Action::"y"];
+

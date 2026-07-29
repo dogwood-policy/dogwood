@@ -1,0 +1,30 @@
+entity A enum [""];
+
+entity A000000xf12f32f3D enum [""];
+
+entity BxB enum [""];
+
+entity Q3333333333333 enum [""];
+
+entity mQSSSSS enum ["\0\0\0", "", "", "", "", "", "", "", "", "\u{15}\0\0\0\0\0\0\0", "", "", "", "", "", "\u{1}z", "", "", "", "", "\u{f}"];
+
+entity mSSS1W_ enum [""];
+
+entity mSSSSSS enum [""];
+
+entity mSSSSWS enum [""];
+
+entity mSySSSS enum ["U"];
+
+entity r enum [""];
+
+entity rB enum [""];
+
+entity rD3 enum [""];
+
+action "action" appliesTo {
+  principal: [mSSSSSS, BxB, mQSSSSS],
+  resource: [mSSSSSS, BxB, mQSSSSS],
+  context: {}
+};
+

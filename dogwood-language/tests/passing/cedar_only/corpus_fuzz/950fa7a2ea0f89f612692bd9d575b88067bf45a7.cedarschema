@@ -1,0 +1,10 @@
+namespace w::r {
+  entity re0000 enum ["\0LLLL"];
+
+  action "action" appliesTo {
+    principal: [re0000],
+    resource: [re0000],
+    context: {}
+  };
+}
+

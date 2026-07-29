@@ -1,0 +1,25 @@
+entity a = {
+  m?: __cedar::String,
+  r?: __cedar::String,
+  @A
+  @MaR("[")
+  @O000000000EE0Rf
+  @OEE3EEEEEEIc("")
+  @m("[\u{1d}")
+  @m3("")
+  @r("FV@")
+  @v("A\0")
+  @vR("")
+  @vRRDEEc0("(")
+  @wRR("")
+  @xTT("c")
+  vR: Set<Set<Set<Set<__cedar::Long>>>>,
+  x?: __cedar::String
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

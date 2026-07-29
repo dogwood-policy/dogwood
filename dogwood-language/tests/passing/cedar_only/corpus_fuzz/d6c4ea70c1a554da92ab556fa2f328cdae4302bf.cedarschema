@@ -1,0 +1,22 @@
+entity a = {
+  @IRbcRS3365
+  @r
+  F?: __cedar::Long
+} tags __cedar::datetime;
+
+action "\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+@P
+action "D" in [Action::"\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}\u{7}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @D("D\u{4}")
+    P555OO?: __cedar::datetime
+  }
+};
+

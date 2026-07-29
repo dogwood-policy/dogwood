@@ -1,0 +1,84 @@
+entity a tags __cedar::String;
+
+action "" in [Action::":~", Action::"\u{1d}@[", Action::"\u{3}\u{1d}$w", Action::"$", Action::"=\u{e}", Action::"\u{1d}", Action::"\u{3}[", Action::"@1T", Action::"\u{1d}@gf\u{e}e8a\u{7}a8fd", Action::"oUUUUUUaU@                      ", Action::"                                             ", Action::"\u{4}", Action::"#", Action::"S"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{3}\u{1d}$w" in [Action::"$", Action::"=\u{e}", Action::"\u{1d}", Action::"\u{3}[", Action::"@1T", Action::"\u{1d}@gf\u{e}e8a\u{7}a8fd", Action::"oUUUUUUaU@                      ", Action::"                                             ", Action::"\u{4}", Action::"#", Action::"S"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{3}[" in [Action::"@1T", Action::"\u{1d}@gf\u{e}e8a\u{7}a8fd", Action::"oUUUUUUaU@                      ", Action::"                                             ", Action::"\u{4}", Action::"#", Action::"S"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{4}" in [Action::"#", Action::"S"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1d}" in [Action::"\u{3}[", Action::"@1T", Action::"\u{1d}@gf\u{e}e8a\u{7}a8fd", Action::"oUUUUUUaU@                      ", Action::"                                             ", Action::"\u{4}", Action::"#", Action::"S"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1d}@[" in [Action::"\u{3}\u{1d}$w", Action::"$", Action::"=\u{e}", Action::"\u{1d}", Action::"\u{3}[", Action::"@1T", Action::"\u{1d}@gf\u{e}e8a\u{7}a8fd", Action::"oUUUUUUaU@                      ", Action::"                                             ", Action::"\u{4}", Action::"#", Action::"S"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1d}@gf\u{e}e8a\u{7}a8fd" in [Action::"oUUUUUUaU@                      ", Action::"                                             ", Action::"\u{4}", Action::"#", Action::"S"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "                                             " in [Action::"\u{4}", Action::"#", Action::"S"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "#" in [Action::"S"];
+
+action "$" in [Action::"=\u{e}", Action::"\u{1d}", Action::"\u{3}[", Action::"@1T", Action::"\u{1d}@gf\u{e}e8a\u{7}a8fd", Action::"oUUUUUUaU@                      ", Action::"                                             ", Action::"\u{4}", Action::"#", Action::"S"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action ":~" in [Action::"\u{1d}@[", Action::"\u{3}\u{1d}$w", Action::"$", Action::"=\u{e}", Action::"\u{1d}", Action::"\u{3}[", Action::"@1T", Action::"\u{1d}@gf\u{e}e8a\u{7}a8fd", Action::"oUUUUUUaU@                      ", Action::"                                             ", Action::"\u{4}", Action::"#", Action::"S"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "=\u{e}" in [Action::"\u{1d}", Action::"\u{3}[", Action::"@1T", Action::"\u{1d}@gf\u{e}e8a\u{7}a8fd", Action::"oUUUUUUaU@                      ", Action::"                                             ", Action::"\u{4}", Action::"#", Action::"S"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "@1T" in [Action::"\u{1d}@gf\u{e}e8a\u{7}a8fd", Action::"oUUUUUUaU@                      ", Action::"                                             ", Action::"\u{4}", Action::"#", Action::"S"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "S";
+
+action "oUUUUUUaU@                      " in [Action::"                                             ", Action::"\u{4}", Action::"#", Action::"S"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

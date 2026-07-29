@@ -1,0 +1,23 @@
+entity a tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: {
+      @A
+      "n\u{1}\0 \0 \'De ia;4": {
+        ""?: Set<Set<__cedar::Long>>,
+        @vbbb
+        "\0": Set<Set<__cedar::Long>>,
+        "\u{e}"?: __cedar::datetime,
+        "\u{1d}\u{3}": a,
+        "\u{1d}@["?: Set<Set<__cedar::Long>>,
+        ":~IE3_E0"?: a,
+        "@=\u{e}": __cedar::Long,
+        "[dddd?": Set<__cedar::ipaddr>
+      }
+    }
+  }
+};
+

@@ -1,0 +1,82 @@
+entity a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    r?: {
+      @r("")
+      "": __cedar::String,
+      "\0": __cedar::ipaddr,
+      @m("")
+      "\0\0": Set<{
+        ""?: Set<__cedar::Long>
+      }>,
+      "\u{3}\u{1d}wDebian "?: __cedar::String,
+      "\u{3}ddddddffd~\u{1d}"?: __cedar::String,
+      @LS33TuR000000
+      "\u{e}"?: Set<Set<__cedar::datetime>>,
+      @r("\0\u{1d}Debian ")
+      @vRT30qdVR35cZgY
+      "\u{1d}": {
+        ""?: Set<Set<__cedar::Long>>,
+        "\u{1d}"?: __cedar::String,
+        "V@"?: Set<Set<__cedar::Long>>
+      },
+      @LST3N13Q0
+      "\u{1d}\u{3}": __cedar::ipaddr,
+      "\u{1d}@[": Set<Set<__cedar::Long>>,
+      @h
+      "\u{1d}@gffd~"?: __cedar::ipaddr,
+      "!\u{3}"?: __cedar::String,
+      "$"?: __cedar::String,
+      "$\u{e}="?: __cedar::String,
+      @EW1Sp3N130000("")
+      @GNS3T1ed
+      @_YlW3ORRT30qdV("")
+      @w
+      ":pVV"?: __cedar::duration,
+      ":~": Set<__cedar::ipaddr>,
+      "=\u{e}"?: __cedar::Bool,
+      @T
+      @rN13Q000RRwnR("")
+      "?\0\0\0"?: __cedar::String,
+      "V@"?: {
+        "": __cedar::ipaddr,
+        "\0": a,
+        "\0\0": {
+          @rS1S("")
+          @yddb03ERVR3X33("")
+          "": Set<__cedar::Long>,
+          @D3Sw1S33Tu5cZgYlW("")
+          "\u{1d}": __cedar::String,
+          "V@": a
+        },
+        @r
+        "3"?: {
+          @A("")
+          @r("\0\u{1d}Debian ")
+          @vRT30qdVR35cZgY
+          "": __cedar::Bool,
+          "\u{1d}"?: __cedar::String,
+          "V@": Set<__cedar::Long>
+        },
+        ":pVV"?: a,
+        @F
+        "?\0\0\0"?: __cedar::String,
+        "V@": a,
+        "V@[fd~\u{1d}"?: {
+          ""?: __cedar::String
+        }
+      },
+      "["?: __cedar::String,
+      "[@"?: __cedar::String,
+      @A("")
+      @d
+      @r
+      "[@["?: Set<Set<__cedar::datetime>>,
+      "^"?: __cedar::String
+    }
+  }
+};
+

@@ -1,0 +1,12 @@
+// Forbid Read if there has been any Submit within the last hour.
+// Different predicate than the permit so the two rule subqueries
+// cannot share state. Deny-overrides means the permit must NOT
+// fire when both rules match at the same tp.
+forbid (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Submit"::request{ input.user: context.input.user }
+};

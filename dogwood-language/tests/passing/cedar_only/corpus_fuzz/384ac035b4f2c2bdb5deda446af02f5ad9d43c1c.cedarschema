@@ -1,0 +1,10 @@
+entity slWp000dppppsJ;
+
+entity t enum ["", "\u{b}\0\0\0\0\0"];
+
+action "action" appliesTo {
+  principal: [t],
+  resource: [t],
+  context: {}
+};
+

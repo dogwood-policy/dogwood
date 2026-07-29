@@ -1,0 +1,10 @@
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    !(Drupe::Action::"Login"::response{ input.user: context.input.user, output.result: true })
+    since within 1h
+    (Drupe::Action::"Sync"::response{ input.user: context.input.user })
+};

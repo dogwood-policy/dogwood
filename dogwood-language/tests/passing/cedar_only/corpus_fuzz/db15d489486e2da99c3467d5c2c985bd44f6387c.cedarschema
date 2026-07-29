@@ -1,0 +1,109 @@
+@Ke("g")
+@L("")
+@bp333333333333333("")
+@bu
+@ideeeAe("$=")
+@v33uTSRa3zERRS3
+namespace K::A::A::SII3w333332::h::A {
+  entity a;
+
+  action "" in [K::A::A::SII3w333332::h::A::Action::"\u{1d}\u{3}", K::A::A::SII3w333332::h::A::Action::"[H\t\u{1} ", K::A::A::SII3w333332::h::A::Action::"h", K::A::A::SII3w333332::h::A::Action::"Debian \u{1}\u{f}", K::A::A::SII3w333332::h::A::Action::"yC", K::A::A::SII3w333332::h::A::Action::"\u{f}i", K::A::A::SII3w333332::h::A::Action::"\u{1}\u{f}i", K::A::A::SII3w333332::h::A::Action::"P .", K::A::A::SII3w333332::h::A::Action::"hSSSSSSSSSSSSSS\u{1}\u{f}", K::A::A::SII3w333332::h::A::Action::"yA", K::A::A::SII3w333332::h::A::Action::"\u{1}", K::A::A::SII3w333332::h::A::Action::"\u{1}\u{f}", K::A::A::SII3w333332::h::A::Action::"\u{1}\u{f}\u{e}2", K::A::A::SII3w333332::h::A::Action::"g", K::A::A::SII3w333332::h::A::Action::"@"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{1}" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{1}\u{f}" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{1}\u{f}\u{e}2" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{1}\u{f}i" in [K::A::A::SII3w333332::h::A::Action::"\u{1}\u{f}\u{e}2", K::A::A::SII3w333332::h::A::Action::"g"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{f}i" in [K::A::A::SII3w333332::h::A::Action::"\u{1}\u{f}i", K::A::A::SII3w333332::h::A::Action::"P .", K::A::A::SII3w333332::h::A::Action::"hSSSSSSSSSSSSSS\u{1}\u{f}", K::A::A::SII3w333332::h::A::Action::"yA", K::A::A::SII3w333332::h::A::Action::"\u{1}", K::A::A::SII3w333332::h::A::Action::"\u{1}\u{f}", K::A::A::SII3w333332::h::A::Action::"\u{1}\u{f}\u{e}2"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{1d}\u{3}" in [K::A::A::SII3w333332::h::A::Action::"[H\t\u{1} ", K::A::A::SII3w333332::h::A::Action::"h", K::A::A::SII3w333332::h::A::Action::"Debian \u{1}\u{f}", K::A::A::SII3w333332::h::A::Action::"yC", K::A::A::SII3w333332::h::A::Action::"\u{f}i", K::A::A::SII3w333332::h::A::Action::"\u{1}\u{f}i", K::A::A::SII3w333332::h::A::Action::"P .", K::A::A::SII3w333332::h::A::Action::"hSSSSSSSSSSSSSS\u{1}\u{f}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      @Daaa
+      Daaaaaaaaa: K::A::A::SII3w333332::h::A::a
+    }
+  };
+
+  action "@" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "Debian \u{1}\u{f}" in [K::A::A::SII3w333332::h::A::Action::"yA", K::A::A::SII3w333332::h::A::Action::"\u{1}\u{f}", K::A::A::SII3w333332::h::A::Action::"g", K::A::A::SII3w333332::h::A::Action::"@"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "P ." in [K::A::A::SII3w333332::h::A::Action::"g"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "[H\t\u{1} " in [K::A::A::SII3w333332::h::A::Action::"hSSSSSSSSSSSSSS\u{1}\u{f}", K::A::A::SII3w333332::h::A::Action::"yA", K::A::A::SII3w333332::h::A::Action::"\u{1}", K::A::A::SII3w333332::h::A::Action::"\u{1}\u{f}\u{e}2", K::A::A::SII3w333332::h::A::Action::"g"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "g" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "h" in [K::A::A::SII3w333332::h::A::Action::"hSSSSSSSSSSSSSS\u{1}\u{f}", K::A::A::SII3w333332::h::A::Action::"yA", K::A::A::SII3w333332::h::A::Action::"\u{1}\u{f}", K::A::A::SII3w333332::h::A::Action::"g"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "hSSSSSSSSSSSSSS\u{1}\u{f}" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "yA" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "yC" in [K::A::A::SII3w333332::h::A::Action::"\u{1}\u{f}i", K::A::A::SII3w333332::h::A::Action::"P .", K::A::A::SII3w333332::h::A::Action::"hSSSSSSSSSSSSSS\u{1}\u{f}", K::A::A::SII3w333332::h::A::Action::"yA", K::A::A::SII3w333332::h::A::Action::"\u{1}", K::A::A::SII3w333332::h::A::Action::"\u{1}\u{f}", K::A::A::SII3w333332::h::A::Action::"\u{1}\u{f}\u{e}2", K::A::A::SII3w333332::h::A::Action::"g", K::A::A::SII3w333332::h::A::Action::"@"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

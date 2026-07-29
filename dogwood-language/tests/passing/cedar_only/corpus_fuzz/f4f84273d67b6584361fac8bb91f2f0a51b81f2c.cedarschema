@@ -1,0 +1,30 @@
+namespace A::A {
+  entity a = {
+    S3?: Set<__cedar::String>,
+    h: Set<__cedar::ipaddr>
+  } tags {
+  ""?: __cedar::Bool,
+  "\u{3}"?: __cedar::Bool,
+  "\u{e}"?: __cedar::Bool,
+  "\u{1d}\u{3}"?: __cedar::Bool,
+  "\u{1d}@J<"?: __cedar::Bool,
+  "$"?: __cedar::Bool,
+  "$=\u{e}p\u{1}\0p\0\0\0\0ppp"?: __cedar::Bool,
+  ":~"?: {  },
+  "=\u{e}"?: __cedar::Bool,
+  @r("")
+  "["?: __cedar::Bool,
+  "[@"?: __cedar::Bool,
+  "^"?: __cedar::Bool,
+  "r@"?: __cedar::Bool,
+  "w\u{1d}[": __cedar::Bool,
+  "}}"?: __cedar::Bool
+};
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

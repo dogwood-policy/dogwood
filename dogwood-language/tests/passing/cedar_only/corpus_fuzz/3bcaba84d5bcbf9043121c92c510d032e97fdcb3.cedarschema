@@ -1,0 +1,40 @@
+namespace r::r::h::r {
+  entity a;
+
+  action "" in [r::r::h::r::Action::"aaa", r::r::h::r::Action::"aaaaaaaa"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" in [r::r::h::r::Action::"aaa"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "8p" in [r::r::h::r::Action::"aaa", r::r::h::r::Action::"aaaaaaaa", r::r::h::r::Action::"["] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "[" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "aaa" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "aaaaaaaa" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

@@ -1,0 +1,32 @@
+// Three permits whose bodies all fire at the same tp must produce
+// exactly one verdict (true), not three. Stresses set-union semantics
+// of permit verdicts: no multiplication by rule index. Compare with
+// 0187 (two permits, identical body); here three permits use distinct
+// windows so each sub-plan must independently fire.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 2h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 3h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

@@ -1,0 +1,25 @@
+// The unconditional-execution contract, pinned positively: a provider
+// under a BARE action scope runs for every decision event, including
+// Ping's — whose context has NO document field at all. The Ping verdicts
+// prove the provider ran there (its sentinel output is what the policy
+// reads) rather than erroring or being skipped.
+namespace Drupe {
+  entity OAuthUser;
+  entity Gateway;
+  type DocInput = {
+    document: String
+  };
+  type PingInput = {
+    seq: Long
+  };
+  action "Read" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: { input: DocInput }
+  };
+  action "Ping" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: { input: PingInput }
+  };
+}

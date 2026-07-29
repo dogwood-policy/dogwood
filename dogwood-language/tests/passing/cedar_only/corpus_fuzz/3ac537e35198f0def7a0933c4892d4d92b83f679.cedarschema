@@ -1,0 +1,55 @@
+entity a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    r?: {
+      ""?: __cedar::Long,
+      "\0": __cedar::ipaddr,
+      "\0\0"?: a,
+      @h
+      @yddb03ERVR3X33(":pVV")
+      "\u{3}\u{1d}w": __cedar::Long,
+      "\u{3}d\u{7}ddddffd~\u{1d}"?: __cedar::String,
+      "\u{e}"?: __cedar::String,
+      @r("\0\u{1d}")
+      "\u{1d}": {
+        ""?: Set<Set<__cedar::Long>>,
+        "\u{1d}"?: __cedar::String,
+        "V@"?: Set<Set<__cedar::Long>>
+      },
+      "\u{1d}\u{3}"?: Set<{
+        ""?: __cedar::String,
+        "!\u{3}@"?: __cedar::String,
+        "$"?: __cedar::String,
+        "@"?: __cedar::String,
+        "["?: __cedar::String,
+        "[$\u{e}="?: __cedar::String
+      }>,
+      "\u{1d}@[": a,
+      "\u{1d}@gffd~"?: __cedar::String,
+      "!\u{3}"?: __cedar::String,
+      @LS33TuRa3X3RR("\u{3}")
+      @LS3T1ed
+      "$"?: Set<Set<__cedar::datetime>>,
+      "$\u{e}="?: __cedar::String,
+      @F
+      @L3("\0\0\0")
+      @LS("")
+      @v("")
+      ":pVV": Set<a>,
+      @LS33TuREFFFFF
+      ":~"?: Set<Set<__cedar::datetime>>,
+      "=\u{e}": __cedar::ipaddr,
+      "?\0\0\0": Set<Set<a>>,
+      "@"?: __cedar::String,
+      @r("")
+      "V@"?: Set<a>,
+      "["?: __cedar::String,
+      "[@["?: __cedar::String,
+      "^"?: __cedar::String
+    }
+  }
+};
+

@@ -1,0 +1,5 @@
+// Freely mix when and unless on one rule.
+@id("sell_capped_not_blocked")
+permit ( principal, action == Drupe::Action::"SellShares", resource )
+when   { context.input.shares <= 1000 }
+unless { context.input.stock == "BLOCKED" };

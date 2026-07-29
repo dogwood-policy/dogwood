@@ -1,0 +1,15 @@
+entity a = {
+  r?: {
+    @r("")
+    @t08007000zzz
+    @tj("")
+    "\u{5}"?: a
+  }
+};
+
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

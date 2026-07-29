@@ -1,0 +1,16 @@
+namespace w1 {
+  entity m enum ["", "", "1"];
+
+  entity q33 enum ["", "", "", ""];
+
+  entity r enum ["\0", ""];
+
+  entity v enum ["\0", ""];
+
+  action "action" appliesTo {
+    principal: [m],
+    resource: [m],
+    context: {}
+  };
+}
+

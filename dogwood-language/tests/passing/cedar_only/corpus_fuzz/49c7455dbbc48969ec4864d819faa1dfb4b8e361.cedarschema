@@ -1,0 +1,38 @@
+entity a tags __cedar::String;
+
+action "" in [Action::";~", Action::"\u{1d}[\u{19}", Action::"@\u{3}w", Action::"$", Action::"=\u{e}UUUUUU\u{3}dddd", Action::"dddddddddd\u{1d}@dddddddddd\u{1d}@", Action::":~", Action::"\u{1d}@[", Action::"\u{3}\u{1d}w2", Action::"\u{3}\u{1d}w", Action::"###############", Action::"?V~##dddddddd\u{1d}@", Action::"##################\u{3}#####w", Action::"$########################", Action::"###########=\u{e}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{3}\u{1d}w" in [Action::"###############", Action::"?V~##dddddddd\u{1d}@", Action::"##################\u{3}#####w", Action::"$########################", Action::"###########=\u{e}"];
+
+action "\u{3}\u{1d}w2" in [Action::"\u{3}\u{1d}w", Action::"###############", Action::"?V~##dddddddd\u{1d}@", Action::"##################\u{3}#####w", Action::"$########################", Action::"###########=\u{e}"];
+
+action "\u{1d}@[" in [Action::"\u{3}\u{1d}w2", Action::"\u{3}\u{1d}w", Action::"###############", Action::"?V~##dddddddd\u{1d}@", Action::"##################\u{3}#####w", Action::"$########################", Action::"###########=\u{e}"];
+
+action "\u{1d}[\u{19}" in [Action::"@\u{3}w", Action::"$", Action::"=\u{e}UUUUUU\u{3}dddd", Action::"dddddddddd\u{1d}@dddddddddd\u{1d}@", Action::":~", Action::"\u{1d}@[", Action::"\u{3}\u{1d}w2", Action::"\u{3}\u{1d}w", Action::"###############", Action::"?V~##dddddddd\u{1d}@", Action::"##################\u{3}#####w", Action::"$########################", Action::"###########=\u{e}"];
+
+action "###############" in [Action::"?V~##dddddddd\u{1d}@", Action::"##################\u{3}#####w", Action::"$########################", Action::"###########=\u{e}"];
+
+action "##################\u{3}#####w" in [Action::"$########################", Action::"###########=\u{e}"];
+
+action "###########=\u{e}";
+
+action "$" in [Action::"=\u{e}UUUUUU\u{3}dddd", Action::"dddddddddd\u{1d}@dddddddddd\u{1d}@", Action::":~", Action::"\u{1d}@[", Action::"\u{3}\u{1d}w2", Action::"\u{3}\u{1d}w", Action::"###############", Action::"?V~##dddddddd\u{1d}@", Action::"##################\u{3}#####w", Action::"$########################", Action::"###########=\u{e}"];
+
+action "$########################" in [Action::"###########=\u{e}"];
+
+action ":~" in [Action::"\u{1d}@[", Action::"\u{3}\u{1d}w2", Action::"\u{3}\u{1d}w", Action::"###############", Action::"?V~##dddddddd\u{1d}@", Action::"##################\u{3}#####w", Action::"$########################", Action::"###########=\u{e}"];
+
+action ";~" in [Action::"\u{1d}[\u{19}", Action::"@\u{3}w", Action::"$", Action::"=\u{e}UUUUUU\u{3}dddd", Action::"dddddddddd\u{1d}@dddddddddd\u{1d}@", Action::":~", Action::"\u{1d}@[", Action::"\u{3}\u{1d}w2", Action::"\u{3}\u{1d}w", Action::"###############", Action::"?V~##dddddddd\u{1d}@", Action::"##################\u{3}#####w", Action::"$########################", Action::"###########=\u{e}"];
+
+action "=\u{e}UUUUUU\u{3}dddd" in [Action::"dddddddddd\u{1d}@dddddddddd\u{1d}@", Action::":~", Action::"\u{1d}@[", Action::"\u{3}\u{1d}w2", Action::"\u{3}\u{1d}w", Action::"###############", Action::"?V~##dddddddd\u{1d}@", Action::"##################\u{3}#####w", Action::"$########################", Action::"###########=\u{e}"];
+
+action "?V~##dddddddd\u{1d}@" in [Action::"##################\u{3}#####w", Action::"$########################", Action::"###########=\u{e}"];
+
+action "@\u{3}w" in [Action::"$", Action::"=\u{e}UUUUUU\u{3}dddd", Action::"dddddddddd\u{1d}@dddddddddd\u{1d}@", Action::":~", Action::"\u{1d}@[", Action::"\u{3}\u{1d}w2", Action::"\u{3}\u{1d}w", Action::"###############", Action::"?V~##dddddddd\u{1d}@", Action::"##################\u{3}#####w", Action::"$########################", Action::"###########=\u{e}"];
+
+action "dddddddddd\u{1d}@dddddddddd\u{1d}@" in [Action::":~", Action::"\u{1d}@[", Action::"\u{3}\u{1d}w2", Action::"\u{3}\u{1d}w", Action::"###############", Action::"?V~##dddddddd\u{1d}@", Action::"##################\u{3}#####w", Action::"$########################", Action::"###########=\u{e}"];
+

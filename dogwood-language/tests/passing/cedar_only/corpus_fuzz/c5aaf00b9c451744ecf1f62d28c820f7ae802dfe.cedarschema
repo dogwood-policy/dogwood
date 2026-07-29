@@ -1,0 +1,22 @@
+entity a = {
+  @A
+  @A0
+  @EWRmST3N13R33("")
+  @F
+  @Ve
+  @bm("")
+  @h
+  @ho
+  @n
+  @r("\u{7f}")
+  @r0("")
+  @w
+  A: a
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

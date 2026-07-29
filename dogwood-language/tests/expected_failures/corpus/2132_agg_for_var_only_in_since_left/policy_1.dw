@@ -1,0 +1,19 @@
+// UNSOUNDNESS repro (U1c): an aggregation `for`-variable whose ONLY
+// occurrence is in the LEFT operand of a `since`. Range restriction
+// propagates only through the since-RIGHT (the anchor; the range-restriction rule —
+// the left is a per-step filter, not a range-restrictor), so `w` is not
+// range-restricted and the relation does not range over `w`: anchor rows
+// carry no `w` column, and the left is evaluated per-step with `w`
+// independently re-quantified. Concretely: after a Login anchor, alice reads,
+// then bob reads — the true count of users who read at EVERY step is 0, but
+// the evaluator counts 1.
+//
+// Expected: rejected at parse-time binding checks — the `for`-variable `w`
+// must be range-restricted by a positive atom in the body.
+permit (principal, action == Drupe::Action::"Alert", resource)
+when temporal {
+    exists (nn: Long). (
+        (count for (w: String). where (Drupe::Action::"Read"::request{ input.user: w } since within 1h Drupe::Action::"Login"::request{})) == nn
+        && nn >= 1
+    )
+};

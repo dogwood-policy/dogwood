@@ -1,0 +1,7 @@
+forbid (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+unless temporal {
+    let n = count where Drupe::Action::"Heartbeat"::request{ input.server: context.input.server } in n > 0};

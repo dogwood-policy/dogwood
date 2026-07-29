@@ -1,0 +1,23 @@
+// Event schema that PINS `callerPrincipal` to the decision request's
+// principal. On every predicate for any event, the past event's
+// `callerPrincipal` is implicitly forced to equal `principal` (the
+// request scope's principal) — reproducing the old hardcoded cross-principal
+// correlation, now declared rather than baked in.
+//
+// The policy (policy_1.dw) never writes `callerPrincipal`; the pin injects
+// it, so the correlation cannot be bypassed by a directly-written predicate.
+
+decision event <A>::request {
+    ...inputs(A),
+    pin callerPrincipal: principalType(A) = principal,
+    callerResource:  resourceType(A),
+    requestId:       String,
+}
+
+event <A>::response {
+    ...inputs(A),
+    ...outputs(A),
+    pin callerPrincipal: principalType(A) = principal,
+    callerResource:  resourceType(A),
+    requestId:       String,
+}

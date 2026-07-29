@@ -1,0 +1,30 @@
+namespace r::V::h::r {
+  entity a;
+
+  action "" in [r::V::h::r::Action::":p", r::V::h::r::Action::"Debian ", r::V::h::r::Action::"0[\u{1d}", r::V::h::r::Action::"V@", r::V::h::r::Action::"\u{1b}", r::V::h::r::Action::"\u{7f}", r::V::h::r::Action::"VV", r::V::h::r::Action::":", r::V::h::r::Action::"\u{15}", r::V::h::r::Action::"V"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{15}" in [r::V::h::r::Action::"V"];
+
+  action "\u{1b}" in [r::V::h::r::Action::"\u{7f}", r::V::h::r::Action::"VV", r::V::h::r::Action::":", r::V::h::r::Action::"\u{15}", r::V::h::r::Action::"V"];
+
+  action "0[\u{1d}" in [r::V::h::r::Action::"V@", r::V::h::r::Action::"\u{1b}", r::V::h::r::Action::"\u{7f}", r::V::h::r::Action::"VV", r::V::h::r::Action::":", r::V::h::r::Action::"\u{15}", r::V::h::r::Action::"V"];
+
+  action ":" in [r::V::h::r::Action::"\u{15}", r::V::h::r::Action::"V"];
+
+  action ":p" in [r::V::h::r::Action::"Debian ", r::V::h::r::Action::"0[\u{1d}", r::V::h::r::Action::"V@", r::V::h::r::Action::"\u{1b}", r::V::h::r::Action::"\u{7f}", r::V::h::r::Action::"VV", r::V::h::r::Action::":", r::V::h::r::Action::"\u{15}", r::V::h::r::Action::"V"];
+
+  action "Debian " in [r::V::h::r::Action::"0[\u{1d}", r::V::h::r::Action::"V@", r::V::h::r::Action::"\u{1b}", r::V::h::r::Action::"\u{7f}", r::V::h::r::Action::"VV", r::V::h::r::Action::":", r::V::h::r::Action::"\u{15}", r::V::h::r::Action::"V"];
+
+  action "V";
+
+  action "V@" in [r::V::h::r::Action::"\u{1b}", r::V::h::r::Action::"\u{7f}", r::V::h::r::Action::"VV", r::V::h::r::Action::":", r::V::h::r::Action::"\u{15}", r::V::h::r::Action::"V"];
+
+  action "VV" in [r::V::h::r::Action::":", r::V::h::r::Action::"\u{15}", r::V::h::r::Action::"V"];
+
+  action "\u{7f}" in [r::V::h::r::Action::"VV", r::V::h::r::Action::":", r::V::h::r::Action::"\u{15}", r::V::h::r::Action::"V"];
+}
+

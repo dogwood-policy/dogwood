@@ -1,0 +1,9 @@
+entity a;
+
+@B("\u{1}\u{1}\u{1}\u{1}\u{1}]]]]]]U\u{1e}\0\0]]\0\0\0\0\0\0\0")
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,10 @@
+entity a;
+
+action "" in [Action::"ח"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "ח";
+

@@ -1,0 +1,13 @@
+// Forbid any SellShares request that asks to sell more than 10000
+// shares. This rule exercises the strict-greater-than operator
+// `>` on the same integer field. Combined with policy_1.dw, every
+// integer comparison operator is now in play across this case.
+
+forbid (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+)
+when {
+    context.input.shares > 10000
+};

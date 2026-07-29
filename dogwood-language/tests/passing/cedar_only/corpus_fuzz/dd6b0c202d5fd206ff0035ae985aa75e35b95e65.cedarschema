@@ -1,0 +1,13 @@
+@sFF1
+entity t = {
+  r?: {  }
+};
+
+action "5555" appliesTo {
+  principal: [t],
+  resource: [t],
+  context: {
+    wmm?: {    }
+  }
+};
+

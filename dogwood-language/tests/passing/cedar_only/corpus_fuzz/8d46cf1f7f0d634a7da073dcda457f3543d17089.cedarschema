@@ -1,0 +1,49 @@
+entity a;
+
+action "" in [Action::"[&:\u{1d}vv", Action::"vvvvvvvvvvvvvvvvv", Action::"p", Action::"V@"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @O3cR3S
+    h: a
+  }
+};
+
+action "\'" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "V@" in [Action::"[", Action::"\'"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "[" in [Action::"\'"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: __cedar::String
+  }
+};
+
+action "[&:\u{1d}vv" in [Action::"V@", Action::"[", Action::"\'"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "p" in [Action::"V@", Action::"[", Action::"\'"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "vvvvvvvvvvvvvvvvv" in [Action::"p", Action::"V@", Action::"[", Action::"\'"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

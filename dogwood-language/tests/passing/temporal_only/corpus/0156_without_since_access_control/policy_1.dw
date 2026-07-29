@@ -1,0 +1,8 @@
+permit (
+    principal,
+    action == Drupe::Action::"Access",
+    resource
+)
+when temporal {
+    !Drupe::Action::"Revoke"::request{ input.user: context.input.user, input.resource: context.input.resource } since within 1h Drupe::Action::"Grant"::request{ input.user: context.input.user, input.resource: context.input.resource }
+};

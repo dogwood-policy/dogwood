@@ -1,0 +1,17 @@
+entity a = {
+  i?: __cedar::Bool,
+  i33?: __cedar::Bool,
+  j?: __cedar::Bool,
+  r?: __cedar::Bool,
+  r3?: __cedar::Bool,
+  r3333: __cedar::datetime,
+  vT000000008WWWWW?: a,
+  y?: __cedar::Bool
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

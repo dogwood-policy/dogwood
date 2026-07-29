@@ -1,0 +1,15 @@
+// NEGATIVE CONTROL for the nested-exists range-restriction fix: descending
+// into a nested `exists` must NOT over-permit. Here the inner `exists (g)`
+// restricts only `g` (via `input.recipient: g`); the outer binder `v` occurs
+// nowhere in a positive atom. By the range-restriction labeling rule the
+// inner binder's own fact (`∅ → g`) is dropped when propagating up, so
+// NOTHING restricts `v` — the outer `exists (v)` is genuinely unsafe and must
+// stay rejected. (Contrast the passing case
+// 1163_nested_exists_outer_restricted_inside_inner, where the inner atom also
+// mentions `v` and so a `∅ → v` fact survives.)
+//
+// Expected: rejected at `validate` — `v` is not range-restricted.
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    exists (v: String). exists (g: String). Drupe::Action::"Transfer"::request{ input.recipient: g }
+};

@@ -1,0 +1,12 @@
+entity a = {
+  AC?: __cedar::datetime,
+  @Y
+  g: __cedar::String
+} tags __cedar::datetime;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,48 @@
+entity B enum [""];
+
+entity C enum ["", "", "\u{1}"];
+
+entity MppG;
+
+entity r;
+
+entity r3333;
+
+entity r33333k tags __cedar::Long;
+
+action "" in [Action::"$", Action::"[", Action::".", Action::"\u{1}", Action::"\u{15}", Action::"loXA33", Action::"\u{31c}"] appliesTo {
+  principal: [r33333k, r, r3333],
+  resource: [r, r33333k, B, r3333],
+  context: {}
+};
+
+action "\u{1}" in [Action::"\u{15}", Action::"loXA33", Action::"\u{31c}"];
+
+action "\u{15}" in [Action::"loXA33", Action::"\u{31c}"];
+
+action "$" in [Action::"[", Action::".", Action::"\u{1}", Action::"\u{15}", Action::"loXA33", Action::"\u{31c}"] appliesTo {
+  principal: [r33333k],
+  resource: [r33333k],
+  context: {}
+};
+
+action "." in [Action::"\u{1}", Action::"\u{15}", Action::"loXA33", Action::"\u{31c}"];
+
+@j
+@r("")
+action "[" in [Action::".", Action::"\u{1}", Action::"\u{15}", Action::"loXA33", Action::"\u{31c}"] appliesTo {
+  principal: [r33333k],
+  resource: [r33333k],
+  context: {}
+};
+
+action "loXA33" in [Action::"\u{31c}"] appliesTo {
+  principal: [r, r33333k, MppG, C],
+  resource: [C, r, r33333k, MppG, B],
+  context: {
+    r?: __cedar::String
+  }
+};
+
+action "\u{31c}";
+

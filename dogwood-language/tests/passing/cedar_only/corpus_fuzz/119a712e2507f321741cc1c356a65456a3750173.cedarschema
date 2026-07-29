@@ -1,0 +1,18 @@
+entity a = {
+  A?: {  },
+  P?: {
+    ""?: {    },
+    @_YlWs300000000
+    "66"?: {    },
+    "66666\0": {    }
+  },
+  Q?: {  },
+  r?: {  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

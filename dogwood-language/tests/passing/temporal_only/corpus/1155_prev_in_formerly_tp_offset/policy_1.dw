@@ -1,0 +1,19 @@
+// Edge: `previous` nested inside a `formerly` body. The outer formerly holds
+// at the guard iff some past instant j (within 2h) had a Transfer at j AND a
+// Heartbeat at exactly j-1 (within 1h) — `previous` is the immediately-prior
+// timepoint, not "any earlier one".
+//
+// Trace: Heartbeat(@0) -> Login decoy(@10) -> Transfer(@20) -> Alert(@30).
+// The only Transfer is at tp2; the step before it (tp1) is the Login, NOT a
+// Heartbeat, so `previous within 1h Heartbeat` is false at tp2. The body never
+// holds, so the Alert is denied. (Exercises the nested-previous timepoint
+// offset: the sole Heartbeat is two steps before the Transfer, not one.)
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    formerly within 2h (Drupe::Action::"Transfer"::request{ input.user: context.input.server } && previous within 1h Drupe::Action::"Heartbeat"::request{ input.server: context.input.server })
+};

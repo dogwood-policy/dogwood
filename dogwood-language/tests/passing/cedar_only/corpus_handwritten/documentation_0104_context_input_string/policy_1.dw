@@ -1,0 +1,14 @@
+// Permit GetStockInfo only when the requested stock is "AMZN".
+//
+// New idea: inside a rule whose scope pins a specific action, the
+// per-tool input record from mcp_tools.json is exposed as
+// `context.input`. Here we read its `stock: String` field and
+// compare it to a double-quoted string literal.
+
+permit(
+    principal,
+    action == Drupe::Action::"GetStockInfo",
+    resource
+) when {
+    context.input.stock == "AMZN"
+};

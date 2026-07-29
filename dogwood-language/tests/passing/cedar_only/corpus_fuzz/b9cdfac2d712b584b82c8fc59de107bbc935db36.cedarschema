@@ -1,0 +1,26 @@
+@A("")
+@A00RRwnRRRR00("")
+@B8
+@LS("")
+@Lw
+@m("\u{1d}")
+namespace r::r::h::r {
+  @N
+  @h
+  @r("")
+  entity a = {
+    @GRRcST3N
+    @rN130000RRwnR("")
+    A: __cedar::String,
+    @J
+    @r("")
+    r: __cedar::Long
+  };
+
+  action "" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

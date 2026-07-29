@@ -1,0 +1,35 @@
+entity a;
+
+action "" in [Action::"[&:\u{1d}", Action::"p", Action::"@", Action::"\'\u{e}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    r?: {    }
+  }
+};
+
+@A
+action "\'\u{e}" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "@" in [Action::"\'\u{e}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "[&:\u{1d}" in [Action::"p", Action::"@", Action::"\'\u{e}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "p" in [Action::"@", Action::"\'\u{e}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

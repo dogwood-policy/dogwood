@@ -1,0 +1,10 @@
+// Temporal half of the mix: forbid a Read unless the same user logged in
+// within the last hour (cross-action correlation over the 2-action schema).
+forbid (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+unless temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

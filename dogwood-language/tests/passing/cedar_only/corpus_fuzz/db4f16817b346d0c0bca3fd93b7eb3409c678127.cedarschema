@@ -1,0 +1,36 @@
+entity a tags __cedar::String;
+
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    OEWrxT000000?: __cedar::String,
+    r?: __cedar::String
+  }
+};
+
+@mSedP("")
+action "?????????????????" in [Action::""] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "??VV" in [Action::"?????????????????", Action::""] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "V" in [Action::"??VV", Action::"?????????????????", Action::""] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "bian [ 5z\u{1d}" in [Action::"V", Action::"??VV", Action::"?????????????????", Action::""] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

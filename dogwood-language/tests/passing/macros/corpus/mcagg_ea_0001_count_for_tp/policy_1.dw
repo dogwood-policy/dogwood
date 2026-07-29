@@ -1,0 +1,23 @@
+// §1.2 example 1 — recover today's `count` via the explicit form:
+//   count for (t: Timepoint). where formerly within 1h (Withdraw(_) ∧ tp(t))
+//
+// Project onto the timepoint binder `t` and count distinct rows: the
+// number of past timepoints (within 1h) at which a Transfer occurred,
+// regardless of who or how much. `tp(t)` binds `t` to each visited
+// timepoint so the rows stay one-per-timepoint.
+//
+// Trace (decision at the Alert, ts=3700; window 1h = 3600s): Transfers
+// at ts=0, 100, 200, 3600 (the last one second before the decision, the
+// strictly-monotone stand-in for a same-instant event). ts=0 is out of
+// window (3700-0 = 3700 > 3600); the other three are in → count = 3.
+def temporal let_(?n, ?A, ?B) {
+    exists (?n: Long). (?A == ?n && ?B)
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    let_(n, count for (t: Timepoint). where (formerly within 1h (Drupe::Action::"Transfer"::request{ input.amount: * } && tp(t))), n == 3)};

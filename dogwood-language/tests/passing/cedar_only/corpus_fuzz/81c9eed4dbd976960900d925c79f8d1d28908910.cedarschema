@@ -1,0 +1,18 @@
+entity a = {
+  @A
+  @K
+  z: {
+    @A
+    @M
+    @r
+    @z
+    "": {    }
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

@@ -1,0 +1,38 @@
+entity a tags __cedar::String;
+
+action "" in [Action::":~", Action::"\u{1d}@[", Action::"\u{3}\u{1d}Debian ", Action::"\u{1d}\u{3}", Action::"[@[", Action::"\u{1d}@g~", Action::"\u{e}ff", Action::"d^", Action::"\u{1d}\u{3}@[", Action::"$=\u{e}", Action::"[", Action::"\u{3}ddddddffd~", Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}dddddddd\u{1d}@"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{3}\u{1d}Debian " in [Action::"\u{1d}\u{3}", Action::"[@[", Action::"\u{1d}@g~", Action::"\u{e}ff", Action::"d^", Action::"\u{1d}\u{3}@[", Action::"$=\u{e}", Action::"[", Action::"\u{3}ddddddffd~", Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}dddddddd\u{1d}@"];
+
+action "\u{3}ddddddffd~" in [Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}dddddddd\u{1d}@"];
+
+action "\u{e}" in [Action::"^", Action::"\u{1d}\u{3}dddddddd\u{1d}@"];
+
+action "\u{e}ff" in [Action::"d^", Action::"\u{1d}\u{3}@[", Action::"$=\u{e}", Action::"[", Action::"\u{3}ddddddffd~", Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}dddddddd\u{1d}@"];
+
+action "\u{1d}\u{3}" in [Action::"[@[", Action::"\u{1d}@g~", Action::"\u{e}ff", Action::"d^", Action::"\u{1d}\u{3}@[", Action::"$=\u{e}", Action::"[", Action::"\u{3}ddddddffd~", Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}dddddddd\u{1d}@"];
+
+action "\u{1d}\u{3}@[" in [Action::"$=\u{e}", Action::"[", Action::"\u{3}ddddddffd~", Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}dddddddd\u{1d}@"];
+
+action "\u{1d}\u{3}dddddddd\u{1d}@";
+
+action "\u{1d}@[" in [Action::"\u{3}\u{1d}Debian ", Action::"\u{1d}\u{3}", Action::"[@[", Action::"\u{1d}@g~", Action::"\u{e}ff", Action::"d^", Action::"\u{1d}\u{3}@[", Action::"$=\u{e}", Action::"[", Action::"\u{3}ddddddffd~", Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}dddddddd\u{1d}@"];
+
+action "\u{1d}@g~" in [Action::"\u{e}ff", Action::"d^", Action::"\u{1d}\u{3}@[", Action::"$=\u{e}", Action::"[", Action::"\u{3}ddddddffd~", Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}dddddddd\u{1d}@"];
+
+action "$=\u{e}" in [Action::"[", Action::"\u{3}ddddddffd~", Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}dddddddd\u{1d}@"];
+
+action ":~" in [Action::"\u{1d}@[", Action::"\u{3}\u{1d}Debian ", Action::"\u{1d}\u{3}", Action::"[@[", Action::"\u{1d}@g~", Action::"\u{e}ff", Action::"d^", Action::"\u{1d}\u{3}@[", Action::"$=\u{e}", Action::"[", Action::"\u{3}ddddddffd~", Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}dddddddd\u{1d}@"];
+
+action "[" in [Action::"\u{3}ddddddffd~", Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}dddddddd\u{1d}@"];
+
+action "[@[" in [Action::"\u{1d}@g~", Action::"\u{e}ff", Action::"d^", Action::"\u{1d}\u{3}@[", Action::"$=\u{e}", Action::"[", Action::"\u{3}ddddddffd~", Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}dddddddd\u{1d}@"];
+
+action "^" in [Action::"\u{1d}\u{3}dddddddd\u{1d}@"];
+
+action "d^" in [Action::"\u{1d}\u{3}@[", Action::"$=\u{e}", Action::"[", Action::"\u{3}ddddddffd~", Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}dddddddd\u{1d}@"];
+

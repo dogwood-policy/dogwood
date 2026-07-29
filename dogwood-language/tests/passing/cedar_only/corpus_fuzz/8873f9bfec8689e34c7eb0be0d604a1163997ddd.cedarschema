@@ -1,0 +1,28 @@
+entity BFf;
+
+entity PFFFFFFdF000FSSS;
+
+entity Pf;
+
+entity g3;
+
+action "" in [Action::"\u{f}\'\u{f}\u{f}\u{f}\u{f}", Action::"\u{f}\u{f}\u{f}\u{f}O\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h", Action::"f", Action::"\u{1}\u{f}h\u{f}\u{f}O\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h", Action::"\u{1}\u{f}h", Action::"####", Action::"#######"] appliesTo {
+  principal: [g3, PFFFFFFdF000FSSS, Pf, BFf],
+  resource: [PFFFFFFdF000FSSS, Pf, BFf, g3],
+  context: {}
+};
+
+action "\u{1}\u{f}h" in [Action::"####", Action::"#######"];
+
+action "\u{1}\u{f}h\u{f}\u{f}O\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h" in [Action::"\u{1}\u{f}h", Action::"####", Action::"#######"];
+
+action "\u{f}\u{f}\u{f}\u{f}O\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h" in [Action::"f", Action::"\u{1}\u{f}h\u{f}\u{f}O\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h", Action::"\u{1}\u{f}h", Action::"####", Action::"#######"];
+
+action "\u{f}\'\u{f}\u{f}\u{f}\u{f}" in [Action::"\u{f}\u{f}\u{f}\u{f}O\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h", Action::"f", Action::"\u{1}\u{f}h\u{f}\u{f}O\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h", Action::"\u{1}\u{f}h", Action::"####", Action::"#######"];
+
+action "####" in [Action::"#######"];
+
+action "#######";
+
+action "f" in [Action::"\u{1}\u{f}h\u{f}\u{f}O\u{f}\u{f}\u{f}\u{f}\u{f}\u{f}h", Action::"\u{1}\u{f}h", Action::"####", Action::"#######"];
+

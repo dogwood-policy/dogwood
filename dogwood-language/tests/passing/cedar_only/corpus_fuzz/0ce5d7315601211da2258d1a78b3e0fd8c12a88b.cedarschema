@@ -1,0 +1,10 @@
+@Ryyyy("{/{{{{{{{{2{{{{{{{{\0(")
+entity a tags __cedar::String;
+
+@r31
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

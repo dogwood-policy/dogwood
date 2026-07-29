@@ -1,0 +1,24 @@
+namespace A::r::r::r::r::r::r::A {
+  @A
+  entity r;
+
+  action "" in [A::r::r::r::r::r::r::A::Action::"@", A::r::r::r::r::r::r::A::Action::"\u{1}", A::r::r::r::r::r::r::A::Action::"\u{5}", A::r::r::r::r::r::r::A::Action::"S", A::r::r::r::r::r::r::A::Action::":"] appliesTo {
+    principal: [r],
+    resource: [r],
+    context: {
+      @A
+      A: __cedar::String
+    }
+  };
+
+  action "\u{1}" in [A::r::r::r::r::r::r::A::Action::"\u{5}", A::r::r::r::r::r::r::A::Action::"S", A::r::r::r::r::r::r::A::Action::":"];
+
+  action "\u{5}" in [A::r::r::r::r::r::r::A::Action::"S", A::r::r::r::r::r::r::A::Action::":"];
+
+  action ":";
+
+  action "@" in [A::r::r::r::r::r::r::A::Action::"\u{1}", A::r::r::r::r::r::r::A::Action::"\u{5}", A::r::r::r::r::r::r::A::Action::"S", A::r::r::r::r::r::r::A::Action::":"];
+
+  action "S" in [A::r::r::r::r::r::r::A::Action::":"];
+}
+

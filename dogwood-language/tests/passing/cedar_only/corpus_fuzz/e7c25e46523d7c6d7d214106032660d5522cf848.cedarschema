@@ -1,0 +1,56 @@
+namespace t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t {
+  entity D;
+
+  entity I;
+
+  entity N;
+
+  entity f;
+
+  entity h0;
+
+  entity m3;
+
+  entity qoqqPbop333;
+
+  entity r;
+
+  entity r3;
+
+  entity ry333S3 = {
+    @hVVV
+    rVVVEnYc?: __cedar::Long
+  };
+
+  entity v = {
+    A?: __cedar::datetime
+  };
+
+  entity vR;
+
+  entity yyqPbop3333;
+
+  entity z;
+
+  action "" in [t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t::Action::"<4Xd23", t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t::Action::"\u{1}["] appliesTo {
+    principal: [D, N, r, m3],
+    resource: [qoqqPbop333, D, z, m3, r3, v, vR, yyqPbop3333, N, r, ry333S3, h0, f, I],
+    context: {
+      ry333S3?: __cedar::Bool,
+      v: t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t::z
+    }
+  };
+
+  action "\u{1}[" appliesTo {
+    principal: [z, f, yyqPbop3333, N, qoqqPbop333, ry333S3, v, m3, vR, D, I, r3],
+    resource: [v, N, h0, z, m3, I, f],
+    context: {}
+  };
+
+  action "<4Xd23" in [t::tFFugC04uq123::r::r::r3z333vSRRReX4u::p2::t::Action::"\u{1}["] appliesTo {
+    principal: [D, N, f, ry333S3],
+    resource: [r3, N, D, I, h0, z, m3, ry333S3, v],
+    context: {}
+  };
+}
+

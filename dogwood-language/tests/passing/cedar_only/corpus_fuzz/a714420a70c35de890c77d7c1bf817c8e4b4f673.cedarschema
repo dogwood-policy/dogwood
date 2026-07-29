@@ -1,0 +1,16 @@
+entity T;
+
+entity h;
+
+entity r;
+
+entity xTT;
+
+entity xui;
+
+action "action" appliesTo {
+  principal: [r],
+  resource: [r],
+  context: {}
+};
+

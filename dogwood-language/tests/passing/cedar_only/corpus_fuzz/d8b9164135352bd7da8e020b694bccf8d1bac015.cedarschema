@@ -1,0 +1,9 @@
+@if
+entity Pf enum ["#", "vH\0\0\0\0ti###/####~", "#\u{f}"];
+
+action "action" appliesTo {
+  principal: [Pf],
+  resource: [Pf],
+  context: {}
+};
+

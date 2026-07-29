@@ -1,0 +1,15 @@
+entity a;
+
+action "\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}dura\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}\u{13}n \u{13}" in [Action::"#"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+@yop4o000
+action "#" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

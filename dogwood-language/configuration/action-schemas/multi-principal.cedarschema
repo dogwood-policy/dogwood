@@ -1,0 +1,37 @@
+// Multi-principal/resource schema: demonstrates multiple entity types in
+// appliesTo (User vs ServiceAccount as principals, Document vs Folder as
+// resources). Shows how policies can scope to specific entity types.
+
+namespace Drupe {
+    entity User;
+    entity ServiceAccount;
+    entity Document;
+    entity Folder;
+
+    type ReadInput = { path: String };
+    type ReadOutput = { content: String };
+
+    type WriteInput = { path: String, content: String };
+    type WriteOutput = { success: Bool };
+
+    type ListInput = { prefix: String };
+    type ListOutput = { items: Set<String> };
+
+    action "Read" appliesTo {
+        principal: [User, ServiceAccount],
+        resource: [Document, Folder],
+        context: { input: ReadInput, output: ReadOutput }
+    };
+
+    action "Write" appliesTo {
+        principal: [User, ServiceAccount],
+        resource: [Document],
+        context: { input: WriteInput, output: WriteOutput }
+    };
+
+    action "List" appliesTo {
+        principal: [User, ServiceAccount],
+        resource: [Folder],
+        context: { input: ListInput, output: ListOutput }
+    };
+}

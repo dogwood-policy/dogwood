@@ -1,0 +1,36 @@
+entity a tags __cedar::String;
+
+action "" in [Action::":~", Action::"\u{1d}@[", Action::"\u{3}\u{1d}$w", Action::"$", Action::"=\u{e}", Action::"\u{1d}", Action::"\u{3}[", Action::"@T", Action::"\u{1d}@gffd~", Action::"^", Action::"\u{1d}\u{3}", Action::"[@"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    vRS33bbpppzp000?: __cedar::String
+  }
+};
+
+action "\u{3}\u{1d}$w" in [Action::"\u{e}"];
+
+action "\u{3}[" in [Action::"@T", Action::"\u{1d}@gffd~", Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}", Action::"[@"];
+
+action "\u{e}" in [Action::"^", Action::"\u{1d}\u{3}", Action::"[@"];
+
+action "\u{1d}" in [Action::"\u{1d}@gffd~", Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}", Action::"[@"];
+
+action "\u{1d}\u{3}" in [Action::"[@"];
+
+action "\u{1d}@[" in [Action::"=\u{e}", Action::"\u{1d}", Action::"\u{3}[", Action::"\u{e}"];
+
+action "\u{1d}@gffd~" in [Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}", Action::"[@"];
+
+action "$" in [Action::"\u{1d}@gffd~", Action::"^", Action::"\u{1d}\u{3}", Action::"[@"];
+
+action ":~" in [Action::"\u{1d}@[", Action::"\u{3}\u{1d}$w", Action::"$", Action::"=\u{e}", Action::"\u{1d}", Action::"\u{3}[", Action::"@T", Action::"\u{1d}@gffd~", Action::"\u{e}", Action::"^", Action::"[@"];
+
+action "=\u{e}" in [Action::"\u{1d}", Action::"\u{3}[", Action::"@T", Action::"\u{1d}@gffd~"];
+
+action "@T" in [Action::"\u{1d}@gffd~", Action::"\u{e}", Action::"^", Action::"\u{1d}\u{3}", Action::"[@"];
+
+action "[@";
+
+action "^" in [Action::"\u{1d}\u{3}", Action::"[@"];
+

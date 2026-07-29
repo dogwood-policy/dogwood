@@ -1,0 +1,15 @@
+entity a = {
+  @hXA0002i0U3320a00("")
+  r: {
+    @Li
+    @r("")
+    "\u{5}"?: a
+  }
+} tags __cedar::String;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

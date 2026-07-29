@@ -1,0 +1,24 @@
+// Correlation on a DEPTH-3 nested injected field, `__drupe.session.id`.
+//
+// A Read is permitted only if there was formerly a Login in the same
+// session — the past Login's `__drupe.session.id` must equal the
+// current Read's, referenced via `context.__drupe.session.id`. The
+// sibling `region` is left as a wildcard (omitted), so only the `id`
+// segment participates in the correlation.
+//
+// Positive/negative control across two traces:
+//   trace_1: prior Login shares the Read's session id → permitted.
+//   trace_2: IDENTICAL except the prior Login's session id differs → the
+//            depth-3 correlation fails → NOT permitted.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{
+        input.user: context.input.user,
+        __drupe.session.id: context.__drupe.session.id
+    }
+};

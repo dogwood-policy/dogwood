@@ -1,0 +1,14 @@
+@A000
+@dKqq("")
+@dWqq("")
+@dqKq("")
+@dqqq("")
+@dqsq("")
+entity a tags __cedar::duration;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

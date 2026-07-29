@@ -1,0 +1,13 @@
+@W
+@ru0SSSS800000
+entity a;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    H30SSaaaaaa?: __cedar::ipaddr,
+    r?: __cedar::ipaddr
+  }
+};
+

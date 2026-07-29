@@ -1,0 +1,9 @@
+// if/then/else nested as an operand to pick a per-stock share cap.
+@id("sell_nested_if_threshold")
+permit ( principal, action == Drupe::Action::"SellShares", resource )
+when {
+    context.input.shares <=
+        (if context.input.stock == "AMZN" then 10
+         else if context.input.stock == "MSFT" then 50
+         else 1000)
+};

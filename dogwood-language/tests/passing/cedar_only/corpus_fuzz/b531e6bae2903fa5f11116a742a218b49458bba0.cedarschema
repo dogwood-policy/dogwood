@@ -1,0 +1,20 @@
+namespace A::A::h::T0::A::A {
+  entity F;
+
+  entity v;
+
+  action "" in [A::A::h::T0::A::A::Action::"0["] appliesTo {
+    principal: [v],
+    resource: [F],
+    context: {}
+  };
+
+  action "0[";
+
+  action ":p" in [A::A::h::T0::A::A::Action::"", A::A::h::T0::A::A::Action::"0["] appliesTo {
+    principal: [v],
+    resource: [v],
+    context: {}
+  };
+}
+

@@ -1,0 +1,24 @@
+namespace w {
+  entity a enum ["\0", ""];
+
+  action "" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      @A
+      @R("j000")
+      @r
+      @tj5cZgYlWjjj("")
+      @tjS1jjjjjjTS
+      @w5
+      r: __cedar::Bool
+    }
+  };
+
+  action "-----------------" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

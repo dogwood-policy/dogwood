@@ -1,0 +1,15 @@
+entity a enum [""];
+
+@Y2425a444s47
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "trin" in [Action::""] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

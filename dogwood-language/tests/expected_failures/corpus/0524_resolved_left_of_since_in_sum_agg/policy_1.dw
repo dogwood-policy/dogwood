@@ -1,0 +1,30 @@
+// MOVED from the passing corpus (temporal_only/0524): this policy's forbid
+// guard sums `a`, whose ONLY occurrence is in the LEFT operand of a `since`.
+// Range restriction propagates only through the since-RIGHT (the anchor), so
+// the formula is non-monitorable: `since`-left is a CONTINUITY condition
+// ("Transfer::response(a) held at every step since the login"), not a
+// collection. At any request decision point that relation is empty — the sum
+// is 0 on every trace, so the guard was dead code — and when a Login request
+// is itself the decision point the anchor range (j, i] is empty, the left is
+// vacuously true for EVERY `a`, and the relation is infinite (the evaluator
+// fabricated 0). The case's own trace shows the authored intent was "sum of
+// resolved transfer amounts since login" (three 501s, total 1503, against a
+// 1500 threshold — built to trip the forbid), which the formula as written
+// cannot express; the recorded `true` at the Read merely documented the inert
+// guard. The validator now rejects the formula: an aggregation `for`-variable
+// must be range-restricted by a positive atom of the `where` body.
+forbid (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    exists (total: Long). ((sum a for (a: Long). where (Drupe::Action::"Transfer"::response{ input.user: context.input.user, input.amount: a } since within 2h Drupe::Action::"Login"::request{ input.user: context.input.user })) == total && total > 1500)};
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

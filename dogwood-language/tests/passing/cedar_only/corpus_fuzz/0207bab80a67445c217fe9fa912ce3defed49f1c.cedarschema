@@ -1,0 +1,10 @@
+entity a tags __cedar::String;
+
+action "" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    nTXTT3oTTT033R000?: __cedar::String
+  }
+};
+

@@ -1,0 +1,32 @@
+// Field injection (`{ … }` refinement) onto a DEEP path. A condition macro
+// refines its predicate-valued argument `?s` with an injected deep field
+// `{ __drupe.session.id: context.__drupe.session.id }`, forcing a
+// same-session correlation onto whatever event the caller passes — even
+// though the caller never mentions the session id.
+//
+//   same_session(1h, Login::request{ input.user: … })
+//     ⇒ formerly within 1h Login::request{ input.user: …,
+//          __drupe.session.id: context.__drupe.session.id }
+//
+// Confirms the injection operator composes with dotted field paths.
+//
+// Positive/negative control across two traces:
+//   trace_1: prior Login shares the Read's session → permitted.
+//   trace_2: IDENTICAL except the prior Login's session differs → the
+//            injected deep-path correlation excludes it → NOT permitted.
+
+def temporal same_session(?w, ?s) {
+    formerly within ?w (?s{ __drupe.session.id: context.__drupe.session.id })
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    same_session(
+        1h,
+        Drupe::Action::"Login"::request{ input.user: context.input.user }
+    )
+};

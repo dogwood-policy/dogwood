@@ -1,0 +1,77 @@
+entity a;
+
+@LR
+action "" in [Action::":p", Action::"&[\u{1d}:p", Action::"&[\u{1d}", Action::"+w", Action::"&$Debian *", Action::"\u{e}VV*", Action::"V$*", Action::":"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+@lNRN1RNa33ENWR3
+action "\u{e}VV" in [Action::"V", Action::"V$*", Action::":"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    h?: __cedar::ipaddr,
+    r: __cedar::Bool
+  }
+};
+
+action "\u{e}VV*" in [Action::"\u{e}VV", Action::"V", Action::"V$*", Action::":"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "&$Debian *" in [Action::"\u{e}VV*", Action::"\u{e}VV", Action::"V", Action::"V$*", Action::":"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "&[\u{1d}" in [Action::"+w", Action::"&$Debian *", Action::"\u{e}VV*", Action::"\u{e}VV", Action::"V", Action::"V$*", Action::":"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "&[\u{1d}:p" in [Action::"&[\u{1d}", Action::"+w", Action::"&$Debian *", Action::"\u{e}VV*", Action::"\u{e}VV", Action::"V", Action::"V$*", Action::":"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "+w" in [Action::"&$Debian *", Action::"\u{e}VV*", Action::"\u{e}VV", Action::"V", Action::"V$*", Action::":"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action ":" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action ":p" in [Action::"+w", Action::"&$Debian *", Action::"\u{e}VV", Action::"V", Action::"V$*", Action::":"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "V" in [Action::"V$*", Action::":"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @e
+    @erDN1RNS
+    v: Set<Set<Set<Set<__cedar::Long>>>>
+  }
+};
+
+action "V$*" in [Action::":"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

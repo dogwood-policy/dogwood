@@ -1,0 +1,10 @@
+namespace Bsss {
+  entity g00000 enum [""];
+
+  action "action" appliesTo {
+    principal: [g00000],
+    resource: [g00000],
+    context: {}
+  };
+}
+

@@ -1,0 +1,16 @@
+namespace yx::ye {
+  entity A0 enum [""];
+
+  entity hn33Ly0003333 enum [""];
+
+  entity r3 enum [""];
+
+  entity y enum [""];
+
+  action "action" appliesTo {
+    principal: [r3],
+    resource: [r3],
+    context: {}
+  };
+}
+

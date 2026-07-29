@@ -1,0 +1,27 @@
+{
+  "availableProviders": {
+    "Access::Level": {
+      "argumentTypes": [
+        { "paramType": "string" }
+      ],
+      "outputType": {
+        "paramType": "record",
+        "fields": { "level": { "paramType": "integer" } },
+        "required": ["level"]
+      },
+      "availableMethods": {
+        "checkLevel": {
+          "argumentTypes": [
+            { "paramType": "string" },
+            { "paramType": "integer" }
+          ],
+          "outputType": { "paramType": "integer" }
+        }
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "level.rhai"
+      }
+    }
+  }
+}

@@ -1,0 +1,30 @@
+@J("q")
+entity a = {
+  @Cpp64JnJqnmmm
+  @J("")
+  @JW("")
+  @O("")
+  @P("")
+  @T
+  @e
+  @iYYY
+  @r("")
+  @r33("")
+  @r333333333333WWW("")
+  @x("")
+  @xTT("")
+  @y("")
+  @z("0\0a")
+  r?: {
+    "": __cedar::String,
+    @w
+    "\0": __cedar::datetime
+  }
+};
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

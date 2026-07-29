@@ -1,0 +1,19 @@
+// A method that is not a Cedar built-in AND whose receiver chain does not
+// bottom out at a declared-provider invocation must be rejected.
+//
+// Before the provider-path unification the parser hard-errored on any
+// unknown method at parse time. Now the parser defers such a method as an
+// `ExprKind::MethodCall`, and lowering resolves it: a provider chain is
+// hoisted, anything else is an "unknown method" error. This case guards
+// that the deferred error still fires — the receiver here is a plain
+// context field (`context.input.document`), not a provider, so
+// `.footgun()` has no meaning and lowering must reject it.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when {
+    context.input.document.footgun() == true
+};

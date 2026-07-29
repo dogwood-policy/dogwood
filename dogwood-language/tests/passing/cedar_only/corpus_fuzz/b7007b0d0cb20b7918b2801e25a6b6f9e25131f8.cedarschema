@@ -1,0 +1,16 @@
+entity a tags __cedar::String;
+
+action "" in [Action::":p", Action::"[\u{1d}", Action::"V@"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    F00000000000000?: __cedar::String
+  }
+};
+
+action ":p" in [Action::"[\u{1d}", Action::"V@"];
+
+action "V@";
+
+action "[\u{1d}" in [Action::"V@"];
+

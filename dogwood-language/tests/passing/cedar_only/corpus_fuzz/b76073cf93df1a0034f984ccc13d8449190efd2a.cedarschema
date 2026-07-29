@@ -1,0 +1,16 @@
+namespace J::J::J::J::J::z::gv {
+  entity A00000000 enum [""];
+
+  entity F enum [""];
+
+  entity J enum [""];
+
+  entity z enum [""];
+
+  action "action" appliesTo {
+    principal: [z],
+    resource: [z],
+    context: {}
+  };
+}
+

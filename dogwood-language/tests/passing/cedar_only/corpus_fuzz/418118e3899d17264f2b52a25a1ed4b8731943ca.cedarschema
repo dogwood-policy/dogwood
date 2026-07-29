@@ -1,0 +1,14 @@
+entity a tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    A?: {
+      "33%"?: __cedar::datetime,
+      "6"?: __cedar::datetime,
+      "n \'\06"?: __cedar::datetime
+    }
+  }
+};
+

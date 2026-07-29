@@ -1,0 +1,378 @@
+{
+  "policies": "corpus-tests/c1a0d574fc3f1f4b7ab7e4d12ecd021838409867.cedar",
+  "policyFormat": "cedar",
+  "entities": "corpus-tests/c1a0d574fc3f1f4b7ab7e4d12ecd021838409867.entities.json",
+  "schema": "corpus-tests/c1a0d574fc3f1f4b7ab7e4d12ecd021838409867.cedarschema",
+  "schemaFormat": "cedar",
+  "shouldValidate": true,
+  "requests": [
+    {
+      "description": "Request 0",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "": "",
+          "$\u0003\u0003\u0003": "",
+          ".6": "",
+          ".a;4": "",
+          "A\u0003$\u0003\u0003\u0003": "",
+          "Debia;": "",
+          "n\u0001\u0000 \u0000 ": {
+            "\u0003": "",
+            "\u0003\u0003\u0003": "",
+            "$\u0003\u0003\u0003": "",
+            "A\u0003$": "",
+            "bia;8": "",
+            "ebi": "",
+            "ion": {
+              "": "",
+              "$\u0003\u0003*~": "",
+              "3": "",
+              "A": ""
+            },
+            "n D": ""
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 1",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "": "",
+          "$\u0003\u0003\u0003": "",
+          ".6": "",
+          ".a;4": "",
+          "A\u0003$\u0003\u0003\u0003": "",
+          "Debia;": "",
+          "n\u0001\u0000 \u0000 ": {
+            "\u0003": "",
+            "\u0003\u0003\u0003": "",
+            "$\u0003\u0003\u0003": "",
+            "A\u0003$": "",
+            "bia;8": "",
+            "ebi": "",
+            "ion": {
+              "": "",
+              "$\u0003\u0003*~": "",
+              "3": "",
+              "A": ""
+            },
+            "n D": ""
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 2",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "": "",
+          "$\u0003\u0003\u0003": "",
+          ".6": "",
+          ".a;4": "",
+          "A\u0003$\u0003\u0003\u0003": "",
+          "Debia;": "",
+          "n\u0001\u0000 \u0000 ": {
+            "\u0003": "",
+            "\u0003\u0003\u0003": "",
+            "$\u0003\u0003\u0003": "",
+            "A\u0003$": "",
+            "bia;8": "",
+            "ebi": "",
+            "ion": {
+              "": "",
+              "$\u0003\u0003*~": "",
+              "3": "",
+              "A": ""
+            },
+            "n D": ""
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 3",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "": "",
+          "$\u0003\u0003\u0003": "",
+          ".6": "",
+          ".a;4": "",
+          "A\u0003$\u0003\u0003\u0003": "",
+          "Debia;": "",
+          "n\u0001\u0000 \u0000 ": {
+            "\u0003": "",
+            "\u0003\u0003\u0003": "",
+            "$\u0003\u0003\u0003": "",
+            "A\u0003$": "",
+            "bia;8": "",
+            "ebi": "",
+            "ion": {
+              "": "",
+              "$\u0003\u0003*~": "",
+              "3": "",
+              "A": ""
+            },
+            "n D": ""
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 4",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "": "",
+          "$\u0003\u0003\u0003": "",
+          ".6": "",
+          ".a;4": "",
+          "A\u0003$\u0003\u0003\u0003": "",
+          "Debia;": "",
+          "n\u0001\u0000 \u0000 ": {
+            "\u0003": "",
+            "\u0003\u0003\u0003": "",
+            "$\u0003\u0003\u0003": "",
+            "A\u0003$": "",
+            "bia;8": "",
+            "ebi": "",
+            "ion": {
+              "": "",
+              "$\u0003\u0003*~": "",
+              "3": "",
+              "A": ""
+            },
+            "n D": ""
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 5",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "": "",
+          "$\u0003\u0003\u0003": "",
+          ".6": "",
+          ".a;4": "",
+          "A\u0003$\u0003\u0003\u0003": "",
+          "Debia;": "",
+          "n\u0001\u0000 \u0000 ": {
+            "\u0003": "",
+            "\u0003\u0003\u0003": "",
+            "$\u0003\u0003\u0003": "",
+            "A\u0003$": "",
+            "bia;8": "",
+            "ebi": "",
+            "ion": {
+              "": "",
+              "$\u0003\u0003*~": "",
+              "3": "",
+              "A": ""
+            },
+            "n D": ""
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 6",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "": "",
+          "$\u0003\u0003\u0003": "",
+          ".6": "",
+          ".a;4": "",
+          "A\u0003$\u0003\u0003\u0003": "",
+          "Debia;": "",
+          "n\u0001\u0000 \u0000 ": {
+            "\u0003": "",
+            "\u0003\u0003\u0003": "",
+            "$\u0003\u0003\u0003": "",
+            "A\u0003$": "",
+            "bia;8": "",
+            "ebi": "",
+            "ion": {
+              "": "",
+              "$\u0003\u0003*~": "",
+              "3": "",
+              "A": ""
+            },
+            "n D": ""
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "Request 7",
+      "principal": {
+        "type": "a",
+        "id": ""
+      },
+      "action": {
+        "type": "Action",
+        "id": "action"
+      },
+      "resource": {
+        "type": "a",
+        "id": ""
+      },
+      "context": {
+        "A": {
+          "": "",
+          "$\u0003\u0003\u0003": "",
+          ".6": "",
+          ".a;4": "",
+          "A\u0003$\u0003\u0003\u0003": "",
+          "Debia;": "",
+          "n\u0001\u0000 \u0000 ": {
+            "\u0003": "",
+            "\u0003\u0003\u0003": "",
+            "$\u0003\u0003\u0003": "",
+            "A\u0003$": "",
+            "bia;8": "",
+            "ebi": "",
+            "ion": {
+              "": "",
+              "$\u0003\u0003*~": "",
+              "3": "",
+              "A": ""
+            },
+            "n D": ""
+          }
+        }
+      },
+      "validateRequest": true,
+      "decision": "allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    }
+  ]
+}

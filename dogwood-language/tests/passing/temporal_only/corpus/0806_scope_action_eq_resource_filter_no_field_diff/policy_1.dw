@@ -1,0 +1,14 @@
+// Scope action == Read; predicate filters Login by user STRING field only.
+// Trace uses different Gateway resources for the Login and Read events
+// (gw1 vs gw2). The temporal body should join on user-string only and
+// ignore the resource entity. Tests whether DSQL implicitly groups by
+// resource and over-filters or over-fires.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user, callerPrincipal: principal, callerResource: resource }
+};

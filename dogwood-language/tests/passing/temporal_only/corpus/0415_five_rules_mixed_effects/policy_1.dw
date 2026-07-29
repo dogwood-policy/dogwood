@@ -1,0 +1,50 @@
+// Five-rule mixed-effect policy at the MAX_POLICIES_PER_MONITOR cap.
+// Three permits with progressively wider Login windows, two forbids
+// (fresh-login block and recent-error block). Each rule maintains
+// its own per-rule state under the SQL prefix scheme; the verdict
+// pattern requires every rule's state to advance independently.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 30m Drupe::Action::"Login"::request{ input.user: context.input.user }
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 2h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 4h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};
+
+forbid (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 5m Drupe::Action::"Login"::request{ input.user: context.input.user }
+};
+
+forbid (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Error"::request{ input.user: context.input.user }
+};

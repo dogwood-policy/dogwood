@@ -1,0 +1,19 @@
+entity a tags __cedar::decimal;
+
+action "action" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @j("###")
+    A?: {
+      "\0\0\0A"?: __cedar::ipaddr,
+      "#####"?: __cedar::ipaddr,
+      "######################u############"?: __cedar::ipaddr,
+      "3"?: __cedar::ipaddr,
+      "33/333336"?: __cedar::ipaddr,
+      ">3": __cedar::ipaddr,
+      A?: __cedar::ipaddr
+    }
+  }
+};
+

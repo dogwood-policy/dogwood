@@ -1,0 +1,16 @@
+namespace r::r::o::r {
+  entity r;
+
+  action "D" in [r::r::o::r::Action::"bi", r::r::o::r::Action::"n "] appliesTo {
+    principal: [r],
+    resource: [r],
+    context: {
+      A000000000000?: __cedar::String
+    }
+  };
+
+  action "bi" in [r::r::o::r::Action::"n "];
+
+  action "n ";
+}
+

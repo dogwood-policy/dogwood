@@ -1,0 +1,7 @@
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    exists (total_r: Long). ((sum r for (r: Long), (t: Timepoint). where (formerly within 1h (Drupe::Action::"Compute"::response{ input.user: context.input.user, output.result: r, output.code: _ } && tp(t)))) == total_r && total_r > 500)&& exists (total_c: Long). ((sum c for (c: Long), (t: Timepoint). where (formerly within 1h (Drupe::Action::"Compute"::response{ input.user: context.input.user, output.result: _, output.code: c } && tp(t)))) == total_c && total_c > 5)};

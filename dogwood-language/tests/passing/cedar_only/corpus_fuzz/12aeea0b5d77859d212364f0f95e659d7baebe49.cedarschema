@@ -1,0 +1,42 @@
+namespace r::V::h::r {
+  entity a;
+
+  @A
+  @Tc("\u{1}")
+  @n
+  action "" in [r::V::h::r::Action::"=Debian", r::V::h::r::Action::" 0[\u{1d}", r::V::h::r::Action::"V@", r::V::h::r::Action::"\u{1b}", r::V::h::r::Action::"\u{7f}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{1b}" in [r::V::h::r::Action::"\u{7f}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {
+      A?: __cedar::ipaddr,
+      C3333333?: __cedar::ipaddr,
+      EYgY0EccR33_3?: __cedar::ipaddr,
+      g?: __cedar::ipaddr,
+      r?: __cedar::ipaddr,
+      vlQNNNNN?: __cedar::ipaddr
+    }
+  };
+
+  action " 0[\u{1d}" in [r::V::h::r::Action::"V@", r::V::h::r::Action::"\u{1b}", r::V::h::r::Action::"\u{7f}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "=Debian" in [r::V::h::r::Action::" 0[\u{1d}", r::V::h::r::Action::"V@", r::V::h::r::Action::"\u{1b}", r::V::h::r::Action::"\u{7f}"];
+
+  action "V@" in [r::V::h::r::Action::"\u{1b}", r::V::h::r::Action::"\u{7f}"] appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+
+  action "\u{7f}";
+}
+

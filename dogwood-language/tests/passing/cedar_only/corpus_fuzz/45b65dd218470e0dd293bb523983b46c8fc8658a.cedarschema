@@ -1,0 +1,10 @@
+namespace D {
+  entity a enum ["\0\0\0\0\0Y"];
+
+  action "action" appliesTo {
+    principal: [a],
+    resource: [a],
+    context: {}
+  };
+}
+

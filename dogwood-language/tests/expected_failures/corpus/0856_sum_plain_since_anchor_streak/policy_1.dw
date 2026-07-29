@@ -1,0 +1,8 @@
+permit (
+    principal,
+    action == Drupe::Action::"Transfer",
+    resource
+)
+when temporal {
+    let total = sum a where (Drupe::Action::"Transfer"::request{ input.user: context.input.user } since within 1h (Drupe::Action::"Login"::response{ input.user: context.input.user, output.tier: a })) in total >= 7
+};

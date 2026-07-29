@@ -1,0 +1,29 @@
+// Relativization / partition-safety, `previous` — ANTI-JOIN RECENCY stress.
+//
+// `rewrite_previous` encodes "the most recent MINE event before now satisfies
+// B" as: some B-position tj within W, with NO mine position tk strictly between
+// tj and the decision ti (the `¬∃tk. … ∧ tj < tk ∧ tk < ti` anti-join). Its
+// correctness hinges on that anti-join selecting the *most recent* mine as tj —
+// not merely *some* mine that satisfies B. The existing tests use a single mine
+// event; this bundle puts MULTIPLE mine candidates and multiple foreign events
+// inside the window to stress the anti-join.
+//
+//   trace_1 (DENY): alice's most-recent own event before the Read is a
+//   Transfer, even though an EARLIER own Login exists. The anti-join must
+//   reject the earlier Login@1 as tj (because own Transfer@3 sits between it
+//   and the Read) and land on Transfer@3 → not a Login → DENY. A bug that let
+//   the earlier Login@1 satisfy the formula would wrongly ALLOW.
+//     @1 alice Login, @2 bob Login, @3 alice Transfer, @4 bob Login, @5 alice Read.
+//
+//   trace_2 (ALLOW): identical interleaving shape, but alice's most-recent own
+//   event is a Login (an earlier own Transfer is correctly ignored) → ALLOW.
+//     @1 alice Transfer, @2 bob Transfer, @3 alice Login, @4 bob Login, @5 alice Read.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    previous within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

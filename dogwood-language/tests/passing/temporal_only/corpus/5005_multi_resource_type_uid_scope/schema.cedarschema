@@ -1,0 +1,21 @@
+// An action with multiple resource types, discriminated by entity UID
+// scopes (`resource == …`): specific resources of BOTH types are pinned by
+// different policies, and an unpinned resource of a covered type stays
+// denied.
+namespace Drupe {
+    entity OAuthUser;
+    entity Gateway;
+    entity Bucket;
+    type LoginInput = { user: String };
+    type ReadInput = { document: String, user: String };
+    action Login appliesTo {
+        principal: [OAuthUser],
+        resource: [Gateway],
+        context: { input: LoginInput }
+    };
+    action Read appliesTo {
+        principal: [OAuthUser],
+        resource: [Gateway, Bucket],
+        context: { input: ReadInput }
+    };
+}

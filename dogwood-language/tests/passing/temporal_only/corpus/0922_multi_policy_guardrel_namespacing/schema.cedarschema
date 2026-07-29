@@ -1,0 +1,58 @@
+namespace Drupe {
+  type UserInput = {
+    user: String
+  };
+
+  type UserOutput = {  };
+
+  entity Gateway;
+
+  entity OAuthUser = {
+    id: String
+  };
+
+  action "Login" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: UserInput,
+      output?: UserOutput
+    }
+  };
+
+  action "Transfer" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: UserInput,
+      output?: UserOutput
+    }
+  };
+
+  action "Refund" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: UserInput,
+      output?: UserOutput
+    }
+  };
+
+  action "Approve" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: UserInput,
+      output?: UserOutput
+    }
+  };
+
+  action "Review" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: UserInput,
+      output?: UserOutput
+    }
+  };
+}

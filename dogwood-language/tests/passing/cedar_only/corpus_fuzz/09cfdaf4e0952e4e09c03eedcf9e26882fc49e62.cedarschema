@@ -1,0 +1,172 @@
+@h
+entity a = {
+  @F
+  @L3("\0\0\0")
+  @LS("")
+  A: __cedar::Long
+};
+
+action "" in [Action::":~", Action::"[@[", Action::"\u{e}", Action::"[@an "] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    @F
+    d?: __cedar::String,
+    @L3("")
+    @LS("")
+    x: {
+      @LST3N13Q0
+      "": {
+        @P("")
+        @v3X33Sw1S3("")
+        ""?: a,
+        "\0": __cedar::ipaddr,
+        @r3bbbbb
+        @v33bR3X33S1RaEz("")
+        "\0\0": Set<{        }>,
+        @LS3T1ed
+        @gRa3zERRT("")
+        ":pVV": __cedar::datetime,
+        ":~"?: __cedar::Bool,
+        @NRVa3zERRT33S
+        @d
+        @x
+        "?\0\0\0": __cedar::Long
+      },
+      @F
+      "\0"?: __cedar::String,
+      "\0\0": __cedar::ipaddr,
+      ":pVV": a,
+      @r
+      "?\0\0\0"?: __cedar::Bool,
+      @A
+      @P("")
+      @_YlW3oORRT30qd
+      @d
+      @r("")
+      "Debian @[1"?: Set<Set<__cedar::datetime>>,
+      "V@": a,
+      "V@[\u{1d}"?: a
+    }
+  }
+};
+
+@D("w")
+@D3S1S3T1eddb0("\u{e}")
+@IER("[[\u{1d}")
+@L3
+@m("@")
+@rzE("")
+@v3X33y1RaE("")
+action "\u{3}\u{1d}wDebian " in [Action::"\u{e}", Action::"[@an "] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+@A
+@EW1Sn3N130000("")
+@F
+@GNNg0u00("")
+@L3("\0\0\0")
+@LS("")
+@_YlW3ORRT30qdV("")
+@d
+@r("")
+@w
+action "\u{e}" in [Action::"^", Action::"!\u{3}", Action::"[@an "] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    L3?: __cedar::String
+  }
+};
+
+action "\u{1d}\u{3}" in [Action::"[@[", Action::"\u{e}", Action::"!\u{3}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1d}@[" in [Action::"\u{3}\u{1d}wDebian ", Action::"$", Action::"[@[", Action::"\u{1d}@gffd~", Action::"!\u{3}"] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "\u{1d}@gffd~" in [Action::"\u{e}", Action::"!\u{3}", Action::"[@an "] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "!\u{3}" in [Action::"[@an "] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {
+    N5cZgYlWRa3zE?: __cedar::Bool,
+    @LST3N13Q0
+    d: __cedar::ipaddr,
+    @A
+    @EW1Sp3N130000("")
+    @F
+    @GNNg0u00("")
+    @L3("\0\0\0")
+    @LS("")
+    @_YlW3ORRT30qdV("")
+    @d
+    @r("")
+    @w
+    m?: Set<Set<__cedar::datetime>>,
+    @LRaEzRR("")
+    @h("")
+    @vbbb
+    @yddb03ERVRREb3("d")
+    v3X33Sw1S3: __cedar::Long
+  }
+};
+
+action "$" in [Action::"!\u{3}"];
+
+@h
+action ":~" in [Action::"\u{1d}\u{3}", Action::"[@[", Action::"\u{1d}@gffd~", Action::"\u{e}", Action::"!\u{3}"];
+
+@A("")
+@D
+@OzR("")
+@U3T1S3ZT("")
+action "=\u{e}" in [Action::"\u{1d}@gffd~", Action::"^", Action::"!\u{3}", Action::"[@an "] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+action "[@[" appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+
+@A("")
+@D3S1S3T1eddb0("\u{e}")
+@IER("[")
+@U3T1S33T("")
+@m("@")
+@rN13Q000RRwnR("")
+@rzE("")
+@v3X33SwnNN("\0")
+@v3X33y1RaE("")
+@vbbbbbddb0T3q
+action "[@an ";
+
+@A("")
+@ORRT33S1S3T
+@URRw03T1("")
+@duRV
+@x
+action "^" in [Action::"!\u{3}", Action::"[@an "] appliesTo {
+  principal: [a],
+  resource: [a],
+  context: {}
+};
+

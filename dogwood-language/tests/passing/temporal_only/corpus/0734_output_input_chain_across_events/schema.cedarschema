@@ -1,0 +1,68 @@
+namespace Drupe {
+  type GrantInput = {
+    user: String
+  };
+
+  type GrantOutput = {
+    amount: Long
+  };
+
+  type ChargeInput = {
+    user: String,
+    amount: Long
+  };
+
+  type ChargeOutput = {  };
+
+  type ReadInput = {
+    user: String
+  };
+
+  type ReadOutput = {  };
+
+  type SystemContext = {
+    now: datetime
+  };
+
+  entity Gateway;
+
+  entity IamEntity = {
+    id: String
+  };
+
+  entity OAuthUser = {
+    id: String
+  } tags String;
+
+  entity UnauthenticatedUser;
+
+  action "Grant" appliesTo {
+    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      input: GrantInput,
+      output?: GrantOutput,
+      system: SystemContext
+    }
+  };
+
+  action "Charge" appliesTo {
+    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      input: ChargeInput,
+      output?: ChargeOutput,
+      system: SystemContext
+    }
+  };
+
+  action "Read" appliesTo {
+    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    resource: [Gateway],
+    context: {
+      input: ReadInput,
+      output?: ReadOutput,
+      system: SystemContext
+    }
+  };
+}
