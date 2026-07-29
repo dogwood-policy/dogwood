@@ -45,7 +45,7 @@ jobs:
           restore-keys: cargo-${{ runner.os }}-
 
       - name: Build
-        run: cargo build --workspace --all-targets --locked
+        run: cargo build --workspace --all-targets
 
       - name: Test
-        run: cargo test --workspace --locked
+        run: cargo test --workspace
