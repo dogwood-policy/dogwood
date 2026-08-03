@@ -121,13 +121,11 @@ for dir in "$EXAMPLES_DIR"/*/; do
 done
 
 # --- Update SUMMARY.md with example entries ---
-# Replace the examples section placeholder (portable sed: write to temp file)
+# Only keep the "Examples Index" link — individual examples are reachable
+# from the table on the index page but don't clutter the sidebar.
 tmp=$(mktemp)
 sed '/^- \[Examples Index\]/,$d' "$SUMMARY" > "$tmp"
 mv "$tmp" "$SUMMARY"
-{
-  echo "- [Examples Index](./examples/index.md)"
-  echo "$SUMMARY_ENTRIES"
-} >> "$SUMMARY"
+echo "- [Examples Index](./examples/index.md)" >> "$SUMMARY"
 
 echo "Generated $(ls "$OUTPUT_DIR"/*.md | wc -l | tr -d ' ') example pages."
