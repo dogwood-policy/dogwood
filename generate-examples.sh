@@ -121,8 +121,10 @@ for dir in "$EXAMPLES_DIR"/*/; do
 done
 
 # --- Update SUMMARY.md with example entries ---
-# Replace the examples section placeholder
-sed -i '' '/^- \[Examples Index\]/,$d' "$SUMMARY"
+# Replace the examples section placeholder (portable sed: write to temp file)
+tmp=$(mktemp)
+sed '/^- \[Examples Index\]/,$d' "$SUMMARY" > "$tmp"
+mv "$tmp" "$SUMMARY"
 {
   echo "- [Examples Index](./examples/index.md)"
   echo "$SUMMARY_ENTRIES"
