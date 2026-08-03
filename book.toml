@@ -1,0 +1,12 @@
+[book]
+title = "The Dogwood Guide"
+authors = ["Dogwood Contributors"]
+src = "dogwood-docs/mdbook-src"
+
+[build]
+build-dir = "book"
+
+[output.html]
+git-repository-url = "https://github.com/dogwood-policy/dogwood"
+edit-url-template = "https://github.com/dogwood-policy/dogwood/edit/main/{path}"
+additional-css = ["dogwood-docs/mdbook-src/custom.css"]
