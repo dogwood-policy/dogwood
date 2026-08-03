@@ -19,14 +19,14 @@ concurrency:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
-      # First-party action only — avoids the per-repo AppSec re-review that a
-      # third-party toolchain action would trigger in awslabs.
       - uses: actions/checkout@v4
 
-      # Install the toolchain via rustup (preinstalled on GitHub runners) rather
-      # than a third-party action. edition 2024 needs a recent stable.
       - name: Install Rust toolchain
         run: |
           rustup update stable --no-self-update
