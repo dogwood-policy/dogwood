@@ -18,6 +18,7 @@ use super::value::{EntityRecord, Event, EventData, Scope, Trace, Value};
 /// comment syntax — a `//` is an ordinary part of a value (e.g. a URL like
 /// `http://…`), not a line comment.
 pub fn parse_trace(log: &str) -> Result<Trace, String> {
+    let log = log.strip_prefix('\u{FEFF}').unwrap_or(log);
     let mut points = Vec::new();
     for (lineno, raw) in log.lines().enumerate() {
         let line = raw.trim();
@@ -119,6 +120,11 @@ fn parse_line(line: &str) -> Result<Event, String> {
 /// — a uid, its attribute record, and an OPTIONAL trailing `in [ … ]` clause of
 /// direct parents (`memberOf` edges). Produces a `uid -> EntityRecord` map.
 ///
+/// The map is keyed by the **canonical** (escaped) uid literal, decoded from the
+/// author's spelling and re-rendered with [`super::value::entity_uid_string`], so
+/// a trace may write an id containing a quote either way (`"o'brien"` or
+/// `"o\'brien"`) and both resolve to the same entity.
+///
 /// The uid itself contains `::`, so the entry cannot be split on its first `:`;
 /// the split point is the top-level `:` immediately preceding the record's `{`.
 /// The record spans to its matching `}`; anything after it must be the `in [ … ]`
@@ -157,12 +163,28 @@ fn parse_entities(src: &str) -> Result<BTreeMap<String, EntityRecord>, String> {
         };
         let parents = parse_entity_parents(rec_src[rclose + 1..].trim(), uid)?;
 
+        // The store is keyed by the CANONICAL (escaped) uid literal — the form
+        // `value::entity_uid_string` produces — because every lookup rebuilds its
+        // key from a decoded `(ty, id)` (`EventData::resolve_entity_attr`,
+        // `eval::seed_supplied_entity_attrs`). Keying by the author's spelling
+        // breaks that for any id Cedar escapes (`'`, `"`, `\`, control chars).
+        //
+        // So decode to `(ty, id)` and re-render, exactly once: `unescape` is the
+        // exact inverse of the escaper, so an already-canonical key round-trips
+        // unchanged rather than double-escaping.
+        let key = match parse_value(uid)? {
+            v @ Value::Entity { .. } => super::value::value_uid_string(&v)
+                .expect("a Value::Entity always renders to a uid string"),
+            _ => {
+                return Err(format!(
+                    "entities entry `{uid}` key is not an entity ref `Ns::Type::\"id\"`"
+                ));
+            }
+        };
+
         // A duplicate uid is an authoring error, not a silent last-wins: which
         // binding survived is invisible in the decision, so reject it.
-        if out
-            .insert(uid.to_string(), EntityRecord { attrs, parents })
-            .is_some()
-        {
+        if out.insert(key, EntityRecord { attrs, parents }).is_some() {
             return Err(format!("entities envelope has a duplicate uid `{uid}`"));
         }
     }
@@ -762,6 +784,66 @@ mod tests {
                 .attrs
                 .is_empty(),
             "empty-attrs entity is present with no attributes"
+        );
+    }
+    /// An entity id containing a single quote is keyed by its CANONICAL (escaped)
+    /// literal, whichever way the trace spells it — Cedar's canonical form escapes
+    /// `'` as `\'`.
+    #[test]
+    fn quoted_id_is_keyed_canonically_from_either_spelling() {
+        // Cedar's canonical key for the id `o'brien`.
+        let canonical = "Svc::User::\"o\\'brien\"";
+
+        for spelling in [r#"Svc::User::"o'brien""#, r#"Svc::User::"o\'brien""#] {
+            let log = format!(
+                r#"@0 scope(principal: Svc::User::"alice", resource: Svc::Gateway::"gw1") entities({spelling}: {{ dept: "eng" }}) Svc::Action::"Read"::request(input: {{ doc: "x" }})"#
+            );
+            let store = &parse_trace(&log).expect("parses").points[0].event.entities;
+            assert_eq!(
+                store.keys().collect::<Vec<_>>(),
+                vec![canonical],
+                "`{spelling}` must be keyed by its canonical literal"
+            );
+            assert_eq!(
+                store.get(canonical).and_then(|r| r.attrs.get("dept")),
+                Some(&Value::String("eng".to_string())),
+                "attrs reachable under the canonical key for `{spelling}`"
+            );
+        }
+    }
+
+    /// The canonical key is exactly what a lookup reconstructs from a decoded
+    /// `(ty, id)` — the invariant `entity_uid_string` documents. This ties the two
+    /// halves together: if either side changed, this breaks.
+    #[test]
+    fn quoted_id_key_matches_what_lookups_reconstruct() {
+        let log = r#"@0 scope(principal: Svc::User::"o'brien", resource: Svc::Gateway::"gw1") entities(Svc::User::"o'brien": { dept: "eng" }) Svc::Action::"Read"::request(input: { doc: "x" })"#;
+        let event = &parse_trace(log).expect("parses").points[0].event;
+        assert_eq!(
+            event.entities.keys().collect::<Vec<_>>(),
+            vec![&super::super::value::entity_uid_string(
+                "Svc::User",
+                "o'brien"
+            )],
+            "store key must equal the key a lookup builds from (ty, id)"
+        );
+        // And the lookup path itself resolves through it.
+        assert_eq!(
+            event.resolve_entity_attr("Svc::User", "o'brien", &["dept".to_string()]),
+            Some(Value::String("eng".to_string())),
+            "resolve_entity_attr must find the quoted-id entity"
+        );
+    }
+
+    /// An entities key that is not an entity ref is rejected at trace-parse time
+    /// rather than deferred to Cedar.
+    #[test]
+    fn non_entity_ref_entities_key_is_rejected() {
+        let log = r#"@0 scope(principal: Svc::User::"alice", resource: Svc::Gateway::"gw1") entities(notAUid: { dept: "eng" }) Svc::Action::"Read"::request(input: { doc: "x" })"#;
+        let err = parse_trace(log).expect_err("non-entity-ref key must be rejected");
+        assert!(
+            format!("{err}").contains("not an entity ref"),
+            "expected a `not an entity ref` error, got: {err}"
         );
     }
 

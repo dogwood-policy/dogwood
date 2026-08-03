@@ -368,6 +368,41 @@ impl Policy {
         n
     }
 
+    /// The `.dw` source spans of each `temporal { … }` block in this policy,
+    /// in source order. Each span covers the entire extension expression node.
+    /// Used by pre-lowering rejection diagnostics to point at the offending
+    /// block(s).
+    pub(crate) fn temporal_block_spans(&self) -> Vec<Span> {
+        let mut spans = Vec::new();
+        for cond in &self.conditions {
+            cond.body.for_each_node(&mut |e| {
+                if matches!(e.kind, ExprKind::Extension(Extension::Temporal(_))) {
+                    spans.push(e.span);
+                }
+            });
+        }
+        spans
+    }
+
+    /// The parsed condition of each `temporal { … }` block in this policy —
+    /// one per [`Extension::Temporal`] leaf counted by
+    /// [`temporal_block_count`](Policy::temporal_block_count), in source
+    /// order. Runs after macro expansion, so a macro that expands to a
+    /// temporal block contributes its condition. A read-only view of the
+    /// authored (pre-lowering) temporal AST, for structural diagnostics that
+    /// need no schema.
+    pub(crate) fn temporal_conditions(&self) -> Vec<&crate::extension::temporal::ast::Condition> {
+        let mut out = Vec::new();
+        for cond in &self.conditions {
+            cond.body.for_each_node(&mut |e| {
+                if let ExprKind::Extension(Extension::Temporal(temporal)) = &e.kind {
+                    out.push(&temporal.condition);
+                }
+            });
+        }
+        out
+    }
+
     /// The information-provider invocation names in this policy, by
     /// declaration key (`Ns::Fn`), in source order with multiplicity.
     ///
@@ -444,7 +479,7 @@ impl Expr {
     /// or call nested anywhere in the tree is reached. Leaf payloads that are
     /// not [`Expr`]s (literals, patterns, entity types) are not recursed
     /// into — they hold no sub-expressions.
-    pub(crate) fn for_each_node(&self, f: &mut impl FnMut(&Expr)) {
+    pub(crate) fn for_each_node<'a>(&'a self, f: &mut impl FnMut(&'a Expr)) {
         f(self);
         match &self.kind {
             // Leaves — no sub-expressions.

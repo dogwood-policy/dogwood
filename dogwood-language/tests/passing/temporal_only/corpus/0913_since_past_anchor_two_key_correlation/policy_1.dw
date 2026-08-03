@@ -6,7 +6,7 @@
 // drop `region`, so the outer identity join would fail on the second key and
 // the verdict would (still wrongly) be false. Both keys must be carried.
 //
-// The interpreter is the oracle (see expected_1.out); DSQL is a known
+// The interpreter is the oracle (see expected_1.out); the temporal engine is a known
 // verdict divergence until the temporal-compiler since-left correlation fix
 // lands. Found by the SMT differential fuzzer.
 permit (

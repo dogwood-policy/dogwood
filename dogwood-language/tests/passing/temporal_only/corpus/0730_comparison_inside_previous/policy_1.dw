@@ -1,7 +1,7 @@
 // Probes whether comparisons inside `previous within` are evaluated at
 // the prior tp (correct) or the current tp (wrong). The body refers to
 // `context.input.amount` whose semantics under Lean dictate which tp's
-// binding is consulted. DSQL might apply the comparison at the current
+// binding is consulted. The temporal engine might apply the comparison at the current
 // tp instead.
 
 permit (

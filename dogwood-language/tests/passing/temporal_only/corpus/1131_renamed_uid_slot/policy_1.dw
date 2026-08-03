@@ -5,7 +5,7 @@
 // tree (`field_path`) exactly like any other field — it has no special
 // knowledge that this slot "used to be" `requestId`.
 //
-// A differential SQL backend must therefore serialize and read `trace_id`
+// A differential temporal engine must therefore serialize and read `trace_id`
 // as an ordinary field, regardless of the fact that the default schema
 // calls the uid slot `requestId`. A compiler that hardcodes the reserved
 // slot names (or a positional args-array that reserves the last slot for

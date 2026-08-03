@@ -26,6 +26,7 @@ fn span_of(p: &Pair<'_>) -> Span {
 
 /// Parse event-schema DSL source into an [`EventSchema`].
 pub fn parse_event_schema(src: &str) -> Result<EventSchema, String> {
+    let src = src.strip_prefix('\u{FEFF}').unwrap_or(src);
     let mut pairs = EventSchemaParser::parse(Rule::schema_entry, src)
         .map_err(|e| format!("event schema parse error: {e}"))?;
     let entry = pairs.next().expect("schema_entry yields one pair");

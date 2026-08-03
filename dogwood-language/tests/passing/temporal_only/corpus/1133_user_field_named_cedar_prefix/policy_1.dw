@@ -8,7 +8,7 @@
 // `input.__cedar_flag == "on"`, matched by a LITERAL. The interpreter
 // resolves `input.__cedar_flag` by descending the `input` group; it has no
 // prefix rule that would drop or specially treat the field. A differential
-// SQL backend that skips any `__cedar_`-prefixed arg (treating it as a
+// temporal engine that skips any `__cedar_`-prefixed arg (treating it as a
 // reserved positional slot) would fail to serialize / read this field.
 //
 // Uses the DEFAULT event schema (no per-case override): the field is an

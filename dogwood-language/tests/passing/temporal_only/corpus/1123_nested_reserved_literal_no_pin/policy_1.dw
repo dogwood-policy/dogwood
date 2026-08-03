@@ -10,7 +10,7 @@
 // `__drupe.sessionid` record directly (`field_path`), so the literal
 // "sess-1" matches the past Login and the `formerly` fires.
 //
-// A differential SQL backend must serialize the nested reserved field into the
+// A differential temporal engine must serialize the nested reserved field into the
 // event's `ctx` REGARDLESS of how the policy binds it (literal, var, or
 // `context.` correlation) — the compiled predicate reads that `ctx` key in all
 // cases. A harness that only serializes reserved paths bound via a

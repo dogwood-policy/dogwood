@@ -156,7 +156,7 @@ window `?w` and a whole condition `?s`, and wraps them in `formerly within`:
 ```text
 def temporal once(?w, ?s) { formerly within ?w ?s };
 
-permit(principal, action, resource)
+permit(principal, action in [Drupe::Action::"Read", Drupe::Action::"Write"], resource)
 when temporal {
     once(1h, Drupe::Action::"Read"::request{
         input.user: context.input.user,
@@ -180,7 +180,7 @@ def temporal recently_read(?u, ?d) {
     }
 };
 
-permit(principal, action, resource)
+permit(principal, action == Drupe::Action::"Write", resource)
 when temporal {
     recently_logged_in(context.input.user)
     && recently_read(context.input.user, context.input.document)
@@ -198,7 +198,7 @@ def temporal count_formerly(?w, ?s) {
     count for ($t: Timepoint). where (formerly within ?w (?s && tp($t)))
 };
 
-permit(principal, action, resource)
+permit(principal, action == Drupe::Action::"Alert", resource)
 when temporal {
     exists (n: Long). (
         (count_formerly(1h, Drupe::Action::"Login"::request{
@@ -296,7 +296,7 @@ def temporal sum_formerly(?a, ?w, ?body) {
     sum ?a for (?a: Long), ($t: Timepoint). where (formerly within ?w (?body && tp($t)))
 };
 
-permit(principal, action, resource)
+permit(principal, action == Drupe::Action::"Alert", resource)
 when temporal {
     exists (total: Long). (
         (sum_formerly(a, 1h, Drupe::Action::"Transfer"::request{

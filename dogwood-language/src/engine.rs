@@ -186,7 +186,7 @@ pub type TemporalBindings = BTreeMap<ExtensionId, bool>;
 ///
 /// [`Event::from_request`]: crate::Event::from_request
 ///
-/// The built-in [`InMemoryTemporalEngine`] and the compiled DSQL engine both key
+/// The built-in [`InMemoryTemporalEngine`] and the compiled temporal engine both key
 /// on `field_path` via the shared logic in
 /// [`partition_value_of`](InMemoryTemporalEngine::partition_value_of).
 ///

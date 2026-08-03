@@ -870,10 +870,12 @@ looks for what `sum` means.
 `count` yields the number of rows in the projected relation. `sum` yields the total of
 its summand column over that relation, **skipping** any row whose summand is not a
 `Long` — which is observable, because `count` over the same relation still counts that
-row. Validation does not rule the case out: a summand's declared type is cross-checked
-against a *predicate field's* type, but a summand range-restricted by an equality
-against a term the validator cannot type (an entity attribute, say) is accepted
-whatever that term's actual type is. Both aggregates are `Long`.
+row. Validation rejects the common ways a summand could be non-`Long` — chiefly a
+declared type that disagrees with whatever range-restricts it — but it does not rule
+the case out: a comparison is only checked where both sides have a type, and an
+optional attribute can be declared `Long` and still be absent. The skip is therefore
+observable in a validated policy, not only in an unvalidated one. Both aggregates are
+`Long`.
 
 Because an aggregate ranges over a *set*, its value does not depend on the order rows
 are visited, and it is exact for every total that a `Long` can hold — including totals

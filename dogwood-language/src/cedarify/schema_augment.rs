@@ -288,37 +288,20 @@ fn normalize_value(
 }
 
 fn add_one(fragment: &mut Fragment<RawName>, field: &ContextField) -> Result<(), String> {
-    match &field.action {
-        // A concrete `==` action: add the field to that one action.
-        ScopedAction::Concrete((namespace, action_id)) => {
-            add_bool_to_named_action(fragment, &field.field_name, namespace, action_id)
-        }
-        // `in [list]`: the leaf attaches to each listed action, so add the
-        // field to every one of them.
-        ScopedAction::List(actions) => {
-            for (namespace, action_id) in actions {
-                add_bool_to_named_action(fragment, &field.field_name, namespace, action_id)?;
-            }
-            Ok(())
-        }
-        // Unconstrained `action` scope: the rule applies to every action,
-        // so the hoisted field must exist on every action's context.
-        // Actions without an `appliesTo` (pure action groups) cannot receive
-        // requests and have no context — skip them, matching the provider
-        // pass. (A *named* action without an appliesTo, in the Concrete/List
-        // arms, remains an error: the rule explicitly scopes it.)
-        ScopedAction::Unconstrained => {
-            for ns in fragment.0.values_mut() {
-                for (action_id, action) in ns.actions.iter_mut() {
-                    if action.applies_to.is_none() {
-                        continue;
-                    }
-                    add_bool_to_action(action, &field.field_name, action_id.as_str())?;
-                }
-            }
-            Ok(())
-        }
+    // EVERY arm goes through the one resolution. A leaf's hoisted field must exist on
+    // exactly the actions the validator will check it against, and the validator reads
+    // the same `scope_target_actions` result — so resolving separately here, however
+    // simple the arm looks, is how the two drift. When they drift the symptom is Cedar
+    // reporting the hoisted field missing on an action, which is the defect this
+    // resolution exists to prevent.
+    //
+    // The resolution already drops actions that cannot receive a request, so a pure
+    // action group named in a list is not an error: naming a group names its members.
+    // A named action the schema does not DECLARE is still an error, raised below.
+    for (namespace, action_id) in scope_target_actions(&field.action, fragment)? {
+        add_bool_to_named_action(fragment, &field.field_name, &namespace, &action_id)?;
     }
+    Ok(())
 }
 
 /// Add the bool field to one named `(namespace, action_id)` in the schema.
@@ -555,11 +538,10 @@ fn insert_provider_record(
     }
 }
 
-/// The concrete `(namespace, action_id)` actions a provider field's scope
-/// attaches to. Concrete → that one action; List → each listed action plus, for
+/// The concrete `(namespace, action_id)` actions a scope attaches to. Concrete → that one action; List → each listed action plus, for
 /// any action that is a *group* (has descendants), its transitive descendants;
 /// Unconstrained → every action in the schema.
-pub fn provider_target_actions(
+pub fn scope_target_actions(
     action: &ScopedAction,
     fragment: &Fragment<RawName>,
 ) -> Result<Vec<(String, String)>, String> {
@@ -580,11 +562,58 @@ pub fn provider_target_actions(
             }
         }
     }
+    // Drop actions that cannot receive a request. A PURE action group (no
+    // `appliesTo`) has no principal, resource or context of its own, so it is
+    // never a target: Cedar validates a group-scoped policy against the group's
+    // MEMBERS. An APPLIABLE group — one that declares `appliesTo` and also has
+    // members — is kept, because it contributes its own request environment
+    // alongside its members'.
+    // Drop only actions that are DECLARED but not appliable. An action the schema does
+    // not declare at all must NOT be dropped: silently removing it hides the real
+    // diagnostic ("action `X` not found in schema") and lets the grafting pass skip a
+    // named action, after which Cedar reports the hoisted field missing on the actions
+    // that WERE grafted — an internal field name in a user-facing error, for what is
+    // usually a typo. `add_bool_to_named_action` still raises the good error for a
+    // declared-but-unappliable name reached through the Concrete arm.
+    out.retain(|(namespace, action_id)| {
+        !action_is_declared(fragment, namespace, action_id)
+            || action_is_appliable(fragment, namespace, action_id)
+    });
     // De-duplicate: a group and one of its descendants may both be listed, and
     // an action reachable by two paths would otherwise be visited twice.
     out.sort();
     out.dedup();
     Ok(out)
+}
+
+/// Whether the schema declares `(namespace, action_id)` as an action at all.
+fn action_is_declared(fragment: &Fragment<RawName>, namespace: &str, action_id: &str) -> bool {
+    ns_key(namespace).is_ok_and(|k| {
+        fragment
+            .0
+            .get(&k)
+            .is_some_and(|ns| ns.actions.contains_key(action_id))
+    })
+}
+
+/// Whether `(namespace, action_id)` declares an `appliesTo`, i.e. can receive a
+/// request and therefore has a context record to graft a hoisted field into. A
+/// pure action group declares none.
+fn action_is_appliable(fragment: &Fragment<RawName>, namespace: &str, action_id: &str) -> bool {
+    let Ok(ns_key) = ns_key(namespace) else {
+        return false;
+    };
+    fragment
+        .0
+        .get(&ns_key)
+        .and_then(|ns| ns.actions.get(action_id))
+        .and_then(|action| action.applies_to.as_ref())
+        // A Cedar-syntax action declared with no `appliesTo` still parses to
+        // `Some(ApplySpec)`, with EMPTY principal and resource lists — so testing
+        // `applies_to.is_some()` alone reports a pure group as appliable. What
+        // makes an action reachable by a request is having at least one principal
+        // AND one resource type it applies to.
+        .is_some_and(|spec| !spec.principal_types.is_empty() && !spec.resource_types.is_empty())
 }
 
 /// Push `action` and — if it is a group (some action lists it via `memberOf`) —
@@ -815,6 +844,9 @@ mod tests {
         )
         .expect("dummy temporal parses");
         ContextField {
+            target_actions: Vec::new(),
+            principal: crate::cedarify::ScopeConstraint::Any,
+            resource: crate::cedarify::ScopeConstraint::Any,
             action,
             field_name: field_name.to_string(),
             temporal,
@@ -881,7 +913,7 @@ mod tests {
         let fragment = parse(HIERARCHY_SCHEMA);
         // Scope is `action in [Action::"ReadWrite"]` — a group with 2 children.
         let action = ScopedAction::List(vec![("App".to_string(), "ReadWrite".to_string())]);
-        let targets = provider_target_actions(&action, &fragment).unwrap();
+        let targets = scope_target_actions(&action, &fragment).unwrap();
         // Should include parent + both children.
         assert!(
             targets.contains(&("App".to_string(), "ReadWrite".to_string())),
@@ -1068,6 +1100,9 @@ mod tests {
             .expect("provider pass skips the group");
         let mut fragment = parse(schema);
         let field = ContextField {
+            target_actions: Vec::new(),
+            principal: crate::cedarify::ScopeConstraint::Any,
+            resource: crate::cedarify::ScopeConstraint::Any,
             action: ScopedAction::Unconstrained,
             field_name: "t0".to_string(),
             temporal: crate::extension::temporal::Temporal::parse(

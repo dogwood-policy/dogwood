@@ -1,7 +1,7 @@
 // Scope action == Read; predicate filters Login by user STRING field only.
 // Trace uses different Gateway resources for the Login and Read events
 // (gw1 vs gw2). The temporal body should join on user-string only and
-// ignore the resource entity. Tests whether DSQL implicitly groups by
+// ignore the resource entity. Tests whether the temporal engine implicitly groups by
 // resource and over-filters or over-fires.
 
 permit (

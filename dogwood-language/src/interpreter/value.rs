@@ -501,7 +501,7 @@ impl Event {
     /// descending yields the individual leaves.
     ///
     /// This is the schema- and name-free basis for serializing an event to the
-    /// SQL monitor's wire form: every field the event carries is emitted at its
+    /// temporal engine's wire form: every field the event carries is emitted at its
     /// dotted path, with no privileged treatment of `input`/`output`/`caller*`
     /// — mirroring the interpreter, whose matching is uniform over
     /// [`field_path`](Event::field_path). A consumer reads whatever path a
@@ -971,7 +971,7 @@ pub(crate) fn uid_to_value(uid: &str) -> Option<Value> {
 /// unlike Cedar, which keys by a structured `EntityUID { ty, eid }` and never
 /// re-parses. Keying Dogwood's store structurally would remove this round-trip
 /// (and its fragility) entirely; that is the architecturally-correct fix but a
-/// wider change (it reaches the DSQL engine's encoder + compiler test support),
+/// wider change (it reaches the temporal engine's encoder + compiler test support),
 /// so for now we make the string form faithfully canonical instead.
 pub(crate) fn entity_uid_string(ty: &str, id: &str) -> String {
     format!("{ty}::\"{}\"", id.escape_debug())

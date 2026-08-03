@@ -2,7 +2,7 @@
 // ANCHOR-SHARED correlation var, at the same-step guard window.
 //
 // `!Heartbeat{server: x} since Login{server: x}` holds for a server that has
-// been SILENT since its login. The DSQL backend's negated read rejects an
+// been SILENT since its login. The temporal engine's negated read rejects an
 // anchor when the guard fires at the current step — but the unconstrained
 // same-step EXISTS tested only the guard's predicate SHAPE, so a heartbeat
 // from a DIFFERENT server wrongly rejected s1's silence → wrong DENY (the

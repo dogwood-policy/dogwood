@@ -80,6 +80,17 @@ pub struct ContextField {
     /// The temporal leaf this field backs — evaluated at authorize time
     /// to produce the boolean bound to `context.<field_name>`.
     pub temporal: crate::extension::temporal::Temporal,
+    /// The concrete actions [`action`](Self::action) resolves to against the
+    /// schema — a group expanded to its transitive members, an unconstrained
+    /// scope to every action. Resolved by
+    /// [`schema_augment::scope_target_actions`], the SAME expansion the schema
+    /// augmentation grafts with, so validation and augmentation cannot disagree
+    /// about which actions a leaf attaches to.
+    pub target_actions: Vec<(String, String)>,
+    /// What the rule's `principal` scope admits on the entity-type axis.
+    pub principal: ScopeConstraint,
+    /// What the rule's `resource` scope admits on the entity-type axis.
+    pub resource: ScopeConstraint,
 }
 
 /// A type-keyed store of hoisted extension leaves.
@@ -195,7 +206,7 @@ pub struct ProviderField {
     /// resolves to against the schema — a group expanded to its descendants,
     /// an unconstrained scope to every action. Informational (see
     /// [`ProviderField::action`]); populated at lowering by
-    /// [`schema_augment::provider_target_actions`], and available to
+    /// [`schema_augment::scope_target_actions`], and available to
     /// alternative implementations for as-if optimizations.
     pub target_actions: Vec<(String, String)>,
     pub field_name: String,
@@ -223,6 +234,11 @@ struct Ctx<'a> {
     /// The rule key of the policy currently being emitted — the namespace
     /// prefix for its hoisted field names (see [`rule_key`]).
     rule_key: String,
+    /// The current rule's `principal` / `resource` scope constraints, set per policy
+    /// in `emit_policy` so a hoisted leaf can record them without threading two more
+    /// parameters through every lowering function.
+    principal_scope: ScopeConstraint,
+    resource_scope: ScopeConstraint,
     /// Ordinal of the next hoisted leaf *within the current policy*, reset to
     /// 0 at each policy boundary. Combined with [`Ctx::rule_key`] it makes each
     /// hoisted field name deterministic and unique across lowering calls.
@@ -247,6 +263,8 @@ pub fn cedarify_with_providers(
         bool_fields: Vec::new(),
         provider_fields: Vec::new(),
         rule_key: String::new(),
+        principal_scope: ScopeConstraint::Any,
+        resource_scope: ScopeConstraint::Any,
         field_ordinal: 0,
         provider_declarations,
         dw_src: Arc::clone(dw_src),
@@ -285,6 +303,20 @@ pub fn cedarify_with_providers(
         span: None,
     })?;
     if !ctx.bool_fields.is_empty() {
+        // Resolve each temporal leaf's action scope to the concrete actions its
+        // rule can match — a group expanded to its transitive members, an
+        // unconstrained scope to every action — now, while the fragment carries
+        // the action hierarchy. The SAME resolution the augmentation below grafts
+        // with, and the one validation consumes, so the two cannot drift.
+        for f in ctx.bool_fields.iter_mut() {
+            f.target_actions =
+                schema_augment::scope_target_actions(&f.action, &fragment).map_err(|message| {
+                    RawCedarifyError {
+                        message: format!("resolve temporal action scope: {message}"),
+                        span: None,
+                    }
+                })?;
+        }
         schema_augment::add_bool_context_fields(&mut fragment, &ctx.bool_fields).map_err(
             |message| RawCedarifyError {
                 message: format!("schema augmentation failed: {message}"),
@@ -301,10 +333,12 @@ pub fn cedarify_with_providers(
         // exposed on the public ProviderField for alternative
         // implementations' as-if optimizations.
         for f in ctx.provider_fields.iter_mut() {
-            f.target_actions = schema_augment::provider_target_actions(&f.action, &fragment)
-                .map_err(|message| RawCedarifyError {
-                    message: format!("resolve provider action scope: {message}"),
-                    span: None,
+            f.target_actions =
+                schema_augment::scope_target_actions(&f.action, &fragment).map_err(|message| {
+                    RawCedarifyError {
+                        message: format!("resolve provider action scope: {message}"),
+                        span: None,
+                    }
                 })?;
         }
         schema_augment::add_provider_context_fields(&mut fragment, &ctx.provider_fields).map_err(
@@ -317,7 +351,9 @@ pub fn cedarify_with_providers(
 
     // Convert the mutated core fragment to the public `SchemaFragment` (the
     // lossless form) in memory — no text round-trip. This is a `#[doc(hidden)]`
-    // conversion (private/internal type coupling), guarded by a canary test.
+    // conversion (private/internal type coupling). Unguarded: a Cedar release that drops
+    // the impl breaks the build rather than being caught by a test. This comment used to
+    // claim a canary test covered it; none has ever existed.
     let schema: cedar_policy::SchemaFragment =
         fragment.try_into().map_err(|e| RawCedarifyError {
             message: format!("assemble augmented schema fragment: {e}"),
@@ -363,6 +399,10 @@ fn emit_policy(
 
     // The scoped action types any hoisted extension field.
     let action = scope_action(&policy.scope.action);
+    // The principal/resource scope narrows which entity types the condition can see,
+    // which decides whether an attribute read in it resolves.
+    ctx.principal_scope = scope_constraint(policy.scope.principal.as_inner());
+    ctx.resource_scope = scope_constraint(policy.scope.resource.as_inner());
 
     // The rule's `.dw` span backs the policy-level `Loc` and the clause-fold
     // nodes (which have no single surface token of their own).
@@ -418,6 +458,55 @@ fn emit_policy(
 /// A `Loc` into the `.dw` source for the given span.
 fn cedar_loc(src: &Arc<str>, span: Span) -> cedar_policy_core::parser::Loc {
     cedar_policy_core::parser::Loc::new(span.start..span.end, Arc::clone(src))
+}
+
+/// What a rule's `principal` / `resource` scope admits on the entity-TYPE axis.
+///
+/// Only the type axis: which INSTANCES arrive is a run-time matter, but which types
+/// can arrive is static, and that is what decides whether an attribute read in the
+/// condition resolves.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ScopeConstraint {
+    /// A bare `principal` / `resource`: every type the action permits.
+    Any,
+    /// `is Ns::T`, or the `is` half of `is Ns::T in G`.
+    IsType(String),
+    /// `== Ns::T::"x"`, or `in Ns::T::"x"`. `membership` distinguishes them: `in` also
+    /// admits types that can be MEMBERS of that uid's type, which needs the schema's
+    /// hierarchy to resolve and so is left to the validator.
+    Uid {
+        entity_type: String,
+        membership: bool,
+    },
+}
+
+/// Read the [`ScopeConstraint`] a structured principal/resource scope admits.
+///
+/// Matched exhaustively on purpose. A catch-all would collapse an unrecognised
+/// variant to [`ScopeConstraint::Any`], which WIDENS the admitted types — and a
+/// wider set means the condition is checked against types the rule cannot see,
+/// which is a false rejection. A new Cedar variant must break the build instead.
+fn scope_constraint(c: &cedar_ast::PrincipalOrResourceConstraint) -> ScopeConstraint {
+    use cedar_ast::{EntityReference, PrincipalOrResourceConstraint as P};
+    let uid_type = |r: &EntityReference| match r {
+        EntityReference::EUID(uid) => Some(uid.entity_type().to_string()),
+        // A template slot names no type; Dogwood does not lower templates.
+        EntityReference::Slot(_) => None,
+    };
+    match c {
+        P::Any => ScopeConstraint::Any,
+        P::Is(ty) => ScopeConstraint::IsType(ty.to_string()),
+        // `is T in G` narrows on the type axis by the `is` half only.
+        P::IsIn(ty, _) => ScopeConstraint::IsType(ty.to_string()),
+        P::Eq(r) => uid_type(r).map_or(ScopeConstraint::Any, |entity_type| ScopeConstraint::Uid {
+            entity_type,
+            membership: false,
+        }),
+        P::In(r) => uid_type(r).map_or(ScopeConstraint::Any, |entity_type| ScopeConstraint::Uid {
+            entity_type,
+            membership: true,
+        }),
+    }
 }
 
 /// Read the [`ScopedAction`] a structured scope pins: a single action for

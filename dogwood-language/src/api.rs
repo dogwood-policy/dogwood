@@ -104,10 +104,28 @@ impl ActionScope {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TemporalField {
     pub id: ExtensionId,
-    /// The action scope the leaf's rule pins.
+    /// The action scope the leaf's rule pins, as written.
     pub action: ActionScope,
+    /// The concrete actions [`action`](Self::action) resolves to against the
+    /// schema: a group expanded to its transitive members, an unconstrained scope
+    /// to every action. This — not [`action`](Self::action) — is what a leaf is
+    /// evaluated against, because Cedar validates a policy scoped
+    /// `action in [Group]` against the group's MEMBERS. Resolved by the same
+    /// expansion the schema augmentation grafts the hoisted field with, so the two
+    /// cannot disagree about where the field lives.
+    pub target_actions: Vec<ActionRef>,
+    /// What the rule's `principal` scope admits on the entity-TYPE axis. A bare
+    /// `principal` admits every type the action permits; `is Ns::T` narrows to that
+    /// type. This is what decides whether an attribute read in the condition
+    /// resolves, since it decides which entity types can arrive.
+    pub principal: ScopeConstraint,
+    /// The same for the rule's `resource` scope.
+    pub resource: ScopeConstraint,
     pub condition: Temporal,
 }
+
+/// Re-exported from lowering: what a rule's `principal` / `resource` scope admits.
+pub use crate::cedarify::ScopeConstraint;
 
 /// The declared type of an event field — the public projection of the derived
 /// event schema's field type. Carried by [`EventFieldPath`].
@@ -700,8 +718,10 @@ pub(crate) fn lower(
 
     // Convert the loc-bearing `ast::PolicySet` into the public
     // `cedar_policy::PolicySet` for validation/authorization. This uses the
-    // `#[doc(hidden)]` `TryFrom<ast::PolicySet>` impl — the one non-stable
-    // coupling we accept; a canary test guards it against a cedar upgrade.
+    // `#[doc(hidden)]` `TryFrom<ast::PolicySet>` impl. Upstream marks it hidden, so it
+    // is not part of Cedar's supported surface and a minor release may remove it. There
+    // is NO guard against that beyond the build failing to compile — this comment used
+    // to claim a canary test protected it, and no such test has ever existed.
     let policies =
         CedarPolicySet::try_from(lowered.policy_set).map_err(|e| Error::PolicySet(Box::new(e)))?;
 
@@ -710,6 +730,13 @@ pub(crate) fn lower(
         .map(|f| TemporalField {
             id: f.field_name,
             action: action_scope(&f.action),
+            target_actions: f
+                .target_actions
+                .iter()
+                .map(|(ns, id)| action_ref(ns.clone(), id.clone()))
+                .collect(),
+            principal: f.principal.clone(),
+            resource: f.resource.clone(),
             condition: f.temporal,
         })
         .collect();
@@ -723,6 +750,9 @@ pub(crate) fn lower(
         .map(|f| TemporalField {
             id: f.id.clone(),
             action: f.action.clone(),
+            target_actions: f.target_actions.clone(),
+            principal: f.principal.clone(),
+            resource: f.resource.clone(),
             condition: crate::extension::temporal::Temporal {
                 condition: crate::event_schema::relativize::relativize_condition(
                     &f.condition.condition,

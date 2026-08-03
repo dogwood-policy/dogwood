@@ -58,7 +58,7 @@
 //!   positive atom before any filter uses it (`ti` by `tp`, `tj`/`tk` by the
 //!   `formerly` atoms); the comparisons appear after their restrictors in
 //!   the same `&&` chain, satisfying both the language's conjunct-order rule
-//!   and the SQL backend's local-filter rule. The window is measured from
+//!   and the temporal engine's local-filter rule. The window is measured from
 //!   the decision point by the `formerly`, so it is exact.
 //! * **`L since[0,W] A`** with a left that is *not* the confined negated
 //!   idiom becomes "some in-window mine anchor `tj`, and every mine position

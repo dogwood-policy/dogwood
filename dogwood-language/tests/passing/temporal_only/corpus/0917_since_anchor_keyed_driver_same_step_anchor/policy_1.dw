@@ -1,6 +1,6 @@
 // Adjacent to 0916: the same missing-rigid-filter shape, but with a DRIVER
 // predicate joined to the `since` on a variable the ANCHOR binds
-// (`input.doc: d`). In the DSQL backend this routes the since read through
+// (`input.doc: d`). In the temporal engine this routes the since read through
 // the k0-seek join path (`to_join_on_since_key`) instead of the standalone
 // read — so it pins the OTHER same-step compensation site, plus the
 // GuardRel binding lookup across an `exists` scope boundary (the
