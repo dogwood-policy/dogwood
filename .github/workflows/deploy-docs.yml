@@ -32,6 +32,9 @@ jobs:
         with:
           mdbook-version: 'latest'
 
+      - name: Generate example pages
+        run: ./generate-examples.sh
+
       - name: Build with mdBook
         run: mdbook build
 
