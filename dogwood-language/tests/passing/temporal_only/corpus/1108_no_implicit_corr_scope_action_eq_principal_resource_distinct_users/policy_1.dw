@@ -1,7 +1,7 @@
 // Scope action == Read; predicate filters Login by the user STRING field
 // (context.input.user), NOT by the principal entity. Trace mixes principal
 // types (OAuthUser vs IamEntity) but pins user-string consistently.
-// Tests whether DSQL joins on the user-string field rather than principal id.
+// Tests whether the temporal engine joins on the user-string field rather than principal id.
 
 permit (
     principal,

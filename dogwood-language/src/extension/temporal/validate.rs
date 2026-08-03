@@ -25,7 +25,6 @@ use super::ast::{
     WithinSpec,
 };
 use super::schema_info::{ActionHandle, SchemaInfo};
-use crate::api::ActionScope;
 use crate::error::{Span, ValidationError};
 
 /// A single temporal validation finding, located in the temporal block body
@@ -39,19 +38,21 @@ pub struct LeafError {
 
 /// Validate one parsed temporal leaf against the schema projection.
 ///
-/// `info` is derived from the (augmented) Cedar schema. `scoped_action` is the
-/// [`ActionScope`] the leaf's rule pins: a single `==` action, an `in [list]`
-/// of actions, or unconstrained. `context.input` paths must resolve against
-/// every action the scope pins (all listed actions for a list scope); an
-/// unconstrained scope pins nothing specific, so that typing is left to Cedar
-/// over the augmented schema.
+/// `info` is derived from the (augmented) Cedar schema. `target_actions` is the
+/// set of actions the leaf's rule scope RESOLVES to — not the actions it names: a
+/// group is expanded to its transitive members, and an unconstrained scope to every
+/// action. The leaf is evaluated for each of them, so both `context.<path>`
+/// resolution and operand typing run against every one, and a condition wrong for
+/// any single action is wrong. This mirrors Cedar, which validates a policy in every
+/// request environment its scope admits.
 ///
 /// Returns every schema-compliance error found; an empty vec means the leaf
 /// is consistent with the schema.
 pub fn validate_leaf(
     leaf: &super::Temporal,
     info: &SchemaInfo,
-    scoped_action: &ActionScope,
+    target_actions: &[crate::api::ActionRef],
+    narrow: ScopeNarrowing<'_>,
 ) -> Vec<LeafError> {
     // Predicate event / field-name validation is owned by the event-schema
     // checker (`event_schema::validate::validate_condition`, run alongside
@@ -61,9 +62,9 @@ pub fn validate_leaf(
     // the request, time-point dependence, and operand/argument typing.
     let mut errs = Vec::new();
     check_entity_types(&leaf.condition, info, &mut errs);
-    check_context_fields(&leaf.condition, info, scoped_action, &mut errs);
+    check_context_fields(&leaf.condition, info, target_actions, narrow, &mut errs);
     check_tp_dependence(&leaf.condition, &mut errs);
-    check_types(&leaf.condition, info, scoped_action, &mut errs);
+    check_types(&leaf.condition, info, target_actions, narrow, &mut errs);
     check_sum_summands(&leaf.condition, &mut errs);
     errs
 }
@@ -140,7 +141,28 @@ impl DogwoodDialect for TemporalDialect {
                 });
             }
 
-            for e in validate_leaf(&field.condition, &info, &field.action) {
+            // An unconstrained `action` scope is checked against EVERY action, because
+            // the rule can fire on every action. Leaving it unchecked was fail-open in
+            // the way this dialect is uniquely exposed to: a `context.<path>` inside a
+            // temporal leaf lives in the hoisted AST and is never lowered to a
+            // Cedar-visible expression, so if this check skips it, NOTHING validates it
+            // and the rule silently monitors nothing at run time.
+            //
+            // History, because the exception looked deliberate: an earlier fix
+            // (`9015f268`) had to stop a FALSE rejection where a scope was recorded as
+            // `None` and `None` was read as "every declared action" — so a rule scoped
+            // `action in [A, B]` was checked against actions it could never fire on.
+            // The follow-up (`32de2889`) split that `None` into `List` and
+            // `Unconstrained`, fixed the list case, and left an unconstrained scope "to
+            // Cedar as before" — which its own reasoning rules out, Cedar being unable
+            // to see inside the leaf. With the two cases now distinguished, checking a
+            // genuinely unconstrained scope against every action cannot reproduce that
+            // false rejection: the rule really does reach all of them.
+            let narrow = ScopeNarrowing {
+                principal: Some(&field.principal),
+                resource: Some(&field.resource),
+            };
+            for e in validate_leaf(&field.condition, &info, &field.target_actions, narrow) {
                 let span = match e.span {
                     Some(s) => s.rebased(base),
                     // No narrower location than the leaf: the block body.
@@ -360,15 +382,57 @@ fn derive_temporal_help(message: &str) -> Option<String> {
 fn check_types(
     c: &Condition,
     info: &SchemaInfo,
-    scoped_action: &ActionScope,
+    target_actions: &[crate::api::ActionRef],
+    narrow: ScopeNarrowing<'_>,
     errs: &mut Vec<LeafError>,
 ) {
-    // Type inference seeds from a single concrete action's input record; a
-    // list scope contributes no single seed (each action may type a field
-    // differently), so it falls back to predicate-argument inference only.
-    let rule_sig = scoped_action
-        .concrete()
-        .and_then(|a| info.action(a.namespace.as_deref(), &a.id));
+    // Type inference seeds from ONE action's signature, so the condition is
+    // checked once per action its scope resolves to — the same set
+    // `check_context_fields` resolves paths against. A field may be typed
+    // differently by two of them (`amount` a `Long` on one action and a `String`
+    // on another), and the leaf is evaluated for each, so a comparison wrong for
+    // ANY of them is wrong: this mirrors Cedar, which validates a policy in every
+    // request environment its scope admits and fails if the body fails in one.
+    //
+    // Seeding from a single concrete action was why a non-`==` scope was checked
+    // at all: `ActionScope::concrete()` returns `None` for a list or an
+    // unconstrained scope, nothing seeded, and because every comparison check is
+    // guarded on both operands having a type, ALL of them were skipped. That was
+    // fail-open in the direction this dialect is uniquely exposed to — a
+    // mis-typed comparison is permanently false, so the condition never holds and
+    // a `forbid` never fires — and Cedar cannot catch it, the leaf being an opaque
+    // `context.<id>` boolean.
+    //
+    // The same finding is reported once however many actions produce it, so a
+    // wide scope does not multiply one mistake into one error per action.
+    let mut seen: std::collections::BTreeSet<(String, Option<usize>)> = Default::default();
+    for action in target_actions {
+        let mut per_action = Vec::new();
+        check_types_for_action(c, info, action, narrow, &mut per_action);
+        for e in per_action {
+            if seen.insert((e.message.clone(), e.span.map(|s| s.start))) {
+                errs.push(e);
+            }
+        }
+    }
+}
+
+fn check_types_for_action(
+    c: &Condition,
+    info: &SchemaInfo,
+    action: &crate::api::ActionRef,
+    narrow: ScopeNarrowing<'_>,
+    errs: &mut Vec<LeafError>,
+) {
+    let rule_sig = info.action(action.namespace.as_deref(), &action.id);
+    // An action for which the rule's principal/resource scope admits no request
+    // environment is one the rule can never be evaluated on, so holding its types
+    // against the condition is a false rejection. Cedar filters whole triples.
+    if let Some(sig) = rule_sig.as_ref()
+        && !sig.admits_any_env(narrow.principal, narrow.resource)
+    {
+        return;
+    }
     let env = build_type_env(c, info, rule_sig.as_ref());
 
     walk(c, &mut |node| match &node.kind {
@@ -395,6 +459,7 @@ fn check_types(
                             &na.name,
                             &env,
                             rule_sig.as_ref(),
+                            narrow,
                             p.span,
                             errs,
                         );
@@ -427,8 +492,8 @@ fn check_types(
         }
         ConditionKind::Comparison { op, left, right } => {
             let (lt, rt) = (
-                term_type(left, &env, rule_sig.as_ref()),
-                term_type(right, &env, rule_sig.as_ref()),
+                term_type(left, &env, rule_sig.as_ref(), narrow),
+                term_type(right, &env, rule_sig.as_ref(), narrow),
             );
             if let (Some(l), Some(r)) = (lt, rt) {
                 let numeric = matches!(op, CmpOp::Lt | CmpOp::Le | CmpOp::Gt | CmpOp::Ge);
@@ -583,10 +648,11 @@ fn check_arg_type(
     param: &str,
     env: &BTreeMap<String, String>,
     rule_sig: Option<&ActionHandle>,
+    narrow: ScopeNarrowing<'_>,
     pred_span: Span,
     errs: &mut Vec<LeafError>,
 ) {
-    if let Some(got) = term_type(arg, env, rule_sig)
+    if let Some(got) = term_type(arg, env, rule_sig, narrow)
         && !param_accepts(expected, &got)
     {
         errs.push(LeafError {
@@ -697,6 +763,7 @@ fn term_type(
     t: &Term,
     env: &BTreeMap<String, String>,
     rule_sig: Option<&ActionHandle>,
+    narrow: ScopeNarrowing<'_>,
 ) -> Option<String> {
     match t {
         Term::Var(v) => env.get(v).cloned(),
@@ -707,7 +774,7 @@ fn term_type(
         Term::Entity { ty, .. } => Some(format!("entity:{}", simple_name(ty))),
         Term::Array(elems) => Some(array_literal_type(elems)),
         Term::ContextField(path) => context_field_type(path, rule_sig),
-        Term::ScopeField(path) => scope_field_type(path, rule_sig),
+        Term::ScopeField(path) => scope_field_type(path, rule_sig, narrow),
         // An aggregate (`count`/`sum`) yields a `Long`; typed as int so a
         // comparison against it (`(count …) == n`, `sum … > k`) checks like
         // any numeric operand.
@@ -748,11 +815,45 @@ fn predicate_field_type(path: &[String], sig: &ActionHandle) -> Option<String> {
 /// (`principal.dept`) is left untyped (the coarse projection carries no entity
 /// attribute types — attribute paths resolve at eval time, matching the
 /// provider-arg surface).
-fn scope_field_type(path: &[String], rule_sig: Option<&ActionHandle>) -> Option<String> {
+/// The rule's per-axis scope narrowing, threaded to wherever a scope path resolves.
+#[derive(Clone, Copy, Default)]
+pub(crate) struct ScopeNarrowing<'a> {
+    pub principal: Option<&'a crate::api::ScopeConstraint>,
+    pub resource: Option<&'a crate::api::ScopeConstraint>,
+}
+
+impl<'a> ScopeNarrowing<'a> {
+    fn for_root(&self, root: &str) -> Option<&'a crate::api::ScopeConstraint> {
+        match root {
+            "principal" => self.principal,
+            "resource" => self.resource,
+            _ => None,
+        }
+    }
+}
+
+fn scope_field_type(
+    path: &[String],
+    rule_sig: Option<&ActionHandle>,
+    narrow: ScopeNarrowing<'_>,
+) -> Option<String> {
     let sig = rule_sig?;
     match path {
-        [root] if root == "principal" => sig.principal_type(),
-        [root] if root == "resource" => sig.resource_type(),
+        // Narrowed by the rule's scope: `principal is W::Staff` under a multi-type
+        // action leaves one candidate, so the root types tagged rather than untagged.
+        [root] if root == "principal" => sig.principal_type_narrowed(narrow.principal),
+        [root] if root == "resource" => sig.resource_type_narrowed(narrow.resource),
+        // An attribute tail resolves against the scope entity's declared
+        // attributes. Typing this is what makes a comparison against a scope
+        // attribute checkable at all: `check_types` skips any comparison with an
+        // untyped side, so while this returned `None` a mis-typed comparison
+        // against `principal.<attr>` validated cleanly and then silently never
+        // matched at runtime — and for an aggregation summand it did worse than
+        // never match, since `sum` skips a non-integer value while `count`
+        // counts it, so a `forbid` cap could never fire.
+        [root, tail @ ..] if !tail.is_empty() && (root == "principal" || root == "resource") => {
+            sig.scope_attribute_type(root, tail, narrow.for_root(root))
+        }
         _ => None,
     }
 }
@@ -772,11 +873,17 @@ fn array_literal_type(elems: &[Term]) -> String {
         return "array".to_string();
     }
     let empty = BTreeMap::new();
-    let mut tys = elems.iter().map(|e| term_type(e, &empty, None));
+    // No action signature in hand here, so no scope path can type anyway.
+    let mut tys = elems
+        .iter()
+        .map(|e| term_type(e, &empty, None, ScopeNarrowing::default()));
     let Some(Some(first)) = tys.next() else {
         return "array<?>".to_string();
     };
-    if elems.iter().any(|e| term_type(e, &empty, None).is_none()) {
+    if elems
+        .iter()
+        .any(|e| term_type(e, &empty, None, ScopeNarrowing::default()).is_none())
+    {
         return "array<?>".to_string();
     }
     if tys
@@ -812,6 +919,27 @@ fn param_accepts(expected: &str, actual: &str) -> bool {
     if expected == actual || actual == "null" {
         return true;
     }
+    // UNLIKE `types_compatible`, a field pattern DOES require equal entity tags. The
+    // expected type here comes from a DECLARED field, which has exactly one entity type,
+    // so no multi-typed operand can arise on this path and rejecting restricts nothing
+    // legitimate. (An earlier comment here claimed the opposite; the relaxation it
+    // described was reverted — see the commit that restored this branch.)
+    //
+    // KNOWN FAIL-OPEN GAP: `_ => true` accepts an UNTAGGED side unconditionally, so a
+    // pattern binding a `Manager`-declared field to a bare `principal` is accepted
+    // whenever the action permits several principal types and the root therefore types as
+    // plain `entity`. Cedar flags its analogue at every arity. Two of the three producers
+    // of untagged `entity` are genuinely UNKNOWN types (`schema_info.rs:507`, `:509` —
+    // no type info, and Cedar's `AnyEntity`) where accepting is correct; only the
+    // multi-type scope root at `schema_info.rs:142` discards a known candidate set.
+    //
+    // Closing it is NOT a per-action disjointness test, which is the tempting shape since
+    // `check_types_for_action` already runs per action. Measured, Cedar makes no complaint
+    // when a comparison is dead under one reached action and live under another
+    // (`err=0 warn=0`), and warns only when it is dead under every reached action
+    // (`err=0 warn=1`). A per-action check would reject the first shape. The rule must
+    // therefore test the UNION of candidates across all reached actions, which needs a
+    // cross-action conjunction this function cannot express from two strings.
     let (eb, et) = split_entity(expected);
     let (ab, at) = split_entity(actual);
     if eb == "entity" && ab == "entity" {
@@ -836,13 +964,30 @@ fn types_compatible(a: &str, b: &str) -> bool {
     if a == b || a == "null" || b == "null" || (is_numeric(a) && is_numeric(b)) {
         return true;
     }
-    let (ab, at) = split_entity(a);
-    let (bb, bt) = split_entity(b);
+    // Two ENTITY operands are comparable whatever their entity types. Comparing
+    // differently-typed entities is well-typed: always false, its negation always true.
+    // Cedar agrees, and so do all three engines at run time (see
+    // `tests/entity_equality_verdicts.rs` and the compiler's differential).
+    //
+    // Not an error here, because an operand may be MULTI-TYPED and a comparison against
+    // one of its possible types is the discriminating idiom —
+    // `a == Ns::T1::"x" || a == Ns::T2::"y"` — where each disjunct is wrong only in
+    // isolation. The dialect has no `||` yet, but a condition or macro reused across
+    // actions via `action in [...]` reaches the same shape today.
+    //
+    // The right end state is a WARNING, matching Cedar's `policy is impossible`. Cedar
+    // cannot supply one here — the leaf is an opaque `context.<id>` boolean its
+    // typechecker never enters — so this is SILENT for now, deliberately: erroring would
+    // cement a restriction that a future temporal impossibility analysis should lift, and
+    // that analysis is the place for this diagnostic.
+    //
+    // Field patterns are NOT relaxed. `param_accepts` receives its expected type from a
+    // DECLARED field, which has exactly one entity type, so no multi-typed operand can
+    // arise there and rejecting restricts nothing legitimate.
+    let (ab, _) = split_entity(a);
+    let (bb, _) = split_entity(b);
     if ab == "entity" && bb == "entity" {
-        return match (at, bt) {
-            (Some(x), Some(y)) => x == y,
-            _ => true,
-        };
+        return true;
     }
     if let (Some(ae), Some(be)) = (array_element(a), array_element(b)) {
         if ae == "?" || be == "?" {
@@ -1296,34 +1441,53 @@ fn check_entity_types(c: &Condition, info: &SchemaInfo, errs: &mut Vec<LeafError
 fn check_context_fields(
     c: &Condition,
     info: &SchemaInfo,
-    scoped_action: &ActionScope,
+    target_actions: &[crate::api::ActionRef],
+    narrow: ScopeNarrowing<'_>,
     errs: &mut Vec<LeafError>,
 ) {
-    // A hoisted leaf attaches to every action the scope pins: the one
-    // concrete `==` action, or each action of an `in [list]` scope. Resolve
-    // each `context.<path>` against every such action's context record — a
-    // field must be declared on all of them, since the leaf is evaluated for
-    // each. An unconstrained `action` scope pins nothing specific (empty
-    // slice), so typing is left to Cedar's validator over the augmented schema.
-    for action in scoped_action.actions_to_check() {
+    // A hoisted leaf attaches to every action its scope RESOLVES to, which is not
+    // the same as the actions it names: `action in [Group]` resolves to the group's
+    // transitive members, because that is what Cedar validates the policy against.
+    // Resolving against the group itself would read a context record it does not
+    // have (a pure group declares no `appliesTo`).
+    //
+    // `target_actions` is that resolved set, computed once during lowering by the
+    // same expansion the schema augmentation grafts the hoisted field with — so
+    // validation cannot disagree with augmentation about where the field lives.
+    //
+    // Resolve each `context.<path>` against every such action's context record: a
+    // field must be declared on all of them, since the leaf is evaluated for each.
+    // An unconstrained `action` scope resolves to every action.
+    for action in target_actions {
         let Some(sig) = info.action(action.namespace.as_deref(), &action.id) else {
             // A pinned action isn't in the projection; Cedar's own validator
             // owns the unknown-action diagnostic.
             continue;
         };
+        // Skip an action for which the rule's principal/resource scope admits no
+        // request environment: the rule can never be evaluated on it, so its context
+        // record must not be held against the condition. See `admits_any_env`.
+        if !sig.admits_any_env(narrow.principal, narrow.resource) {
+            continue;
+        }
         walk(c, &mut |node| {
             let node_span = node.span;
             for_each_term(node, &mut |t| {
-                // Only `context.<path>` is statically checked here. A
-                // `principal` / `resource` scope path (`Term::ScopeField`) needs
-                // no check: the grammar guarantees the root, a bare root and its
-                // `.id` / `.type` projections always resolve, and an attribute
-                // tail (`principal.dept`) resolves at eval time against the
-                // request's entity store — the coarse projection carries no
-                // entity attribute types to check against (the same treatment
-                // the provider-arg surface gives `principal.dept`).
-                if let Term::ContextField(path) = t {
-                    check_one_context_path(path, &sig, node_span, errs);
+                // A bare `principal` / `resource` root and its `.id` / `.type`
+                // projections always resolve, so they need no check. An ATTRIBUTE
+                // tail does: the entity's declared attributes say whether it
+                // exists and what it is, so an unresolvable tail is a policy that
+                // can never match rather than one deferred to eval time. Leaving
+                // it unchecked is fail-open — silent for most comparisons, and for
+                // an aggregation summand worse, since `sum` skips a non-integer
+                // value while `count` counts it, so a `forbid` cap could never
+                // fire.
+                match t {
+                    Term::ContextField(path) => check_one_context_path(path, &sig, node_span, errs),
+                    Term::ScopeField(path) => {
+                        check_one_scope_path(path, &sig, narrow, node_span, errs)
+                    }
+                    _ => {}
                 }
             });
         });
@@ -1364,6 +1528,57 @@ fn check_one_context_path(
         }),
         PathResolution::NonRecord(seg) => errs.push(LeafError {
             message: format!("`{seg}` accesses a field of a non-record type"),
+            span: Some(node_span),
+        }),
+    }
+}
+
+/// Check a `principal.<path>` / `resource.<path>` attribute tail against the
+/// declared attributes of every entity type the scope permits.
+///
+/// A bare root always resolves and never reaches here. A `.id` / `.type` projection
+/// resolves too — as a string, so a comparison against one is type-checked like any
+/// other rather than waved through. Rejecting an
+/// unresolvable tail rather than ignoring it is the point: the comparison it feeds
+/// can never match, so the condition is permanently false, and a permanently false
+/// `forbid` is a cap that never fires.
+fn check_one_scope_path(
+    path: &[String],
+    sig: &ActionHandle,
+    narrow: ScopeNarrowing<'_>,
+    node_span: Span,
+    errs: &mut Vec<LeafError>,
+) {
+    let [root, tail @ ..] = path else { return };
+    if tail.is_empty() || !(root == "principal" || root == "resource") {
+        return;
+    }
+    let rendered = format!("{root}.{}", tail.join("."));
+    use super::schema_info::ScopePath;
+    match sig.resolve_scope_path(root, tail, narrow.for_root(root)) {
+        ScopePath::Resolved(_) | ScopePath::Unknown => {}
+        ScopePath::Missing { entities, segment } => errs.push(LeafError {
+            message: format!(
+                "`{rendered}` does not resolve for every entity the rule's `{root}` may \
+                 be: `{}` declares no attribute `{segment}`, so for those requests the \
+                 comparison can never match and the condition is permanently false. \
+                 Narrow the rule's scope (`{root} is <type>`) if only some types are \
+                 meant.",
+                entities.join("`, `")
+            ),
+            span: Some(node_span),
+        }),
+        ScopePath::NonRecord { segment } => errs.push(LeafError {
+            message: format!("`{segment}` accesses a field of a non-record type in `{rendered}`"),
+            span: Some(node_span),
+        }),
+        ScopePath::Ambiguous { types } => errs.push(LeafError {
+            message: format!(
+                "`{rendered}` has a different type on each entity the action's \
+                 `{root}` may be (`{}`), so the condition cannot be checked against \
+                 one type; it is evaluated whichever entity the request carries",
+                types.join("`, `")
+            ),
             span: Some(node_span),
         }),
     }

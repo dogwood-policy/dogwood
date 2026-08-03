@@ -130,6 +130,38 @@ fn temporal_count_sums_multiple_blocks_including_nested() {
     assert!(p.uses_temporal());
 }
 
+// ─── temporal_conditions (parsed AST view) ───────────────────────────
+
+#[test]
+fn temporal_conditions_is_empty_for_pure_cedar() {
+    let src = r#"permit ( principal, action == Svc::Action::"Read", resource )
+                 when { context.input.doc == "x" };"#;
+    let parsed = ParsedPolicySet::parse(src, &service_no_providers()).expect("parses");
+    let p = parsed.policies().next().unwrap();
+    assert_eq!(p.temporal_conditions().count(), 0);
+}
+
+#[test]
+fn temporal_conditions_yields_one_condition_per_block() {
+    // Two temporal blocks (one nested in a Cedar `&&`, one a second clause):
+    // the parsed-condition view returns one entry per block, agreeing with
+    // `temporal_count`.
+    let src = r#"
+        permit ( principal, action == Drupe::Action::"SellShares", resource )
+        when {
+            context.input.shares > 0
+            && temporal { formerly within 1h Drupe::Action::"ApproveSale"::request{input.stock: context.input.stock} }
+        }
+        when temporal {
+            formerly within 2h Drupe::Action::"Login"::request{input.user: context.input.user}
+        };
+    "#;
+    let parsed = ParsedPolicySet::parse(src, &service_no_providers()).expect("parses");
+    let p = parsed.policies().next().unwrap();
+    assert_eq!(p.temporal_conditions().count(), p.temporal_count());
+    assert_eq!(p.temporal_conditions().count(), 2);
+}
+
 // ─── provider counts / invocations ───────────────────────────────────
 
 #[test]
@@ -318,5 +350,97 @@ fn diagnostics_see_through_macro_expansion() {
     assert_eq!(
         p.provider_invocations().collect::<Vec<_>>(),
         vec!["Risk::Score".to_string()]
+    );
+}
+
+// ─── reject_temporal_arrays gate ─────────────────────────────────────
+
+#[test]
+fn reject_temporal_arrays_passes_for_pure_cedar() {
+    let src = r#"
+        permit ( principal, action == Svc::Action::"Read", resource )
+        when { context.input.x == 1 };
+    "#;
+    let parsed = ParsedPolicySet::parse(src, &service_no_providers()).expect("parses");
+    assert!(parsed.reject_temporal_arrays().is_ok());
+}
+
+#[test]
+fn reject_temporal_arrays_passes_for_temporal_without_arrays() {
+    let src = r#"
+        forbid (principal, action == Svc::Action::"Write", resource)
+        when temporal {
+            formerly within 1h Svc::Action::"Write"::request{
+                input.doc: context.input.doc
+            }
+        };
+    "#;
+    let parsed = ParsedPolicySet::parse(src, &service_no_providers()).expect("parses");
+    assert!(
+        parsed.reject_temporal_arrays().is_ok(),
+        "temporal without arrays should pass"
+    );
+}
+
+#[test]
+fn reject_temporal_arrays_rejects_array_in_predicate_arg() {
+    let src = r#"
+        forbid (principal, action == Svc::Action::"Write", resource)
+        when temporal {
+            formerly within 1h Svc::Action::"Write"::request{
+                input.user: context.input.user,
+                input.tags: ["secret", "pii"]
+            }
+        };
+    "#;
+    let parsed = ParsedPolicySet::parse(src, &service_no_providers()).expect("parses");
+    let err = parsed.reject_temporal_arrays().unwrap_err();
+    let msg = err.to_string();
+    assert!(
+        msg.contains("array constants"),
+        "error should mention array constants, got: {msg}"
+    );
+    assert!(
+        msg.contains("scalar values"),
+        "error should suggest scalar values, got: {msg}"
+    );
+}
+
+#[test]
+fn reject_temporal_arrays_rejects_array_in_nested_formerly() {
+    let src = r#"
+        permit (principal, action == Svc::Action::"Read", resource)
+        when temporal {
+            formerly within 2h Svc::Action::"Read"::request{
+                input.categories: ["a", "b", "c"]
+            }
+        };
+    "#;
+    let parsed = ParsedPolicySet::parse(src, &service_no_providers()).expect("parses");
+    assert!(
+        parsed.reject_temporal_arrays().is_err(),
+        "array in predicate arg should be rejected"
+    );
+}
+
+#[test]
+fn reject_temporal_arrays_passes_multiple_temporal_blocks_without_arrays() {
+    let src = r#"
+        permit (principal, action == Svc::Action::"Write", resource)
+        when temporal {
+            formerly within 1h Svc::Action::"Read"::request{
+                input.doc: context.input.doc
+            }
+        }
+        when temporal {
+            formerly within 2h Svc::Action::"Write"::request{
+                input.doc: context.input.doc
+            }
+        };
+    "#;
+    let parsed = ParsedPolicySet::parse(src, &service_no_providers()).expect("parses");
+    assert!(
+        parsed.reject_temporal_arrays().is_ok(),
+        "temporal without arrays should pass even with multiple blocks"
     );
 }

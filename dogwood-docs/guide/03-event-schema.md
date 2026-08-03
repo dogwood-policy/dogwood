@@ -125,9 +125,9 @@ universally-pinned field* (the request's "slice"). Concretely:
 
 This is implemented by a lowering-time rewrite of the leaf formulas (the
 authored form is what validation checks and error messages point at; the
-rewritten form is what engines evaluate — including the SQL monitor the
-temporal compiler emits, so the in-memory interpreter and the compiled
-monitor agree). With no universal symmetric pin — including under the
+rewritten form is what engines evaluate — including the database-backed
+temporal engine, so the in-memory interpreter and the compiled
+engine agree). With no universal symmetric pin — including under the
 default event schema, which declares no pins — nothing changes: leaves
 keep the global-trace semantics described in
 [Temporal expressions](04-temporal-expressions.md).

@@ -93,10 +93,20 @@ struct Ev {
 }
 
 fn ev(ts: i64, who: &'static str, action: &'static str) -> Ev {
-    Ev { ts, who, action, amount: None }
+    Ev {
+        ts,
+        who,
+        action,
+        amount: None,
+    }
 }
 fn ev_amount(ts: i64, who: &'static str, amount: i64) -> Ev {
-    Ev { ts, who, action: "Transfer", amount: Some(amount) }
+    Ev {
+        ts,
+        who,
+        action: "Transfer",
+        amount: Some(amount),
+    }
 }
 
 fn render(events: &[Ev]) -> String {
@@ -216,27 +226,47 @@ const POLICIES: &[(&str, &str)] = &[
 
 #[test]
 fn engines_agree_previous_displacement() {
-    let events = [ev(1, "A", "Login"), ev(2, "B", "Transfer"), ev(3, "A", "Read")];
+    let events = [
+        ev(1, "A", "Login"),
+        ev(2, "B", "Transfer"),
+        ev(3, "A", "Read"),
+    ];
     assert_engines_agree(P_PREVIOUS, &events, "previous/displacement");
 }
 
 #[test]
 fn engines_agree_previous_own_non_matching() {
-    let events = [ev(1, "A", "Login"), ev(2, "A", "Transfer"), ev(3, "A", "Read")];
+    let events = [
+        ev(1, "A", "Login"),
+        ev(2, "A", "Transfer"),
+        ev(3, "A", "Read"),
+    ];
     assert_engines_agree(P_PREVIOUS, &events, "previous/own-non-matching");
 }
 
 #[test]
 fn engines_agree_previous_window_edge() {
-    let events = [ev(1, "A", "Login"), ev(3599, "B", "Transfer"), ev(3700, "A", "Read")];
+    let events = [
+        ev(1, "A", "Login"),
+        ev(3599, "B", "Transfer"),
+        ev(3700, "A", "Read"),
+    ];
     assert_engines_agree(P_PREVIOUS, &events, "previous/window");
 }
 
 #[test]
 fn engines_agree_neg_since_foreign_logout() {
-    let events = [ev(1, "A", "Login"), ev(2, "B", "Logout"), ev(3, "A", "Read")];
+    let events = [
+        ev(1, "A", "Login"),
+        ev(2, "B", "Logout"),
+        ev(3, "A", "Read"),
+    ];
     assert_engines_agree(P_NEG_SINCE, &events, "neg-since/foreign-logout");
-    let events2 = [ev(1, "A", "Login"), ev(2, "A", "Logout"), ev(3, "A", "Read")];
+    let events2 = [
+        ev(1, "A", "Login"),
+        ev(2, "A", "Logout"),
+        ev(3, "A", "Read"),
+    ];
     assert_engines_agree(P_NEG_SINCE, &events2, "neg-since/own-logout");
 }
 
@@ -267,10 +297,20 @@ fn engines_agree_count_confinement() {
     let a_uid = "Drupe::OAuthUser::\"A\"".to_string();
     let b_uid = "Drupe::OAuthUser::\"B\"".to_string();
     let find = |v: &[(i64, String, Decision)], ts: i64, who: &str| {
-        v.iter().find(|(t, w, _)| *t == ts && w == who).map(|(_, _, d)| *d)
+        v.iter()
+            .find(|(t, w, _)| *t == ts && w == who)
+            .map(|(_, _, d)| *d)
     };
-    assert_eq!(find(&partitioned, 4, &a_uid), Some(Decision::Deny), "A@4 count<2");
-    assert_eq!(find(&partitioned, 5, &b_uid), Some(Decision::Allow), "B@5 count>=2");
+    assert_eq!(
+        find(&partitioned, 4, &a_uid),
+        Some(Decision::Deny),
+        "A@4 count<2"
+    );
+    assert_eq!(
+        find(&partitioned, 5, &b_uid),
+        Some(Decision::Allow),
+        "B@5 count>=2"
+    );
     assert_eq!(global, partitioned, "count/confinement: engines differ");
 }
 

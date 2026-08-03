@@ -1,7 +1,7 @@
 // Companion to 0271 (which uses `formerly within`). Probes whether the
 // "omitted predicate fields are wildcarded" rule is honored under
 // `previous within`, which goes through a different translation path
-// in the DSQL backend.
+// in the temporal engine.
 //
 // `Login` has fields `(server, user)`, but the predicate only mentions
 // `user`. The runtime must match the prior Login regardless of which

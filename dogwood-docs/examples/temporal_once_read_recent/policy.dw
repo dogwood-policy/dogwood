@@ -4,7 +4,7 @@
 def temporal once(?w, ?s) { formerly within ?w ?s };
 
 @id("read_recently_via_once")
-permit (principal, action, resource)
+permit (principal, action in [Drupe::Action::"Read", Drupe::Action::"Write"], resource)
 when temporal {
     once(1h, Drupe::Action::"Read"::request{
         input.user: context.input.user,

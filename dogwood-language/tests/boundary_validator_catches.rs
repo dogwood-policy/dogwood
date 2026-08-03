@@ -630,3 +630,222 @@ fn macro_error_cannot_reach_validator_undefined_call() {
         dogwood_language::Error::Macro(_)
     ));
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// Entity-attribute typing in a temporal condition
+// ═══════════════════════════════════════════════════════════════════════
+
+/// A schema whose principal carries attributes of distinct types.
+const ATTR_SCHEMA: &str = r#"
+    namespace Drupe {
+      entity OAuthUser = { dept: String, quota: Long, profile: { team: String } };
+      entity Admin = { dept: Long, quota: Long };
+      entity NoDept = { other: Long };
+      entity Gateway;
+      type ReadInput = { user: String, amount: Long };
+      action "Read" appliesTo {
+        principal: [OAuthUser],
+        resource: [Gateway],
+        context: { input: ReadInput }
+      };
+      action "Subset" appliesTo {
+        principal: [OAuthUser, NoDept],
+        resource: [Gateway],
+        context: { input: ReadInput }
+      };
+      action "Multi" appliesTo {
+        principal: [OAuthUser, Admin],
+        resource: [Gateway],
+        context: { input: ReadInput }
+      };
+    }
+"#;
+
+fn lower_attr(src: &str) -> LoweredPolicySet {
+    let schema = PolicySchema::from_cedarschema_str(ATTR_SCHEMA).unwrap();
+    let service = ServiceSchema::builder()
+        .event_schema_str(EVENT_SCHEMA)
+        .build()
+        .unwrap();
+    LoweredPolicySet::from_str(src, &service, &schema)
+        .expect("precondition: source must parse and lower successfully")
+}
+
+/// A `Long` summand range-restricted against a `String` attribute must be caught.
+///
+/// This is the fail-open shape. The summand's declared type is `Long`, so the
+/// summand check passes; the restrictor `a == principal.dept` types the other side
+/// as `String`. At evaluation the rows exist and `a` binds to a string, which `sum`
+/// then SKIPS — so the total is 0 no matter what the trace contains, and a `forbid`
+/// cap written this way can never fire while `count` over the same rows still counts
+/// them. Nothing reports a problem at any stage, which is why validation must.
+#[test]
+fn a_long_summand_restricted_against_a_string_attribute_is_caught() {
+    let lowered = lower_attr(
+        r#"forbid (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+  (sum a for (a: Long), (t: Timepoint). where formerly within 1h
+    (Drupe::Action::"Read"::request{} && tp(t) && a == principal.dept)) > 0
+};"#,
+    );
+    let errors = validate_errors(&lowered);
+    assert_has_error(&errors, "same type");
+}
+
+/// The same shape against a `Long` attribute must still validate.
+///
+/// Guards the fix against over-rejection: the defect is a type MISMATCH, not the act
+/// of restricting a summand against an entity attribute.
+#[test]
+fn a_long_summand_restricted_against_a_long_attribute_is_accepted() {
+    let lowered = lower_attr(
+        r#"forbid (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+  (sum a for (a: Long), (t: Timepoint). where formerly within 1h
+    (Drupe::Action::"Read"::request{} && tp(t) && a == principal.quota)) > 0
+};"#,
+    );
+    let errors = validate_errors(&lowered);
+    assert!(
+        errors.is_empty(),
+        "a correctly typed restrictor must validate, got:\n{}",
+        errors.join("\n")
+    );
+}
+
+/// The same defect one level deeper must be caught too.
+///
+/// A scope path types by descending through record-typed attributes, so a nested
+/// path has to resolve as well — otherwise the check that catches
+/// `principal.dept` is silently skipped for `principal.profile.team`, and the
+/// fail-open shape survives by being spelled with one more dot.
+#[test]
+fn a_long_summand_restricted_against_a_nested_string_attribute_is_caught() {
+    let lowered = lower_attr(
+        r#"forbid (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+  (sum a for (a: Long), (t: Timepoint). where formerly within 1h
+    (Drupe::Action::"Read"::request{} && tp(t) && a == principal.profile.team)) > 0
+};"#,
+    );
+    assert_has_error(&validate_errors(&lowered), "same type");
+}
+
+/// A scope path that cannot be resolved is REJECTED, not ignored.
+///
+/// Ignoring it is fail-open in the same way a type mismatch is: the comparison can
+/// never match, so the condition is permanently false, and a permanently false
+/// `forbid` is a cap that never fires. Each case below validated clean before.
+#[test]
+fn an_unresolvable_scope_path_is_rejected() {
+    // An attribute the entity does not declare.
+    assert_has_error(
+        &validate_errors(&lower_attr(&cap("Read", "a == principal.nonexistent"))),
+        "attribute `nonexistent`",
+    );
+    // The same on the resource side.
+    assert_has_error(
+        &validate_errors(&lower_attr(&cap("Read", "a == resource.nonexistent"))),
+        "attribute `nonexistent`",
+    );
+    // Descending into an attribute that is not a record.
+    assert_has_error(
+        &validate_errors(&lower_attr(&cap("Read", "a == principal.dept.foo"))),
+        "non-record type",
+    );
+}
+
+/// A scope permitting several entity types must agree on the attribute's type.
+///
+/// The condition is evaluated whichever entity the request carries, so a path that
+/// types differently per entity has no single type to check against — and is a
+/// mismatch for at least one of them. Mirrors the rule context paths already follow
+/// across the actions a hoisted leaf attaches to.
+#[test]
+fn a_scope_path_typed_differently_per_entity_is_rejected() {
+    // `dept` is String on OAuthUser and Long on Admin.
+    assert_has_error(
+        &validate_errors(&lower_attr(&cap("Multi", "a == principal.dept"))),
+        "different type on each entity",
+    );
+    // Declared on only SOME permitted entities IS rejected: the condition is dead for
+    // requests carrying an entity that lacks the attribute, which is Cedar's own
+    // answer. An author who means only the declaring type says so in the rule scope,
+    // and that narrowing is honoured — see the accept case below.
+    assert_has_error(
+        &validate_errors(&lower_attr(&cap("Subset", "a == principal.quota"))),
+        "does not resolve for every entity",
+    );
+
+    // Narrowed to the declaring type, the same read is accepted.
+    let errors = validate_errors(&lower_attr(&cap("Subset", "a == principal.quota").replace(
+        "forbid (principal,",
+        "forbid (principal is Drupe::OAuthUser,",
+    )));
+    assert!(
+        errors.is_empty(),
+        "narrowing the scope to the declaring type must be accepted, got:\n{}",
+        errors.join("\n")
+    );
+
+    // `quota` is Long on both, so it resolves and the policy is accepted.
+    let errors = validate_errors(&lower_attr(&cap("Multi", "a == principal.quota")));
+    assert!(
+        errors.is_empty(),
+        "an attribute typed the same on every entity must resolve, got:\n{}",
+        errors.join("\n")
+    );
+}
+
+/// The entity-reference projections type as STRING, so a mismatch against one is
+/// caught like any other.
+///
+/// `.id` and `.type` project the entity uid when no attribute of that name is
+/// declared, and the uid's parts are strings. Exempting them from the check instead
+/// would leave the fail-open shape a second door: a `Long` summand equated to
+/// `principal.id` binds a string, which `sum` skips, so the cap never fires. Verified
+/// that the projection is live rather than theoretical: `principal.id == "alice"`
+/// holds at runtime against a trace whose principal is `App::OAuthUser::"alice"`.
+#[test]
+fn an_int_compared_against_a_reference_projection_is_rejected() {
+    for path in ["principal.id", "principal.type", "resource.id"] {
+        assert_has_error(
+            &validate_errors(&lower_attr(&cap("Read", &format!("a == {path}")))),
+            "same type",
+        );
+    }
+    // The projection is a string, so it has no fields to descend into.
+    assert_has_error(
+        &validate_errors(&lower_attr(&cap("Read", "a == principal.id.foo"))),
+        "non-record type",
+    );
+}
+
+/// Comparing a projection against a STRING must still validate.
+///
+/// Guards the fix against over-rejection: the defect is the type mismatch, not the
+/// act of reading `.id`.
+#[test]
+fn a_string_compared_against_a_reference_projection_is_accepted() {
+    let src = r#"permit (principal, action == Drupe::Action::"Read", resource)
+when temporal { formerly within 1h
+  (Drupe::Action::"Read"::request{ input.user: context.input.user }
+   && principal.id == "alice") };"#;
+    let errors = validate_errors(&lower_attr(src));
+    assert!(
+        errors.is_empty(),
+        "a string comparison against `.id` must validate, got:\n{}",
+        errors.join("\n")
+    );
+}
+
+/// A `forbid` cap whose summand restrictor names a declared `Long` attribute.
+fn cap(action: &str, restrictor: &str) -> String {
+    format!(
+        r#"forbid (principal, action == Drupe::Action::"{action}", resource)
+when temporal {{
+  (sum a for (a: Long), (t: Timepoint). where formerly within 1h
+    (Drupe::Action::"{action}"::request{{}} && tp(t) && {restrictor})) > 0
+}};"#
+    )
+}

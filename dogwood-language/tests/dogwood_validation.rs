@@ -648,19 +648,39 @@ when temporal { formerly within 48h App::Action::"Login"::request{input.user: co
 // ─── Scope terms: principal / resource (Cedar-consistent) ───────────
 
 #[test]
-fn when_temporal_reads_a_scope_attribute_then_no_errors() {
-    // `principal.dept` — a current-request scope entity attribute — is
-    // accepted (attribute paths resolve at eval time; untyped here, as on the
-    // provider surface). Nested inside the `formerly` scope so the tp-dependence
-    // check is satisfied by the predicate, matching the corpus 0735 idiom.
+fn when_temporal_reads_a_declared_scope_attribute_then_no_errors() {
+    // A DECLARED scope entity attribute validates. `id` is declared on
+    // `OAuthUser` in this schema. Nested inside the `formerly` scope so the
+    // tp-dependence check is satisfied by the predicate, matching the corpus
+    // 0735 idiom.
+    let src = r#"
+permit (principal, action == App::Action::"Read", resource)
+when temporal { formerly within 1h (App::Action::"Login"::request{input.user: context.input.user} && principal.id == "eng") };
+"#;
+    let result = validate_source(src, SCHEMA, None);
+    assert!(
+        result.validation_passed(),
+        "a declared scope attribute read should validate, got:\n{result:?}"
+    );
+}
+
+#[test]
+fn when_temporal_reads_an_undeclared_scope_attribute_then_temporal_error() {
+    // This case previously validated cleanly, on the stated grounds that scope
+    // attribute paths "resolve at eval time". They do not. Measured with the same
+    // policy and trace, varying only whether the schema declares the attribute:
+    // declared gives Allow, undeclared gives Deny even when the trace's entity
+    // store supplies the attribute. So an undeclared attribute does not resolve
+    // late — it makes the comparison permanently false, and a permanently false
+    // `forbid` is a cap that can never fire. Rejecting it is the whole point.
     let src = r#"
 permit (principal, action == App::Action::"Read", resource)
 when temporal { formerly within 1h (App::Action::"Login"::request{input.user: context.input.user} && principal.dept == "eng") };
 "#;
     let result = validate_source(src, SCHEMA, None);
     assert!(
-        result.validation_passed(),
-        "a scope attribute read should validate, got:\n{result:?}"
+        !result.validation_passed(),
+        "an undeclared scope attribute can never match and must be rejected, got:\n{result:?}"
     );
 }
 

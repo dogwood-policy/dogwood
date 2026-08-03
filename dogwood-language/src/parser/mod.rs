@@ -416,6 +416,9 @@ fn extract_token(src: &str, pos: usize) -> Option<String> {
 ///
 /// Returns all policies on success, or the collected parse errors.
 pub fn parse_policies(src: &str) -> Result<PolicySet, Vec<RawParseError>> {
+    // Strip a leading UTF-8 BOM (U+FEFF) if present — editors and Windows
+    // tools sometimes prepend it, and the grammar doesn't expect it.
+    let src = src.strip_prefix('\u{FEFF}').unwrap_or(src);
     // Shared `.dw` source for scope entity-UID `Loc`s (so a scope error
     // points at the offending token, not the whole rule).
     let dw_src: std::sync::Arc<str> = std::sync::Arc::from(src);

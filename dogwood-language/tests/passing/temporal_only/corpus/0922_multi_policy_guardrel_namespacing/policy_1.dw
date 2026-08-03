@@ -1,5 +1,5 @@
 // TWO GuardRel-correlated `since` policies in ONE policy set — the
-// multi-policy compilation path. The DSQL backend compiles every temporal
+// multi-policy compilation path. The temporal engine compiles every temporal
 // leaf of a policy set into a single SQL function, namespacing each leaf's
 // CTEs and state-table rows only by a per-policy prefix (`p0_`/`p1_` in CTE
 // names, `:p0_N`/`:p1_N` in `since_guard`/`since_anchor` row ids).

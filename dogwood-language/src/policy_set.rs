@@ -88,6 +88,7 @@ impl ParsedPolicySet {
     /// the schema are *not* returned here — run
     /// [`Validator::validate`](crate::Validator::validate) for those.
     pub fn lower(&self, policy_schema: &PolicySchema) -> Result<LoweredPolicySet, Error> {
+        self.reject_temporal_arrays()?;
         Ok(LoweredPolicySet {
             lowered: api::lower(&self.parsed, policy_schema, None)?,
         })
@@ -120,6 +121,7 @@ impl ParsedPolicySet {
         policy_schema: &PolicySchema,
         distincter: &str,
     ) -> Result<LoweredPolicySet, Error> {
+        self.reject_temporal_arrays()?;
         Ok(LoweredPolicySet {
             lowered: api::lower(&self.parsed, policy_schema, Some(distincter))?,
         })
@@ -158,6 +160,90 @@ impl ParsedPolicySet {
                 dw_src,
                 index,
             })
+    }
+
+    // ─── pre-lowering rejection gates ────────────────────────────────
+
+    /// Reject the policy set if any temporal predicate argument contains an
+    /// **array constant** (e.g. `input.tags: ["secret", "pii"]`), returning
+    /// an [`Error`] that points at the enclosing `temporal { … }` block.
+    ///
+    /// Array constants are accepted by the temporal grammar but support for
+    /// them is incomplete — they are not handled correctly downstream and
+    /// produce confusing errors. This check rejects them early with a clear
+    /// message.
+    ///
+    /// Returns `Ok(())` if no temporal blocks contain array terms.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let parsed = ParsedPolicySet::parse(source, &service)?;
+    /// parsed.reject_temporal_arrays()?; // fails fast if arrays in temporal
+    /// let lowered = parsed.lower(&policy_schema)?;
+    /// ```
+    pub fn reject_temporal_arrays(&self) -> Result<(), Error> {
+        use crate::extension::temporal::ast::{AggExprKind, Condition, ConditionKind, Term};
+
+        /// Check whether a term is or contains an array constant.
+        fn term_has_array(term: &Term) -> bool {
+            match term {
+                Term::Array(_) => true,
+                Term::Agg(agg) => match &agg.kind {
+                    AggExprKind::Sum { body, .. } | AggExprKind::Count { body, .. } => {
+                        condition_has_array(body)
+                    }
+                    AggExprKind::Call(_) => false,
+                },
+                _ => false,
+            }
+        }
+
+        /// Walk a temporal condition tree, returning `true` if any predicate
+        /// argument or comparison operand is a `Term::Array`.
+        fn condition_has_array(cond: &Condition) -> bool {
+            match &cond.kind {
+                ConditionKind::And { left, right }
+                | ConditionKind::Or { left, right }
+                | ConditionKind::Since { left, right, .. } => {
+                    condition_has_array(left) || condition_has_array(right)
+                }
+                ConditionKind::Not { inner }
+                | ConditionKind::Formerly { body: inner, .. }
+                | ConditionKind::Previous { body: inner, .. }
+                | ConditionKind::Exists { body: inner, .. } => condition_has_array(inner),
+                ConditionKind::Predicate(pred) => {
+                    pred.args.iter().any(|arg| term_has_array(&arg.value))
+                }
+                ConditionKind::Comparison { left, right, .. } => {
+                    term_has_array(left) || term_has_array(right)
+                }
+                ConditionKind::Tp { .. }
+                | ConditionKind::Call(_)
+                | ConditionKind::SigilRef { .. } => false,
+                ConditionKind::Refine { base, fields, .. } => {
+                    condition_has_array(base) || fields.iter().any(|arg| term_has_array(&arg.value))
+                }
+            }
+        }
+
+        for (policy_idx, policy) in self.parsed.policies().iter().enumerate() {
+            for (block_idx, temporal_block) in policy.temporal_conditions().into_iter().enumerate()
+            {
+                if condition_has_array(temporal_block) {
+                    // Point the error at the temporal block's span.
+                    let span = policy.temporal_block_spans().into_iter().nth(block_idx);
+                    let message = format!(
+                        "temporal predicate arguments cannot contain array constants \
+                         (e.g. `field: [\"a\", \"b\"]`); use scalar values or \
+                         `context` field references instead"
+                    );
+                    let raw = crate::error::RawCedarifyError { message, span };
+                    return Err(crate::api::cedarify_error(raw, self.parsed.dw_src()));
+                }
+            }
+        }
+        Ok(())
     }
 }
 
@@ -203,6 +289,19 @@ impl<'a> ParsedPolicy<'a> {
     /// (`temporal_count() > 0`). Use for a region gate on temporal support.
     pub fn uses_temporal(&self) -> bool {
         self.temporal_count() > 0
+    }
+
+    /// The parsed condition of each `temporal { … }` block in this policy, in
+    /// source order — one per block counted by
+    /// [`temporal_count`](ParsedPolicy::temporal_count). A read-only view of
+    /// the authored (pre-lowering, macro-expanded) temporal AST via
+    /// [`temporal_ast`](crate::temporal_ast), for structural diagnostics that
+    /// need no action schema. The condition is the block body; its inner spans
+    /// are block-relative (see [`Temporal`](crate::TemporalField)).
+    pub fn temporal_conditions(
+        &self,
+    ) -> impl Iterator<Item = &'a crate::temporal_ast::Condition> + use<'a> {
+        self.policy.temporal_conditions().into_iter()
     }
 
     // ── information providers ───────────────────────────────────────────

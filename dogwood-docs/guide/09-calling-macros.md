@@ -91,7 +91,7 @@ A `def temporal` macro is called inside a `when temporal { … }` (or
 a temporal condition is expected. Here `once` wraps a window and a predicate:
 
 ```text
-permit(principal, action, resource)
+permit(principal, action == Drupe::Action::"Write", resource)
 when temporal {
     once(1h, Drupe::Action::"Read"::request{
         input.user: context.input.user,
@@ -105,7 +105,7 @@ when temporal {
 Condition macros compose with `&&` just like the built-in operators:
 
 ```text
-permit(principal, action, resource)
+permit(principal, action == Drupe::Action::"Write", resource)
 when temporal {
     recently_logged_in(context.input.user)
     && recently_read(context.input.user, context.input.document)
@@ -119,7 +119,7 @@ into a comparison — always inside an `exists` binder, which introduces the var
 the aggregate is compared against — never called on its own:
 
 ```text
-permit(principal, action, resource)
+permit(principal, action == Drupe::Action::"Alert", resource)
 when temporal {
     exists (n: Long). (
         (count_formerly(1h, Drupe::Action::"Login"::request{
@@ -145,7 +145,7 @@ def temporal count_within(?w, ?s) {
 };
 def temporal bind(?n, ?A, ?B) { exists (?n: Long). (?A == ?n && ?B) };
 
-permit(principal, action, resource)
+permit(principal, action == Drupe::Action::"Alert", resource)
 when temporal {
     bind(n, count_within(1h, Drupe::Action::"Login"::request{
         input.user: _, input.server: context.input.server

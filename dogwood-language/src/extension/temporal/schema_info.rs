@@ -45,9 +45,10 @@ impl SchemaInfo {
             _ => "Action".to_string(),
         };
         let uid: EntityUID = format!("{type_name}::\"{id}\"").parse().ok()?;
-        self.schema
-            .get_action_id(&uid)
-            .map(|action| ActionHandle { action })
+        self.schema.get_action_id(&uid).map(|action| ActionHandle {
+            action,
+            schema: &self.schema,
+        })
     }
 
     /// The declared entity type `(namespace, name)`, if any.
@@ -74,6 +75,10 @@ impl SchemaInfo {
 /// A declared action and its Cedar-typed context.
 pub struct ActionHandle<'a> {
     action: &'a ValidatorActionId,
+    /// Kept so a scope entity's ATTRIBUTES can be resolved, not just its type
+    /// name: `applies_to_principals` yields an entity type, and turning that
+    /// into attribute types needs another lookup in the same schema.
+    schema: &'a ValidatorSchema,
 }
 
 impl ActionHandle<'_> {
@@ -118,27 +123,210 @@ impl ActionHandle<'_> {
     /// string, if it declares exactly one principal type. `None` when the
     /// action admits several (a LUB the coarse projection does not model) or
     /// none — the bare `principal` term is then left untyped.
-    pub fn principal_type(&self) -> Option<String> {
-        single_entity_rich(self.action.applies_to_principals())
+    /// The scope entity's type, narrowed by `narrow` when given.
+    ///
+    /// Exactly one candidate yields the TAGGED type (`entity:Staff`). Several yield the
+    /// UNTAGGED `entity`, which is the honest answer — the arriving entity is some one of
+    /// them and the tag is not statically known, but it IS an entity. Returning `None`
+    /// there was fail-open: every comparison check is guarded on both operands having a
+    /// type, so an entity compared against a STRING or an INT — a genuine type error
+    /// Cedar rejects — went unreported whenever an action permitted more than one type.
+    fn scope_entity_type<'t>(
+        &self,
+        tys: impl Iterator<Item = &'t EntityType>,
+        narrow: Option<&crate::api::ScopeConstraint>,
+    ) -> Option<String> {
+        let mut admitted = tys.filter(|ety| narrow.is_none_or(|n| self.admits(n, ety)));
+        let first = admitted.next()?;
+        if admitted.next().is_some() {
+            return Some("entity".to_string());
+        }
+        Some(format!("entity:{}", first.name().basename()))
     }
 
-    /// The scoped action's resource entity type, mirroring
-    /// [`principal_type`](ActionHandle::principal_type).
-    pub fn resource_type(&self) -> Option<String> {
-        single_entity_rich(self.action.applies_to_resources())
+    /// [`principal_type`](ActionHandle::principal_type), narrowed by the rule's scope.
+    pub fn principal_type_narrowed(
+        &self,
+        narrow: Option<&crate::api::ScopeConstraint>,
+    ) -> Option<String> {
+        self.scope_entity_type(self.action.applies_to_principals(), narrow)
     }
-}
 
-/// Render the single entity type of an applies-to iterator as
-/// `entity:<basename>`, or `None` if there is not exactly one.
-fn single_entity_rich<'a>(
-    mut tys: impl Iterator<Item = &'a cedar_policy_core::ast::EntityType>,
-) -> Option<String> {
-    let first = tys.next()?;
-    if tys.next().is_some() {
-        return None;
+    /// [`resource_type`](ActionHandle::resource_type), narrowed by the rule's scope.
+    pub fn resource_type_narrowed(
+        &self,
+        narrow: Option<&crate::api::ScopeConstraint>,
+    ) -> Option<String> {
+        self.scope_entity_type(self.action.applies_to_resources(), narrow)
     }
-    Some(format!("entity:{}", first.name().basename()))
+
+    /// Whether this action admits ANY request environment under `principal` / `resource`
+    /// narrowing — i.e. some permitted principal type AND some permitted resource type
+    /// survive it.
+    ///
+    /// Cedar filters whole (principal, action, resource) triples by the policy scope and
+    /// never typechecks an action for which no triple survives. Narrowing the types
+    /// WITHIN an action is not enough: `principal is Staff` must also remove an action
+    /// whose principals are `[Bot]` entirely, or that action's resource types and context
+    /// record get held against a condition the rule can never evaluate there.
+    pub fn admits_any_env(
+        &self,
+        principal: Option<&crate::api::ScopeConstraint>,
+        resource: Option<&crate::api::ScopeConstraint>,
+    ) -> bool {
+        let ok = |narrow: Option<&crate::api::ScopeConstraint>,
+                  mut tys: Box<dyn Iterator<Item = &EntityType> + '_>| match narrow
+        {
+            None => true,
+            Some(n) => tys.any(|ety| self.admits(n, ety)),
+        };
+        ok(principal, Box::new(self.action.applies_to_principals()))
+            && ok(resource, Box::new(self.action.applies_to_resources()))
+    }
+
+    /// Whether `narrowing` admits entity type `ety`.
+    ///
+    /// `in G` admits `G`'s own type and any type that can be a MEMBER of it, which is
+    /// static even though membership is not: it comes from the schema's declared
+    /// hierarchy, via Cedar's own `ancestors` relation rather than a hand-rolled walk.
+    fn admits(&self, narrowing: &crate::api::ScopeConstraint, ety: &EntityType) -> bool {
+        use crate::api::ScopeConstraint as S;
+        match narrowing {
+            S::Any => true,
+            S::IsType(ty) => ety.to_string() == *ty,
+            S::Uid {
+                entity_type,
+                membership,
+            } => {
+                if ety.to_string() == *entity_type {
+                    return true;
+                }
+                if !*membership {
+                    return false;
+                }
+                self.schema
+                    .ancestors(ety)
+                    .is_some_and(|mut a| a.any(|p| p.to_string() == *entity_type))
+            }
+        }
+    }
+
+    /// The declared type at attribute `path` under this action's `scope` entity
+    /// (`"principal"` or `"resource"`), or `None` when it does not resolve.
+    ///
+    /// Typing only: a caller wanting to know WHY a path did not resolve, so it can
+    /// say so, uses [`resolve_scope_path`](ActionHandle::resolve_scope_path).
+    pub fn scope_attribute_type(
+        &self,
+        scope: &str,
+        path: &[String],
+        narrow: Option<&crate::api::ScopeConstraint>,
+    ) -> Option<String> {
+        match self.resolve_scope_path(scope, path, narrow) {
+            ScopePath::Resolved(ty) => Some(ty),
+            _ => None,
+        }
+    }
+
+    /// Resolve attribute `path` under this action's `scope` entity, explaining any
+    /// failure so it can be reported rather than silently ignored.
+    ///
+    /// `path` is the tail after the scope root, so `principal.profile.team` passes
+    /// `["profile", "team"]`. Each segment after the first descends through a
+    /// record-typed attribute, mirroring how a context path resolves.
+    ///
+    /// A scope may permit SEVERAL entity types. The path is resolved against every
+    /// one of them and must resolve the same way for all, because the condition is
+    /// evaluated whichever entity the request carries — the same rule context paths
+    /// follow across the actions a hoisted leaf attaches to. A path that resolves to
+    /// different types is therefore [`Ambiguous`](ScopePath::Ambiguous) rather than
+    /// silently one of them.
+    pub fn resolve_scope_path(
+        &self,
+        scope: &str,
+        path: &[String],
+        narrow: Option<&crate::api::ScopeConstraint>,
+    ) -> ScopePath {
+        let Some((first, rest)) = path.split_first() else {
+            return ScopePath::Unknown;
+        };
+        let mut etys: Vec<_> = match scope {
+            "principal" => self.action.applies_to_principals().collect(),
+            "resource" => self.action.applies_to_resources().collect(),
+            _ => return ScopePath::Unknown,
+        };
+        // Narrow by the RULE's scope. The action says which types it accepts; the
+        // rule's `principal is T` / `== T::"x"` / `in G` says which of those the rule
+        // itself can see. Without this, a rule narrowed to a type that declares the
+        // attribute is judged against types it can never receive.
+        if let Some(narrowing) = narrow {
+            etys.retain(|ety| self.admits(narrowing, ety));
+        }
+        if etys.is_empty() {
+            // The scope pins no entity type, so there is nothing to resolve
+            // against and nothing to report.
+            return ScopePath::Unknown;
+        }
+
+        // Resolve against EVERY permitted entity type, then decide from the whole
+        // picture. Deciding on the first failure would be nondeterministic: the
+        // applies-to spec is a hash set, so its iteration order is not stable across
+        // schema builds, and the reported entity would vary run to run.
+        let mut resolved: Vec<(String, String)> = Vec::new();
+        let mut failed: Vec<(String, ScopePathFailure)> = Vec::new();
+        for ety in etys {
+            let entity = ety.to_string();
+            let Some(declared) = self.schema.get_entity_type(ety) else {
+                // Not in the projection; Cedar's own validator owns that.
+                return ScopePath::Unknown;
+            };
+            match resolve_one(declared, first, rest) {
+                Ok(ty) => resolved.push((entity, ty)),
+                Err(f) => failed.push((entity, f)),
+            }
+        }
+        resolved.sort();
+        failed.sort_by(|a, b| a.0.cmp(&b.0));
+
+        // Reject when the path fails on ANY admitted entity type. The condition is
+        // evaluated whichever type the request carries, so a read that cannot resolve
+        // for one of them is dead for those requests — Cedar's own answer. An author
+        // who means only one type says so in the rule scope (`principal is T`), which
+        // the narrowing above honours, so this tightens rather than removing a
+        // capability.
+        if !failed.is_empty() {
+            // Report only the entities that failed the SAME WAY as the first. Listing
+            // every failure against one entity's segment misattributes it: two entities
+            // can fail at different segments of the same path. Sorted above, so which
+            // failure leads does not depend on the schema's hash iteration order.
+            let failure = failed[0].1.clone();
+            let entities: Vec<String> = failed
+                .iter()
+                .filter(|(_, f)| match (f, &failure) {
+                    (ScopePathFailure::Missing(a), ScopePathFailure::Missing(b)) => a == b,
+                    (ScopePathFailure::NonRecord(a), ScopePathFailure::NonRecord(b)) => a == b,
+                    _ => false,
+                })
+                .map(|(e, _)| e.clone())
+                .collect();
+            return match failure {
+                ScopePathFailure::Missing(segment) => ScopePath::Missing { entities, segment },
+                ScopePathFailure::NonRecord(segment) => ScopePath::NonRecord { segment },
+            };
+        }
+
+        // Type it only when every permitted entity type agrees. Compare the QUALIFIED
+        // entity types' resolved types as rendered; a disagreement means the
+        // comparison is a mismatch for at least one admissible request, which is
+        // reported rather than silently resolved to one side.
+        let mut types: Vec<String> = resolved.iter().map(|(_, t)| t.clone()).collect();
+        types.sort();
+        types.dedup();
+        if types.len() > 1 {
+            return ScopePath::Ambiguous { types };
+        }
+        ScopePath::Resolved(types.remove(0))
+    }
 }
 
 /// Resolve `head` then the remaining `rest` segments within a record's
@@ -159,6 +347,72 @@ fn resolve_in(attrs: &Attributes, head: &str, rest: &[String]) -> PathResolution
         }
     }
     PathResolution::Resolved(rich_type(current))
+}
+
+/// Why resolving a scope path against ONE entity type failed.
+#[derive(Clone)]
+enum ScopePathFailure {
+    Missing(String),
+    NonRecord(String),
+}
+
+/// Resolve `first` (then `rest`) against one entity type's declared attributes.
+///
+/// `.id` / `.type` project the entity uid when no attribute of that name is declared,
+/// and the uid's parts are strings. A DECLARED attribute shadows the projection, which
+/// the attribute lookup below already handles by running first — matching the
+/// interpreter, which looks a supplied attribute up before falling back to the uid.
+fn resolve_one(
+    declared: &ValidatorEntityType,
+    first: &str,
+    rest: &[String],
+) -> Result<String, ScopePathFailure> {
+    let Some(attr) = declared.attr(first) else {
+        if matches!(first, "id" | "type") {
+            return match rest.first() {
+                None => Ok("string".to_string()),
+                // The projection is a string, so it has no fields.
+                Some(segment) => Err(ScopePathFailure::NonRecord(segment.clone())),
+            };
+        }
+        return Err(ScopePathFailure::Missing(first.to_string()));
+    };
+    let mut ty = &attr.attr_type;
+    for segment in rest {
+        let Some(attrs) = record_attrs(ty) else {
+            return Err(ScopePathFailure::NonRecord(segment.clone()));
+        };
+        let Some(next) = attrs.get_attr(segment) else {
+            return Err(ScopePathFailure::Missing(segment.clone()));
+        };
+        ty = &next.attr_type;
+    }
+    Ok(rich_type(ty))
+}
+
+/// The outcome of resolving a scope attribute path
+/// ([`resolve_scope_path`](ActionHandle::resolve_scope_path)).
+///
+/// Separate from [`PathResolution`] because a scope path has a failure mode a
+/// context path does not: the scope may permit several entity types, which can
+/// declare the same attribute differently.
+pub enum ScopePath {
+    /// The full path resolved on every permitted entity type, to this type.
+    Resolved(String),
+    /// A segment is declared on NONE of the permitted entity types, listed in
+    /// sorted order so the diagnostic does not depend on hash iteration order.
+    Missing {
+        entities: Vec<String>,
+        segment: String,
+    },
+    /// A segment tried to traverse into a non-record type.
+    NonRecord { segment: String },
+    /// The path resolved on every permitted entity type but to different types,
+    /// so there is no single type the condition can be checked against.
+    Ambiguous { types: Vec<String> },
+    /// Nothing to resolve against, and nothing to report: no attribute tail, an
+    /// unrecognized root, or a scope pinning no entity type in the projection.
+    Unknown,
 }
 
 /// The outcome of resolving a `context.input` field path.

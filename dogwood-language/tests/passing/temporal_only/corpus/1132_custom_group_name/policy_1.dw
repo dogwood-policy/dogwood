@@ -5,7 +5,7 @@
 //
 // The interpreter descends `meta.region` via `field_path` exactly like
 // `input.user` — it has no privileged set of group names. A differential
-// SQL backend that hardcodes `input`/`output` as the only field groups
+// temporal engine that hardcodes `input`/`output` as the only field groups
 // would fail to serialize / read `meta.region`, so the compiled filter
 // would see NULL and wrongly deny.
 //

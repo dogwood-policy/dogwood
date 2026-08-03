@@ -1,5 +1,5 @@
 // Non-vacuous `since` with a PAST anchor and a current-request correlation on
-// the left — a DSQL backend divergence distinct from the `0875` current-anchor
+// the left — a temporal engine divergence distinct from the `0875` current-anchor
 // vacuity case.
 //
 // The formula is `(A && C) since within 1h B` where
@@ -9,17 +9,17 @@
 //
 // `0875` exercises the case where the CURRENT event is itself the anchor, so
 // the left is checked over the empty range `(i, i]` and is vacuously true
-// (the §5.3 `((A S B) ∧ C) ∨ B` rewrite handles that, and `0875` passes DSQL).
+// (the §5.3 `((A S B) ∧ C) ∨ B` rewrite handles that, and `0875` passes the temporal engine).
 //
 // THIS case exercises the complementary shape: the anchor B is strictly in the
 // PAST (a prior `carol` Transfer), and the left `(A && C)` is checked over a
 // NON-empty range up to the current step, where A correlates on
 // `context.input.user` of the *current* request. The interpreter evaluates
-// this correctly (see expected_1.out); the DSQL compiler returns the wrong
+// this correctly (see expected_1.out); the temporal engine compiler returns the wrong
 // verdict at the decision step (it denies where the interpreter permits).
 //
 // Interpreter (oracle) verdicts are correct — this lives in the Passing corpus
-// for the interpreter and is a KNOWN DSQL verdict divergence surfaced by the
+// for the interpreter and is a KNOWN temporal engine verdict divergence surfaced by the
 // SMT differential fuzzer (dogwood-fuzz-smt). Tracked for the temporal-compiler
 // `since` left-guard past-anchor compilation; see the compiler root-cause note.
 permit (

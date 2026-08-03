@@ -191,7 +191,7 @@ fn match_occurrences(trace: &Trace, i: usize, env: &Env, cond: &Condition) -> Ve
             out
         }
         // Internal-only disjunction: the set union of the two branches'
-        // satisfying rows, deduplicated — mirroring the SQL backend's
+        // satisfying rows, deduplicated — mirroring the temporal engine's
         // `UNION` (set semantics), so a tuple produced by both branches
         // counts once in an enclosing aggregation. The rewrite emits `Or`
         // only with identical per-branch free variables (each closed
@@ -286,7 +286,7 @@ fn match_occurrences(trace: &Trace, i: usize, env: &Env, cond: &Condition) -> Ve
         // bound `x` projected away (it is local to the exists), then
         // deduplicated (set semantics). Other bindings escape — `exists`
         // binds only its own variable. This is MFOTL's ∃-as-projection,
-        // and it is exactly what the SQL backend's `Op::Exists` computes,
+        // and it is exactly what the temporal engine's `Op::Exists` computes,
         // so the oracle and the compiled monitor agree. The
         // pin-relativization rewrite relies on it: its fresh timepoint
         // binders stay internal while the rewritten body's own variables
@@ -468,14 +468,25 @@ fn join_rows(a: &Row, b: &Row) -> Option<Row> {
 /// sum is the same thing, but is worth stating because `count` over the same relation
 /// still counts it, so the two disagree about the same rows.
 ///
-/// That case is REACHABLE from a schema-respecting trace, so do not read the skip as
-/// unreachable defence. Validation cross-checks a summand's declared type against a
-/// predicate FIELD's type, but a summand range-restricted by an equality against a
-/// term it cannot type — an entity attribute, for instance — is accepted whatever that
-/// term's actual type is, and every such row is then skipped here. A `forbid` policy
-/// written that way can never fire, so this fails OPEN. Closing it belongs in
-/// validation, not here: this function cannot tell an absent column from a present
-/// non-integer one, and by the time a row arrives the type information is gone.
+/// Validation catches the common way in: a summand's declared type is checked against
+/// the type of whatever range-restricts it, so a `Long` summand equated to a `String`
+/// field or scope attribute is rejected. It is NOT a guarantee, and the gaps matter
+/// because each one is fail-OPEN — a `forbid` written that way never fires:
+///
+/// - Validation is a SEPARATE step. `Authorizer::new` takes a lowered policy set and
+///   does not require one, so an unvalidated (or outright rejected) policy runs.
+/// - A comparison is only checked when both sides type, and nothing types under an
+///   `action in [..]` or unconstrained `action` scope, which pins no single signature.
+/// - An OPTIONAL attribute types fine and can still be absent at run time, and the
+///   temporal dialect has no `has` guard with which to test for it.
+/// - An attribute declared on only SOME of the entity types a scope permits is left
+///   untyped on purpose, since rejecting it would remove a capability that has no
+///   other spelling.
+///
+/// So the skip is a backstop that is genuinely load-bearing, not dead defence. It
+/// cannot be promoted into the guard: this function cannot tell an absent column from
+/// a present non-integer one, and the type information is gone by the time a row
+/// arrives.
 fn sum_column(rel: &[Row], col: &str) -> i64 {
     let total: i128 = rel
         .iter()

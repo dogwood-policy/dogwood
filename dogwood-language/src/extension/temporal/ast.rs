@@ -36,7 +36,7 @@ pub enum ConditionKind {
     /// any declared kind of mine" (μ) — a disjunction over the event
     /// schema's kinds. In a relational (aggregation) context it is the
     /// set union of the two branches' satisfying rows (deduplicated),
-    /// mirroring the SQL backend's `UNION`. Range-restriction invariant:
+    /// mirroring the temporal engine's `UNION`. Range-restriction invariant:
     /// the rewrite only emits `Or` whose branches have identical free
     /// variables, each range-restricted within its own branch (per-branch
     /// wildcards are existentially closed inside the branch).

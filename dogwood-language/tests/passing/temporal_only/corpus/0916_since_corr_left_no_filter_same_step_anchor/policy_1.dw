@@ -5,7 +5,7 @@
 // over the empty range `(i, i]` and is vacuously true, so the verdict is
 // PERMIT regardless of the correlation.
 //
-// This exposes the DSQL same-step compensation gap: the verdict read UNIONs
+// This exposes the temporal engine same-step compensation gap: the verdict read UNIONs
 // an inline evaluation of the anchor subplan (the just-inserted anchor row is
 // snapshot-invisible), and that compensation projected the correlation
 // column as raw NULL — which the outer strict join against the current

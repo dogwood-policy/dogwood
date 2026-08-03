@@ -571,7 +571,7 @@ A temporal expression is legal exactly when: it parses under the grammar (only `
 
 ## Evaluation semantics
 
-This section states precisely how a temporal condition is evaluated. The reference is the oracle interpreter used for diff-testing; the compiled DSQL monitor matches these verdicts.
+This section states precisely how a temporal condition is evaluated. The reference is the oracle interpreter used for diff-testing; the compiled temporal engine matches these verdicts.
 
 **Decision timepoint and history.** A condition is evaluated at a single **decision timepoint `i`** against the trace history `0..=i` — everything up to and including `i`. The language is **past-only**: nothing at any `j > i` is ever read. The request's own fields seed the initial bindings (nested groups flattened to dotted keys), plus the scope aliases `@principal` and `@resource`.
 

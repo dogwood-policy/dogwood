@@ -79,6 +79,11 @@ pub(super) fn lower_expr(
                 action: action.clone(),
                 field_name: field_name.clone(),
                 temporal: t.clone(),
+                // Resolved after the fragment is parsed, in `cedarify_with_providers`,
+                // where the action hierarchy is available.
+                target_actions: Vec::new(),
+                principal: ctx.principal_scope.clone(),
+                resource: ctx.resource_scope.clone(),
             });
             Ok(b().get_attr(b().var(cedar_ast::Var::Context), field_name.into()))
         }

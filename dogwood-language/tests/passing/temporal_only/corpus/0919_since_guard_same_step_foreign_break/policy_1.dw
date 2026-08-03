@@ -2,7 +2,7 @@
 // classical (non-GuardRel) sibling of the 0904 family's same-step gap.
 //
 // `Heartbeat{server: x} since Login{server: x}` requires an UNBROKEN
-// per-server heartbeat streak since that server's login. The DSQL backend's
+// per-server heartbeat streak since that server's login. The temporal engine's
 // guard streak is correctly keyed per server, but its SAME-STEP compensation
 // (the streak-extend CTE's write is snapshot-invisible, so "the guard fires
 // NOW" is checked with an inline EXISTS over the current batch) tested only
