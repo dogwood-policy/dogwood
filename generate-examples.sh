@@ -121,11 +121,18 @@ for dir in "$EXAMPLES_DIR"/*/; do
 done
 
 # --- Update SUMMARY.md with example entries ---
-# Only keep the "Examples Index" link — individual examples are reachable
-# from the table on the index page but don't clutter the sidebar.
+# Replace everything from "# Examples" onward with the index + individual pages.
+# Individual pages must be in SUMMARY.md for mdBook to build them, but we hide
+# them from the sidebar via CSS.
 tmp=$(mktemp)
-sed '/^- \[Examples Index\]/,$d' "$SUMMARY" > "$tmp"
+sed '/^# Examples/,$d' "$SUMMARY" > "$tmp"
 mv "$tmp" "$SUMMARY"
-echo "- [Examples Index](./examples/index.md)" >> "$SUMMARY"
+
+{
+  echo "# Examples"
+  echo ""
+  echo "- [Examples Index](./examples/index.md)"
+  echo "$SUMMARY_ENTRIES"
+} >> "$SUMMARY"
 
 echo "Generated $(ls "$OUTPUT_DIR"/*.md | wc -l | tr -d ' ') example pages."
