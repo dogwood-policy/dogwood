@@ -77,7 +77,7 @@ permit(principal, action, resource)
 when { is_small(context.input.shares) };
 ```
 
-> Runnable: [`examples/cedar_is_small_threshold/`](../examples/cedar_is_small_threshold/) — `dogwood validate` (the macro library is supplied with `--macros`).
+> Runnable: [`examples/cedar_is_small_threshold/`](../examples/cedar_is_small_threshold.md) — `dogwood validate` (the macro library is supplied with `--macros`).
 
 Cedar macros compose with ordinary Cedar operators. Here two of them are joined
 with `&&`, and each takes an argument of a different type:
@@ -93,7 +93,7 @@ when {
 };
 ```
 
-> Runnable: [`examples/cedar_eligible_not_blocked/`](../examples/cedar_eligible_not_blocked/) — `dogwood validate`.
+> Runnable: [`examples/cedar_eligible_not_blocked/`](../examples/cedar_eligible_not_blocked.md) — `dogwood validate`.
 
 A Cedar macro body can be any Cedar expression, including `like` patterns and
 `if/then/else`:
@@ -106,7 +106,7 @@ def cedar within_cap(?stock, ?shares) {
 };
 ```
 
-> Runnable: [`examples/cedar_starts_with_f_like/`](../examples/cedar_starts_with_f_like/) and [`examples/cedar_within_cap_if_else/`](../examples/cedar_within_cap_if_else/) — each wraps the macro in a full rule; `dogwood validate`.
+> Runnable: [`examples/cedar_starts_with_f_like/`](../examples/cedar_starts_with_f_like.md) and [`examples/cedar_within_cap_if_else/`](../examples/cedar_within_cap_if_else.md) — each wraps the macro in a full rule; `dogwood validate`.
 
 A Cedar macro can even build a record and be passed as an argument to another
 Cedar macro. This is the RFC 0061 `semver` worked example — two macros, where
@@ -126,7 +126,7 @@ permit(principal, action, resource)
 when { semverGT(semver(2, 1, 1), semver(2, 1, 0)) };
 ```
 
-> Runnable: [`examples/cedar_semver_gt/`](../examples/cedar_semver_gt/) — `dogwood validate`.
+> Runnable: [`examples/cedar_semver_gt/`](../examples/cedar_semver_gt.md) — `dogwood validate`.
 
 This works because the compiler expands call *arguments* first, then splices the
 result into the outer macro's body — nesting one macro call as an argument to
@@ -165,7 +165,7 @@ when temporal {
 };
 ```
 
-> Runnable: [`examples/temporal_once_read_recent/`](../examples/temporal_once_read_recent/) — `dogwood validate` and `dogwood replay`.
+> Runnable: [`examples/temporal_once_read_recent/`](../examples/temporal_once_read_recent.md) — `dogwood validate` and `dogwood replay`.
 
 Condition macros compose the same way Cedar ones do. Two of them joined with
 `&&` inside a single temporal block:
@@ -187,7 +187,7 @@ when temporal {
 };
 ```
 
-> Runnable: [`examples/temporal_login_then_read/`](../examples/temporal_login_then_read/) — `dogwood validate` and `dogwood replay`.
+> Runnable: [`examples/temporal_login_then_read/`](../examples/temporal_login_then_read.md) — `dogwood validate` and `dogwood replay`.
 
 An aggregation-flavoured temporal macro produces a `count` or `sum`. It is
 spliced into a comparison, never called on its own. `count_formerly` counts the
@@ -209,7 +209,7 @@ when temporal {
 };
 ```
 
-> Runnable: [`examples/temporal_count_formerly_login/`](../examples/temporal_count_formerly_login/) — `dogwood validate` and `dogwood replay`.
+> Runnable: [`examples/temporal_count_formerly_login/`](../examples/temporal_count_formerly_login.md) — `dogwood validate` and `dogwood replay`.
 
 An aggregate value is always compared inside an `exists` binder — that is what
 introduces the `n` the count is compared against (`exists` is the temporal
@@ -307,7 +307,7 @@ when temporal {
 };
 ```
 
-> Runnable: [`examples/temporal_sum_formerly_transfer/`](../examples/temporal_sum_formerly_transfer/) — `dogwood validate` and `dogwood replay`.
+> Runnable: [`examples/temporal_sum_formerly_transfer/`](../examples/temporal_sum_formerly_transfer.md) — `dogwood validate` and `dogwood replay`.
 
 As with `count_formerly`, the aggregate is compared inside an `exists (total:
 Long). (…)` binder, which introduces `total`.
@@ -348,7 +348,7 @@ permit(principal, action, resource)
 when { level_ok(context.input.level) && temporal { /* ... */ } };
 ```
 
-> Runnable: [`examples/cedar_macro_plus_temporal_leaf/`](../examples/cedar_macro_plus_temporal_leaf/) — the bundle fills the `temporal { … }` leaf with a recent-Login check; `dogwood validate` and `dogwood replay`.
+> Runnable: [`examples/cedar_macro_plus_temporal_leaf/`](../examples/cedar_macro_plus_temporal_leaf.md) — the bundle fills the `temporal { … }` leaf with a recent-Login check; `dogwood validate` and `dogwood replay`.
 
 ### Arity checking
 
@@ -647,7 +647,7 @@ not automatically include the standard-library macros; if you want them
 alongside your own, copy their definitions into your library source. If you omit
 `macros_str`, `DEFAULT_MACROS` (the standard library above) is used.
 
-> Runnable: [`examples/macro_library_once_is_small/`](../examples/macro_library_once_is_small/) — the same `once` + `is_small` library as a `macros.dw` file a policy calls via `dogwood validate --macros …` (and `dogwood replay`).
+> Runnable: [`examples/macro_library_once_is_small/`](../examples/macro_library_once_is_small.md) — the same `once` + `is_small` library as a `macros.dw` file a policy calls via `dogwood validate --macros …` (and `dogwood replay`).
 
 Only the library's *definitions* are used — if the library source happens to
 contain policies too, they are ignored. An empty or whitespace-only library

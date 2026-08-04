@@ -99,7 +99,7 @@ when {
 };
 ```
 
-> Runnable: [`examples/provider_regex_matches_uppercase/`](../examples/provider_regex_matches_uppercase/) — `dogwood validate` and `dogwood replay`.
+> Runnable: [`examples/provider_regex_matches_uppercase/`](../examples/provider_regex_matches_uppercase.md) — `dogwood validate` and `dogwood replay`.
 
 That is all a policy author writes. Behind it, `Strings::Matches` is declared in a
 `providers.json` (with argument types `[string, string]`, an output record
@@ -122,7 +122,7 @@ expression language (see [The policy language](02-policy-language.md)).
 
 Two providers combined with `&&` and `!` (the `Strings::Matches` and `Lists::Blocked`
 providers of case `0004`) — a fragment; the full rule is the
-[`provider_matches_and_not_blocked`](../examples/provider_matches_and_not_blocked/) bundle:
+[`provider_matches_and_not_blocked`](../examples/provider_matches_and_not_blocked.md) bundle:
 
 ```text
 when {
@@ -133,7 +133,7 @@ when {
 
 Disjunction and parentheses (the `Lists::Allowed` and `Strings::Length` providers of
 case `0007`) — a fragment; the full rule is the
-[`provider_allowed_or_short`](../examples/provider_allowed_or_short/) bundle:
+[`provider_allowed_or_short`](../examples/provider_allowed_or_short.md) bundle:
 
 ```text
 when {
@@ -144,7 +144,7 @@ when {
 
 Several calls to the same provider, each with plain-Cedar comparisons — case `0005`
 (a fragment; the full rule is the
-[`provider_regex_analyze_fields`](../examples/provider_regex_analyze_fields/) bundle):
+[`provider_regex_analyze_fields`](../examples/provider_regex_analyze_fields.md) bundle):
 
 ```text
 when {
@@ -157,7 +157,7 @@ when {
 And because the output is plain Cedar, you can do things a provider's own comparison
 could not — for instance, use its integer output in **arithmetic**, alongside an
 ordinary context field — case `0010` (a fragment; the full rule is the
-[`provider_int_arithmetic_trusted`](../examples/provider_int_arithmetic_trusted/) bundle):
+[`provider_int_arithmetic_trusted`](../examples/provider_int_arithmetic_trusted.md) bundle):
 
 ```text
 when {
@@ -174,7 +174,7 @@ output's type.
 **Operator form** uses one of `<=`, `>=`, `==`, `!=`, `<`, `>`. Verified examples
 across the corpus include `.matched == true` (case `0001`), `.length < 5`
 (case `0002`), and `.count >= 2` (case `0008`) — this fragment's full rule is the
-[`provider_digitcount_operator_ge`](../examples/provider_digitcount_operator_ge/) bundle:
+[`provider_digitcount_operator_ge`](../examples/provider_digitcount_operator_ge.md) bundle:
 
 ```text
 when {
@@ -186,7 +186,7 @@ when {
 `lessThan`, `lessThanOrEqual`, `greaterThan`, `greaterThanOrEqual` — to compare a
 `decimal` output against a `decimal("…")` literal (the `Content::Risk` provider of
 case `0003`) — a fragment; the full rule is the
-[`provider_risk_decimal_method`](../examples/provider_risk_decimal_method/) bundle:
+[`provider_risk_decimal_method`](../examples/provider_risk_decimal_method.md) bundle:
 
 ```text
 when {
@@ -206,7 +206,7 @@ positional list indexing, an index must be a **string key**: `record["k"]` reads
 
 The `Content::Filter` provider of case `0006` chains an index accessor and a field
 accessor, then compares with the decimal method form (a fragment; the full rule is the
-[`provider_filter_set_index_decimal`](../examples/provider_filter_set_index_decimal/) bundle):
+[`provider_filter_set_index_decimal`](../examples/provider_filter_set_index_decimal.md) bundle):
 
 ```text
 when {
@@ -230,7 +230,7 @@ when {
 };
 ```
 
-> Runnable: [`examples/provider_digitcount_forbid/`](../examples/provider_digitcount_forbid/) — the `forbid` plus a catch-all `permit`; `dogwood validate` and `dogwood replay`.
+> Runnable: [`examples/provider_digitcount_forbid/`](../examples/provider_digitcount_forbid.md) — the `forbid` plus a catch-all `permit`; `dogwood validate` and `dogwood replay`.
 
 ### A caution on names
 
@@ -273,7 +273,7 @@ Strings::Matches(context.input.document, "^[A-Z]+$")
 ```
 
 A principal-rooted argument — case `0015` (a fragment; the full rule is the
-[`provider_principal_id_allowlist`](../examples/provider_principal_id_allowlist/) bundle):
+[`provider_principal_id_allowlist`](../examples/provider_principal_id_allowlist.md) bundle):
 
 ```text
 Access::Allowed(principal.id)

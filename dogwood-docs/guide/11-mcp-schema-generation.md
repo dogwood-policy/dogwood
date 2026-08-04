@@ -77,7 +77,7 @@ permit(principal, action == Drupe::Action::"GetStockInfo", resource)
 when { context.input.stock == "AMZN" };
 ```
 
-> Runnable: [`examples/get_amzn_stock_info/`](../examples/get_amzn_stock_info/) — `dogwood validate` and `dogwood replay`.
+> Runnable: [`examples/get_amzn_stock_info/`](../examples/get_amzn_stock_info.md) — `dogwood validate` and `dogwood replay`.
 
 Feeding the generated schema through `PolicySchema::from_cedarschema_str` and pairing it with a default `ServiceSchema` (so `request` is a decision kind) lets the policy above lower and validate cleanly.
 

@@ -25,7 +25,7 @@ when temporal {
 };
 ```
 
-> Runnable: [`examples/write_after_read_formerly/`](../examples/write_after_read_formerly/) — `dogwood validate` and `dogwood replay`.
+> Runnable: [`examples/write_after_read_formerly/`](../examples/write_after_read_formerly.md) — `dogwood validate` and `dogwood replay`.
 
 Read this as: "permit the write only if, at some point in the last hour, this same user read this same document." The `formerly within 1h …` part is the temporal claim; the predicate `Drupe::Action::"Read"::request{ … }` describes the past event to look for; and `input.user: context.input.user` pins the past event's user to the *current* request's user. (This is corpus case `0004_write_after_read`.)
 
@@ -58,13 +58,13 @@ Decomposing `Drupe::Action::"Login"::request{ input.user: context.input.user }`:
 
 The `::kind` suffix is **mandatory**; a predicate is not well-formed without it. The quoted action id acts as an anchor so the parser can tell the namespace `::` segments (before the quote) apart from the kind segment (after the quote).
 
-**Event kinds are author-defined, not a fixed set.** `request` and `response` are merely the conventional kinds — `request` for the invocation, `response` for the result — and a response predicate typically reads `output.*` fields (a `formerly`-gated read-after-successful-login permit built on this is runnable as [`examples/read_after_login_success/`](../examples/read_after_login_success/)):
+**Event kinds are author-defined, not a fixed set.** `request` and `response` are merely the conventional kinds — `request` for the invocation, `response` for the result — and a response predicate typically reads `output.*` fields (a `formerly`-gated read-after-successful-login permit built on this is runnable as [`examples/read_after_login_success/`](../examples/read_after_login_success.md)):
 
 ```text
 Drupe::Action::"Login"::response{ input.user: context.input.user, output.result: true }
 ```
 
-There is no separate "response" AST form; a response is just a predicate whose `kind` segment is `response`. Nothing stops a schema from naming other kinds; corpus case `1110_custom_event_schema_renamed_reserved` uses a custom `attempt` kind (runnable as [`examples/login_attempt_custom_kind/`](../examples/login_attempt_custom_kind/)):
+There is no separate "response" AST form; a response is just a predicate whose `kind` segment is `response`. Nothing stops a schema from naming other kinds; corpus case `1110_custom_event_schema_renamed_reserved` uses a custom `attempt` kind (runnable as [`examples/login_attempt_custom_kind/`](../examples/login_attempt_custom_kind.md)):
 
 ```text
 formerly within 1h Drupe::Action::"Login"::attempt{ input.user: context.input.user, actor: principal }
@@ -137,7 +137,7 @@ There is no week, month, or year unit. The amount is an integer. Literals seen a
 
 **Syntax:** `formerly within <interval> <atom>`
 
-`formerly` is the existential past operator: it holds at the decision timepoint if its body held at **some** timepoint within the window. Think "did this ever happen in the last hour?" The write-after-read policy from the introduction is the canonical use (corpus `0004_write_after_read`; runnable as [`examples/write_after_read/`](../examples/write_after_read/), which adapts it to a `SellShares`/`ApproveSale` permit):
+`formerly` is the existential past operator: it holds at the decision timepoint if its body held at **some** timepoint within the window. Think "did this ever happen in the last hour?" The write-after-read policy from the introduction is the canonical use (corpus `0004_write_after_read`; runnable as [`examples/write_after_read/`](../examples/write_after_read.md), which adapts it to a `SellShares`/`ApproveSale` permit):
 
 ```text
 when temporal {
@@ -150,7 +150,7 @@ when temporal {
 
 The body of `formerly` (and of `previous`) is an **atom**: a parenthesized condition, a `tp(...)`, a macro call, a predicate (optionally refined), or a comparison. A bare `&&` chain is *not* an atom, so to put a conjunction under `formerly` you must parenthesize it: `formerly within 1h (A && B)`.
 
-A session-correlated example using the scope entities (corpus `0036_plain_heartbeat`; the same pattern is runnable as an `Alert` permit in [`examples/heartbeat_scope_alias/`](../examples/heartbeat_scope_alias/)):
+A session-correlated example using the scope entities (corpus `0036_plain_heartbeat`; the same pattern is runnable as an `Alert` permit in [`examples/heartbeat_scope_alias/`](../examples/heartbeat_scope_alias.md)):
 
 ```text
 when temporal {
@@ -168,7 +168,7 @@ when temporal {
 
 `previous` is much stricter than `formerly`: it looks only at the **immediately preceding timepoint** (`i - 1`), not the whole window. It holds when the event directly before the decision point is *both* within the window *and* satisfies the body. At the very first timepoint it is `false` (there is no previous event). The window still applies, so `previous within 1h` succeeds only when the preceding event was at most an hour ago.
 
-Corpus `0243_kernel_previous_within` (runnable as a `Read`-after-login permit in [`examples/read_prev_login/`](../examples/read_prev_login/)):
+Corpus `0243_kernel_previous_within` (runnable as a `Read`-after-login permit in [`examples/read_prev_login/`](../examples/read_prev_login.md)):
 
 ```text
 when temporal {
@@ -176,7 +176,7 @@ when temporal {
 };
 ```
 
-With a response predicate and an output-field filter (corpus `0183_previous_at_tp0_no_verdict`; runnable as [`examples/read_prev_login_success/`](../examples/read_prev_login_success/)):
+With a response predicate and an output-field filter (corpus `0183_previous_at_tp0_no_verdict`; runnable as [`examples/read_prev_login_success/`](../examples/read_prev_login_success.md)):
 
 ```text
 when temporal {
@@ -201,7 +201,7 @@ when temporal {
 
 `since` is different in shape: it is a **suffix** on a conjunct, not a prefix. It expresses "`left` has held continuously ever since `right` happened." Formally it holds at the decision point when there is an anchor timepoint `j` in the window where `right` held, and `left` held at **every** step from `j+1` through the decision point. This is the classic MFOTL `left S right`.
 
-A positive-left example — a login has held continuously since a login (corpus `0034_since_explicit`; runnable as [`examples/read_since_login/`](../examples/read_since_login/)):
+A positive-left example — a login has held continuously since a login (corpus `0034_since_explicit`; runnable as [`examples/read_since_login/`](../examples/read_since_login.md)):
 
 ```text
 when temporal {
@@ -211,7 +211,7 @@ when temporal {
 };
 ```
 
-**Negated left — the "open session" idiom.** There is no dedicated "hasn't happened since" operator; you write it with a negated left operand, `!left since …`. Because negation binds tighter than `since` (see [Precedence](#conjunction-negation-and-precedence)), `!A since within W B` negates only `A`. This expresses "no `A` has happened since `B`" — e.g. "the user has not been revoked since they were granted" (corpus `0156_without_since_access_control`; runnable as [`examples/access_not_revoked_since_grant/`](../examples/access_not_revoked_since_grant/)):
+**Negated left — the "open session" idiom.** There is no dedicated "hasn't happened since" operator; you write it with a negated left operand, `!left since …`. Because negation binds tighter than `since` (see [Precedence](#conjunction-negation-and-precedence)), `!A since within W B` negates only `A`. This expresses "no `A` has happened since `B`" — e.g. "the user has not been revoked since they were granted" (corpus `0156_without_since_access_control`; runnable as [`examples/access_not_revoked_since_grant/`](../examples/access_not_revoked_since_grant.md)):
 
 ```text
 when temporal {
@@ -253,7 +253,7 @@ From tightest to loosest binding: negation, then `since`, then conjunction. Cons
 - `!a since within W b` parses as `(!a) since within W b` — negation binds only the since-left.
 - To widen a negation's scope, parenthesize: `!(a && b)`.
 
-`&&` is left-associative and is the loosest operator, so a top-level chain like `A && B && C` groups as `((A && B) && C)`. A top-level conjunction combining a `formerly` with an `exists`-guarded count (corpus `0059_count_threshold`; runnable as an `Alert` permit in [`examples/alert_heartbeat_and_login_rate/`](../examples/alert_heartbeat_and_login_rate/)):
+`&&` is left-associative and is the loosest operator, so a top-level chain like `A && B && C` groups as `((A && B) && C)`. A top-level conjunction combining a `formerly` with an `exists`-guarded count (corpus `0059_count_threshold`; runnable as an `Alert` permit in [`examples/alert_heartbeat_and_login_rate/`](../examples/alert_heartbeat_and_login_rate.md)):
 
 ```text
 when temporal {
@@ -266,7 +266,7 @@ when temporal {
 };
 ```
 
-A top-level `previous && (open-session)` chain (corpus `0462_previous_and_without_since_top_level`; runnable as a `Read` permit in [`examples/read_prev_compute_open_session/`](../examples/read_prev_compute_open_session/)):
+A top-level `previous && (open-session)` chain (corpus `0462_previous_and_without_since_top_level`; runnable as a `Read` permit in [`examples/read_prev_compute_open_session/`](../examples/read_prev_compute_open_session.md)):
 
 ```text
 when temporal {
@@ -300,7 +300,7 @@ Simplest form — some user logged in (corpus `ea_0010_exists_login_no_agg`):
 exists (u: String). formerly within 1h Drupe::Action::"Login"::request{ input.user: u, input.server: context.input.server }
 ```
 
-Correlation — the *same* user both logged in and transferred, by sharing `u` across two `formerly`s (corpus `ea_0012_exists_correlation`; runnable as an `Alert` permit in [`examples/alert_same_user_login_and_transfer/`](../examples/alert_same_user_login_and_transfer/)):
+Correlation — the *same* user both logged in and transferred, by sharing `u` across two `formerly`s (corpus `ea_0012_exists_correlation`; runnable as an `Alert` permit in [`examples/alert_same_user_login_and_transfer/`](../examples/alert_same_user_login_and_transfer.md)):
 
 ```text
 exists (u: String). (
@@ -309,7 +309,7 @@ exists (u: String). (
 )
 ```
 
-Nested existentials with a value filter — a user who logged in and made a transfer over 100 (corpus `ea_0013_nested_exists_threshold`; runnable as an `Alert` permit in [`examples/alert_login_and_big_transfer/`](../examples/alert_login_and_big_transfer/)):
+Nested existentials with a value filter — a user who logged in and made a transfer over 100 (corpus `ea_0013_nested_exists_threshold`; runnable as an `Alert` permit in [`examples/alert_login_and_big_transfer/`](../examples/alert_login_and_big_transfer.md)):
 
 ```text
 exists (u: String). (
@@ -339,7 +339,7 @@ exists (pr: Drupe::OAuthUser). (
 - Include `t` in the `for` list to keep **one row per timepoint** — this counts occurrences over time.
 - Omit `t` from the `for` list to **deduplicate equal values** across time.
 
-The canonical count-over-timepoints idiom — how many logins to this server occurred (corpus `0178_agg_no_temporal_counts_current_tp`; runnable as an `Alert` permit in [`examples/alert_login_current_tp/`](../examples/alert_login_current_tp/)):
+The canonical count-over-timepoints idiom — how many logins to this server occurred (corpus `0178_agg_no_temporal_counts_current_tp`; runnable as an `Alert` permit in [`examples/alert_login_current_tp/`](../examples/alert_login_current_tp.md)):
 
 ```text
 when temporal {
@@ -387,7 +387,7 @@ when temporal {
 };
 ```
 
-Count over history using a temporal body (corpus `0179_agg_with_once_counts_history`; runnable as an `Alert` permit in [`examples/alert_login_in_last_hour/`](../examples/alert_login_in_last_hour/)):
+Count over history using a temporal body (corpus `0179_agg_with_once_counts_history`; runnable as an `Alert` permit in [`examples/alert_login_in_last_hour/`](../examples/alert_login_in_last_hour.md)):
 
 ```text
 when temporal {
@@ -412,7 +412,7 @@ when temporal {
 };
 ```
 
-Count over a `*`-wildcard field — exactly three transfers, regardless of amount (corpus `1117_count_for_tp`; runnable as an `Alert` permit in [`examples/alert_exactly_three_transfers/`](../examples/alert_exactly_three_transfers/)):
+Count over a `*`-wildcard field — exactly three transfers, regardless of amount (corpus `1117_count_for_tp`; runnable as an `Alert` permit in [`examples/alert_exactly_three_transfers/`](../examples/alert_exactly_three_transfers.md)):
 
 ```text
 when temporal {
@@ -505,7 +505,7 @@ when temporal {
 };
 ```
 
-The first argument `1h` fills the `within ?w` window; the second (a predicate condition) fills `?s`. A runnable, `validate`-passing macro that exercises the same `?s{…}` refinement-in-body path (the `same_session` example above uses a deep context path the validator rejects) is [`examples/submit_after_approval_injection/`](../examples/submit_after_approval_injection/).
+The first argument `1h` fills the `within ?w` window; the second (a predicate condition) fills `?s`. A runnable, `validate`-passing macro that exercises the same `?s{…}` refinement-in-body path (the `same_session` example above uses a deep context path the validator rejects) is [`examples/submit_after_approval_injection/`](../examples/submit_after_approval_injection.md).
 
 > Macros are a fully specified but lightly exercised corner of the language (one corpus case out of hundreds). For everyday policies you will rarely need them; reach for them only when you have a genuinely reusable temporal pattern. See [Calling macros](09-calling-macros.md) for call syntax across both sublanguages, and [Macros](06-macros.md) for the general macro system (defining `def temporal`, the sigils, and hygiene).
 
@@ -540,7 +540,7 @@ Within a `&&` chain, every conjunct may *produce* bindings (a predicate field, `
 - **Rejected — filter before its restrictor:** `exists (a: Long). (a > 100 && formerly … Transfer{ input.amount: a })`.
 - **Rejected — correlated count before its restrictor:** `exists (u: String). exists (n: Long). ((count for (t: Timepoint). where (formerly … (Login{ input.user: u } && tp(t)))) == n && n >= 2 && formerly … Login{ input.user: u })` — move the `formerly … Login{ input.user: u }` before the equality.
 - **Rejected — since-left variable restricted only later:** `exists (u). ((Read{ input.user: u } since … Login{}) && formerly … Transfer{ input.user: u })` — put the restrictor first, or restrict `u` in the anchor.
-- **Accepted — restrictor first:** `exists (a: Long). (formerly … Transfer{ input.amount: a } && a > 100)`; guarded negation after a restrictor, `Login{ input.user: context.input.user } && !Logout{ input.user: context.input.user }` (runnable as a `Read` permit in [`examples/read_login_not_logout/`](../examples/read_login_not_logout/)); the standard aggregate shape `exists (n: Long). ((agg) == n && n > 0)`; and a correlated aggregate after its restrictor — including in a nested chain: `exists (u). (formerly … Login{ input.user: u } && exists (n: Long). ((count for (t: Timepoint). where (formerly … (Login{ input.user: u } && tp(t)))) == n && n >= 2))`.
+- **Accepted — restrictor first:** `exists (a: Long). (formerly … Transfer{ input.amount: a } && a > 100)`; guarded negation after a restrictor, `Login{ input.user: context.input.user } && !Logout{ input.user: context.input.user }` (runnable as a `Read` permit in [`examples/read_login_not_logout/`](../examples/read_login_not_logout.md)); the standard aggregate shape `exists (n: Long). ((agg) == n && n > 0)`; and a correlated aggregate after its restrictor — including in a nested chain: `exists (u). (formerly … Login{ input.user: u } && exists (n: Long). ((count for (t: Timepoint). where (formerly … (Login{ input.user: u } && tp(t)))) == n && n >= 2))`.
 
 Binding equalities against a *ground* value (`x == 5`, `x == context.input.limit`) are pure producers, so their order never matters.
 

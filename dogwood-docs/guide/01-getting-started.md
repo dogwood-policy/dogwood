@@ -72,7 +72,7 @@ permit (
 );
 ```
 
-> Runnable: [`examples/permit_read_anyone/`](../examples/permit_read_anyone/) — `dogwood validate` and `dogwood replay`.
+> Runnable: [`examples/permit_read_anyone/`](../examples/permit_read_anyone.md) — `dogwood validate` and `dogwood replay`.
 
 - `permit` is the effect. (`forbid` is the other; a `forbid` always wins over a
   `permit`.)
@@ -153,7 +153,7 @@ when temporal {
 };
 ```
 
-> Runnable: [`examples/read_after_login/`](../examples/read_after_login/) — `dogwood validate` and `dogwood replay`.
+> Runnable: [`examples/read_after_login/`](../examples/read_after_login.md) — `dogwood validate` and `dogwood replay`.
 
 Read the temporal clause as: *"there was formerly, within the last 1 hour, a
 `Login` request whose `input.user` equals this request's `context.input.user`."*
