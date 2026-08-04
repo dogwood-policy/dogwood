@@ -8,6 +8,7 @@ on:
       - 'dogwood-docs/examples/**'
       - 'dogwood-docs/mdbook-src/**'
       - 'book.toml'
+      - 'generate-examples.sh'
       - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
 
