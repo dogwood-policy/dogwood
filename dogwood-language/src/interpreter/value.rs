@@ -1,7 +1,7 @@
 //! The runtime value and trace model for temporal evaluation.
 //!
-//! Mirrors the proven temporal interpreter's data model so that the
-//! existing `.log` trace corpus parses verbatim and verdicts match:
+//! Uses the trace data model the `.log` corpus is written against, so the
+//! existing corpus parses verbatim and verdicts match:
 //! a trace is a sequence of timepoints, each carrying exactly one
 //! flat event (a predicate name plus named fields). Reserved fields
 //! `callerPrincipal` / `callerResource` / `requestId` travel as
@@ -38,7 +38,7 @@ impl Value {
     /// Structural equality, with decimals compared the way Cedar compares them.
     ///
     /// A `decimal` is Cedar's extension type, so two decimals are equal exactly
-    /// when Cedar says they are — see [`cedar_decimal_value`].
+    /// when Cedar says they are — see `cedar_decimal_value`.
     pub fn dom_eq(&self, other: &Value) -> bool {
         match (self, other) {
             (Value::Decimal(a), Value::Decimal(b)) => decimal_eq(a, b),
@@ -462,8 +462,8 @@ impl Event {
         }
     }
 
-    /// Every field in a named `group`, as `(name, value)` pairs — what a
-    /// database-backed [`TemporalEngine`](crate::TemporalEngine) persists on
+    /// Every field in a named `group`, as `(name, value)` pairs — what an
+    /// engine that persists history outside the process would record on
     /// [`observe`](crate::TemporalEngine::observe).
     pub fn fields(&self, group: &str) -> impl Iterator<Item = (&str, &Value)> {
         let map = match self.event.logged.get(group) {
@@ -481,9 +481,8 @@ impl Event {
     /// (`["input", "user"]` reads the `user` member of the `input` group,
     /// the same as [`field`](Event::field)`("input", "user")`).
     ///
-    /// This is the general accessor a database-backed
-    /// [`TemporalEngine`](crate::TemporalEngine) uses to serialize a policy's
-    /// correlation fields into an event's persisted context — including
+    /// This is the general accessor for serializing a policy's correlation
+    /// fields into an event's persisted context — including
     /// top-level fields that carry no group prefix, which
     /// [`field`](Event::field) (which requires a group) cannot reach.
     /// Returns `None` if any segment is absent or an intermediate segment is
@@ -518,10 +517,9 @@ impl Event {
     /// group). Reads the `request_context` bag — the Cedar request context, a
     /// deliberately separate dataset from the logged temporal record.
     ///
-    /// This is the request-only analog of [`field_path`](Event::field_path): a
-    /// database-backed [`TemporalEngine`](crate::TemporalEngine) uses this to
-    /// serialize a policy's `context.<path>` references into a request-only
-    /// channel that the monitor reads at verdict time (never persisted).
+    /// This is the request-only analog of [`field_path`](Event::field_path): it
+    /// serializes a policy's `context.<path>` references into a request-only
+    /// channel read at verdict time (never persisted).
     ///
     /// Returns `None` if any segment is absent or an intermediate segment is
     /// not a record.
@@ -559,10 +557,9 @@ impl Event {
 
     /// All supplied attributes for a given entity uid, as `(name, value)`
     /// pairs. The uid is the canonical `Ns::Type::"id"` form as produced by
-    /// [`entity_uid_string`]. Returns an empty iterator if the uid has no
-    /// supplied attributes. Used by a database-backed
-    /// [`TemporalEngine`](crate::TemporalEngine) to serialize the whole
-    /// entity-attribute store for the current request.
+    /// `entity_uid_string`. Returns an empty iterator if the uid has no
+    /// supplied attributes. Serializes the whole entity-attribute store for
+    /// the current request.
     pub fn entity_attributes(&self, uid: &str) -> impl Iterator<Item = (&str, &Value)> {
         self.event
             .entities
@@ -589,13 +586,12 @@ impl Event {
     /// must be `"principal"` or `"resource"`; `attrs` is the attribute tail
     /// (e.g. `["dept"]` for `principal.dept`).
     ///
-    /// A [`TemporalEngine`](crate::TemporalEngine) uses this to serialize a
-    /// policy's `principal.<attr>` / `resource.<attr>` references into a
-    /// request-only channel that the monitor reads at verdict time.
+    /// Serializes a policy's `principal.<attr>` / `resource.<attr>` references
+    /// into a request-only channel read at verdict time.
     ///
     /// A bare `root` (empty `attrs`) returns the entity itself as
     /// [`Value::Entity`]. An attribute tail follows the same response as
-    /// [`EventData::resolve_entity_attr`]: supplied attributes win, then
+    /// `EventData::resolve_entity_attr`: supplied attributes win, then
     /// `.id` / `.type` project the uid, else `None`.
     pub fn scope_attr(&self, root: &str, attrs: &[String]) -> Option<Value> {
         let entity = match root {
@@ -774,13 +770,13 @@ impl EventBuilder {
     /// closed with a diagnostic rather than silently mis-deciding.
     ///
     /// **`uid` must already be a canonical Cedar literal** (`Ns::Type::"id"`
-    /// with the id escaped as [`entity_uid_string`] produces, e.g. a control
+    /// with the id escaped as `entity_uid_string` produces, e.g. a control
     /// char written `\u{..}`). The store is keyed by this string verbatim, and
     /// lookups reconstruct the key by escaping a *decoded* id — so a non-canonical
     /// key never matches, and, because the escaper is **not idempotent**
     /// (`\` → `\\` → `\\\\`), an *already-escaped* id passed back through the
     /// escaper double-escapes. Build the uid from a decoded `(ty, id)` via
-    /// [`entity_uid_string`] exactly once; do not escape it yourself and do not
+    /// `entity_uid_string` exactly once; do not escape it yourself and do not
     /// pass raw control/whitespace bytes.
     pub fn entity<'a>(
         mut self,
@@ -807,7 +803,7 @@ impl EventBuilder {
     ///
     /// Both `uid` and each parent **must be canonical Cedar literals** (see the
     /// note on [`entity`](EventBuilder::entity)): `uid` keys the store verbatim,
-    /// and each parent is decoded via [`uid_to_value`] then re-escaped at the
+    /// and each parent is decoded via `uid_to_value` then re-escaped at the
     /// Cedar boundary, so a non-canonical or double-escaped literal will not
     /// resolve.
     pub fn entity_parents<'a>(
@@ -827,7 +823,7 @@ impl EventBuilder {
     /// Supply an entity's attributes from **structured** `(ty, id)` components
     /// plus its attributes — the structured analog of
     /// [`entity`](EventBuilder::entity). Keys the store by
-    /// [`entity_uid_string`]`(ty, id)`, which is *exactly* the key the attribute
+    /// `entity_uid_string``(ty, id)`, which is *exactly* the key the attribute
     /// lookup reconstructs, so there is no uid literal to hand-escape and no way
     /// to double-escape: an id containing `"` / `\` / a control char is escaped
     /// canonically exactly once, here. Repeated calls for the same `(ty, id)`
@@ -853,10 +849,10 @@ impl EventBuilder {
     /// Supply an entity's **direct parents** (`memberOf` edges) from structured
     /// `(ty, id)` components, each parent given as its own `(ty, id)` pair — the
     /// structured analog of [`entity_parents`](EventBuilder::entity_parents).
-    /// The subject is keyed by [`entity_uid_string`]`(ty, id)` and each parent
+    /// The subject is keyed by `entity_uid_string``(ty, id)` and each parent
     /// [`Value::Entity`] is built from its components directly, so neither the
     /// subject uid nor any parent uid is parsed or hand-escaped (closing the
-    /// double-escape footgun of the literal-taking [`entity_parents`]). Cedar
+    /// double-escape footgun of the literal-taking `entity_parents`). Cedar
     /// computes the transitive closure, so only direct parents are supplied;
     /// repeated calls append. Composes with [`entity_for`](EventBuilder::entity_for).
     pub fn parents_for<'a>(
@@ -927,7 +923,7 @@ fn split_qualified_action(action: &str) -> (Vec<String>, String) {
 /// Parse a Cedar entity-uid literal `Type::"id"` (possibly namespaced) into a
 /// [`Value::Entity`], **unescaping** the id (`\"` → `"`, `\\` → `\`) so
 /// `Value::Entity.id` holds the true id, not the escaped source form. The
-/// inverse of [`entity_uid_string`]; the round-trip
+/// inverse of `entity_uid_string`; the round-trip
 /// `entity_uid_string(uid_to_value(s))` reproduces a valid literal, so an id
 /// containing `"` / `\` is neither doubly-escaped on the Cedar path nor missed
 /// by the entity-store lookup. Returns `None` if the string is not of

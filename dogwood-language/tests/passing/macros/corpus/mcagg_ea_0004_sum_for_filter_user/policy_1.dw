@@ -1,4 +1,4 @@
-// §1.2 example 4 — restrict the aggregation to one user, also new:
+// Restrict the aggregation to one user — also only expressible explicitly:
 //   sum a for (a: Long), (p: String), (t: Timepoint).
 //     where formerly within 1h (Withdraw(user: p, amount: a) ∧ tp(t) ∧ p = "alice")
 //

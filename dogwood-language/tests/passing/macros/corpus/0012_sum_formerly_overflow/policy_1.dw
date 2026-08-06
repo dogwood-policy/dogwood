@@ -3,7 +3,7 @@
 // value"): a conforming implementation may clamp, evaluate at a wider precision, or
 // report an error. The expected verdicts below pin THIS engine's choice to clamp, so
 // they are a regression guard for this crate and NOT a conformance requirement. A
-// consumer running differential tests over the embedded corpus should expect an
+// alternative engine evaluating this case from the embedded corpus should expect an
 // implementation that does not clamp to disagree here, and exclude the case.
 // Macro-form rewrite of 0870_sum_overflow.
 //

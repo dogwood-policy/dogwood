@@ -82,7 +82,7 @@ pub fn check_condition(cond: &Condition, bound: &BTreeSet<String>) -> Result<(),
         }
         // A comparison operand may be a *top-level* aggregate (its `for`
         // domain is checked). Any aggregate NOT at the operand top level
-        // (nested in an array, etc.) is rejected — the §3.1
+        // (nested in an array, etc.) is rejected — the
         // comparison-operand-only rule, enforced here rather than by the
         // grammar.
         ConditionKind::Comparison { left, right, .. } => {
@@ -90,7 +90,7 @@ pub fn check_condition(cond: &Condition, bound: &BTreeSet<String>) -> Result<(),
             check_operand(right, bound)
         }
         // A predicate's field values are ordinary terms — an aggregate is
-        // never allowed there (§3.1).
+        // never allowed there.
         ConditionKind::Predicate(p) => {
             for arg in &p.args {
                 reject_nested_agg(&arg.value)?;
@@ -108,8 +108,8 @@ pub fn check_condition(cond: &Condition, bound: &BTreeSet<String>) -> Result<(),
 
 /// Check a comparison operand: a *top-level* aggregate operand has its
 /// `for` domain checked; any other term must contain no aggregate (an
-/// aggregate is legal only as the immediate operand of a comparison — the
-/// §3.1 rule, enforced here). A macro sigil term is opaque (expansion
+/// aggregate is legal only as the immediate operand of a comparison,
+/// enforced here). A macro sigil term is opaque (expansion
 /// re-checks the substituted form).
 fn check_operand(operand: &Term, bound: &BTreeSet<String>) -> Result<(), String> {
     match operand {
@@ -1147,7 +1147,7 @@ mod tests {
         assert!(e.contains("not range-restricted"), "{e}");
     }
 
-    // ─── Aggregate comparison-operand-only rule (§3.1, validation) ──
+    // ─── Aggregate comparison-operand-only rule (validation) ───────
 
     #[test]
     fn aggregate_as_comparison_operand_is_accepted() {
@@ -1162,7 +1162,7 @@ mod tests {
     fn aggregate_in_predicate_arg_is_rejected() {
         // An aggregate as a predicate-field value is not a comparison
         // operand — rejected by validation (the grammar admits it as a
-        // term, but §3.1 forbids it here).
+        // term, but validation forbids it here).
         let e = check(
             r#"Drupe::Action::"Login"::request{ input.amount: count for (t: Timepoint). where tp(t) }"#,
         )

@@ -1038,10 +1038,10 @@ mod tests {
     }
 
     #[test]
-    fn resolution_nests_both_input_and_output() {
+    fn response_nests_both_input_and_output() {
         let d = derive_rr(ACTION_SCHEMA);
         let ns = vec!["Drupe".to_string(), "Action".to_string()];
-        let res = d.get(&ns, "Login", "response").expect("resolution derived");
+        let res = d.get(&ns, "Login", "response").expect("response derived");
         assert_leaf(res, &["output", "result"]);
         assert_leaf(res, &["input", "server"]);
         assert_leaf(res, &["input", "user"]);
@@ -1200,7 +1200,7 @@ mod tests {
 
     #[test]
     fn derives_against_a_real_corpus_schema() {
-        // The request/resolution DSL against a real per-case schema (which
+        // The request/response DSL against a real per-case schema (which
         // uses common-type-referenced input/output records) derives the
         // actual declared fields — exercising the spread resolution on the
         // shapes the corpus actually contains.
@@ -1813,7 +1813,7 @@ mod tests {
         }
     "#;
 
-    fn derive_dup_resolution() -> DerivedEvent {
+    fn derive_dup_response() -> DerivedEvent {
         let dsl = parse_event_schema(RR_SCHEMA).unwrap();
         let d = derive(&dsl, DUP_ACTION).unwrap();
         let ns = vec!["Drupe".to_string(), "Action".to_string()];
@@ -1822,7 +1822,7 @@ mod tests {
 
     #[test]
     fn input_output_shared_name_keeps_divergent_types() {
-        let res = derive_dup_resolution();
+        let res = derive_dup_response();
         // Same field name `shared` on both sides, kept distinct WITH their
         // different types — impossible under the old flat model.
         assert_eq!(
@@ -1837,7 +1837,7 @@ mod tests {
 
     #[test]
     fn input_output_disjoint_names_both_present() {
-        let res = derive_dup_resolution();
+        let res = derive_dup_response();
         assert_leaf(&res, &["input", "only_in"]);
         assert_leaf(&res, &["output", "only_out"]);
         // The cross-side names do NOT leak across groups.
@@ -1941,7 +1941,7 @@ mod tests {
         let ns = vec!["Drupe".to_string(), "Action".to_string()];
         assert!(
             d.get(&ns, "Login", "request").unwrap().pins.is_empty(),
-            "stock request/resolution schema declares no pins"
+            "stock request/response schema declares no pins"
         );
     }
 

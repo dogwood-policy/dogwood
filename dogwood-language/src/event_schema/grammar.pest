@@ -8,7 +8,7 @@
 // the fields that kind carries — either spliced from the action (`...inputs(A)`)
 // or injected with an explicit type (`__cedar_principal: principalType(A)`).
 //
-// Example (reproduces the request/resolution convention):
+// Example (reproduces the request/response convention):
 //
 //   decision event <A>::request {
 //       ...inputs(A),
@@ -17,7 +17,7 @@
 //       __cedar_uid:       String,
 //   }
 //
-//   event <A>::resolution {
+//   event <A>::response {
 //       ...inputs(A),
 //       ...outputs(A),
 //       __cedar_principal: principalType(A),

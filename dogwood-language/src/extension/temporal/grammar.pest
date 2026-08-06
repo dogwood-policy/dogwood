@@ -54,7 +54,7 @@ condition_entry = { SOI ~ condition ~ EOI }
 // with `sum`/`count`, which `condition` does not.
 temporal_macro_body_entry = { SOI ~ (agg_expr | condition) ~ EOI }
 
-// ── Condition structure (mirrors the proven temporal grammar) ──────
+// ── Condition structure (mirrors the specified temporal grammar) ───
 //
 // `&&` is the loosest operator. A `conjunct_or_since` is an optionally
 // `since`-suffixed `conjunct`; a `conjunct` may be prefixed with one or
@@ -157,7 +157,7 @@ qualified_action = { ident ~ ("::" ~ ident)* ~ "::" ~ string }
 // quoted-string anchor makes the segment unambiguous (the `::ident` after
 // the closing `"` is the kind, distinct from the namespace `::`s before
 // it). Event kinds are author-defined, not a fixed set — `request` /
-// `resolution` are merely the conventional ones.
+// `response` are merely the conventional ones.
 predicate     = { qualified_action ~ "::" ~ event_kind ~ "{" ~ named_arg_list? ~ "}" }
 event_kind    = { ident }
 
@@ -173,10 +173,10 @@ field_path     = { ident ~ ("." ~ ident)* }
 //
 // Both operands are `term`s. An aggregate is a `term` (see the `term`
 // rule), so `0 < count for … where φ` and `(count …) == n` are ordinary
-// comparisons; the "aggregate only as a comparison operand" rule (§3.1) is
+// comparisons; the "aggregate only as a comparison operand" rule is
 // enforced by validation, not the grammar. Parenthesizing the aggregate on
 // the LEFT of `== n` fences off the `== n` from its greedy `where` body
-// (design §3.2) — the `term` rule admits a parenthesized aggregate.
+// — the `term` rule admits a parenthesized aggregate.
 comparison = { term ~ cmp_op ~ term }
 cmp_op     = { "<=" | ">=" | "!=" | "==" | "<" | ">" }
 
@@ -192,7 +192,7 @@ cmp_op     = { "<=" | ">=" | "!=" | "==" | "<" | ">" }
 // `exists (n: Long). ((A) == n && n > 0)`. The aggregate's greedy `where`
 // body means `0 < count for (t: Timepoint). where φ` needs no parens
 // (aggregate rightmost), while `(count …) == n` must parenthesize the
-// aggregate to fence off `== n` (design §3.2).
+// aggregate to fence off `== n`.
 //
 // The bare aggregation value (separable so a temporal macro body can be
 // just the value, spliced into a comparison operand at call sites). A
@@ -255,14 +255,14 @@ interval_lit  = { integer ~ time_unit }
 // `$t` anywhere a normal identifier would appear (e.g. as a predicate
 // argument value, comparison operand, etc.).
 //
-// An aggregate (`sum`/`count`) is a term (design §3.1); the
+// An aggregate (`sum`/`count`) is a term; the
 // comparison-operand-only rule is enforced by validation, not here.
 // Ordering is load-bearing:
 //   * `entity` and `decimal_lit` precede `agg_expr` because `agg_expr`
 //     includes `call = ident "(" … ")"`, which would otherwise mis-grab
 //     `decimal("1.5")` as a call named `decimal` (and an `Ns::"x"` head as
 //     a call). Both are matched first, so aggregates never see them.
-//   * `paren_agg` is a parenthesized aggregate — the §3.2 fencing form
+//   * `paren_agg` is a parenthesized aggregate — the fencing form
 //     `(count …) == n`. Nothing else in `term` starts with `(`, so it is
 //     unambiguous; a parenthesized *condition* `(A && B)` is not an
 //     aggregate, so `paren_agg` fails and the enclosing `comparison`

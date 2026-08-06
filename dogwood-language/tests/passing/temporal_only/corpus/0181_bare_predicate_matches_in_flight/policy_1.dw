@@ -1,5 +1,5 @@
 // Bare `Drupe::Action::"Login"{...}` matches a Login request that has NOT been denied.
-// An in-flight request (request emitted, no resolution yet) qualifies.
+// An in-flight request (request emitted, no response yet) qualifies.
 
 permit (
     principal,

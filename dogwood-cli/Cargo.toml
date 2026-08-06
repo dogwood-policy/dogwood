@@ -3,7 +3,7 @@ name = "amzn-dogwood-cli"
 version = "1.0.0"
 edition = "2024"
 # A binary crate: it produces the `dogwood` executable, not a library artifact
-# other packages consume, so it is not published to the version set.
+# other packages consume, so it is not published.
 publish = false
 description = "The `dogwood` command-line tool: check, validate, lower, and replay Dogwood policies locally. A thin shell over the `amzn-dogwood-language` frontend."
 exclude = ["/build", "/Config", "/build-tools/"]

@@ -9,7 +9,7 @@ macros — the `def cedar` / `def temporal` syntax, the `?p` / `$t` sigils, hygi
 the rejection rules, and the macro library — is the subject of [Macros](06-macros.md).
 
 The complete policies shown on this page are runnable example bundles under
-`examples/`, each checked by the `dogwood` CLI on every build.
+`examples/`.
 
 A macro call looks like an ordinary function call:
 
@@ -32,7 +32,7 @@ matching position:
 | temporal condition | a temporal condition slot (`when temporal { … }`, a `&&` operand, a `formerly` body, …) |
 | temporal aggregation | an aggregation-value position (an operand of a comparison) |
 
-A mismatch is a hard compile error, never a silent coercion — calling a temporal
+A mismatch is a hard error, never a silent coercion — calling a temporal
 macro in a Cedar position (or vice versa) is rejected with a message naming the
 macro and the two kinds. The full set of checks (arity, kind, and argument shape)
 is documented in [Macros](06-macros.md#calling-macros).
@@ -48,7 +48,7 @@ permit(principal, action, resource)
 when { is_small(context.input.shares) };
 ```
 
-> Runnable: [`examples/call_cedar_macro_is_small/`](../examples/call_cedar_macro_is_small.md) — `dogwood validate`.
+> Runnable: [`examples/call_cedar_macro_is_small/`](../examples/call_cedar_macro_is_small/) — `dogwood validate`.
 
 ```text
 permit(principal, action, resource)
@@ -58,7 +58,7 @@ when {
 };
 ```
 
-> Runnable: [`examples/call_cedar_macros_composed/`](../examples/call_cedar_macros_composed.md) — `dogwood validate`.
+> Runnable: [`examples/call_cedar_macros_composed/`](../examples/call_cedar_macros_composed/) — `dogwood validate`.
 
 Because a Cedar macro expands before the surrounding expression is lowered, one may
 be conjoined with a `temporal { … }` block mid-expression:
@@ -68,7 +68,7 @@ permit(principal, action, resource)
 when { level_ok(context.input.level) && temporal { /* … */ } };
 ```
 
-> Runnable: [`examples/call_cedar_macro_with_temporal_leaf/`](../examples/call_cedar_macro_with_temporal_leaf.md) — `dogwood validate` and `dogwood replay` (the bundle fills the `/* … */` leaf with a recent-`Login` check).
+> Runnable: [`examples/call_cedar_macro_with_temporal_leaf/`](../examples/call_cedar_macro_with_temporal_leaf/) — `dogwood validate` and `dogwood replay` (the bundle fills the `/* … */` leaf with a recent-`Login` check).
 
 A macro call may also appear as an argument to another macro call — the arguments
 are expanded first, then spliced in — so a record-building macro can feed a
@@ -79,7 +79,7 @@ permit(principal, action, resource)
 when { semverGT(semver(2, 1, 1), semver(2, 1, 0)) };
 ```
 
-> Runnable: [`examples/call_cedar_macro_as_argument/`](../examples/call_cedar_macro_as_argument.md) — `dogwood validate`.
+> Runnable: [`examples/call_cedar_macro_as_argument/`](../examples/call_cedar_macro_as_argument/) — `dogwood validate`.
 
 (Nesting a call *inside a macro's declared body* is a different thing and is not
 allowed; see [Macros](06-macros.md#no-macro-in-macro).)
@@ -93,14 +93,14 @@ a temporal condition is expected. Here `once` wraps a window and a predicate:
 ```text
 permit(principal, action == Drupe::Action::"Write", resource)
 when temporal {
-    once(1h, Drupe::Action::"Read"::request{
+    once(1h, Drupe::Action::"Read"::response{
         input.user: context.input.user,
         input.document: context.input.document
     })
 };
 ```
 
-> Runnable: [`examples/call_temporal_condition_macro_once/`](../examples/call_temporal_condition_macro_once.md) — `dogwood validate` and `dogwood replay`.
+> Runnable: [`examples/call_temporal_condition_macro_once/`](../examples/call_temporal_condition_macro_once/) — `dogwood validate` and `dogwood replay`.
 
 Condition macros compose with `&&` just like the built-in operators:
 
@@ -112,7 +112,7 @@ when temporal {
 };
 ```
 
-> Runnable: [`examples/call_temporal_condition_macros_composed/`](../examples/call_temporal_condition_macros_composed.md) — `dogwood validate` and `dogwood replay`.
+> Runnable: [`examples/call_temporal_condition_macros_composed/`](../examples/call_temporal_condition_macros_composed/) — `dogwood validate` and `dogwood replay`.
 
 An **aggregation**-flavoured macro produces a `count` or `sum`, so it is spliced
 into a comparison — always inside an `exists` binder, which introduces the variable
@@ -130,7 +130,7 @@ when temporal {
 };
 ```
 
-> Runnable: [`examples/call_temporal_aggregation_macro_count/`](../examples/call_temporal_aggregation_macro_count.md) — `dogwood validate` and `dogwood replay`.
+> Runnable: [`examples/call_temporal_aggregation_macro_count/`](../examples/call_temporal_aggregation_macro_count/) — `dogwood validate` and `dogwood replay`.
 
 Argument-nesting works for temporal macros too: because an aggregation macro
 expands to a value (a `count`/`sum` term), a call to one may be passed as the
@@ -172,7 +172,7 @@ fills the window and the predicate fills the condition parameter.
 When a macro parameter is used in a *binder* position (for example the bound
 variable of a `sum`), the call-site argument for it must be a **single bare
 identifier** — that identifier becomes the bound-variable name. Passing a literal
-or a compound expression there is a compile error. This is the one case where an
+or a compound expression there is a hard error. This is the one case where an
 argument must be a plain name rather than a value; see
 [Macros](06-macros.md#binder-position-parameters-p-used-as-a-binder) for why.
 

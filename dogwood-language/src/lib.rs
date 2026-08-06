@@ -18,9 +18,9 @@ pub mod validator;
 // ─── The embedded regression corpus (feature `corpus`) ───────────────
 //
 // Exposes the temporal regression cases (policy + schema + trace + expected
-// verdicts) so a different package can run differential tests over the same
-// cases this crate's in-memory monitor is validated against. Data only — not
-// part of the authorization API.
+// verdicts) so an alternative engine can be checked against the same cases
+// this crate's in-memory engine is validated against. Data only — not part of
+// the authorization API.
 #[cfg(feature = "corpus")]
 pub mod corpus;
 
@@ -140,19 +140,18 @@ pub use crate::engine::{
 ///
 /// The node types are also **constructible** by a downstream crate (their fields
 /// and variants are public), so an external client can build a `Condition` tree
-/// programmatically — e.g. to feed the temporal compiler. The one wrinkle is the
-/// `span` field: the [`Span`](crate::error) type itself is intentionally not part
+/// programmatically — e.g. to feed an alternative engine. The one wrinkle is the
+/// `span` field: the `Span` type itself is intentionally not part
 /// of the public API (source-mapping is a crate-internal detail), so fill that
-/// field with [`dummy_span`](crate::dummy_span), which yields a placeholder span
+/// field with [`dummy_span`], which yields a placeholder span
 /// without naming the type. A client that only *reads* a Dogwood-produced tree
 /// ignores `.span` entirely. Constructing transient/invariant-violating nodes is
 /// the caller's responsibility — Dogwood's own guarantees hold only for trees it
 /// produced.
 ///
-/// NOTE: this widens the public surface beyond the four lifecycle functions the
-/// (paused) API-tightening effort targets. It is deliberately scoped to the
-/// temporal-compiler consumer and kept in one module so it can be revisited
-/// there.
+/// NOTE: this widens the public surface beyond the four lifecycle functions.
+/// It is deliberately scoped to callers that consume the temporal AST, and is
+/// kept in one module so it can be revisited as a unit.
 pub mod temporal_ast {
     pub use crate::extension::temporal::ast::{
         AggExpr, AggExprKind, BinderSlot, CmpOp, Condition, ConditionKind, Interval, NamedArg,

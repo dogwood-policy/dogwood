@@ -12,7 +12,7 @@ this rule we can read `context.input.stock` as a `String`.
 
 ## Shape
 
-```guardlogic
+```dogwood
 permit(
     principal,
     action == Drupe::Action::"GetStockInfo",

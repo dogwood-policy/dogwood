@@ -28,12 +28,12 @@ present after the tool has resolved. A clause that mentions
 it only makes sense once the result is in hand. Guard the read
 with `context has output` (or an `if context has output then …
 else …` like above) so the clause is well-typed for both
-pre-resolution and post-resolution evaluation.
+pre-response and post-response evaluation.
 
 ## Decimals only support `==` and `!=`
 
 The `SellShares` action declares `proceeds` as a `decimal`.
-Decimals in GuardLogic are equality-comparable but not
+Decimals in Dogwood are equality-comparable but not
 order-comparable: `==` and `!=` are valid, while `<`, `<=`, `>`,
 `>=` fail type-checking. Use integer fields like
 `context.input.shares` (see 0002) when you need ordered

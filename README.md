@@ -2,9 +2,9 @@
 
 Dogwood is a policy language for authorization decisions that depend on
 **history** — not just a single request, but patterns of events over time. It
-extends [Cedar](https://www.cedarpolicy.com/) with temporal conditions (`since`,
-`formerly`, `once`, aggregations) and information providers (computed guardrail
-facts), then lowers everything back to Cedar for evaluation.
+supports [Cedar](https://www.cedarpolicy.com/) policies and adds temporal
+conditions (`since`, `formerly`, `once`, aggregations) and information providers
+(computed guardrail facts), then lowers everything back to Cedar for evaluation.
 
 ```text
 permit(principal, action, resource)
@@ -17,9 +17,10 @@ when formerly within 1h {
 This repository contains a **reference interpreter** for the language for the
 purpose of understanding the semantics of the language, with simple examples of
 the kinds of policies Dogwood supports.  This reference interpreter is **NOT**
-intended to be used in a production implementation of an authorization engine
-for enforcing Dogwood policies.  Please see the end of this document for a list
+intended for production use. Please see the end of this document for a list
 of important limitations of the interpreter.
+
+📖 **[Read the full documentation →](https://dogwood-policy.github.io/dogwood/index.html)**
 
 
 ## Key features

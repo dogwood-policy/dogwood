@@ -1,4 +1,4 @@
-// A custom event schema that keeps the standard request/resolution kinds
+// A custom event schema that keeps the standard request/response kinds
 // and reserved scope fields, but ALSO injects an extra reserved field
 // `__drupe_sessionid` on every event. This exercises injecting an
 // additional (non-standard) reserved field alongside the usual ones, and

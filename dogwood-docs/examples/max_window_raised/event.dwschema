@@ -4,7 +4,7 @@
 // with the cap raised to 30d, a 7d window is well within bounds.
 //
 // The directive must come first, before any event declaration. The event
-// kinds are the conventional request/resolution convention (the default
+// kinds are the conventional request/response convention (the default
 // shape), spelled out here only because supplying any `--event-schema` opts
 // out of the built-in default.
 max_window = 30d

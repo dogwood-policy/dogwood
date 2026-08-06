@@ -6,7 +6,7 @@
 //!
 //! Each case is driven through the Cedar-parity public API: build a
 //! [`PolicySchema`] from the action schema and a [`ServiceSchema`] from the
-//! `request_resolution` event schema fixture and (when present) the case's
+//! `request_response` event schema fixture and (when present) the case's
 //! [`ProviderDeclarations`]; parse the policy into a [`LoweredPolicySet`] via
 //! [`LoweredPolicySet::from_str`]; then replay the trace with [`replay_log`],
 //! comparing the verdict stream to the expected output.
@@ -55,7 +55,7 @@ fn read_sorted(dir: &Path, prefix: &str, ext: &str) -> Vec<PathBuf> {
 #[test]
 fn provider_corpus_verdicts() {
     let event_schema = std::fs::read_to_string(
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/request_resolution.dwschema"),
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/request_response.dwschema"),
     )
     .expect("event schema");
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/passing/provider_only/corpus");
@@ -113,7 +113,7 @@ fn provider_corpus_verdicts() {
 
             let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                 // Build the schema: action schema (PolicySchema) + the
-                // request_resolution event schema fixture, plus the case's provider
+                // request_response event schema fixture, plus the case's provider
                 // declarations when present (ServiceSchema). `replay_log` consumes the
                 // LoweredPolicySet (and the service-schema build consumes the
                 // ProviderDeclarations), so assemble both fresh per trace.

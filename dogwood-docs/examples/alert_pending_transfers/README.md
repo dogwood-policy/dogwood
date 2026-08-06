@@ -1,7 +1,7 @@
 # alert_pending_transfers
 
 Aggregate-vs-aggregate comparison (parenthesized left, bare right): permit an
-`Alert` when there are **more `Transfer` requests than resolutions** in the last
+`Alert` when there are **more `Transfer` requests than responses** in the last
 hour — i.e. some transfers are still pending.
 
 The left `count for (t: Timepoint). where (…)` aggregate is parenthesized so its

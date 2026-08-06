@@ -3,14 +3,13 @@
 // filter `context.input.amount >= 10` FAILS at the current step (amount = 5).
 // Correct verdict: DENY.
 //
-// This guards against a fix that, in threading the request correlation through
-// the since-anchor branch, drops or mis-scopes the rigid `C` filter — which
-// would wrongly PERMIT. Together with 0914 (streak broken) this pins both ways
-// the non-vacuous left can legitimately fail, so a fix must reproduce DENY for
-// both while making 0904/0913 PERMIT.
+// This guards against an implementation that, in threading the request
+// correlation through the since-anchor branch, drops or mis-scopes the rigid
+// `C` filter — which would wrongly PERMIT. Together with 0914 (streak broken)
+// this pins both ways the non-vacuous left can legitimately fail, so an
+// implementation must reproduce DENY for both while making 0904/0913 PERMIT.
 //
-// Interpreter is the oracle (see expected_1.out). Found via the SMT
-// differential fuzzer.
+// Expected verdicts are in expected_1.out.
 permit (
     principal,
     action == Drupe::Action::"Transfer",

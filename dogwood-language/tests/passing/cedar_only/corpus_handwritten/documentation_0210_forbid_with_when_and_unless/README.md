@@ -8,7 +8,7 @@ a narrow exception" in one rule.
 
 ## Shape
 
-```guardlogic
+```dogwood
 forbid (
     principal,
     action == Drupe::Action::"SellShares",

@@ -13,7 +13,7 @@
 // permits. (Contrast 1112, which matches on a mismatch; here both constraints
 // are simultaneously satisfiable and the correct verdict is PERMIT.)
 //
-// A Publish is permitted only if there was formerly a Review resolution whose
+// A Publish is permitted only if there was formerly a Review response whose
 // requested verdict was "approve" AND whose recorded system verdict was
 // "published".
 //

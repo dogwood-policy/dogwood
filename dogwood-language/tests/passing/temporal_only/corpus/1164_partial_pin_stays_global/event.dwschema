@@ -1,5 +1,5 @@
 // A PARTIAL pin: `callerPrincipal = principal` is pinned on `request` but
-// NOT on `resolution`. Per the universality requirement, a pin declared on
+// NOT on `response`. Per the universality requirement, a pin declared on
 // only some event kinds is NOT universal, so it must NOT activate key-local
 // (partition) semantics — the leaf keeps GLOBAL-trace semantics, silently and
 // with no error. This is the safety direction of the partition guarantee: the

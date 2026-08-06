@@ -37,11 +37,12 @@ enum Format {
 }
 
 /// The service-schema override flags, shared by the pipeline commands. All
-/// optional; omit for the default request/resolution event schema, no
+/// optional; omit for the default event schema (request/response/error), no
 /// providers, and the default macros.
 #[derive(Args, Default)]
 struct SchemaArgs {
-    /// Event-schema DSL file (.dwschema). Defaults to request/resolution.
+    /// Event-schema DSL file (.dwschema). Defaults to the built-in
+    /// request/response/error schema.
     #[arg(long, value_name = "FILE")]
     event_schema: Option<PathBuf>,
     /// Provider declarations file (providers.json).

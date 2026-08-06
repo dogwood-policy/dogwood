@@ -2,28 +2,28 @@
 
 *This page walks you through your first Dogwood authorization end to end — a
 schema, a policy, and the Rust code that decides a request. It starts with the
-simplest possible policy and then adds the one feature that makes Dogwood
-special: a decision that depends on history. The two policies here are the
-`permit_read_anyone` and `read_after_login` example bundles, checked by the
-`dogwood` CLI on every build, so they really compile and run.*
+simplest possible policy and then adds a decision that depends on history. The
+two policies here are the `permit_read_anyone` and `read_after_login` example
+bundles, checked on every build, so they do validate and replay as shown.*
 
 If you have not read [the introduction](00-introduction.md), skim it first — it
-explains the five concepts (policies, events, schemas, the two sublanguages, and
-the authorizer) this tutorial puts into practice.
+explains the five concepts (policies, events, schemas, temporal expressions and
+information providers, and the authorizer) this tutorial puts into practice.
 
 ## The shape of the workflow
 
-Every use of Dogwood follows the same four steps:
+Every use of Dogwood runs the same pipeline:
 
-1. **Build the two schema halves** — a `ServiceSchema` (macros, providers, and
-   the event-schema DSL — the fixed, service-provided inputs) and a
-   `PolicySchema` (your action schema).
-2. **Parse and lower a `LoweredPolicySet`** from your policy source, against
-   those two schemas.
-3. **(Optionally) validate** the policy set with a `Validator`.
-4. **Build an `Authorizer`** and feed it **events**, getting a **`Response`** back.
+- **Build the two schema halves** — a `ServiceSchema` (macros, providers, and
+  the event-schema DSL — the fixed, service-provided inputs) and a
+  `PolicySchema` (your action schema).
+- **Parse and lower a `LoweredPolicySet`** from your policy source, against
+  those two schemas.
+- **(Optionally) validate** the policy set with a `Validator`.
+- **Build an `Authorizer`** and feed it **events**, getting a **`Response`** back.
 
-Let's do it.
+The tutorial below writes the schema and policy first, then runs that whole
+pipeline in Step 3.
 
 ## Step 1 — a schema
 
@@ -50,9 +50,10 @@ namespace Drupe {
 }
 ```
 
-Two things to notice, both Dogwood conventions covered in [The policy language](02-policy-language.md):
+Two things to notice, both Dogwood conventions covered in
+[The policy language](02-policy-language.md):
 
-- Each action's request parameters live under a **`context.input`** record
+- Each action's parameters live under a **`context.input`** record
   (`context: { input: ReadInput }`). This is where a policy reads the request's
   fields from (`context.input.user`).
 - We only wrote the **action schema**. Dogwood's other two schemas — the event
@@ -72,7 +73,8 @@ permit (
 );
 ```
 
-> Runnable: [`examples/permit_read_anyone/`](../examples/permit_read_anyone.md) — `dogwood validate` and `dogwood replay`.
+> Runnable: [`examples/permit_read_anyone/`](../examples/permit_read_anyone/) —
+> `dogwood validate` and `dogwood replay`.
 
 - `permit` is the effect. (`forbid` is the other; a `forbid` always wins over a
   `permit`.)
@@ -121,24 +123,24 @@ if let Some(response) = authorizer.is_authorized(&event) {
 }
 ```
 
-A few things worth understanding here — they are the crux of Dogwood's model:
+Three details of Dogwood's model are worth noting here:
 
-- **You authorize an `Event`, not a bare request.** An event is a timestamped
+- You authorize an `Event`, not a bare request. An event is a timestamped
   occurrence of an action with a *kind* (here `"request"`) plus the
   principal/resource and input fields. `Event::builder` constructs one.
-- **`is_authorized` returns `Option<Response>`.** You get `Some(response)` for a
+- `is_authorized` returns `Option<Response>`. You get `Some(response)` for a
   *decision-kind* event (like `request`) and `None` for a history-only event.
   With the default event schema, `request` is a decision kind — so this call
   returns `Some`.
-- **The `Authorizer` is `&mut`.** It is stateful: it remembers every event you
-  feed it. That does not matter for this pure-Cedar policy, but it is the whole
-  point of the next step.
+- The `Authorizer` is `&mut`. It is stateful: it remembers every event you
+  feed it. That does not matter for this pure-Cedar policy, but the next step
+  depends on it.
 
-The full API — every type and method — is [The API and workflow](07-api-and-workflow.md).
+The full API is [The API and workflow](07-api-and-workflow.md).
 
 ## Step 4 — a decision that depends on history
 
-Now the feature that makes Dogwood more than Cedar. Change the requirement to:
+The next requirement depends on the past. Change it to:
 *permit `Read` only if the same user logged in within the last hour.* That is a
 statement about the **past**, so it uses a `when temporal { … }` clause:
 
@@ -149,14 +151,15 @@ permit (
     resource
 )
 when temporal {
-    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+    formerly within 1h Drupe::Action::"Login"::response{ input.user: context.input.user }
 };
 ```
 
-> Runnable: [`examples/read_after_login/`](../examples/read_after_login.md) — `dogwood validate` and `dogwood replay`.
+> Runnable: [`examples/read_after_login/`](../examples/read_after_login/) —
+> `dogwood validate` and `dogwood replay`.
 
 Read the temporal clause as: *"there was formerly, within the last 1 hour, a
-`Login` request whose `input.user` equals this request's `context.input.user`."*
+successful `Login` whose `input.user` equals this request's `context.input.user`."*
 The `formerly within 1h …` operator scans the event history; the
 `{ input.user: context.input.user }` part correlates the past login's user with
 the current request's user. This is the subject of
@@ -207,15 +210,14 @@ This prints:
 @7200  Deny
 ```
 
-- **`@0` Login → Deny.** The policy gates `Read`, not `Login`, so no `permit`
+- `@0` Login → Deny. The policy gates `Read`, not `Login`, so no `permit`
   matches the login itself. (The login still matters — it is now in the history.)
-- **`@10` Read → Allow.** A login for `alice` happened 10 seconds ago, inside the
+- `@10` Read → Allow. A login for `alice` happened 10 seconds ago, inside the
   1-hour window, so the temporal condition holds.
-- **`@7200` Read → Deny.** The only login was 7200 seconds (2 hours) ago, outside
+- `@7200` Read → Deny. The only login was 7200 seconds (2 hours) ago, outside
   the window, so the condition no longer holds.
 
 Same policy, same code — the verdict changes because the **history** changed.
-That is Dogwood.
 
 ## Run it yourself
 
@@ -233,16 +235,16 @@ dogwood replay   policy.dw --policy-schema schema.cedarschema --trace trace.log
 Every policy-level example in this guide is a complete, runnable bundle under
 this crate's `examples/` directory — a `policy.dw`, its `schema.cedarschema`,
 and (where the example is history-dependent) a `trace.log` and the expected
-verdict stream. A test harness runs *every* bundle through the `dogwood` binary
-on each build, so the examples cannot drift from the language. The two policies
-above are the `permit_read_anyone` and `read_after_login` bundles. See
+verdict stream. A test harness checks *every* bundle on each build, so the
+examples cannot drift from the language. The two policies above are the
+`permit_read_anyone` and `read_after_login` bundles. See
 [The command line](12-cli.md) for the full CLI.
 
 **The library.** To *embed* the engine instead of driving it over files —
 building events programmatically, feeding them one at a time, and reading each
 `Response` — use the Rust API, walked through end to end in
-[The API and workflow](07-api-and-workflow.md). That is the one thing the
-file-driven CLI cannot show: the stateful builder API.
+[The API and workflow](07-api-and-workflow.md). The CLI cannot drive the
+builder API.
 
 ## Where to go next
 
@@ -256,9 +258,11 @@ file-driven CLI cannot show: the stateful builder API.
   generation: [The event schema](03-event-schema.md),
   [The provider schema](10-provider-schema.md), and
   [Generating the action schema from an MCP manifest](11-mcp-schema-generation.md).
-- **The full Rust API** — every type, plus swapping in external policy backends: [The API and workflow](07-api-and-workflow.md).
+- **The full Rust API** — the end-to-end flow, and how to plug in your own
+  policy or temporal engine: [The API and workflow](07-api-and-workflow.md).
 
 ## See also
 
 - [Introduction](00-introduction.md) — the concepts behind this tutorial.
-- [The policy language](02-policy-language.md) — the next step in learning the language.
+- [The policy language](02-policy-language.md) — the next step in learning the
+  language.

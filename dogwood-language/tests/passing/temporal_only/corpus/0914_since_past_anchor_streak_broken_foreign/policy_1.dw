@@ -4,16 +4,15 @@
 // `(anchor, i]`. Here a mismatching event sits between the past anchor and the
 // decision, so the left streak is BROKEN and the correct verdict is DENY.
 //
-// This guards against a fix that threads the request correlation through the
-// since-anchor branch but drops the guard-streak filter (which would wrongly
-// PERMIT): the fix must both carry the correlation AND still enforce that the
-// left held over the whole range. A fix that only makes 0904 permit, without
-// preserving the streak, would over-permit here.
+// This guards against an implementation that threads the request correlation
+// through the since-anchor branch but drops the guard-streak filter (which
+// would wrongly PERMIT): it must both carry the correlation AND still enforce
+// that the left held over the whole range. An implementation that only makes
+// 0904 permit, without preserving the streak, would over-permit here.
 //
-// The interpreter is the oracle (see expected_1.out). Unlike 0904/0913 this
-// case's verdict is DENY, so a broken-streak fix that over-permits diverges
-// here in the OPPOSITE direction — a strong anti-overfit signal. Found via the
-// SMT differential fuzzer.
+// Expected verdicts are in expected_1.out. Unlike 0904/0913 this case's
+// verdict is DENY, so an implementation that over-permits fails here in the
+// OPPOSITE direction — a strong anti-overfit signal.
 permit (
     principal,
     action == Drupe::Action::"Transfer",

@@ -13,8 +13,8 @@
 //! [`provider`] module therefore holds only the invocation/argument/method
 //! data types, the declarations schema, the authorize-time evaluator, and
 //! validation — no sub-parser and no closed grammar. (The surface keyword
-//! is `guardrails`, matching the reference monitor Dogwood descends from; the
-//! concept is "provider" everywhere else: module, declarations,
+//! is `guardrails` for historical reasons; the concept is "provider"
+//! everywhere else: module, declarations,
 //! `context.providers`.)
 
 pub mod dialect;

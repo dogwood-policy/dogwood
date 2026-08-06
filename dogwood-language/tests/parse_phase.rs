@@ -103,3 +103,80 @@ fn schema_dependent_error_is_not_caught_by_parse() {
         "the unknown attribute must surface as a validation error, not at parse"
     );
 }
+
+// ─── IN_SCOPE_CONTEXT guard tests ────────────────────────────────────
+
+/// After a parse that hits an error in a scope expression, the next parse
+/// (on the same thread) must produce condition-context errors — not
+/// scope-context errors. This verifies the RAII guard resets the flag.
+#[test]
+fn scope_context_resets_after_scope_parse_error() {
+    use dogwood_language::{ParsedPolicySet, ServiceSchema};
+
+    let service = ServiceSchema::defaults();
+
+    // First: parse a policy with an invalid name in scope position.
+    // This triggers the scope-context error path.
+    let scope_err_src = r#"
+        permit (principal == Ns::Type, action, resource);
+    "#;
+    let err1 = ParsedPolicySet::parse(scope_err_src, &service).unwrap_err();
+    let msg1 = err1.to_string();
+    // In scope context, the error suggests `is Type`
+    assert!(
+        msg1.contains("is Ns::Type") || msg1.contains("not a valid entity reference"),
+        "first parse should give scope-context error, got: {msg1}"
+    );
+
+    // Second: parse a policy with an invalid name in condition position.
+    // This should give a condition-context error, NOT a scope-context error.
+    let cond_err_src = r#"
+        permit (principal, action, resource)
+        when { Ns::Type };
+    "#;
+    let err2 = ParsedPolicySet::parse(cond_err_src, &service).unwrap_err();
+    let msg2 = err2.to_string();
+    // In condition context, it should NOT suggest `is Type`
+    assert!(
+        !msg2.contains("is Ns::Type"),
+        "second parse should NOT give scope-context error, got: {msg2}"
+    );
+}
+
+/// Simulates the async service scenario: a parse with scope-context error
+/// followed immediately by another parse on the same thread. Without the
+/// RAII guard, the IN_SCOPE_CONTEXT flag would leak `true` from the first
+/// parse into the second, producing incorrect "try `is Type`" suggestions
+/// in non-scope positions. The guard ensures each parse starts clean.
+#[test]
+fn scope_context_does_not_leak_across_sequential_parses() {
+    use dogwood_language::{ParsedPolicySet, ServiceSchema};
+
+    let service = ServiceSchema::defaults();
+
+    // Simulate multiple "requests" hitting the parser on the same thread,
+    // as would happen in an async runtime with worker thread reuse.
+    for _ in 0..10 {
+        // Request A: policy with a bad entity ref in scope position
+        // (triggers scope-context error path internally)
+        let scope_policy = r#"permit (principal == Ns::BadType, action, resource);"#;
+        let _ = ParsedPolicySet::parse(scope_policy, &service);
+
+        // Request B: policy with a bad name in condition position
+        // This MUST get a condition-context error, not a scope-context one.
+        let cond_policy = r#"
+            permit (principal, action, resource)
+            when { Ns::BadExpr };
+        "#;
+        let err = ParsedPolicySet::parse(cond_policy, &service).unwrap_err();
+        let msg = err.to_string();
+
+        // The key assertion: if the flag leaked from parse A, this would
+        // incorrectly suggest `is Ns::BadExpr` (scope advice in a condition).
+        assert!(
+            !msg.contains("is Ns::BadExpr"),
+            "IN_SCOPE_CONTEXT leaked across parses! Got scope-context error \
+             in condition position: {msg}"
+        );
+    }
+}

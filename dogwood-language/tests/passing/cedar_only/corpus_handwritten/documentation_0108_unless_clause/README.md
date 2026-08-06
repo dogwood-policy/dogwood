@@ -1,7 +1,7 @@
 # 0108 — `unless` is the negation of `when`
 
 Some constraints read more naturally as exceptions than as
-positive conditions. GuardLogic offers `unless { B }` as sugar
+positive conditions. Dogwood offers `unless { B }` as sugar
 for `when { !B }` so the policy can be written in whichever
 direction matches intent.
 

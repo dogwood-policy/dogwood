@@ -5,8 +5,8 @@
 //!
 //! Values follow Cedar surface forms: entity refs `Ns::Type::"id"`,
 //! double-quoted strings, integers, decimals (`1.50`), `true`/`false`,
-//! arrays `[…]`, and objects `{…}`. This mirrors the proven temporal
-//! trace parser so the existing corpus parses verbatim.
+//! arrays `[…]`, and objects `{…}`. This is the trace format the corpus is
+//! written in, so the existing corpus parses verbatim.
 
 use std::collections::BTreeMap;
 

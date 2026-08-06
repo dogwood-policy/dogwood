@@ -3,7 +3,7 @@
 //! all through the public Cedar-parity API.
 //!
 //! Build a [`ServiceSchema`] + [`PolicySchema`] (action schema + the
-//! request/resolution event schema), then [`LoweredPolicySet::from_str`] to
+//! request/response event schema), then [`LoweredPolicySet::from_str`] to
 //! parse + lower, then a [`Validator`] to validate. The public API exposes
 //! whether a policy set is self-contained Cedar (no temporal/provider leaves
 //! hoisted) but not the count or internals of hoisted leaves, so leaf-count
@@ -20,12 +20,12 @@ fn temporal_case() -> (String, String, String) {
     let policy = std::fs::read_to_string(dir.join("policy_1.dw")).unwrap();
     let schema = std::fs::read_to_string(dir.join("schema.cedarschema")).unwrap();
     let event_schema =
-        std::fs::read_to_string(root.join("tests/fixtures/request_resolution.dwschema")).unwrap();
+        std::fs::read_to_string(root.join("tests/fixtures/request_response.dwschema")).unwrap();
     (policy, schema, event_schema)
 }
 
 /// Build the case `ServiceSchema` + `PolicySchema` from the action schema +
-/// request/resolution event schema, with no provider declarations.
+/// request/response event schema, with no provider declarations.
 fn build_schema(schema_src: &str, event_schema: &str) -> (ServiceSchema, PolicySchema) {
     let service = ServiceSchema::builder()
         .event_schema_str(event_schema)

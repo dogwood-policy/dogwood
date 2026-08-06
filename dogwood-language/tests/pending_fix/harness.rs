@@ -1,15 +1,15 @@
 //! Pending-fix harness.
 //!
-//! Reads from `tests/pending_fix/corpus/` — cases that parse
-//! and evaluate but whose verdict stream diverges from the oracle. Asserts
-//! they STILL FAIL. If one starts passing, it should be moved to
+//! Reads from `tests/pending_fix/corpus/` — cases whose verdict stream does
+//! not match their `expected_<n>.out`. Asserts they STILL FAIL. If one starts
+//! passing, it should be moved to
 //! `tests/passing/temporal_only/corpus/`.
 //!
 //! Each case is driven through the Cedar-parity public API: build a
-//! [`ServiceSchema`] from the shared `request_resolution` event schema fixture
+//! [`ServiceSchema`] from the shared `request_response` event schema fixture
 //! and a [`PolicySchema`] from the action schema; parse the policy into a
 //! [`LoweredPolicySet`] via [`LoweredPolicySet::from_str`]; then replay the
-//! trace with [`replay_log`]. A build or parse error counts as a divergence,
+//! trace with [`replay_log`]. A build or parse error counts as a mismatch,
 //! just as an `authorize_trace` Err did.
 
 use std::path::{Path, PathBuf};
@@ -52,14 +52,14 @@ fn read_sorted(dir: &Path, prefix: &str, ext: &str) -> Vec<PathBuf> {
 }
 
 #[test]
-fn temporal_divergences_still_diverge() {
+fn temporal_mismatches_still_fail() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/pending_fix/corpus");
     if !root.exists() {
         return;
     }
 
     let event_schema = std::fs::read_to_string(
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/request_resolution.dwschema"),
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/request_response.dwschema"),
     )
     .expect("event schema");
 
@@ -78,7 +78,7 @@ fn temporal_divergences_still_diverge() {
             std::fs::read_to_string(dir.join("schema.cedarschema")).unwrap_or_default();
 
         let traces = read_sorted(&dir, "trace_", "log");
-        let mut case_diverges = false;
+        let mut case_mismatches = false;
         for trace_path in traces {
             let stem = trace_path.file_stem().unwrap().to_string_lossy();
             let n = stem.trim_start_matches("trace_");
@@ -90,10 +90,10 @@ fn temporal_divergences_still_diverge() {
             let expected = std::fs::read_to_string(&expected_path).unwrap();
 
             let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                // Build the service schema from the shared `request_resolution`
+                // Build the service schema from the shared `request_response`
                 // event schema fixture and the policy schema from the action
                 // schema, parse the policy, then replay the trace. A build or
-                // parse Err is surfaced as an Err (a divergence), exactly as the
+                // parse Err is surfaced as an Err (a mismatch), exactly as the
                 // old `authorize_trace` Err was. `replay_log` consumes the
                 // LoweredPolicySet, so assemble it fresh per trace.
                 let service = ServiceSchema::builder()
@@ -105,16 +105,16 @@ fn temporal_divergences_still_diverge() {
             }));
             match result {
                 Ok(Ok(got)) if norm(&got) != norm(&expected) => {
-                    case_diverges = true;
+                    case_mismatches = true;
                 }
                 Ok(Err(_)) | Err(_) => {
-                    case_diverges = true;
+                    case_mismatches = true;
                 }
                 _ => {}
             }
         }
 
-        if case_diverges {
+        if case_mismatches {
             still_failing += 1;
         } else {
             unexpectedly_passing.push(case);
@@ -122,12 +122,12 @@ fn temporal_divergences_still_diverge() {
     }
 
     eprintln!(
-        "pending_fix: {still_failing} still diverging, {} unexpectedly passing",
+        "pending_fix: {still_failing} still failing, {} unexpectedly passing",
         unexpectedly_passing.len()
     );
     if !unexpectedly_passing.is_empty() {
         panic!(
-            "These divergence cases now PASS — move them to tests/passing/temporal_only/corpus/:\n  {}",
+            "These cases now PASS — move them to tests/passing/temporal_only/corpus/:\n  {}",
             unexpectedly_passing.join("\n  ")
         );
     }

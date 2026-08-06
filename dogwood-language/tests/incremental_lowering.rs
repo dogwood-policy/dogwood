@@ -217,7 +217,7 @@ fn decision_kinds_match_the_authorizer_gate() {
     // A consumer reimplementing the decision loop must gate on the decision
     // kinds. `decision_kinds()` / `is_decision_kind()` must report exactly what
     // `Authorizer::is_authorized` gates on: with the default event schema,
-    // `request` is a decision kind and `resolution` is history-only.
+    // `request` is a decision kind and `response` is history-only.
     use dogwood_language::{Authorizer, Event, Value};
 
     let set =
@@ -230,7 +230,7 @@ fn decision_kinds_match_the_authorizer_gate() {
     );
     assert!(
         !kinds.contains("response"),
-        "resolution is history-only: {kinds:?}"
+        "response is history-only: {kinds:?}"
     );
     assert!(set.is_decision_kind("request"));
     assert!(!set.is_decision_kind("response"));
@@ -245,7 +245,7 @@ fn decision_kinds_match_the_authorizer_gate() {
         .resource("Drupe::Gateway::\"gw1\"")
         .field("input", "user", Value::String("alice".to_string()))
         .build();
-    let resolution = Event::builder("Drupe::Action::Read", "response")
+    let response = Event::builder("Drupe::Action::Read", "response")
         .principal("Drupe::OAuthUser::\"alice\"")
         .resource("Drupe::Gateway::\"gw1\"")
         .field("input", "user", Value::String("alice".to_string()))
@@ -255,8 +255,8 @@ fn decision_kinds_match_the_authorizer_gate() {
         "a `request` (decision kind) yields Some"
     );
     assert!(
-        authorizer.is_authorized(&resolution).is_none(),
-        "a `resolution` (history-only) yields None"
+        authorizer.is_authorized(&response).is_none(),
+        "a `response` (history-only) yields None"
     );
 }
 

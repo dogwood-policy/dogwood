@@ -1,4 +1,4 @@
-// §1.2 example 1 — recover today's `count` via the explicit form:
+// Recover the implicit-domain `count` via the explicit form:
 //   count for (t: Timepoint). where formerly within 1h (Withdraw(_) ∧ tp(t))
 //
 // Project onto the timepoint binder `t` and count distinct rows: the

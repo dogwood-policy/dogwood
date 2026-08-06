@@ -1,11 +1,9 @@
 // Permit Read when a Scan returned score decimal("0.50") within 1h.
-// The trace sends score: 0.50 which is numerically equal to 0.5 and 0.50.
-// This case SHOULD pass — decimal("0.50") and score: 0.50 represent the same
-// value — but currently FAILS because the temporal engine compares the decimal
-// literal string '0.50' against the trace-serialized string '0.50', and
-// decimal("0.5") would NOT match score: 0.50 for the same reason.
-// This test documents the expected correct behavior (match) which the
-// implementation currently gets wrong for certain string representations.
+//
+// The policy pins `output.score: decimal("0.50")` while the trace carries
+// `score: 0.5`. Those are the same value written two ways, so the predicate
+// must compare decimals by numeric value rather than by their serialized
+// text. Expected: the Read at @2 permits.
 permit (
     principal,
     action == Drupe::Action::"Read",

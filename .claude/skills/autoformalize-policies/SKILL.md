@@ -105,22 +105,37 @@ Work through this checklist:
    - **"happened at least once recently"** → `formerly within W`.
    - **"the immediately preceding event"** → `previous within W` (strict: only
      `i-1`, false at the first event). Under an event schema with a
-     **universal symmetric pin** (a field pinned on every kind, e.g.
-     principal or session — see the event-schema doc), `previous` means the
-     *key's own* previous event, and the positive left of `since` ranges over
-     the key's own positions only — other keys' interleaved events neither
-     satisfy nor break these operators.
+     **universal symmetric pin** — which includes the **default** schema,
+     whose every kind pins `callerPrincipal` to the request principal —
+     `previous` means the *key's own* previous event, and the positive left of
+     `since` ranges over the key's own positions only — other keys' interleaved
+     events neither satisfy nor break these operators (see the event-schema
+     doc's "Universal symmetric pins" section).
    - **"has held continuously since an anchor"** → `left since within W right`.
    - **"has NOT happened since"** → `!left since within W right` (there is no
      dedicated operator).
    - **What is the window `W`?** Every temporal operator needs a mandatory
      `within <amount><unit>` (`s`/`m`/`h`/`d` only; no week/month/year). If the
      user says "recently" without a number, **ask** — the window is not optional
-     and there is no default.
+     and there is no default. Windows are also **capped** by the event schema's
+     `max_window` (**24h when absent**): a `within 7d` under the default schema
+     is a validation error. If the requirement genuinely needs a longer
+     look-back, that is an event-schema change (`max_window = 30d` at the top
+     of a `.dwschema` that also declares the events) — route it to
+     **authoring-service-schema**, don't shrink the user's window silently.
    - **"the same X"** (same user, same document) → *pin* the past predicate's
      field to the current request: `input.user: context.input.user`. Decide
-     which fields correlate; getting this wrong turns "the same user" into "any
-     user".
+     which fields correlate. Note the **default** event schema already
+     correlates every temporal predicate to the current request's
+     **principal** (its universal `callerPrincipal` pin — key-local
+     semantics), so "the same user" is enforced automatically when "user" =
+     the principal; you still correlate explicitly for anything else (same
+     document, same session, an `input` field distinct from the principal).
+     Under an **unpinned** (global-trace) schema nothing is automatic, and a
+     missing correlation silently turns "the same user" into "any user".
+     Conversely, a "by *any* user" requirement cannot be met under the pinned
+     default at all — it needs the unpinned schema (see
+     **authoring-service-schema**).
    - **Counting/summing** → `count`/`sum` (no `min`/`max`/`avg`). For counts,
      decide **occurrences vs distinct values**: per-timepoint occurrences need a
      `tp` var in the `for` domain; distinct values omit it. Confirm the
@@ -159,10 +174,9 @@ unless { context.input.stock == "AMZN" };
 
 Use the exact operator/method vocabulary from the core-language doc. Watch the
 type rules it calls out: **decimals are equality-only** (use `.lessThan(…)`
-etc. for ordering), `/` and `%` are unsupported (only `+`, `-`, `*`), and there
-is no `let … in`. Core Cedar *does* have `!=`; note that the **temporal
-sublanguage does not** — inside `temporal { … }` write `!(x == y)` instead
-(see §2b).
+etc. for ordering), and `/` and `%` are unsupported (only `+`, `-`, `*`). There
+is also no `let … in` binding form (in core Cedar or in Dogwood). `!=` is
+available both in core Cedar and inside `temporal { … }`.
 
 ### 2b. History-dependent policies (`temporal { … }`)
 
@@ -252,8 +266,11 @@ Common rejection causes and where they surface:
   restrictor; a filter conjunct placed before its restrictor; an aggregate used
   outside a comparison operand; a missing `within` window.
 - **Schema-aware:** an unknown entity type or action; a `context.input.<field>`
-  that does not resolve in the scoped action; an ordering comparison on a
-  non-numeric operand; a decimal ordered with `<` instead of `.lessThan(…)`.
+  that does not resolve in the scoped action; a `within` window exceeding the
+  event schema's `max_window` cap (**24h** under the default schema — raising
+  it is an event-schema change, see **authoring-service-schema**); an ordering
+  comparison on a non-numeric operand; a decimal ordered with `<` instead of
+  `.lessThan(…)`.
 
 ### Custom event schema, providers, or macros
 
@@ -285,8 +302,8 @@ dogwood replay policy.dw --policy-schema schema.cedarschema --trace events.log
 
 Each decision point prints `@<ts> (time point <i>): ALLOW|DENY`. Confirm that a
 case which *should* allow does, and one that *should* deny does — this catches a
-mis-pinned correlation ("same user" that is really "any user") or a wrong window
-that validation alone cannot. Use `--format json` for a structured verdict
+mis-pinned correlation ("same document" that is really "any document") or a wrong
+window that validation alone cannot. Use `--format json` for a structured verdict
 stream.
 
 ### If you genuinely cannot run the CLI

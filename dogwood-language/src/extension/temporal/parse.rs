@@ -634,7 +634,7 @@ fn build_term(pair: Pair<'_>) -> Term {
         }
         // A bare or parenthesized aggregate term (`count …` / `(count …)`).
         // The parens (`paren_agg`) carry no semantics — they only fence the
-        // greedy `where` body off a trailing `== n` (§3.2).
+        // greedy `where` body off a trailing `== n`.
         Some(Rule::agg_expr) => Term::Agg(Box::new(build_agg_expr(inner.unwrap()))),
         Some(Rule::paren_agg) => {
             let agg = inner
@@ -1492,7 +1492,7 @@ mod tests {
     fn aggregate_as_right_operand_needs_no_parens() {
         // `0 < count for (t: Timepoint). where φ` — the aggregate is the
         // rightmost operand, so its greedy `where` body has nothing to
-        // swallow and no parens are needed (design §3.2).
+        // swallow and no parens are needed.
         let c = parse(
             r#"0 < count for (t: Timepoint). where (Drupe::Action::"Login"::request{} && tp(t))"#,
         );

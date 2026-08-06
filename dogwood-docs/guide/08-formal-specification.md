@@ -9,8 +9,8 @@ Where the rest of the guide (from [Getting started](01-getting-started.md) throu
 [The API and workflow](07-api-and-workflow.md)) explains *how to use* Dogwood, this
 chapter states *what it is*, at the level of detail a second implementation or a
 proof would need. Every rule is annotated
-with the source of record (`file.rs:line`); the code is authoritative, and this
-document tracks it.
+with its source of record — the file and function; the code is authoritative, and
+this document tracks it.
 
 ## Contents
 
@@ -21,7 +21,6 @@ document tracks it.
 5. [Validation](#5-validation)
 6. [Authorization](#6-authorization)
 7. [Meta-properties](#7-meta-properties)
-8. [Rule index](#8-rule-index)
 
 ---
 
@@ -137,8 +136,8 @@ expression parsed identically to an untagged `when { … }`. An
 information-provider invocation inside it (`Ns::Fn(args)…`) is recognized and
 hoisted at *lowering* time exactly as in a bare `when { … }`
 ([§4.4](#44-information-provider-leaves)), so the tag adds nothing semantically
-and the parser discards it. It is retained only for surface compatibility with
-the reference monitor Dogwood descends from. ("provider" is the term used
+and the parser discards it. It is retained only for backward
+compatibility of the surface syntax. ("provider" is the term used
 everywhere else; `guardrails` is the surface keyword.) There is no closed
 provider grammar.
 
@@ -449,13 +448,13 @@ Each Dogwood rule becomes exactly one Cedar static policy.
         ⇝  StaticPolicy(PolicyID id, ᾱ, ε, P, A, R, γ)  ⊣ Γ′
 ```
 
-*(`cedarify/mod.rs:304`.)* The scope constraints `P, A, R` pass through
+*(`cedarify/mod.rs` `emit_policy`.)* The scope constraints `P, A, R` pass through
 **unchanged** — the parser already built them as loc-bearing Cedar constraints
-(**L-ScopePassthrough**, `mod.rs:358`). Effect maps directly, `Permit ↦ Permit`,
+(**L-ScopePassthrough**, `cedarify/mod.rs` `emit_policy`). Effect maps directly, `Permit ↦ Permit`,
 `Forbid ↦ Forbid` (**L-Effect**). Annotations map to Cedar annotations; a key
 that fails to parse as a Cedar id is silently dropped, and `@id` is **not**
 special-cased — it is an ordinary annotation, never the policy's identity
-(**L-Annotations**, `mod.rs:342`). A rule containing an unfilled template slot
+(**L-Annotations**, `cedarify/mod.rs` `emit_policy`). A rule containing an unfilled template slot
 (`?principal`/`?resource`) fails: `StaticPolicy::try_from` errors *"policy is not
 static"*.
 
@@ -468,7 +467,7 @@ key(δ, i)  =  δ "_" i      if a distincter δ is supplied
            =  "policy_" i   otherwise
 ```
 
-*(`cedarify/mod.rs:176`, rule **L-RuleKey**.)* It is deliberately **not** derived
+*(`cedarify/mod.rs` `rule_key`, rule **L-RuleKey**.)* It is deliberately **not** derived
 from `@id`; distinctness is the caller's decision, so that independently-lowered
 sets can be combined without colliding ids (see [Chapter 07](07-api-and-workflow.md)
 on `lower_with_distincter`). Two rules that mint the same id are a fatal error
@@ -500,7 +499,7 @@ A rule's condition `γ` is the conjunction of its clauses, `when` verbatim and
    Γ ⊢ (c :: rest) ⇝ (γ_c && γ_r) ⊣ Γ₂
 ```
 
-*(`cedarify/mod.rs:326`–`340`.)* Clauses fold **left-associatively in source
+*(`cedarify/mod.rs` `emit_policy`.)* Clauses fold **left-associatively in source
 order**: `[c₁, c₂, c₃]` becomes `And(And(γ₁, γ₂), γ₃)`. A bare rule (no clauses)
 has condition literal `true` — note this is `Some(true)`, an explicit condition,
 not an absent one. The synthesized `Not` (for `unless`) and `And` (for the
@@ -524,10 +523,10 @@ Cedar-parsed text. The **surface-only** operators desugar to negations:
    GreaterEq(l, r) ⇝  !(⟦l⟧ <  ⟦r⟧)
 ```
 
-*(`to_ast.rs:212`, **L-Binary-Table**.)* Extension constructors and methods
+*(`to_ast.rs` `lower_binary`, **L-Binary-Table**.)* Extension constructors and methods
 become `ExtensionFunctionApp`s keyed by the unqualified name: unary
 `decimal | datetime | duration | ip | isIpv4 | … | toDays`
-(**L-Unary-Table**, `to_ast.rs:183`) and binary
+(**L-Unary-Table**, `to_ast.rs` `lower_unary`) and binary
 `isInRange | offset | durationSince | lessThan | lessThanOrEqual | greaterThan | greaterThanOrEqual`.
 A `Call` that is not a namespace-qualified (provider) invocation, and any
 `ParamRef`, are fatal at this point (**L-Expr-Call**) — a well-formed
@@ -548,9 +547,9 @@ span, so a type error on a hoisted field points back at the source it came from.
    Γ ⊢ Temporal φ  ⇝  context.name  ⊣ Γ′
 ```
 
-*(`to_ast.rs:64`.)* The recorded `ContextField` carries the rule's scoped action
+*(`to_ast.rs` `lower_expr`.)* The recorded `ContextField` carries the rule's scoped action
 (`Concrete` / `List` / `Unconstrained`, classified off the Cedar action
-constraint — **L-ScopeAction-Classification**, `mod.rs:392`), the field name, and
+constraint — **L-ScopeAction-Classification**, `cedarify/mod.rs` `scope_action`), the field name, and
 the temporal condition. Semantically the field is a pre-evaluated `Bool`.
 
 A **provider invocation** is a `Call` whose name is namespace-qualified
@@ -572,7 +571,7 @@ hoists to a **two-level** reference `context.providers.<id>`:
    Γ ⊢ Invocation·methods  ⇝  context.providers.name  ⊣ Γ′
 ```
 
-*(`to_ast.rs:lower_provider_invocation`.)* `τ` is the pipeline's tail type: the
+*(`to_ast.rs` `lower_provider_invocation`.)* `τ` is the pipeline's tail type: the
 last method's `outputType` if the chain is non-empty, else the invocation's
 `outputType`, looked up from the declarations `D` and defaulting to `String` when
 undeclared (the undeclared case — and an undeclared/misused method — is caught by
@@ -636,8 +635,9 @@ binder is fresh (`__pin_*`) and range-restricted by a positive atom before any
 filter uses it. Validation (§5) runs on the **pre-rewrite** leaves, so
 findings point at authored structure; engines receive the rewritten leaves
 (`Lowered.temporal_rewritten`, surfaced by `temporal_fields()` /
-`temporal_leaves()`). With no universal symmetric pin — in particular under
-the default event schema — the rewrite is the identity.
+`temporal_leaves()`). With no universal symmetric pin the rewrite is the identity. The default event
+schema is not such a case: it pins `callerPrincipal` on every derived kind, so under
+the default the rewrite is active.
 
 The result is the `Lowered` artifact (**L-Lowered-Artifact**, `api.rs`, `struct Lowered`):
 the Cedar `policies`, the `augmented_schema` (+ its source text), the hoisted
@@ -663,7 +663,7 @@ own — the augmented schema travels on `L` — which is why, unlike Cedar's
    L is a proof object; validate(L) yields only findings, never a fatal Error
 ```
 
-*(`validate.rs:14`.)* A **fatal `Error`** — a parse failure, a macro-expansion
+*(`validate.rs`.)* A **fatal `Error`** — a parse failure, a macro-expansion
 failure, a lowering failure, or an augmented-schema failure — aborts before a
 `Lowered` exists, so the validator never sees it. The existence of `L` *is* the
 proof that those four phases succeeded. Everything `validate` produces is a
@@ -681,7 +681,7 @@ is empty.
    validate(L) = ValidationResult(E₁·E₂·E₃, W₁·W₂·W₃)
 ```
 
-*(`validate.rs:46`.)* Checks run in a fixed order — **Cedar side, then temporal,
+*(`validate.rs` `validate_impl`.)* Checks run in a fixed order — **Cedar side, then temporal,
 then provider** — accumulating into two channels with no short-circuit across
 checks. `ctx = (Σ = L.augmented_schema, event_schema = L.event_schema, dw_src)`.
 `Σ ⊢ L ✓ ⟺ E₁·E₂·E₃ = []`.
@@ -695,7 +695,7 @@ checks. `ctx = (Σ = L.augmented_schema, event_schema = L.event_schema, dw_src)`
                                                             L.policies, Strict)
 ```
 
-*(`validate.rs:80`.)* Cedar's own validator runs in **strict** mode over the
+*(`validate.rs` `validate_impl`.)* Cedar's own validator runs in **strict** mode over the
 augmented schema. Its errors become `ValidationError::Cedar` findings and its
 warnings pass through verbatim (**V-Cedar-Warnings**). Crucially, this pass is
 where several things are *deliberately delegated* rather than re-checked
@@ -735,7 +735,7 @@ treats a negation as an opaque boolean filter whose rows carry no bindings).
    Γ ⊢ exists (x : T). φ  ✓wf
 ```
 
-*(`check.rs:181`, `check_exists_safe`.)* An `exists`-bound variable must be range-restricted by a
+*(`check.rs` `check_exists_safe`.)* An `exists`-bound variable must be range-restricted by a
 positive atom **inside its body**. Otherwise: *"existential variable `x` is not
 range-restricted by any positive atom in the `exists` body …"*. (Sigil slot or a
 sigil anywhere in the body ⇒ accept, deferring to post-expansion.)
@@ -754,7 +754,7 @@ order and walk left to right with an accumulator `ρ`:
    c₁ && … && cₙ   ✓wf
 ```
 
-*(`check.rs:248`, `check_demands`/`check_chain`.)* The demanding conjuncts
+*(`check.rs` `check_demands`/`check_chain`.)* The demanding conjuncts
 (**WF-Demands-Classification**):
 
 - a **pure filter** — an *ordering* comparison (`<`, `<=`, `>`, `>=`), an
@@ -796,7 +796,7 @@ an `exists` binder or an aggregation `for` list.
    φ   ✓wf as a leaf
 ```
 
-*(`check.rs:877`, `check_leaf_closed`; run by `Temporal::parse` and again
+*(`check.rs` `check_leaf_closed`; run by `Temporal::parse` and again
 post-expansion.)* A leaf is evaluated **boolean-ly** at the decision point with
 no implicit existential closure, so a free variable's bindings would not thread
 across conjuncts — the accepted formula would silently evaluate as an
@@ -819,7 +819,7 @@ timepoint must actually vary with the current timepoint (`is_tp_dep`):
    ─────────────────────────── (WF-TpDep-Agg-Body)    the where-body of an aggregate is tp-dependent
 ```
 
-*(`check.rs`/`validate.rs:850`.)* A `Predicate`, a `Tp`, or an `Agg` is
+*(`check.rs`, `temporal/validate.rs` `check_tp_dependence`.)* A `Predicate`, a `Tp`, or an `Agg` is
 tp-dependent by construction; a `Var` is tp-dependent iff bound in the current
 scope; literals, `context` fields, and wildcards are not. Each violated scope
 emits a targeted message (e.g. *"this `when`/`unless` conjunct does not vary with
@@ -836,7 +836,7 @@ which has no `v`):
    sum v for ḡ. where ψ   ✓wf
 ```
 
-*(`check.rs:631`, `check_aggregation`.)* Four obligations, checked in order:
+*(`check.rs` `check_aggregation`.)* Four obligations, checked in order:
 
 1. The summed variable must be one of this aggregation's own `for` binders
    (**WF-Agg-BoundVar-InDomain**): the sum is computed over the relation
@@ -865,7 +865,7 @@ paragraphs under this heading state **semantics** instead. Nothing here can make
 condition ill-formed, so §7's meta-properties about what passes this section are
 unaffected. They sit with the other aggregation rules because that is where a reader
 looks for what `sum` means.
-*(`src/interpreter/eval.rs:123`, `eval_agg_expr`; `:479`, `sum_column`.)*
+*(`src/interpreter/eval.rs` `eval_agg_expr`, `sum_column`.)*
 
 `count` yields the number of rows in the projected relation. `sum` yields the total of
 its summand column over that relation, **skipping** any row whose summand is not a
@@ -898,9 +898,7 @@ wider precision as the two readings — an erroring implementation differs from 
   the total left it. At the maximum, `==`, `!=`, `>` and `<=` distinguish them while
   `>=` and `<` do not; at the minimum, `==`, `!=`, `<` and `>=` distinguish them while
   `<=` and `>` do not.
-- **Bound to a variable**, as `exists (n: Long). ((A) == n && B)` does — the idiom that
-  replaced the removed `let … in` form, and which policies often wrap in a macro named
-  `let_` — the reach is wider. An out-of-range total has *no* `Long` witness at all
+- **Bound to a variable**, as `exists (n: Long). ((A) == n && B)` does, the reach is wider. An out-of-range total has *no* `Long` witness at all
   unless the implementation clamps, so a widening implementation empties the
   existential outright. The two readings then differ exactly when `B` holds of the
   clamped endpoint: they agree when it does not, so `B` = `n > <maximum>` agrees
@@ -920,9 +918,8 @@ of a comparison:
    an Agg as a predicate-arg value, an array element, or otherwise nested ⟹ reject
 ```
 
-*(`check.rs:113`, `check_operand`.)* Violation: *"an aggregate (`sum`/`count`) may appear only as
-the immediate operand of a comparison …"*. This makes the sugar
-`let n = A in B` ⤳ `exists (n: T). ((A) == n && B)` well-formed: `(A) == n` binds
+*(`check.rs` `check_operand`.)* Violation: *"an aggregate (`sum`/`count`) may appear only as
+the immediate operand of a comparison …"*. This makes the aggregate-binding idiom `exists (n: T). ((A) == n && B)` well-formed: `(A) == n` binds
 `n` (restrictor), then `B`'s use of `n` is an already-restricted filter.
 
 ### 5.5 Temporal dialect validation (against the schema)
@@ -1002,7 +999,7 @@ The authority on predicate names (`event_schema/validate.rs`), applied to every
    Predicate P  ✓names
 ```
 
-*(`event_schema/validate.rs:20`.)* A predicate must name a **declared** derived
+*(`event_schema/validate.rs` `validate_condition`.)* A predicate must name a **declared** derived
 event (**EVENT-Predicate-DeclaredEvent**: else *"predicate `…` does not name a
 declared event …"*), and every **mentioned** field path must resolve to a
 declared **leaf** (**EVENT-Field-Leaf**). *Omitting* a field is legal (omission =
@@ -1203,52 +1200,3 @@ These follow from the rules above; they are the properties a caller may rely on.
   positive atom (a negation restricts nothing, at any depth; a `since`
   restricts only through its anchor), filters follow their restrictors, and
   every monitoring scope varies with the timepoint.
-
----
-
-## 8. Rule index
-
-Each rule cross-referenced to its source of record. The code is authoritative.
-
-**Lowering** (`src/cedarify/`, `src/api.rs`):
-`L-EmitPolicy` `mod.rs:304` · `L-Effect` `mod.rs:311` · `L-Annotations`
-`mod.rs:342` · `L-ScopePassthrough` `mod.rs:358` · `L-RuleKey` `mod.rs:176` ·
-`L-Fold-{Empty,When,Unless,Cons}` `mod.rs:326` · `L-NodeLoc` `to_ast.rs:42` ·
-`L-Expr-{Leaves,Structural,Call,Call-Provider,Method-Chain}` `to_ast.rs:60` ·
-`L-Unary-Table` `to_ast.rs:183` · `L-Binary-Table` `to_ast.rs:212` ·
-`L-Hoist-Temporal` `to_ast.rs:64` · `L-Hoist-Provider`
-`to_ast.rs:lower_provider_invocation` · `L-Provider-Projection`
-`to_ast.rs:apply_cedar_projection` · `L-ScopeAction-Classification` `mod.rs:392` ·
-`L-Phase-{Parse,Lower}` `api.rs` (`ParsedPolicySet::parse`, `lower`) · `L-Lowered-Artifact` `api.rs` (`struct Lowered`).
-
-**Validation** (`src/validate.rs`, `src/extension/*/validate.rs`,
-`src/event_schema/validate.rs`):
-`V-TwoChannel` `validate.rs:14` · `V-Order` `validate.rs:46` · `V-Cedar-Empty`
-`validate.rs:80` · `V-Cedar-Validate` `validate.rs:83` · `V-Cedar-Span`
-`validate.rs:120` · `V-Cedar-Warnings` `validate.rs:110` · `TEMP-Order`
-`temporal/validate.rs:61` · `TEMP-EntityType-*` `temporal/validate.rs:731` ·
-`TEMP-ContextPath-*` `temporal/validate.rs:773` · `TEMP-Type-*`
-`temporal/validate.rs:154` · `TEMP-MaxWindow` `temporal/validate.rs:1131` ·
-`EVENT-Predicate` `event_schema/validate.rs:20` ·
-`EVENT-Field-{Leaf,Group,Absent}` `event_schema/validate.rs:79` ·
-`PROV-DeclaredProvider` `provider/validate.rs:36` · `PROV-ArgCount`
-`provider/validate.rs:59` · `PROV-ArgType` `provider/validate.rs:73` ·
-`PROV-Method-*` `provider/validate.rs:88` · `PROV-Output-Deferred`
-`provider/validate.rs:1`.
-
-**Acceptance** (`src/extension/temporal/check.rs`):
-`WF-Exists` `:181` · `WF-Demands` / `WF-Demands-Classification` / `WF-Demands-Seed`
-`:248` · `WF-Neg-Guarded` `:248` · `WF-Agg-BoundVar-InDomain` `:631` ·
-`WF-Agg-Domain-Binds-FreeVars` `:631` · `WF-Agg-Domain-Occurs` `:631` ·
-`WF-Agg-Domain-RR` `:631` · `WF-Agg-Operand` `:113` · `WF-Closed` `:877` ·
-`WF-Sigil-Punt` (passim) · `WF-TpDep-*` `temporal/validate.rs:850`.
-
-**Authorization** (`src/authorize/mod.rs`, `src/api.rs`, `src/engine.rs`):
-`A-Observe`, `A-Ingest-History`, `A-Ingest-Decide` `api.rs` (`ingest`) ·
-`A-Stateful-Invariant` `authorize/mod.rs` (`is_authorized`) · `A-Decide-Ok`,
-`FailClosed-Temporal`, `FailClosed-Context` `api.rs` (`decide_at`) ·
-`FailClosed-Request(-*)` `api.rs` (`decide_at`, `build_request`) ·
-`A-Context-Keys`, `A-Context-{Input,ValueMap,EntityValue-Sentinel}`,
-`A-Context-Providers` `api.rs` (`build_context`) ·
-`A-Provider-{ArgResolve,Resolver,Rhai}` `api.rs` (`eval_provider`) ·
-`A-Decide-Core`, `A-Decide-RuleMap` `api.rs` (`decide`).

@@ -5,7 +5,7 @@
 // the trace is itself at tp 0; it is also a Login candidate's
 // "current tp", not a predecessor.
 //
-// Expectation (Lean): no permits fire.
+// Expected: no permits fire.
 
 permit (
     principal,

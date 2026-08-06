@@ -1,6 +1,6 @@
 # 0001 — The simplest permit
 
-The smallest GuardLogic policy that grants something:
+The smallest Dogwood policy that grants something:
 
 ```
 permit (
@@ -30,6 +30,6 @@ declared in the schema. Tool names are quoted strings; the
 `Drupe::Action::` prefix is the namespace inherited from
 the schema.
 
-GuardLogic's default decision when no rule matches is **deny**.
+Dogwood's default decision when no rule matches is **deny**.
 With only this rule in the file, every other tool — `SellShares`,
 `ApproveSale`, anything else — would be denied.

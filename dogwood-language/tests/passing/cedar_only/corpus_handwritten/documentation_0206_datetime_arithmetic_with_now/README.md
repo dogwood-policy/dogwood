@@ -25,6 +25,6 @@ comparisons on a numeric quantity, reach for a `Long` (e.g.
 `context.input.shares`) or for `context.system.now`.
 
 Note that this policy is purely non-temporal: it inspects the
-request's own clock, not any past resolution events. For
+request's own clock, not any past response events. For
 "happened in the last hour" semantics, use `formerly within 1h`
 (see 0005).

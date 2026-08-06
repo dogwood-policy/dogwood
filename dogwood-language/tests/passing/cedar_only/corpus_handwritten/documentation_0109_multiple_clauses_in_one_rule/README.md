@@ -6,7 +6,7 @@ body evaluates to true.
 
 ## Shape
 
-```guardlogic
+```dogwood
 permit (principal, action == Drupe::Action::"SellShares", resource)
 when { context.input.shares < 100 }
 when { context.input.stock == "AMZN" };

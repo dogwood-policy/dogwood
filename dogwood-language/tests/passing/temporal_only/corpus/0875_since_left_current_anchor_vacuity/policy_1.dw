@@ -13,13 +13,11 @@
 // (`"carol"`) rather than `context.input.user`: a `Transfer` by carol both is
 // a decision point (the permit is Transfer-scoped) and matches the anchor.
 //
-// This exposes a live, currently-masked divergence: a naive SQL compiler
-// lifts the Since-left comparison to a plain verdict-time filter, which would
-// (incorrectly) require `amount >= 10` at the current step even at a vacuous
-// anchor, denying the case. The correct compilation must preserve the
-// `((A S B) ∧ C) ∨ B` vacuity identity (GuardRel design §5.3). Known-failing
-// in the differential SQL test until §5.3 lands; the interpreter (oracle)
-// verdicts below are correct and this is a valid Passing case.
+// An implementation that lifts the Since-left comparison to a plain
+// verdict-time filter would incorrectly require `amount >= 10` at the current
+// step even at a vacuous anchor, denying the case. A correct implementation
+// must preserve the `((A S B) ∧ C) ∨ B` vacuity identity. The expected
+// verdicts below are the correct ones.
 //
 // Controls across traces:
 //   trace_1: the current event is a matching anchor (Transfer by carol),

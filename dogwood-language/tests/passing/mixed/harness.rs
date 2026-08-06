@@ -7,7 +7,7 @@
 //! Two tests, both driven through the Cedar-parity public API:
 //!
 //!   * [`mixed_cases_parse`] — build a [`ServiceSchema`] (the shared
-//!     request/resolution event schema, needed for temporal predicates) and a
+//!     request/response event schema, needed for temporal predicates) and a
 //!     [`PolicySchema`] (the case's action schema), then lower the policy via
 //!     [`LoweredPolicySet::from_str`]. Success iff both steps succeed.
 //!   * [`mixed_cases_verdicts`] — for each case with a `trace_N.log` /
@@ -66,7 +66,7 @@ fn mixed_cases_parse() {
     }
 
     let event_schema = std::fs::read_to_string(
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/request_resolution.dwschema"),
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/request_response.dwschema"),
     )
     .expect("event schema");
 
@@ -108,7 +108,7 @@ fn mixed_cases_parse() {
         let schema_src =
             std::fs::read_to_string(dir.join("schema.cedarschema")).unwrap_or_default();
 
-        // Build the service schema (the shared request/resolution event
+        // Build the service schema (the shared request/response event
         // schema) and the policy (action) schema, then lower the policy.
         // Either step failing means the case did not parse.
         let result = ServiceSchema::builder()
@@ -149,7 +149,7 @@ fn mixed_cases_verdicts() {
     }
 
     let event_schema = std::fs::read_to_string(
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/request_resolution.dwschema"),
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/request_response.dwschema"),
     )
     .expect("event schema");
 

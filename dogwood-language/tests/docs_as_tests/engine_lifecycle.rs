@@ -23,11 +23,11 @@ fn build_parse_validate_authorize_temporal_policy() {
     let (policy, action_schema_src, trace_log) = fixture();
 
     let event_schema = std::fs::read_to_string(
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/request_resolution.dwschema"),
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/request_response.dwschema"),
     )
     .unwrap();
 
-    // 1. Build the two schema halves: the service schema (the request/resolution
+    // 1. Build the two schema halves: the service schema (the request/response
     //    event schema — passed explicitly here, though it is also the default)
     //    and the policy schema (the action schema).
     let service = ServiceSchema::builder()

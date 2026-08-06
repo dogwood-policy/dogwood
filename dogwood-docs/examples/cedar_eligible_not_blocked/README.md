@@ -8,7 +8,7 @@ Two `def cedar` macros of different argument types composed with `&&` inside one
 
 Both macros are defined inline in `policy.dw` (no `macros.dw`). The schema is the
 Drupe `SellShares` schema (`SellSharesInput.shares: Long`,
-`.stock: String`); the default request/resolution event schema is used.
+`.stock: String`); the default request/response event schema is used.
 
 Validate with:
 

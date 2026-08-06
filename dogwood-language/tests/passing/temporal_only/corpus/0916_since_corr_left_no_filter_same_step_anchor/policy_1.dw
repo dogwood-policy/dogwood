@@ -1,22 +1,21 @@
 // Adjacent to 0904: the same current-request correlation on the left, but
-// with NO rigid filter (`C`) — so the §5.3 `((A S B) ∧ C) ∨ B` rewrite does
+// with NO rigid filter (`C`) — so the `((A S B) ∧ C) ∨ B` rewrite does
 // NOT fire (there are no lifted left units) and the backend alone must handle
 // the SAME-STEP anchor: at the anchor's own timepoint the left is checked
 // over the empty range `(i, i]` and is vacuously true, so the verdict is
 // PERMIT regardless of the correlation.
 //
-// This exposes the temporal engine same-step compensation gap: the verdict read UNIONs
-// an inline evaluation of the anchor subplan (the just-inserted anchor row is
-// snapshot-invisible), and that compensation projected the correlation
-// column as raw NULL — which the outer strict join against the current
-// request's binding rejects → wrong DENY at @0. In 0904 the rigid `C` made
-// the §5.3 vacuity disjunct supply the row instead, masking this.
+// The same-step anchor is the delicate part: an implementation that evaluates
+// the anchor subplan separately must still project the correlation column for
+// the just-matched anchor row. Projecting it as absent instead makes a strict
+// join against the current request's binding reject the row, yielding a wrong
+// DENY at @0. In 0904 the rigid `C` made the vacuity disjunct supply the
+// row instead, so that shape does not exercise this path.
 //
 // @10 pins the history path (guard streak for dave holds over (0,1]) and
 // @20 is the deny control (dave's event breaks eve's streak).
 //
-// Interpreter is the oracle (see expected_1.out). Found by differential
-// review of the temporal-compiler since compensation paths.
+// Expected verdicts are in expected_1.out.
 permit (
     principal,
     action == Drupe::Action::"Transfer",

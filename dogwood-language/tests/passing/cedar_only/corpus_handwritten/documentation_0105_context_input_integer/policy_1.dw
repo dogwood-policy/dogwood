@@ -1,5 +1,5 @@
 // Permit SellShares when the request stays at or below a 1000-share cap.
-// New idea: `Long` is GuardLogic's integer type. It supports the full
+// New idea: `Long` is Dogwood's integer type. It supports the full
 // ordered comparison set, including `<=` (used here). Compare with 0002,
 // which used the strict `<`.
 

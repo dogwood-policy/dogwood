@@ -5,22 +5,22 @@ syntax you write in a `.dw` file. It covers the anatomy of a policy rule
 (`permit`/`forbid`), the `(principal, action, resource)` scope and every constraint form
 it accepts, `when`/`unless` condition clauses, and the *complete* condition-expression
 language: every operator, literal, type, built-in method, set/record, and entity
-reference. Read this once and you will know 100% of the core syntax.
+reference.
 
 Every policy example on this page is a runnable bundle under
-[`examples/`](../examples/) that the `dogwood` CLI checks on every build.
+[`examples/`](../examples/), checked on every build.
 
 Dogwood's core language is an intentional re-implementation of upstream
 [Cedar](https://www.cedarpolicy.com/) (the grammar is a faithful translation of
-`cedar-policy-core` v4.10.0), so if you already know Cedar this will feel familiar. What
+`cedar-policy-core` v4.11.0), so its syntax follows Cedar's. What
 Dogwood adds on top is the `temporal { … }` *marker clause* — which hands off to a
-dedicated sub-language — plus a thin `guardrails { … }` clause that is just sugar for a
+dedicated sub-language — plus a thin `guardrails { … }` clause that is sugar for a
 bare `when` (it invokes information providers, which are ordinary Cedar calls). This page
 only *names* these forms and tells you where they attach; their contents are documented
 separately (see the [See also](#see-also) list).
 
-A quick note on how to read the accuracy of this doc: the grammar is deliberately
-**permissive**, and the real semantics are enforced by the parser afterward. That means a
+How to read this page: the grammar is deliberately **permissive**, and the real
+semantics are enforced by the parser afterward. That means a
 number of things *parse* but are then *rejected* with an error. Wherever that matters,
 this page tells you the real, current behavior rather than what the grammar alone might
 suggest.
@@ -41,11 +41,13 @@ parser and adds **no** new schema syntax — it is Cedar `.cedarschema` verbatim
 What Dogwood adds is a *convention* about how you lay out the `context` record,
 covered below.
 
-(The action schema is the one schema you always write. Dogwood composes two more —
-the event schema and the provider declarations — but both have defaults, so the
-core language takes them as given; see [The event schema](03-event-schema.md) and
-[The provider schema](10-provider-schema.md) when you need to customize them. You
-can also *generate* an action schema from an MCP tool manifest — see
+(The action schema is the one schema you always write. Dogwood composes two more
+schemas — the event schema and the provider declarations — plus a macro library,
+and all three have defaults, so the core language takes them as given;
+see [The event schema](03-event-schema.md),
+[The provider schema](10-provider-schema.md), and [Macros](06-macros.md) when you
+need to customize them. You can also *generate* an action schema from an MCP tool
+manifest — see
 [Generating the action schema from an MCP manifest](11-mcp-schema-generation.md).)
 
 ### A real action schema
@@ -119,12 +121,12 @@ describing its intent.
 Here is the simplest possible policy — a single `permit` with no extra conditions:
 
 ```text
-// The simplest possible GuardLogic policy: a single permit with
+// The simplest possible Dogwood policy: a single permit with
 // no further condition.
 permit ( principal, action == Drupe::Action::"GetStockInfo", resource );
 ```
 
-> Runnable: [`examples/simplest_permit/`](../examples/simplest_permit.md) — `dogwood validate`.
+> Runnable: [`examples/simplest_permit/`](../examples/simplest_permit/) — `dogwood validate`.
 
 Every policy rule has the same five-part shape, in this order:
 
@@ -144,7 +146,7 @@ permit (                                                // (2) effect
 when { context.input.shares <= 50 };                    // (4) condition, (5) terminator
 ```
 
-> Runnable: [`examples/sell_small_only/`](../examples/sell_small_only.md) — `dogwood validate` and `dogwood replay`.
+> Runnable: [`examples/sell_small_only/`](../examples/sell_small_only/) — `dogwood validate` and `dogwood replay`.
 
 The sections below take each part in turn.
 
@@ -172,7 +174,7 @@ forbid ( principal, action == Drupe::Action::"SellShares", resource )
 when { context.input.stock == "AMZN" };
 ```
 
-> Runnable: [`examples/deny_overrides_sell_not_amzn/`](../examples/deny_overrides_sell_not_amzn.md) — `dogwood validate` and `dogwood replay`.
+> Runnable: [`examples/deny_overrides_sell_not_amzn/`](../examples/deny_overrides_sell_not_amzn/) — `dogwood validate` and `dogwood replay`.
 
 ### Annotations: `@key("value")`
 
@@ -187,14 +189,14 @@ when { context.input.shares <= 50 };
 
 The value string is optional, so both `@id("x")` and a bare `@reviewed` are legal. A rule
 may carry any number of annotations. Annotations are purely for diagnostics and reporting
-(the `@id` key names a rule so tools can refer to it) — **they never change whether a rule
-matches.**
+(the `@id` key names a rule so tools can refer to it) — they never change whether a rule
+matches.
 
 ### Scope and conditions
 
 The scope triple and the condition clauses are where all the matching logic lives; they
 each get their own full section below ([The scope triple](#the-scope-triple) and
-[Condition clauses](#condition-clauses)). The terminator is simply the `;` that ends every
+[Condition clauses](#condition-clauses)). The terminator is the `;` that ends every
 top-level item.
 
 ---
@@ -241,7 +243,7 @@ permit (
 );
 ```
 
-> Runnable: [`examples/allow_anything/`](../examples/allow_anything.md) — `dogwood validate`.
+> Runnable: [`examples/allow_anything/`](../examples/allow_anything/) — `dogwood validate`.
 
 ### `==` — equality to a specific entity
 
@@ -257,7 +259,7 @@ permit (
 );
 ```
 
-> Runnable: [`examples/sell_shares_eq_scope/`](../examples/sell_shares_eq_scope.md) — `dogwood validate`.
+> Runnable: [`examples/sell_shares_eq_scope/`](../examples/sell_shares_eq_scope/) — `dogwood validate`.
 
 If the operand is not a valid entity reference you get
 `` expected an entity reference (`Ns::Type::"id"`) or a template slot (`?principal`) ``
@@ -279,7 +281,7 @@ permit (
 );
 ```
 
-> Runnable: [`examples/sell_or_approve_action_in/`](../examples/sell_or_approve_action_in.md) — `dogwood validate`.
+> Runnable: [`examples/sell_or_approve_action_in/`](../examples/sell_or_approve_action_in/) — `dogwood validate`.
 
 A single action reference is also accepted after `action in` (i.e. the list brackets are
 optional for one element).
@@ -298,7 +300,7 @@ permit (
 );
 ```
 
-> Runnable: [`examples/principal_is_oauth/`](../examples/principal_is_oauth.md) — `dogwood validate`.
+> Runnable: [`examples/principal_is_oauth/`](../examples/principal_is_oauth/) — `dogwood validate`.
 
 To combine both, write the type test first and the group after `in`:
 
@@ -310,11 +312,11 @@ permit (
 );
 ```
 
-> Runnable: [`examples/traders_is_in_group_scope/`](../examples/traders_is_in_group_scope.md) — `dogwood validate`.
+> Runnable: [`examples/traders_is_in_group_scope/`](../examples/traders_is_in_group_scope/) — `dogwood validate`.
 
 Two restrictions to know:
 
-- **`action is Type` is invalid** — the `is` form is not allowed on the action slot. You
+- `action is Type` is invalid — the `is` form is not allowed on the action slot. You
   will get `` `action is Type` is not valid in the action scope ``.
 - Only `is Type in …` may follow an `is` test. Writing `is Type == …` is rejected with
   `` `is Type {op} …` is not valid; only `is Type in …` is allowed ``.
@@ -371,7 +373,7 @@ unless {
 };
 ```
 
-> Runnable: [`examples/sell_unless_huge/`](../examples/sell_unless_huge.md) — `dogwood validate`.
+> Runnable: [`examples/sell_unless_huge/`](../examples/sell_unless_huge/) — `dogwood validate`.
 
 ### Multiple clauses on one rule
 
@@ -384,7 +386,7 @@ when { context.input.shares < 100 }
 when { context.input.stock == "AMZN" };
 ```
 
-> Runnable: [`examples/sell_two_when_small_amzn/`](../examples/sell_two_when_small_amzn.md) — `dogwood validate`.
+> Runnable: [`examples/sell_two_when_small_amzn/`](../examples/sell_two_when_small_amzn/) — `dogwood validate`.
 
 You can freely mix `when` and `unless` on the same rule:
 
@@ -394,7 +396,7 @@ when   { context.input.shares <= 1000 }
 unless { context.input.stock == "BLOCKED" };
 ```
 
-> Runnable: [`examples/sell_when_unless_mix/`](../examples/sell_when_unless_mix.md) — `dogwood validate`.
+> Runnable: [`examples/sell_when_unless_mix/`](../examples/sell_when_unless_mix/) — `dogwood validate`.
 
 The same applies to `forbid` rules — this forbids large sells except for AMZN:
 
@@ -404,7 +406,7 @@ when   { context.input.shares > 100 }
 unless { context.input.stock == "AMZN" };
 ```
 
-> Runnable: [`examples/forbid_large_except_amzn/`](../examples/forbid_large_except_amzn.md) — `dogwood validate` and `dogwood replay`.
+> Runnable: [`examples/forbid_large_except_amzn/`](../examples/forbid_large_except_amzn/) — `dogwood validate` and `dogwood replay`.
 
 ### The `temporal { … }` marker and the `guardrails { … }` clause
 
@@ -420,11 +422,11 @@ Dogwood extends Cedar with two clause forms beyond a bare `when { … }`:
   The tag is retained only for surface compatibility. See
   [Information providers](05-information-providers.md).
 
-The `temporal` marker can appear in two places. First, as an entire clause body (a full permit combining both a `when temporal` and a `when guardrails` clause is runnable at [`examples/sell_after_approval_valid_ticker/`](../examples/sell_after_approval_valid_ticker.md)):
+The `temporal` marker can appear in two places. First, as an entire clause body (a full permit combining both a `when temporal` and a `when guardrails` clause is runnable at [`examples/sell_after_approval_valid_ticker/`](../examples/sell_after_approval_valid_ticker/)):
 
 ```text
 when temporal {
-    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.approver }
+    formerly within 1h Drupe::Action::"Login"::response{ input.user: context.input.approver }
 }
 when guardrails {
     Strings::Matches(context.input.request_id, "^REQ-[0-9]+$").matched == true
@@ -433,14 +435,14 @@ when guardrails {
 
 Second, a `temporal` marker is also a primary expression, so it may appear
 *inside* an ordinary Cedar expression (a full permit of this shape is runnable at
-[`examples/sell_shares_temporal_subexpr/`](../examples/sell_shares_temporal_subexpr.md)):
+[`examples/sell_shares_temporal_subexpr/`](../examples/sell_shares_temporal_subexpr/)):
 
 ```text
 when { context.input.shares > 5 && temporal { /* … */ } }
 ```
 
 Both `unless temporal { … }` and `unless guardrails { … }` are equally valid.
-**The temporal marker's braced contents are out of scope for this page** — see
+The temporal marker's braced contents are out of scope for this page — see
 the linked docs. All this page records is that these forms exist and where they
 attach.
 
@@ -461,7 +463,7 @@ top.
 appear anywhere a value is expected. Both branches must produce the same type.
 
 At the top level of a `when`, it reads like a conditional rule (runnable as a full
-rule at [`examples/sell_threshold_by_stock/`](../examples/sell_threshold_by_stock.md)):
+rule at [`examples/sell_threshold_by_stock/`](../examples/sell_threshold_by_stock/)):
 
 ```text
 when {
@@ -473,7 +475,7 @@ when {
 
 Because it is an expression, you can nest it and use it as an operand — here to pick a
 per-stock threshold (runnable as a full rule at
-[`examples/sell_nested_if_threshold/`](../examples/sell_nested_if_threshold.md)):
+[`examples/sell_nested_if_threshold/`](../examples/sell_nested_if_threshold/)):
 
 ```text
 when {
@@ -484,9 +486,9 @@ when {
 };
 ```
 
-A very common idiom pairs `if` with `has` (see [has](#has--attribute-existence)) to guard
+A common idiom pairs `if` with `has` (see [has](#has--attribute-existence)) to guard
 an optional field, falling back to `false` when the field is absent (runnable as a full
-rule at [`examples/sell_zero_proceeds_if_has/`](../examples/sell_zero_proceeds_if_has.md)):
+rule at [`examples/sell_zero_proceeds_if_has/`](../examples/sell_zero_proceeds_if_has/)):
 
 ```text
 when {
@@ -501,7 +503,7 @@ when {
 `||` (or) and `&&` (and) are the boolean connectives; `!` is boolean negation (a unary
 prefix, covered under [arithmetic and unary operators](#arithmetic-and-unary-operators)).
 `&&` binds tighter than `||`, so parenthesize when you want the other grouping (runnable
-as a full rule at [`examples/sell_logical_grouping/`](../examples/sell_logical_grouping.md)):
+as a full rule at [`examples/sell_logical_grouping/`](../examples/sell_logical_grouping/)):
 
 ```text
 when {
@@ -526,7 +528,7 @@ The relational level covers ordinary comparison operators plus the keyword opera
 | `in` | entity-hierarchy membership |
 
 Comparisons chain and fold left, so you can write several in a single `&&` conjunction
-(runnable as a full rule at [`examples/sell_comparison_chain/`](../examples/sell_comparison_chain.md)):
+(runnable as a full rule at [`examples/sell_comparison_chain/`](../examples/sell_comparison_chain/)):
 
 ```text
 when {
@@ -542,24 +544,24 @@ Note there is **no** `=` operator — writing `=` is rejected with
 `in` is not only a scope keyword; it is also an expression operator that tests
 entity-hierarchy membership, e.g. `principalGroup in someParent`.
 
-**Which operators apply to which type** matters, and is checked by the validator
+Which operators apply to which type matters, and is checked by the validator
 downstream (not by the parser). The rules of thumb:
 
 - **Long (integer)** supports the full ordered set: `<`, `<=`, `>`, `>=`, `==`, `!=`.
 - **String** supports `==` and `!=` (and `like`, below). Ordered comparison is not
   meaningful. For example: `when { context.input.stock != "BLOCKED" };` (runnable as a
-  full rule at [`examples/sell_not_blocked_string/`](../examples/sell_not_blocked_string.md)).
+  full rule at [`examples/sell_not_blocked_string/`](../examples/sell_not_blocked_string/)).
 - **Bool** is compared with `== true` / `== false`.
 - **Decimal** supports **equality only** (`==` / `!=`). Ordered comparison on decimals does
   **not** type-check — use the decimal methods (`.lessThan`, etc.) instead (runnable as a
-  full rule at [`examples/sell_nonzero_proceeds_decimal/`](../examples/sell_nonzero_proceeds_decimal.md)):
+  full rule at [`examples/sell_nonzero_proceeds_decimal/`](../examples/sell_nonzero_proceeds_decimal/)):
 
   ```text
   when { context has output && context.output.proceeds != decimal("0.0") };
   ```
 
 - **Datetime** supports the full ordered set, so you can express time windows directly
-  (runnable as a full rule at [`examples/sell_datetime_window/`](../examples/sell_datetime_window.md)):
+  (runnable as a full rule at [`examples/sell_datetime_window/`](../examples/sell_datetime_window/)):
 
   ```text
   when {
@@ -603,8 +605,8 @@ when { context.system.now > datetime("2024-01-01T00:00:00Z") };
 
 After a primary expression you can chain member accessors. There are three forms.
 
-**Attribute access** `e.attr` reads a field. Chained attribute access is the workhorse of
-Dogwood conditions:
+**Attribute access** `e.attr` reads a field. Chained attribute access is the
+common form in Dogwood conditions:
 
 ```text
 context.input.shares
@@ -635,7 +637,7 @@ rejected with `unexpected call: only extension functions and methods can be call
 guard you use before reading a field that might not exist. The right-hand side may be a
 dotted path (`has a.b.c`), a string-literal name (`has "attr"`), or (per Cedar RFC 62) the
 reserved word `if` used as an attribute name (`has if.x`). This guard-then-read pattern is
-runnable as a full rule at [`examples/approve_has_output_guard/`](../examples/approve_has_output_guard.md):
+runnable as a full rule at [`examples/approve_has_output_guard/`](../examples/approve_has_output_guard/):
 
 ```text
 when {
@@ -652,14 +654,14 @@ right. The `if … then … else false` variant of this pattern was shown under
 `s like "pattern"` matches a string against a wildcard pattern. The right-hand side must be
 a string literal. Inside the pattern, `*` matches any number of characters, `\*` matches a
 literal star, and the usual escapes (including `\u{HEX}`) are supported (runnable as a full rule at
-[`examples/sell_like_a_prefix/`](../examples/sell_like_a_prefix.md)):
+[`examples/sell_like_a_prefix/`](../examples/sell_like_a_prefix/)):
 
 ```text
 when { context.input.stock like "A*" };
 ```
 
 A common denylist idiom uses `like` under `unless` to reject a family of values (runnable
-as a full rule at [`examples/sell_not_test_tickers_like/`](../examples/sell_not_test_tickers_like.md)):
+as a full rule at [`examples/sell_not_test_tickers_like/`](../examples/sell_not_test_tickers_like/)):
 
 ```text
 unless { context.input.stock like "TEST_*" };
@@ -670,7 +672,7 @@ unless { context.input.stock like "TEST_*" };
 `e is Type` tests whether an entity value has the given entity type, and the optional
 `is Type in group` additionally checks hierarchy membership. This is the expression-level
 counterpart of the `is` scope constraint (runnable as a full rule at
-[`examples/cond_is_oauth_in_team/`](../examples/cond_is_oauth_in_team.md)):
+[`examples/cond_is_oauth_in_team/`](../examples/cond_is_oauth_in_team/)):
 
 ```text
 principal is Drupe::OAuthUser in Drupe::Team::"traders"
@@ -745,7 +747,7 @@ A `.method(args)` after a receiver expression is a method call. Methods come in 
 
 Note the decimal comparison methods — since `<`/`<=`/`>`/`>=` do not type-check on
 decimals, these methods are how you order decimals (a full rule using `.lessThan` on a decimal output
-field is runnable at [`examples/sell_small_proceeds_decimal_method/`](../examples/sell_small_proceeds_decimal_method.md)):
+field is runnable at [`examples/sell_small_proceeds_decimal_method/`](../examples/sell_small_proceeds_decimal_method/)):
 
 ```text
 context.output.severityScore.lessThan(decimal("0.5"))
@@ -765,8 +767,7 @@ record literal.
 
 **Variable names.** A bare name in value position must resolve to one of the four request
 variables: `principal`, `action`, `resource`, or `context`. Any other bare identifier is an
-error (`` `{other}` is not a valid variable; the valid variables are `principal`, `action`,
-`resource`, and `context` ``).
+error (`` `{other}` is not a valid variable ``).
 
 **Parenthesized expressions** group to override precedence, as shown earlier:
 `(context.input.shares < 100 || context.input.stock == "AMZN")`.
@@ -866,13 +867,9 @@ not use these:
 - **The colon scope form `principal : Type`** — rejected; use `principal is Type`.
 - **`action is Type`** in a scope — the `is` form is not valid on the action slot.
 - **`Type::{ … }`** entity-initializer syntax — parses but is not supported.
-- **`!=` on decimals** and ordered comparison on decimals do not type-check — use the
-  decimal comparison methods.
+- **Ordered comparison on decimals** (`<`, `<=`, `>`, `>=`) does not type-check — use
+  the decimal comparison methods. Equality (`==` / `!=`) does work.
 - **Integer `2^63`** as a bare literal — out of range (only reachable via negation).
-
-Also note some things that simply **do not exist** in the current core language, so do not
-reach for them: there is no `let … in` binding form, and mixed unary prefixes like `!-x`
-are unparseable.
 
 ---
 

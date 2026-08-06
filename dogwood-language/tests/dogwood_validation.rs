@@ -10,7 +10,7 @@ use dogwood_language::{
     ValidationResult, Validator,
 };
 
-/// Run the full pipeline: build a [`ServiceSchema`] (the request/resolution
+/// Run the full pipeline: build a [`ServiceSchema`] (the request/response
 /// event schema + optional providers) and a [`PolicySchema`] (action schema),
 /// parse the source into a [`LoweredPolicySet`] (lower + event-schema check),
 /// then run the [`Validator`] (Cedar core + temporal + provider dialects).
@@ -83,9 +83,9 @@ namespace App {
 }
 "#;
 
-/// The standard request/resolution event schema (the same convention the
+/// The standard request/response event schema (the same convention the
 /// other temporal tests use): for every action `A`, derive a `request`
-/// decision event and a `resolution` history event from the action's inputs.
+/// decision event and a `response` history event from the action's inputs.
 /// Temporal predicates here name `<Action>::request{…}`, so `parse` needs this
 /// to derive those event signatures.
 const EVENT_SCHEMA: &str = r#"

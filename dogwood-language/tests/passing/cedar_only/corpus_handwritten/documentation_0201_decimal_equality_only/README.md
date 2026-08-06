@@ -1,6 +1,6 @@
 # 0201 — Decimals compare with `==` / `!=` only
 
-GuardLogic borrows Cedar's decimal type for fields like
+Dogwood borrows Cedar's decimal type for fields like
 `SellShares.proceeds` (see 0006 for an earlier proceeds-style
 example). Decimals are deliberately restricted: you can ask
 *equal* or *not equal*, but you cannot order them.

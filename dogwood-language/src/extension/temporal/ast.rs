@@ -139,7 +139,7 @@ pub enum Sigil {
 }
 
 /// An aggregation expression — a numeric term (yielding `Long`). Carried
-/// as a [`Term::Agg`]; the comparison-operand-only rule (§3.1) is enforced
+/// as a [`Term::Agg`]; the comparison-operand-only rule is enforced
 /// by validation, not the grammar. A macro whose body *is* an aggregation
 /// is spliced into a `Term::Agg` at its call site.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -367,7 +367,7 @@ pub enum Term {
     Array(Vec<Term>),
     /// An aggregate value: `count for … where φ` / `sum a for … where φ`,
     /// yielding `Long`. A term syntactically, but the
-    /// comparison-operand-only rule (§3.1) — an aggregate must be the
+    /// comparison-operand-only rule — an aggregate must be the
     /// immediate operand of a comparison, never a predicate-arg value or a
     /// nested term — is enforced by validation (`check`), not the grammar.
     Agg(Box<AggExpr>),
@@ -386,8 +386,8 @@ pub enum Term {
 /// like `Drupe::OAuthUser`) plus the temporal-only [`Type::Timepoint`].
 ///
 /// Annotations are **parsed and carried through the AST but not yet
-/// checked** against the schema — typed validation is deferred (see the
-/// `exists`/`let` design, §4.1). The distinct `Timepoint` type lets future
+/// checked** against the schema — typed validation is deferred. The
+/// distinct `Timepoint` type lets future
 /// validation forbid nonsensical mixes (summing timepoints, comparing a
 /// timepoint to an amount) that a plain `Long` would silently allow.
 #[derive(Debug, Clone, PartialEq, Eq)]

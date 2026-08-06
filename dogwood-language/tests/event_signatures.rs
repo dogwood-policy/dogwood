@@ -61,7 +61,7 @@ fn default_schema_surfaces_injected_reserved_fields() {
 }
 
 #[test]
-fn resolution_carries_output_leaves() {
+fn response_carries_output_leaves() {
     let lowered = lower(&ServiceSchema::defaults());
     let res = leaf_paths(&lowered, "Login", "response");
     assert!(res.contains(&"input.user".to_string()), "{res:?}");
@@ -81,7 +81,7 @@ fn namespace_is_qualified_with_action_segment() {
         .event_signatures()
         .find(|s| s.action() == "Login" && s.kind() == "response")
         .unwrap();
-    assert!(!res.is_decision(), "resolution is history-only");
+    assert!(!res.is_decision(), "response is history-only");
 }
 
 #[test]

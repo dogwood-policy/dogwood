@@ -87,7 +87,7 @@ pub struct ServiceSchema {
 
 impl ServiceSchema {
     /// Start building a service schema. The event schema defaults to
-    /// [`DEFAULT_EVENT_SCHEMA`] (the request/resolution convention), the macros
+    /// [`DEFAULT_EVENT_SCHEMA`] (the request/response convention), the macros
     /// to [`DEFAULT_MACROS`], and the providers to empty.
     pub fn builder() -> ServiceSchemaBuilder {
         ServiceSchemaBuilder {
@@ -132,7 +132,7 @@ pub struct ServiceSchemaBuilder {
 
 impl ServiceSchemaBuilder {
     /// Set the event-schema DSL source. Optional — omit to use
-    /// [`DEFAULT_EVENT_SCHEMA`] (the request/resolution convention).
+    /// [`DEFAULT_EVENT_SCHEMA`] (the request/response convention).
     pub fn event_schema_str(mut self, src: &str) -> Self {
         self.event_schema_src = Some(src.to_string());
         self
@@ -177,7 +177,7 @@ impl ServiceSchemaBuilder {
                 return Err(Error::EventSchema(
                     "event_schema_str was given an empty event schema, which declares no \
                      events (so authorization could never run); omit event_schema_str to use \
-                     the default request/resolution schema, or pass a schema that declares a \
+                     the default request/response schema, or pass a schema that declares a \
                      `decision` event"
                         .to_string(),
                 ));

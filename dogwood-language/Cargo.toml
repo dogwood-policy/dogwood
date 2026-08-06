@@ -43,15 +43,15 @@ mcp-tools-sdk = "0.4"
 rhai = { version = "1", features = ["decimal", "sync"] }
 regex = "1"
 rust_decimal = "1"
-# Embeds the temporal regression corpus into the crate (feature `corpus`)
-# so other packages — notably the SQL compiler — can run differential
-# tests over the same cases the in-memory engine is validated against.
+# Embeds the temporal regression corpus into the crate (feature `corpus`) so
+# that an alternative implementation of the temporal engine can be checked
+# against the same cases the in-memory engine is validated against.
 include_dir = { version = "0.7", optional = true }
 
 [features]
 # Expose the embedded temporal regression corpus via `crate::corpus`.
-# Off by default: only consumers running differential tests need the
-# ~13MB of embedded case data.
+# Off by default: only callers that want to check an alternative engine
+# against the corpus need the ~13MB of embedded case data.
 corpus = ["dep:include_dir"]
 
 # Register a networked `http_get(url)` host function for provider scripts

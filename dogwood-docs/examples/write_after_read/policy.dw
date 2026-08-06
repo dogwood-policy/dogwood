@@ -12,7 +12,7 @@ permit (
     resource
 )
 when temporal {
-    formerly within 1h Drupe::Action::"ApproveSale"::request{
+    formerly within 1h Drupe::Action::"ApproveSale"::response{
         input.stock: context.input.stock
     }
 };

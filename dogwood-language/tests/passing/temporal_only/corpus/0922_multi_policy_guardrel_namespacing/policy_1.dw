@@ -1,26 +1,25 @@
-// TWO GuardRel-correlated `since` policies in ONE policy set — the
-// multi-policy compilation path. The temporal engine compiles every temporal
-// leaf of a policy set into a single SQL function, namespacing each leaf's
-// CTEs and state-table rows only by a per-policy prefix (`p0_`/`p1_` in CTE
-// names, `:p0_N`/`:p1_N` in `since_guard`/`since_anchor` row ids).
+// TWO request-correlated `since` policies in ONE policy set — the
+// multi-policy path. An implementation that evaluates every temporal leaf of a
+// policy set together must keep each leaf's correlated state separate, since
+// nothing else distinguishes them.
 //
 // Both leaves correlate on `context.input.user`, so their guard streaks are
-// keyed by the SAME k0 hash values (md5 of the user) — the row-id prefix is
-// the ONLY thing separating dave's Transfer streak (policy 0's breaker)
-// from dave's Refund streak (policy 1's breaker). The guard predicates
-// differ (Transfer vs Refund), so any cross-policy read flips a verdict:
+// keyed by the SAME correlation value — the per-policy identity is the ONLY
+// thing separating dave's Transfer streak (policy 0's breaker) from dave's
+// Refund streak (policy 1's breaker). The guard predicates differ (Transfer vs
+// Refund), so any cross-policy read flips a verdict:
 //
 //   @20 Approve dave — dave DID transfer (@10) → deny.
 //   @30 Review dave  — dave never refunded → PERMIT; if policy 1's lookup
-//                      read policy 0's rows (id mixup), it would see dave's
-//                      Transfer streak and wrongly deny.
+//                      read policy 0's state, it would see dave's Transfer
+//                      streak and wrongly deny.
 //   @50 Review eve   — eve DID refund (@40) → deny.
 //   @60 Approve eve  — eve never transferred → PERMIT; the mirror detector
-//                      for pollution in the other direction.
+//                      for leakage in the other direction.
 //
-// Every single-policy GuardRel case compiles a one-prefix function, so this
-// is the only coverage of prefix isolation for the correlation machinery.
-// Interpreter is the oracle (see expected_1.out).
+// Every single-policy correlated case involves only one policy, so this is the
+// only coverage of isolation between policies for the correlation machinery.
+// Expected verdicts are in expected_1.out.
 permit (
     principal,
     action == Drupe::Action::"Approve",

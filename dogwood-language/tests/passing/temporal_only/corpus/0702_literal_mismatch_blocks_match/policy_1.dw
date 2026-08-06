@@ -1,8 +1,8 @@
 // Negative twin of 0272: pin `server` to a literal that no
-// Login event in the trace ever uses. Lean must produce zero
-// permits; the literal-pin filter is what we are testing. A
-// temporal engine bug that ignores or off-by-ones the literal-equality
-// generation would let the Read events permit anyway.
+// Login event in the trace ever uses. The expected result is zero
+// permits; the literal-pin filter is what we are testing. An
+// implementation that ignored the literal-equality condition, or applied it
+// at the wrong position, would let the Read events permit anyway.
 permit (
     principal,
     action == Drupe::Action::"Read",

@@ -1,6 +1,6 @@
 ---
 name: authoring-service-schema
-description: "Author or edit a Dogwood SERVICE schema — the event schema (.dwschema: event kinds, decision vs history points, renamed/reserved fields, nested records, correlation pins) and/or information providers (providers.json + the Rhai `evaluate` implementation behind a computed guardrail fact). Use when a policy needs a non-default event model (a history-only event kind, a renamed principal field, a pin/correlation invariant) or a computed fact from a provider/guardrail. The service schema is OPTIONAL and defaults sensibly (default = only `request` is a decision kind, no providers, no macros), so this also covers deciding whether one is even needed. Requires a Cedar action schema first — that is authoring-action-schema. NOT for the Cedar action schema itself (entities/actions/context) — that is authoring-action-schema. NOT for writing `.dw` policies — that is autoformalize-policies."
+description: "Author or edit a Dogwood SERVICE schema — the event schema (.dwschema: event kinds, decision vs history points, renamed/reserved fields, nested records, correlation pins) and/or information providers (providers.json + the Rhai `evaluate` implementation behind a computed guardrail fact). Use when a policy needs a non-default event model (a history-only event kind, a renamed principal field, a pin/correlation invariant) or a computed fact from a provider/guardrail. The service schema is OPTIONAL and defaults sensibly (default = request/response/error kinds with only `request` deciding, a universal principal pin giving key-local semantics, a 24h `max_window` cap, no providers, and a small standard macro library), so this also covers deciding whether one is even needed. Requires a Cedar action schema first — that is authoring-action-schema. NOT for the Cedar action schema itself (entities/actions/context) — that is authoring-action-schema. NOT for writing `.dw` policies — that is autoformalize-policies."
 ---
 
 # Authoring a Dogwood service schema (events + providers)
@@ -11,12 +11,19 @@ schema** (`.dwschema`) and/or an **information-provider declarations** file
 and lets the policies you care about validate against a concrete action schema.
 
 The service schema is **entirely optional and defaults sensibly**. The default
-event schema declares exactly two kinds — `request` (the only decision kind) and
-`resolution` (history-only) — each carrying the action's inputs plus the reserved
-leaves `callerPrincipal` / `callerResource` / `requestId`, with **no pins**;
-the default provider set is **empty** and there are **no macros**. So the most
-important decision is Step 0: *do you even need one?* If not, the best service
-schema is no service schema — omit it and Dogwood uses the default.
+event schema declares three kinds — `request` (the only decision kind),
+`response`, and `error` (both history-only) — each carrying the action's inputs
+(`response` also its outputs) plus the reserved leaves `callerPrincipal` /
+`callerResource` / `requestId` / `sessionId`. Crucially, `callerPrincipal` is a
+**universal symmetric pin** (`pin callerPrincipal: principalType(A) =
+principal` on every kind), so the default runs under **key-local semantics**:
+every temporal predicate is silently correlated to the current request's
+principal, and other principals' events are invisible to it. The default
+look-back cap is `max_window = 24h`, the default provider set is **empty**, and
+the default macro library is the small standard one (`count_within`,
+`sum_within`, `count_distinct_within`, `bind`). So the most important decision
+is Step 0: *do you even need one?* If not, the best service schema is no
+service schema — omit it and Dogwood uses the default.
 
 This skill has two cores — **events** and **providers** — plus **macros** as a
 related seam (Step 3, briefly; the guide owns it). Do **not** invent DSL or JSON
@@ -26,20 +33,33 @@ Follow the steps in order.
 ## Step 0 — Decide whether you need a service schema at all (do this first)
 
 Write a custom **event schema** only if the application's event model diverges
-from the default request/resolution model in one of these ways:
+from the default request/response/error model in one of these ways:
 
 - **A history-only event kind the default lacks** — an `audit`/`outcome` kind, or
-  renaming the pair (`attempt`/`outcome` instead of `request`/`resolution`). The
-  default already gives `request` (decision) + `resolution` (history); customize
-  only to go *beyond* that.
+  renaming the set (`attempt`/`outcome` instead of `request`/`response`). The
+  default already gives `request` (decision) + `response` + `error` (history);
+  customize only to go *beyond* that.
 - **A different decision point** — some kind other than `request` must run
   authorization (mark it `decision`).
 - **A renamed or extra reserved/principal field** — the injected principal is
   `actor` not `callerPrincipal`, or an extra `__session_id`.
 - **Nested record fields** — hierarchical fields like `__platform.session.id`.
-- **A pin / correlation invariant** — a field every predicate for an event must
-  silently correlate to the current request (same principal, same session),
-  enforced by the schema so individual policies cannot forget it.
+- **A different pin / correlation invariant** — the default already pins
+  `callerPrincipal` on every kind (key-local, per-principal semantics). Write a
+  custom schema to pin a *different* key (a session id), to add an extra pin,
+  or — going the other way — to get **global-trace semantics** (a policy about
+  *any* principal's events, e.g. "N logins by any user"), which requires a
+  schema *without* the universal principal pin (the shipped
+  `configuration/event-schemas/unpinned.dwschema` is exactly that).
+- **A longer look-back than 24h** — every temporal window is capped by the
+  event schema's `max_window` directive, **24h when absent**, so a policy with
+  `within 7d` is a validation error under the default. Raising the cap is an
+  event-schema change: copy the default schema and add `max_window = <interval>`
+  (e.g. `max_window = 30d`) at the top of the file. **A `.dwschema` containing
+  only the directive declares zero events** — it passes the isolated
+  `schema event` check but every policy predicate then fails the composite
+  `validate` (`does not name a declared event`) — so always carry the event
+  declarations along with the directive.
 
 Write **providers** (`providers.json`) only if a policy needs a **computed fact**
 not in the request — a regex match, denylist check, risk/content score, allowlist
@@ -62,8 +82,9 @@ are relative to this skill directory
 - `../../../dogwood-docs/guide/03-event-schema.md` — the **event-schema DSL**:
   the `[decision] event <A>::kind { … }` shape, the four selectors (`inputs`,
   `outputs`, `principalType`, `resourceType`), spreads vs field-types, nested
-  records, **pins** (`pin name: type = context.<path>`), decision vs history
-  kinds, the default schema, and worked corpus examples (1110–1122). Read in full
+  records, **pins** (`pin name: type = <request-reference>`), decision vs
+  history kinds, the **`max_window` directive** (the look-back cap), the
+  default schema, and worked corpus examples (1110–1122). Read in full
   before writing any `.dwschema`.
 - `../../../dogwood-docs/guide/10-provider-schema.md` — **declaring** a provider:
   the `providers.json` format (`availableProviders`, `argumentTypes`,
@@ -74,8 +95,8 @@ are relative to this skill directory
   `providers.json`.
 - `../../../dogwood-docs/guide/05-information-providers.md` — the **calling**
   contract from a policy's side (`Ns::Fn(args).field <cmp> …`, argument kinds,
-  projection, the concrete-action requirement): what a policy author writes
-  against your declaration.
+  projection; any action scope works): what a policy author writes against your
+  declaration.
 - `../../../dogwood-docs/guide/12-cli.md` — the `dogwood` CLI, the two schema
   halves, and the exact commands + exit codes used in Step 4.
 - `../../../dogwood-docs/guide/06-macros.md` — **defining** macros (Step 3).
@@ -245,8 +266,8 @@ intended (guide 12).
 If `dogwood` is unavailable, you MUST NOT present the schema as correct. Instead:
 (1) state plainly it was **not** validated here; (2) do a rigorous manual check
 against guides 03 and 10 — every selector references the `<A>` binder, a reachable
-`decision` kind exists, pins are leaf-only with both `pin` and `= context.<path>`,
-field names unique at every level, provider `argumentTypes`/`outputType`
+`decision` kind exists, pins are leaf-only with both `pin` and a `= <request-reference>`
+value, field names unique at every level, provider `argumentTypes`/`outputType`
 well-formed, and Rhai is **inline under `script`** (not `scriptFile`); and (3)
 give the user the exact `dogwood validate` command above to gate it themselves.
 Treat "cannot validate here" as a degraded path to flag loudly — not the norm.

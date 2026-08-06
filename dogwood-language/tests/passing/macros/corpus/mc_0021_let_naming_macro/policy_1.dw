@@ -1,5 +1,5 @@
 // `let_` naming macro: recovers `let`-style ergonomics after `let` was
-// removed from the grammar (exists/let design §8.1). `let_(?n, ?A, ?B)`
+// removed from the grammar. `let_(?n, ?A, ?B)`
 // expands to `exists (?n: Long). (?A == ?n && ?B)` — `?n` is used in BOTH
 // binder position (the `exists` declaration) and term position (`== ?n`);
 // `?A` is an aggregate term passed as a macro argument. This works with no

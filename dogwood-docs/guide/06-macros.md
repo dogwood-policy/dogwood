@@ -1,14 +1,12 @@
 # Macros
 
 This page is the Advanced-topics deep dive on **defining** Dogwood macros:
-compile-time templates that let you name and reuse a fragment of policy logic. It
+lowering-time templates that let you name and reuse a fragment of policy logic. It
 explains the two kinds of macro (`def cedar` and `def temporal`), the two
 parameter sigils (`?p` value parameters and `$t` fresh binders), how calls are
 checked for arity and kind, how hygiene keeps reused macros from capturing each
-other's variables, every rule that will get a macro rejected at compile time, and
-how to ship a reusable macro library alongside a schema. Every example here is
-drawn from the tested corpus, so you can copy any of them into a `.dw` file and
-expect it to parse and expand.
+other's variables, every rule that will get a macro rejected, and
+how to ship a reusable macro library alongside a schema.
 
 If you just want to *call* a macro that already exists — where a call may appear
 and what shape its arguments take — see [Calling macros](09-calling-macros.md);
@@ -16,18 +14,18 @@ this page is what you write to define one.
 
 ## What a macro is (and is not)
 
-A Dogwood macro is a **compile-time template**, not a runtime function. There is
-no call stack, no recursion, and nothing that survives into the compiled
+A Dogwood macro is a lowering-time template, not a runtime function. There is
+no call stack, no recursion, and nothing that survives into the lowered
 monitor. You declare a macro once at the top of a `.dw` file, and everywhere you
-call it the compiler splices the macro body in — substituting the call
+call it expansion splices the macro body in — substituting the call
 arguments — before the policy is lowered. By the time the temporal evaluator or
 the Cedar backend sees your policy, there are no macro definitions and no calls
 left; the definitions have been consumed and every call has been replaced by its
 expanded body.
 
-Because macros are templates, they buy you two concrete things:
+Because macros are templates, they give you two things:
 
-- **Naming.** `is_small(context.input.shares)` reads better than
+- **Naming.** `is_small(context.input.shares)` names the check
   `context.input.shares < 100`, and the threshold lives in exactly one place.
 - **Reuse without duplication.** A temporal pattern like "did this happen in the
   last hour" can be written once and called from many policies. Dogwood's
@@ -52,10 +50,10 @@ def temporal <name>(?w, ?s, ...) { <temporal condition or aggregation> } ;
 
 The kind keyword after `def` — `cedar` or `temporal` — chooses the sub-language
 the body is parsed in, and that in turn decides where the macro may be called.
-Definitions may be interleaved with policies in any order; the compiler collects
-all definitions first, then expands calls in the policies.
+Definitions may be interleaved with policies in any order; all definitions are
+collected first, then calls in the policies are expanded.
 
-Note the trailing `;` is required, exactly as it is on a policy rule. The
+The trailing `;` is required, exactly as it is on a policy rule. The
 parameter list is optional: a zero-argument macro is just `name()`.
 
 ### `def cedar` — a pure Cedar expression
@@ -64,7 +62,7 @@ A `def cedar` macro's body is an ordinary Cedar expression. Wherever you would
 write that expression by hand — inside a `when { ... }` clause, or as part of a
 larger expression — you can instead call the macro.
 
-The simplest useful example names a threshold:
+One example names a threshold:
 
 ```text
 def cedar is_small(?n) { ?n < 100 };
@@ -77,7 +75,7 @@ permit(principal, action, resource)
 when { is_small(context.input.shares) };
 ```
 
-> Runnable: [`examples/cedar_is_small_threshold/`](../examples/cedar_is_small_threshold.md) — `dogwood validate` (the macro library is supplied with `--macros`).
+> Runnable: [`examples/cedar_is_small_threshold/`](../examples/cedar_is_small_threshold/) — `dogwood validate` (the macro library is supplied with `--macros`).
 
 Cedar macros compose with ordinary Cedar operators. Here two of them are joined
 with `&&`, and each takes an argument of a different type:
@@ -93,7 +91,7 @@ when {
 };
 ```
 
-> Runnable: [`examples/cedar_eligible_not_blocked/`](../examples/cedar_eligible_not_blocked.md) — `dogwood validate`.
+> Runnable: [`examples/cedar_eligible_not_blocked/`](../examples/cedar_eligible_not_blocked/) — `dogwood validate`.
 
 A Cedar macro body can be any Cedar expression, including `like` patterns and
 `if/then/else`:
@@ -106,7 +104,7 @@ def cedar within_cap(?stock, ?shares) {
 };
 ```
 
-> Runnable: [`examples/cedar_starts_with_f_like/`](../examples/cedar_starts_with_f_like.md) and [`examples/cedar_within_cap_if_else/`](../examples/cedar_within_cap_if_else.md) — each wraps the macro in a full rule; `dogwood validate`.
+> Runnable: [`examples/cedar_starts_with_f_like/`](../examples/cedar_starts_with_f_like/) and [`examples/cedar_within_cap_if_else/`](../examples/cedar_within_cap_if_else/) — each wraps the macro in a full rule; `dogwood validate`.
 
 A Cedar macro can even build a record and be passed as an argument to another
 Cedar macro. This is the RFC 0061 `semver` worked example — two macros, where
@@ -126,10 +124,10 @@ permit(principal, action, resource)
 when { semverGT(semver(2, 1, 1), semver(2, 1, 0)) };
 ```
 
-> Runnable: [`examples/cedar_semver_gt/`](../examples/cedar_semver_gt.md) — `dogwood validate`.
+> Runnable: [`examples/cedar_semver_gt/`](../examples/cedar_semver_gt/) — `dogwood validate`.
 
-This works because the compiler expands call *arguments* first, then splices the
-result into the outer macro's body — nesting one macro call as an argument to
+This works because call *arguments* are expanded first, and the result is then
+spliced into the outer macro's body — nesting one macro call as an argument to
 another is fine. (Nesting a call *inside a macro's declared body* is not; see
 [No macro-in-macro](#no-macro-in-macro).)
 
@@ -150,8 +148,11 @@ automatically by the parser:
 The distinction matters at call sites, because Dogwood enforces which flavour
 may appear where (see [Kind checking](#kind-checking)).
 
-A condition-flavoured temporal macro is often a thin wrapper. `once` takes a
-window `?w` and a whole condition `?s`, and wraps them in `formerly within`:
+A condition-flavoured temporal macro is frequently a wrapper. `once` takes a
+window `?w` and a whole condition `?s`, and wraps them in `formerly within`
+(`once` only puts a name on `formerly within` and adds no capability of its own;
+it is shown here for the shape a temporal macro takes, and the next example puts
+a macro to fuller use):
 
 ```text
 def temporal once(?w, ?s) { formerly within ?w ?s };
@@ -165,17 +166,17 @@ when temporal {
 };
 ```
 
-> Runnable: [`examples/temporal_once_read_recent/`](../examples/temporal_once_read_recent.md) — `dogwood validate` and `dogwood replay`.
+> Runnable: [`examples/temporal_once_read_recent/`](../examples/temporal_once_read_recent/) — `dogwood validate` and `dogwood replay`.
 
 Condition macros compose the same way Cedar ones do. Two of them joined with
 `&&` inside a single temporal block:
 
 ```text
 def temporal recently_logged_in(?u) {
-    formerly within 1h Drupe::Action::"Login"::request{ input.user: ?u }
+    formerly within 1h Drupe::Action::"Login"::response{ input.user: ?u }
 };
 def temporal recently_read(?u, ?d) {
-    formerly within 1h Drupe::Action::"Read"::request{
+    formerly within 1h Drupe::Action::"Read"::response{
         input.user: ?u, input.document: ?d
     }
 };
@@ -187,7 +188,7 @@ when temporal {
 };
 ```
 
-> Runnable: [`examples/temporal_login_then_read/`](../examples/temporal_login_then_read.md) — `dogwood validate` and `dogwood replay`.
+> Runnable: [`examples/temporal_login_then_read/`](../examples/temporal_login_then_read/) — `dogwood validate` and `dogwood replay`.
 
 An aggregation-flavoured temporal macro produces a `count` or `sum`. It is
 spliced into a comparison, never called on its own. `count_formerly` counts the
@@ -209,29 +210,27 @@ when temporal {
 };
 ```
 
-> Runnable: [`examples/temporal_count_formerly_login/`](../examples/temporal_count_formerly_login.md) — `dogwood validate` and `dogwood replay`.
+> Runnable: [`examples/temporal_count_formerly_login/`](../examples/temporal_count_formerly_login/) — `dogwood validate` and `dogwood replay`.
 
 An aggregate value is always compared inside an `exists` binder — that is what
 introduces the `n` the count is compared against (`exists` is the temporal
 sublanguage's only binder; see
-[Temporal expressions](04-temporal-expressions.md)). The macro call simply fills
+[Temporal expressions](04-temporal-expressions.md)). The macro call fills
 the aggregate slot.
 
-Note the `$t` in that body: it is a fresh binder the macro introduces itself,
+The `$t` in that body is a fresh binder the macro introduces itself,
 not a parameter. That is the subject of the next section.
 
 ## Parameters: two sigils, two jobs
 
-Dogwood macros use two sigils, and they do fundamentally different things. The
-distinction is the single most important thing to understand about writing
-temporal macros.
+Dogwood macros use two sigils, and they do different things. The distinction
+matters when writing temporal macros.
 
 ### `?p` — value / expression parameters
 
 A `?p` parameter is declared in the parameter list and receives an argument at
-each call site. The compiler splices the call argument literally into every
-occurrence of `?p` in the body. This is the ordinary "fill in the blank" you
-expect from a template.
+each call site. Expansion splices the call argument literally into every
+occurrence of `?p` in the body. This is ordinary template substitution.
 
 `?p` parameters can stand for several different kinds of thing depending on
 where they appear in the body:
@@ -271,7 +270,7 @@ binder: the macro needs a timepoint variable to count over, so it names one
 machinery. At expansion, each `$t` is renamed to a unique concrete name (see
 [Hygiene](#hygiene-t-is-fresh-per-call-site)).
 
-The `$` sigil is deliberately distinct from `!` (negation) so it can never be
+The `$` sigil is distinct from `!` (negation) so it can never be
 confused with an operator; `$` is used nowhere else in the surface syntax. A
 `$t` may appear anywhere a regular identifier or binder can go: a term position,
 a binder list, a `tp(...)` argument, or a `sum`'s bound variable. It may **not**
@@ -282,11 +281,11 @@ stand for a whole condition (see [Rejection rules](#what-gets-rejected)).
 There is one subtle case that ties the two sigils together: a `?p` parameter can
 be used in a *binder* position — for example as the bound variable of a `sum`,
 or inside a `for (?a: Long)`. When a `?p` is used that way, the argument the
-caller passes for it must be a **single bare identifier**, because that
+caller passes for it must be a single bare identifier, because that
 identifier is going to *become* a bound variable name. Passing anything else (a
-literal, a compound expression) is a compile error.
+literal, a compound expression) is a hard error.
 
-`sum_formerly` is the canonical example. Here `?a` is used both as the `sum`
+In `sum_formerly`, `?a` is used both as the `sum`
 bound variable and inside `for (?a: Long)`, so `?a` is a binder-position
 parameter, while `?w` is a window and `?body` is a condition, and `$t` is the
 macro's own fresh timepoint binder:
@@ -307,17 +306,17 @@ when temporal {
 };
 ```
 
-> Runnable: [`examples/temporal_sum_formerly_transfer/`](../examples/temporal_sum_formerly_transfer.md) — `dogwood validate` and `dogwood replay`.
+> Runnable: [`examples/temporal_sum_formerly_transfer/`](../examples/temporal_sum_formerly_transfer/) — `dogwood validate` and `dogwood replay`.
 
 As with `count_formerly`, the aggregate is compared inside an `exists (total:
 Long). (…)` binder, which introduces `total`.
 
 The caller passes the bare identifier `a` for `?a`; that identifier fills the
 binder slot. If you called it with a non-identifier such as a literal, the
-compiler rejects it: "parameter `?a` is used in a binder position, so the
+call is rejected: "parameter `?a` is used in a binder position, so the
 call-site argument must be a single identifier".
 
-Note the difference between `?a` (a binder-position *parameter* the caller
+There is a difference between `?a` (a binder-position *parameter* the caller
 names) and `$t` (a binder the *macro* names for itself). Use `?p` when the
 caller should choose the variable; use `$t` when the variable is purely internal
 and should be hygienically fresh.
@@ -348,7 +347,7 @@ permit(principal, action, resource)
 when { level_ok(context.input.level) && temporal { /* ... */ } };
 ```
 
-> Runnable: [`examples/cedar_macro_plus_temporal_leaf/`](../examples/cedar_macro_plus_temporal_leaf.md) — the bundle fills the `temporal { … }` leaf with a recent-Login check; `dogwood validate` and `dogwood replay`.
+> Runnable: [`examples/cedar_macro_plus_temporal_leaf/`](../examples/cedar_macro_plus_temporal_leaf/) — the bundle fills the `temporal { … }` leaf with a recent-Login check; `dogwood validate` and `dogwood replay`.
 
 ### Arity checking
 
@@ -379,21 +378,20 @@ parameter is used inside the body:
 
 - A whole-condition parameter (`?s` in `once`) must be given a temporal
   condition argument.
-- A window parameter (`within ?w`) must be given a **bare interval literal** such
+- A window parameter (`within ?w`) must be given a bare interval literal such
   as `1h` — not a `within` clause. The body writes `formerly within ?w (...)`,
-  and the call supplies just `1h`. (An older `within 1h` call-argument form no
-  longer parses.)
+  and the call supplies just `1h`.
 - A term-position parameter must be given a term (an expression), not a
   condition or an interval.
 - A binder-position parameter must be given a single bare identifier, as
   described above.
 
-Passing an argument whose shape does not match the parameter's use is a compile
+Passing an argument whose shape does not match the parameter's use is a hard
 error explaining the expected shape.
 
 ## Hygiene: `$t` is fresh per call site
 
-Reusing a macro that introduces its own bound variable would be dangerous if the
+Reusing a macro that introduces its own bound variable would break if the
 macro's variable could collide with a variable the caller already has in scope.
 Consider `sum_formerly` again: its body binds `$t`, and the caller of
 `sum_formerly` might also have a variable named `t` in scope. If the macro's
@@ -418,14 +416,14 @@ Two properties make this both safe and predictable:
 
 Concretely, if a caller passes its own identifier `t` as a bound-variable
 argument and the macro also uses `$t` internally, the macro's `$t` expands to
-`t$<offset>` — provably distinct from the caller's `t`, so no capture occurs.
+`t$<offset>`. A source identifier cannot contain `$`, so the fresh name is not
+expressible in the surface syntax and cannot collide with the caller's `t`.
 And because the gensym is a deterministic function of the source position, the
 same source always produces the same name, keeping builds reproducible.
 
 ## What gets rejected
 
-Dogwood is strict at compile time. The following are all hard errors, caught
-during the macro-expansion pass.
+The following are all hard errors, caught during the macro-expansion pass.
 
 ### Reserved names
 
@@ -439,8 +437,9 @@ formerly, previous, since,
 true, false                             // literals
 ```
 
-Naming a macro `count`, for example, fails with "macro name `count` is reserved
-(built-in or keyword); pick a different name".
+`let` is reserved although the language has no `let` form. Naming a macro
+`count`, for example, fails with "macro name `count` is reserved (built-in or
+keyword); pick a different name".
 
 ### Duplicate definitions
 
@@ -458,7 +457,7 @@ temporal bodies in every position a `?p` can appear (term, window, binder, and
 whole-condition positions).
 
 `$t` binder names are the exception: they are *not* checked against the
-parameter list (they are never declared there), and are simply tied together by
+parameter list (they are never declared there), and are tied together by
 name at expansion.
 
 ### No macro-in-macro
@@ -495,7 +494,7 @@ A `?p` or `$t` that survives expansion outside any macro body is rejected,
 because there is nothing to substitute it. Writing `?something` in a policy that
 is not inside a macro body fails with "stray macro parameter reference
 `?something` outside a macro body"; a top-level `$t` in a `for`-binder fails with
-"stray macro binder reference `$t`". (Note that `?principal` and `?resource` in
+"stray macro binder reference `$t`". (`?principal` and `?resource` in
 Cedar templates are a different feature — template slots — and are handled
 before the macro pass.)
 
@@ -511,7 +510,7 @@ a whole-condition slot) and, if it somehow reaches expansion, with "macro binder
 A call whose name is neither a Cedar built-in nor a declared macro is rejected.
 In Cedar position: "unknown function or macro `<name>` (not a Cedar built-in and
 not a declared macro)". In temporal position: "unknown macro `<name>` (no
-declared `def temporal`)". (One exception exists that is not really a macro: a
+declared `def temporal`)". (One exception exists that is not a macro: a
 call whose name is a declared information provider is left intact for the Cedar
 backend — see [Information providers](05-information-providers.md).)
 
@@ -647,7 +646,7 @@ not automatically include the standard-library macros; if you want them
 alongside your own, copy their definitions into your library source. If you omit
 `macros_str`, `DEFAULT_MACROS` (the standard library above) is used.
 
-> Runnable: [`examples/macro_library_once_is_small/`](../examples/macro_library_once_is_small.md) — the same `once` + `is_small` library as a `macros.dw` file a policy calls via `dogwood validate --macros …` (and `dogwood replay`).
+> Runnable: [`examples/macro_library_once_is_small/`](../examples/macro_library_once_is_small/) — the same `once` + `is_small` library as a `macros.dw` file a policy calls via `dogwood validate --macros …` (and `dogwood replay`).
 
 Only the library's *definitions* are used — if the library source happens to
 contain policies too, they are ignored. An empty or whitespace-only library
@@ -657,12 +656,11 @@ nothing.
 ### Precedence: a policy's `def` wins
 
 If a policy file declares a macro with the same name as one in the library, the
-**policy's own definition takes precedence** and the library's same-named
-definition is dropped. This is a deliberate merge rule, not a duplicate error:
+policy's own definition takes precedence and the library's same-named
+definition is dropped. This is a merge rule, not a duplicate error:
 the library can neither shadow a policy's macro nor cause a
-duplicate-definition failure against one. The practical effect is that a policy
-author can always override a library macro locally simply by defining their own
-version of it.
+duplicate-definition failure against one. So a policy author can always override a
+library macro locally by defining their own version of it.
 
 ## See also
 

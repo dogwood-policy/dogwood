@@ -1043,7 +1043,7 @@ fn expand_temporal_call_to_condition(
 ///   * an aggregation-macro-call argument is expanded to its `AggExpr` and
 ///     **re-tagged** as `CallArg::Term(Term::Agg(...))`, so it can fill a
 ///     term-position parameter (e.g. the `?A` in `bind(?n, ?A, ?B)`'s
-///     `?A == ?n`). The comparison-operand-only rule (§3.1) is then checked
+///     `?A == ?n`). The comparison-operand-only rule is then checked
 ///     downstream, exactly as for a raw inline aggregate.
 ///   * any other condition argument (including a condition-macro call) is
 ///     expanded as a condition, unchanged from before.

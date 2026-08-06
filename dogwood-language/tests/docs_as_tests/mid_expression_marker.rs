@@ -28,16 +28,16 @@ fn schema_src() -> String {
     std::fs::read_to_string(dir.join("schema.cedarschema")).expect("read schema")
 }
 
-/// The request/resolution event schema convention these temporal markers
+/// The request/response event schema convention these temporal markers
 /// validate against.
 fn event_schema() -> String {
     std::fs::read_to_string(
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/request_resolution.dwschema"),
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/request_response.dwschema"),
     )
     .expect("read event schema")
 }
 
-/// Build the case schema halves from the action schema + request/resolution
+/// Build the case schema halves from the action schema + request/response
 /// event schema, with no provider declarations.
 fn build_schema() -> (ServiceSchema, PolicySchema) {
     let service = ServiceSchema::builder()

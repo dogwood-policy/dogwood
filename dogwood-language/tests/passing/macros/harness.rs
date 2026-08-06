@@ -5,7 +5,7 @@
 //!
 //! Migrated to the Cedar-parity public API: each case builds a
 //! [`PolicySchema`] from its `schema.cedarschema` action schema plus a
-//! [`ServiceSchema`] for the shared request/resolution event schema, parses
+//! [`ServiceSchema`] for the shared request/response event schema, parses
 //! the corpus policy into a [`LoweredPolicySet`]
 //! (`LoweredPolicySet::from_str`), then drives each recorded trace through
 //! [`replay_log`] and compares the verdict stream against the expected
@@ -96,7 +96,7 @@ fn run_macro_case(dir: &Path, event_schema: &str) -> CaseResult {
         let expected = std::fs::read_to_string(&expected_path).unwrap();
 
         let replayed = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            // Build the service schema (shared request/resolution event schema)
+            // Build the service schema (shared request/response event schema)
             // and the policy (action) schema, parse the policy into a
             // LoweredPolicySet, then replay the trace. `replay_log` consumes the
             // LoweredPolicySet, so it is parsed per trace.
@@ -137,7 +137,7 @@ fn run_macro_case(dir: &Path, event_schema: &str) -> CaseResult {
 #[test]
 fn macro_corpus_verdicts() {
     let event_schema = std::fs::read_to_string(
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/request_resolution.dwschema"),
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/request_response.dwschema"),
     )
     .expect("event schema");
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/passing/macros/corpus");

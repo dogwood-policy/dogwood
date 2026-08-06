@@ -4,14 +4,14 @@
 //
 // The Review action's input carries the *requested* verdict and its output
 // carries the *system's* verdict. A Publish is permitted only if there was
-// formerly a Review resolution where the requested verdict was "approve"
+// formerly a Review response where the requested verdict was "approve"
 // AND the system's verdict was "deny" — i.e. a request/outcome mismatch.
 // This predicate is only expressible because the two `verdict` fields are
 // kept distinct; a flat model would have collapsed them into one key and
 // this filter could not be written.
 //
 // Positive/negative control across two traces:
-//   trace_1: Review resolution input.verdict="approve", output.verdict="deny"
+//   trace_1: Review response input.verdict="approve", output.verdict="deny"
 //            → mismatch → Publish permitted.
 //   trace_2: IDENTICAL except output.verdict="approve" (they agree) → the
 //            `output.verdict: "deny"` constraint fails → NOT permitted.

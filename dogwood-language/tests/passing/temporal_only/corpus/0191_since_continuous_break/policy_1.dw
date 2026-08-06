@@ -3,8 +3,8 @@
 // the Read's tp.
 //
 // This test exercises a structural property of `A == {} since B == {}`
-// with separate request/resolution tps: `A == {}` only holds at
-// Heartbeat_resolution tps, so it's always false at Heartbeat_request
+// with separate request/response tps: `A == {}` only holds at
+// Heartbeat_response tps, so it's always false at Heartbeat_request
 // tps and at the Read's own tp. Both traces below have at least one
 // tp in the interval (Login, Read] where A doesn't hold, so the
 // `since` never satisfies its continuity requirement. Neither trace
@@ -12,13 +12,13 @@
 // compiler erroneously firing `since` when A is false at some
 // intermediate tp.
 //
-// trace.log: intermediate Login_request/resolution for bob at @20/@21
+// trace.log: intermediate Login_request/response for bob at @20/@21
 // — A is false there because those aren't alice's Heartbeat tps.
 // trace_2.log: no bob tps, but A is still false at Heartbeat_request
 // tps (@10, @20, @30) and at the Read's own tp (@32).
 //
 // A `since` on resolved forms like this is rarely useful in a real
-// policy — request and resolution events don't align on every tp, so
+// policy — request and response events don't align on every tp, so
 // continuity is effectively unsatisfiable. A realistic pattern
 // wraps A in `formerly within Δ`, e.g. `(formerly within 5s Heartbeat == {})
 // since Login == {}`, which says "at every tp since the Login, there

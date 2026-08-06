@@ -1,10 +1,10 @@
 # write_after_read_formerly
 
 The flagship history-dependent policy in the guide's literal wording: permit a
-`Write` only if the **same user** read the **same document** within the last
-hour. `formerly within 1h` is the existential past operator; the field pins
-`input.user: context.input.user` and `input.document: context.input.document`
-correlate the past `Read` to the *current* request.
+`Write` only if the **same user** successfully read the **same document** within
+the last hour. `formerly within 1h` is the existential past operator; the field
+pins `input.user: context.input.user` and `input.document: context.input.document`
+correlate the past `Read` response to the *current* request.
 
 This bundle preserves the guide's literal `Read`/`Write` text. (The sibling
 bundle `examples/write_after_read` adapts the same concept to the designated
@@ -13,10 +13,12 @@ corpus case `0004_write_after_read`, which carries the `Read`/`Write` actions.
 
 The trace shows both outcomes:
 
-- `@0` — alice reads doc1 (a history-only event; a `Read` is not a `Write`
+- `@0` — alice reads doc1 (a decision event; a `Read` is not a `Write`
   permit, so the decision is a deny).
-- `@10` — alice writes doc1, 10s after her read -> **allow** (matching read in
-  the window).
+- `@5` — the read completes successfully (a history-only `response` event;
+  no verdict is produced, but it records the success for later lookups).
+- `@10` — alice writes doc1, 10s after her read -> **allow** (matching read
+  response in the window).
 - `@20` — alice writes doc2, which she never read -> **deny** (the
   `input.document` pin fails).
 - `@30` — bob writes doc1, which he never read -> **deny** (the `input.user`

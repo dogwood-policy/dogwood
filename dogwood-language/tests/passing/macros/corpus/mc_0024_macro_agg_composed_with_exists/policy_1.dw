@@ -1,6 +1,6 @@
 // Compose a macro-produced aggregate with an independent `exists`. The
 // `count_unresolved_transfer_within` macro (itself built from exists +
-// negation, correlating request/resolution by uid) is used inside an
+// negation, correlating request/response by uid) is used inside an
 // `exists (n: Long)` threshold, AND conjoined with a separate
 // `exists (u: String)` login check. Exercises a macro-expanded aggregate
 // sitting alongside a hand-written existential in one condition.

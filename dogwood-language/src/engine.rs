@@ -157,7 +157,7 @@ pub type TemporalBindings = BTreeMap<ExtensionId, bool>;
 /// value** — `event.field_path(field_path)` — so that "event E is in decision
 /// D's partition" is identical to "E is one of D's μ-events". This is forced by
 /// how μ works: a μ-branch is a predicate, and a predicate can only address a
-/// candidate event through its **logged** record ([`match_args`] reads
+/// candidate event through its **logged** record (`match_args` reads
 /// `event.field_path(arg.name)`); the pin's request-side `context_path` only
 /// ever names the *decision* event's scope/context on the comparison's other
 /// side, never a candidate's field. So the sole μ-addressable handle on a
@@ -186,11 +186,8 @@ pub type TemporalBindings = BTreeMap<ExtensionId, bool>;
 ///
 /// [`Event::from_request`]: crate::Event::from_request
 ///
-/// The built-in [`InMemoryTemporalEngine`] and the compiled temporal engine both key
-/// on `field_path` via the shared logic in
-/// [`partition_value_of`](InMemoryTemporalEngine::partition_value_of).
-///
-/// [`match_args`]: crate::interpreter (the predicate matcher)
+/// The built-in [`InMemoryTemporalEngine`] keys on `field_path` via
+/// `partition_value_of`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PartitionKey {
     /// The dotted path of the pinned **logged field** on the event — the key
@@ -278,7 +275,7 @@ pub trait TemporalEngine: Send {
 /// far. `prepare` records the leaves (nothing to compile); `observe` appends to
 /// an in-memory event log; `evaluate` runs the interpreter at the last timepoint.
 ///
-/// Two modes (see [`Mode`]):
+/// Two modes (see `Mode`):
 ///   * **Global** (default) — one trace holding every event; the relativized
 ///     leaves are evaluated over it.
 ///   * **Partitioned** — a separate trace per [`PartitionKey`] value; each event

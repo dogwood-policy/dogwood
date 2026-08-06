@@ -6,7 +6,7 @@ Every request carries a wall-clock timestamp at
 `context.system.now`. You can compare it against a literal
 datetime written `datetime("<ISO-8601-UTC>")`.
 
-```guardlogic
+```dogwood
 when { context.system.now > datetime("2024-01-01T00:00:00Z") }
 ```
 

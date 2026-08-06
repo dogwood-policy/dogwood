@@ -1,7 +1,7 @@
 // The accepted "A but not B" idiom with restrictor-first conjunct ordering: a
 // guarded negation must come AFTER a conjunct that range-restricts its
-// variables. Permit a Read only if the same user logged in within the last
-// hour AND has not since logged out.
+// variables. Permit a Read only if the same user successfully logged in within
+// the last hour AND has not since successfully logged out.
 @id("read_login_not_logout")
 permit (
     principal,
@@ -9,6 +9,6 @@ permit (
     resource
 )
 when temporal {
-    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
-    && !Drupe::Action::"Logout"::request{ input.user: context.input.user }
+    formerly within 1h Drupe::Action::"Login"::response{ input.user: context.input.user }
+    && !Drupe::Action::"Logout"::response{ input.user: context.input.user }
 };

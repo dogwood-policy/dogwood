@@ -8,9 +8,7 @@ permit (
     resource
 )
 when temporal {
-    exists (n: Long). (
-        (count for (t: Timepoint). where (
-            formerly within 1h (Drupe::Action::"Transfer"::request{ input.amount: * } && tp(t))
-        )) == n && n == 3
-    )
+    (count for (t: Timepoint). where (
+        formerly within 1h (Drupe::Action::"Transfer"::request{ input.amount: * } && tp(t))
+    )) == 3
 };

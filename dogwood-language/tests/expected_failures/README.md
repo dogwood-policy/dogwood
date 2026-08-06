@@ -60,9 +60,9 @@ OVERWRITE=1 cargo test --test expected_failures -- --ignored generate_expected_e
   timepoints are ordinal positions, not quantities. Regression guard for a bug
   where the summand's type was never checked (`term_type(Agg)` reports the whole
   aggregate as `int`, and the summand is a *use*, not a declaration site) — so a
-  non-`Long` summand validated cleanly, and a decimal summand silently diverged
-  between backends (the interpreter drops decimal rows; the SQL compiler sums
-  them as `NUMERIC`). A `Timepoint` in the `for (…)` binders remains valid — it
+  non-`Long` summand validated cleanly. Summing decimals has no defined meaning
+  in Dogwood, so it must be rejected rather than left to each implementation to
+  interpret. A `Timepoint` in the `for (…)` binders remains valid — it
   controls per-timepoint row distinctness; only the summand is constrained.
 - **Summand not in the `for` list** (`1044`): a `sum <v> for (<binders>). where
   …` whose summand `<v>` is bound in scope (e.g. by an enclosing `exists`) but

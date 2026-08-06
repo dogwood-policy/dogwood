@@ -1,14 +1,13 @@
-//! The regression corpora, embedded for cross-package reuse (feature
-//! `corpus`).
+//! The regression corpora, embedded so other implementations can reuse them
+//! (feature `corpus`).
 //!
 //! Three temporal corpus directories are embedded, each living in its
 //! respective test-category directory:
 //!
 //!   * `tests/passing/temporal_only/corpus/` — cases that parse, evaluate,
 //!     and produce the expected verdict stream.
-//!   * `tests/pending_fix/corpus/` — cases that parse and
-//!     evaluate but whose verdict stream diverges from the MFOTL oracle
-//!     (documented semantic gaps to be fixed before GA).
+//!   * `tests/pending_fix/corpus/` — a holding area for cases whose verdict
+//!     stream does not match their expected output. Currently empty.
 //!   * `tests/expected_failures/corpus/` — cases using removed
 //!     syntax (implicit-domain aggregation) plus event-schema errors;
 //!     asserted to fail at parse time.
@@ -18,9 +17,9 @@
 //!   * `tests/passing/macros/corpus/` — the macro-layer corpus
 //!     (`def cedar` / `def temporal` expansion). No tolerated failures.
 //!
-//! This module embeds all corpora into the crate so a *different* package
-//! (e.g. the SQL compiler) can run the same cases through its own backend
-//! and diff against the same expected verdicts.
+//! This module embeds all corpora into the crate so that an alternative
+//! implementation of the temporal engine can run the same cases through its
+//! own backend and check them against the same expected verdicts.
 //!
 //! Category is derived from physical directory location — there are no
 //! separate name lists to maintain. To recategorize a case, move it
@@ -30,12 +29,11 @@ use include_dir::{Dir, include_dir};
 
 static TEMPORAL_PASSING: Dir<'_> =
     include_dir!("$CARGO_MANIFEST_DIR/tests/passing/temporal_only/corpus");
-/// The pending-fix corpus is expected to be empty (all former divergences
-/// have been resolved). We construct an empty `Dir` directly rather than
-/// using `include_dir!` because an empty directory is not reliably
-/// preserved across crate packaging (git does not track empty dirs, and a
-/// packaging step may strip dotfile placeholders like `.gitkeep`).
-static TEMPORAL_DIVERGENCES: Dir<'_> = Dir::new("tests/pending_fix/corpus", &[]);
+/// The pending-fix corpus is expected to be empty. We construct an empty
+/// `Dir` directly rather than using `include_dir!` because an empty directory
+/// is not reliably preserved across crate packaging (git does not track empty
+/// dirs, and a packaging step may strip dotfile placeholders like `.gitkeep`).
+static TEMPORAL_PENDING_FIX: Dir<'_> = Dir::new("tests/pending_fix/corpus", &[]);
 static TEMPORAL_PARSE_REJECTED: Dir<'_> =
     include_dir!("$CARGO_MANIFEST_DIR/tests/expected_failures/corpus");
 static MACRO_CORPUS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/tests/passing/macros/corpus");
@@ -63,8 +61,8 @@ pub struct CorpusTrace {
 pub enum TemporalCategory {
     /// Parses, evaluates, and produces the expected verdict stream.
     Passing,
-    /// Parses and evaluates but the verdict stream diverges from the
-    /// oracle (to be fixed before GA).
+    /// Parses and evaluates, but the verdict stream does not match the
+    /// expected output.
     Divergence,
     /// Uses removed syntax; expected to fail at parse time.
     ParseRejected,
@@ -91,7 +89,8 @@ pub struct TemporalCase {
 }
 
 impl TemporalCase {
-    /// Whether the case is a known verdict-divergence.
+    /// Whether the case is expected to produce a verdict stream that does not
+    /// match its expected output.
     pub fn is_xfail(&self) -> bool {
         self.category == TemporalCategory::Divergence
     }
@@ -128,7 +127,7 @@ pub fn temporal_cases() -> Vec<TemporalCase> {
     let mut cases = Vec::new();
     load_temporal_dir(&TEMPORAL_PASSING, TemporalCategory::Passing, &mut cases);
     load_temporal_dir(
-        &TEMPORAL_DIVERGENCES,
+        &TEMPORAL_PENDING_FIX,
         TemporalCategory::Divergence,
         &mut cases,
     );
@@ -335,7 +334,7 @@ mod tests {
             .iter()
             .filter(|c| c.category == TemporalCategory::Passing)
             .count();
-        let divergences = cases
+        let pending_fix = cases
             .iter()
             .filter(|c| c.category == TemporalCategory::Divergence)
             .count();
@@ -355,7 +354,10 @@ mod tests {
             passing, expected_passing,
             "embedded passing count doesn't match on-disk"
         );
-        assert_eq!(divergences, 0, "expected 0 divergences, got {divergences}");
+        assert_eq!(
+            pending_fix, 0,
+            "expected 0 pending-fix cases, got {pending_fix}"
+        );
         assert_eq!(
             parse_rejected, expected_rejected,
             "embedded parse_rejected count doesn't match on-disk"

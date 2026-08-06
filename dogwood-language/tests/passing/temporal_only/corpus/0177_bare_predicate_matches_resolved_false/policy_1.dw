@@ -1,5 +1,5 @@
 // Bare `Drupe::Action::"Login"{...}` (no `= { ... }` constraint) matches
-// a Login regardless of its resolution outcome — including resolutions whose
+// a Login regardless of its response outcome — including responses whose
 // application-defined `result` is `false`. The bare form asserts only
 // that the request happened; output-field semantics live in the
 // constrained form `Login(...) = { result: ... }`.

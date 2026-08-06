@@ -1,10 +1,10 @@
 # 0113 — Probing optional context fields with `has`
 
-The `context` record passed into a GuardLogic rule has shape
+The `context` record passed into a Dogwood rule has shape
 `{ system, input, output? }`. The `output` field is **optional**:
 it is present only after the tool has resolved. A request that
 asks "may this call proceed?" *before* the tool runs carries no
-`output`; a post-resolution check (the same tool call evaluated
+`output`; a post-response check (the same tool call evaluated
 again after it returned) does.
 
 A rule that reads `context.output.X` directly is therefore

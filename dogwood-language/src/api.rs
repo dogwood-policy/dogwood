@@ -279,7 +279,8 @@ impl EventSignature {
 
     /// The **pins** the event schema declares on this event, each an
     /// [`EventPin`] correlating a field to a request-side value. Empty when the
-    /// schema declares no pins (the default schema declares none). Each pin's
+    /// schema declares no pins; the default schema pins `callerPrincipal` on
+    /// every kind. Each pin's
     /// [`field_path`](EventPin::field_path) is also present in
     /// [`fields`](EventSignature::fields) — pins describe *which* declared
     /// fields are request-correlated, not additional fields.
@@ -349,7 +350,8 @@ pub(crate) struct Lowered {
     /// ([`crate::event_schema::relativize`]) — the executable artifact
     /// handed to temporal engines and exposed to reimplementers. Identical
     /// to `temporal` when the event schema declares no universal symmetric
-    /// pin (the default schema declares none).
+    /// pin. The default schema declares one (on `callerPrincipal`), so under
+    /// the default these differ from `temporal`.
     pub temporal_rewritten: Vec<TemporalField>,
     /// The event schema's universal symmetric pins as engine-facing partition
     /// keys. Non-empty iff the schema declares such a pin. A partitioning
@@ -742,8 +744,9 @@ pub(crate) fn lower(
         .collect();
 
     // Relativize each leaf for the schema's universal symmetric pins (the
-    // "pinned ⇒ safe to partition" encoding). A no-op clone when the schema
-    // declares none — notably the default request/resolution schema.
+    // "pinned ⇒ safe to partition" encoding). A no-op clone when the schema declares
+    // no universal symmetric pin. The default is not such a case — it pins
+    // `callerPrincipal` on every kind, so its leaves are relativized.
     let pins = crate::event_schema::relativize::universal_pins(&event_schema);
     let temporal_rewritten: Vec<TemporalField> = temporal
         .iter()

@@ -54,6 +54,7 @@ impl ProviderDeclarations {
     /// (an external `.rhai` reference) is left unresolved — use
     /// [`from_json_file`](Self::from_json_file) to also read those files.
     pub fn from_json(json: &str) -> Result<Self, String> {
+        let json = json.strip_prefix('\u{FEFF}').unwrap_or(json);
         serde_json::from_str(json).map_err(|e| format!("providers.json: {e}"))
     }
 
@@ -160,7 +161,7 @@ pub enum Implementation {
     /// value matching `outputType` (typically an object map). The script
     /// runs in a locked-down engine (operation/depth caps, no ambient
     /// file/network/process access); the only capabilities it has are the
-    /// host functions Dogwood registers (see [`super::eval`]).
+    /// host functions Dogwood registers (see `super::eval`).
     ///
     /// The script is given either inline (`script`) or as an external
     /// `.rhai` file (`scriptFile`) resolved relative to the declarations

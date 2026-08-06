@@ -1,6 +1,6 @@
-// A resolution predicate reads output.* fields. Permit a Read only if the
+// A response predicate reads output.* fields. Permit a Read only if the
 // same user's Login SUCCEEDED (output.result: true) within the last hour --
-// a resolution predicate matches the result event, not the request event.
+// a response predicate matches the result event, not the request event.
 @id("read_after_login_success")
 permit (
     principal,

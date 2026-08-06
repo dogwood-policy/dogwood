@@ -1,7 +1,7 @@
 //! The temporal condition evaluator.
 //!
-//! Fresh reimplementation of the temporal semantics, matching the
-//! proven interpreter exactly so verdicts agree with the corpus:
+//! Implements the temporal semantics exactly as given in the formal
+//! specification, so verdicts agree with the corpus:
 //!
 //! * a condition is evaluated at a single decision timepoint `i`
 //!   against the trace history `0..=i`;
@@ -286,8 +286,7 @@ fn match_occurrences(trace: &Trace, i: usize, env: &Env, cond: &Condition) -> Ve
         // bound `x` projected away (it is local to the exists), then
         // deduplicated (set semantics). Other bindings escape — `exists`
         // binds only its own variable. This is MFOTL's ∃-as-projection,
-        // and it is exactly what the temporal engine's `Op::Exists` computes,
-        // so the oracle and the compiled monitor agree. The
+        // and any conforming engine must compute the same projection. The
         // pin-relativization rewrite relies on it: its fresh timepoint
         // binders stay internal while the rewritten body's own variables
         // still flow to an enclosing aggregation domain.
@@ -675,7 +674,7 @@ fn eval_comparison(
 
 /// Resolve a term to a value, evaluating an aggregate operand against the
 /// trace. This is the resolver for comparison operands — the only position
-/// an aggregate may occupy (§3.1). For every non-aggregate term it defers
+/// an aggregate may occupy. For every non-aggregate term it defers
 /// to the env-only [`resolve_term`].
 fn resolve_term_at(env: &Env, trace: &Trace, i: usize, term: &Term) -> Option<Value> {
     match term {
@@ -1075,13 +1074,13 @@ mod tests {
         );
     }
 
-    // ─── exists over a Timepoint, aggregate-free (design §2) ────────
+    // ─── exists over a Timepoint, aggregate-free ───────────────────
 
     #[test]
     fn exists_timepoint_binder_outside_aggregate() {
         // `exists (t: Timepoint). (formerly within 1h (Login && tp(t)))` —
         // pure timepoint existence: "there is a past in-window timepoint at
-        // which a Login held". tp(t) is used OUTSIDE an aggregate (§2).
+        // which a Login held". tp(t) is used OUTSIDE an aggregate.
         let body = r#"exists (t: Timepoint). (formerly within 1h (Drupe::Action::"Login"::request{ input.user: u } && tp(t)))"#;
 
         let pos = trace(&[
@@ -1393,7 +1392,7 @@ mod tests {
     #[test]
     fn exists_binder_with_range_constraint() {
         // `exists (n). ((count …) == n && n > 0 && n < 10)` — a compound
-        // body constraining the bound var on BOTH sides (the design §3.3
+        // body constraining the bound var on BOTH sides (the
         // `let n = … in (0 < n && n < 2)` shape, which the migration
         // flattened; tested directly here).
         let body = r#"exists (nn: Long). ((count for (t: Timepoint). where (formerly within 1h (Drupe::Action::"Login"::request{} && tp(t)))) == nn && nn > 0 && nn < 10)"#;

@@ -82,7 +82,7 @@ use dogwood_language::{ServiceSchema, PolicySchema, ProviderDeclarations};
 
 // The service half — everything customer-independent.
 let service = ServiceSchema::builder()
-    .event_schema_str(event_dsl)  // optional — default: request/resolution
+    .event_schema_str(event_dsl)  // optional — default: request/response
     .macros_str(macro_library)    // optional — default: DEFAULT_MACROS (stdlib)
     .providers(provider_decls)    // optional — default: none
     .build()?;
@@ -164,7 +164,7 @@ let event = Event::builder("Drupe::Action::SellShares", "request")
 
 The event *kind* decides whether the event produces a verdict. The event
 schema marks some kinds as **decision** kinds (in the default schema,
-`request` is one and `resolution` is not).
+`request` is one and `response` is not).
 [`is_authorized`](Authorizer::is_authorized) returns:
 
 - `Some(`[`Response`]`)` for a decision-kind event — the authorization result; or
@@ -221,7 +221,7 @@ backend *compile* the leaves and evaluate them against a **database**:
   its tables here.
 - [`observe`](TemporalEngine::observe) — for *every* event ingested, in
   order. A database backend inserts a row (reading the event's fields via
-  [`Event::input`] / [`Event::principal`] / [`Event::inputs`]).
+  [`Event::field`] / [`Event::principal`] / [`Event::fields`]).
 - [`evaluate`](TemporalEngine::evaluate) — at each decision point, returning
   each leaf's boolean. A database backend runs its compiled queries here.
 
@@ -231,9 +231,7 @@ itself is stateless between the engines. A failure from either backend
 (a compile error at build time, an unreachable database at decision time)
 fails the affected decision closed.
 
-The two seams are independent — replace one, the other, or both. See the
-examples for how to swap in a custom policy engine and a
-compiled/database temporal engine at once.
+The two seams are independent — replace one, the other, or both.
 
 ## Writing policies over history and computed values
 

@@ -189,7 +189,7 @@ mod tests {
     }
 
     #[test]
-    fn resolution_output_field_passes() {
+    fn response_output_field_passes() {
         // Output fields are addressed under the `output` group.
         check(r#"Drupe::Action::"Login"::response{ output.result: r }"#).expect("output field");
     }
@@ -221,7 +221,7 @@ mod tests {
 
     #[test]
     fn output_field_on_request_is_error() {
-        // `output.result` is an output field — present on resolution, not
+        // `output.result` is an output field — present on the response, not
         // request (request has no `output` group at all).
         let e = check(r#"Drupe::Action::"Login"::request{ output.result: r }"#)
             .expect_err("request has no output group");
@@ -354,7 +354,7 @@ mod tests {
     // asymmetry. These pin that a deep predicate arg now resolves.
 
     /// An action schema with a record-typed input member (`meta: Meta`) and a
-    /// nested int leaf, validated against the stock request/resolution DSL.
+    /// nested int leaf, validated against the stock request/response DSL.
     const NESTED_INPUT_ACTION: &str = r#"
         namespace Drupe {
             entity OAuthUser = { id: String };

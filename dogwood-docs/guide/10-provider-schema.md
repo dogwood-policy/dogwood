@@ -5,8 +5,8 @@ This page is the advanced deep dive on **defining** an information provider — 
 author writes to make a provider available to policies. **Calling** a provider from a
 policy (the invocation syntax, arguments, projection, and comparison) is covered in
 [Information providers](05-information-providers.md); this page is the other half: what
-you write so that such a call resolves. Every example here is drawn from the tested
-corpus.
+you write so that such a call resolves. The corpus cases named below are directories
+under `dogwood-language/tests/passing/provider_only/corpus/`.
 
 > A note on naming: an information provider is invoked as an ordinary Cedar call (`Provider::Name(args)…`), optionally inside a `guardrails { … }` clause (which is just sugar for a bare `when`). Throughout the docs we call these things *providers* when we mean the declared functions and speak of *guardrails* clauses when we mean the sugar. The internal name "provider" is what the declarations and `context.providers` use; there is no dedicated provider grammar.
 
@@ -116,17 +116,17 @@ Rule of thumb: when your declarations reference external `.rhai` files, load wit
 
 The corpus exercises the full range of output types. A few representative shapes:
 
-- **Integer output** (`Strings::Length`, case `0002`): `argumentTypes: [{string}]`,
+- **Integer output** (`Strings::Length`, case `0002_length_threshold`): `argumentTypes: [{string}]`,
   `outputType` a record with `length: integer`, required.
-- **Decimal output** (`Content::Risk`, case `0003`): `outputType` a record with
+- **Decimal output** (`Content::Risk`, case `0003_decimal_score_method`): `outputType` a record with
   `severityScore: decimal`, required.
-- **Multi-field record output** (`Regex::Analyze`, case `0005`): a record with
+- **Multi-field record output** (`Regex::Analyze`, case `0005_regex_operations`): a record with
   `is_match: bool`, `first_match: string`, `count: integer`, all required.
-- **Two providers in one file** (case `0004`: `Strings::Matches` + `Lists::Blocked`;
-  case `0007`: `Lists::Allowed` + `Strings::Length`) — just add more keys under
+- **Two providers in one file** (case `0004_two_providers_and_not`: `Strings::Matches` + `Lists::Blocked`;
+  case `0007_boolean_or_parens`: `Lists::Allowed` + `Strings::Length`) — just add more keys under
   `availableProviders`.
 
-The most elaborate is `Content::Filter` (cases `0006` / `0009`), which takes a string
+The most elaborate is `Content::Filter` (cases `0006_set_arg_index_projection` / `0009_unwrapped_no_marker`), which takes a string
 and a set of strings, and returns a nested record whose keys are content categories:
 
 ```json
@@ -197,7 +197,7 @@ correspond **positionally** to the declared `argumentTypes`. It returns a value
 matching the `outputType` — typically a Rhai object map (`#{ … }`), which Dogwood
 converts into a Cedar record.
 
-The simplest possible script — `length.rhai` (case `0002`). Note that even the
+The simplest possible script — `length.rhai` (case `0002_length_threshold`). Note that even the
 simplest script carries a **unit-argument guard**; that guard is part of what
 "simplest" means here, not an optional refinement:
 
@@ -278,7 +278,7 @@ Three regex host functions are **always** registered (they are pure — no I/O):
 - `regex_count(pattern, text) -> i64` — the number of non-overlapping matches (`0` on
   an invalid pattern).
 
-All three appear together in `analyze.rhai` (case `0005`):
+All three appear together in `analyze.rhai` (case `0005_regex_operations`):
 
 ```rhai
 fn evaluate(text, pattern) {
@@ -292,7 +292,7 @@ fn evaluate(text, pattern) {
 ```
 
 A provider does not have to call any host function at all — pure Rhai is often enough.
-The denylist in `blocked.rhai` (case `0004`) uses only a built-in `contains`:
+The denylist in `blocked.rhai` (case `0004_two_providers_and_not`) uses only a built-in `contains`:
 
 ```rhai
 fn evaluate(text) {
@@ -309,7 +309,7 @@ The engine is built with Rhai's decimal feature, so a script can call
 decimal. This is what lets a provider return a `severityScore` that the policy then
 compares with `.lessThan(decimal("0.5"))`.
 
-The risk-score provider — `risk.rhai` (case `0003`):
+The risk-score provider — `risk.rhai` (case `0003_decimal_score_method`):
 
 ```rhai
 fn evaluate(text) {
@@ -325,8 +325,8 @@ fn evaluate(text) {
 }
 ```
 
-Scripts can also build nested records dynamically. `filter.rhai` (cases `0006` /
-`0009`) loops over the requested categories and builds a record keyed by category
+Scripts can also build nested records dynamically. `filter.rhai` (cases `0006_set_arg_index_projection` /
+`0009_unwrapped_no_marker`) loops over the requested categories and builds a record keyed by category
 name:
 
 ```rhai
@@ -392,7 +392,7 @@ fn evaluate(base, key) {
 ```
 
 The policy passes a **literal** base URL (deployer-owned) and only a validated `key`
-from the request — never a URL (this is also the only corpus use of `!=`):
+from the request — never a URL:
 
 ```text
 when {
@@ -427,7 +427,7 @@ calling evaluate."
 
 Putting the pieces together, here is the full life cycle of a provider invocation.
 
-**At compile time**, every provider invocation is hoisted. A generated field name
+**At lowering time**, every provider invocation is hoisted. A generated field name
 (`p_0`, `p_1`, …) is assigned per invocation, and the call leaf is replaced with
 `context.providers.<field>`. The surrounding projection and comparison were already
 ordinary Cedar, so they lower natively — an index `["k"]` becomes `.k`, and the
@@ -451,9 +451,9 @@ record, and Cedar evaluates the (already-lowered) comparison against it.
 
 The net effect: you write the *surface* form `Ns::Fn(args).field <cmp> literal`, and
 the engine evaluates `context.providers.<id>.field <cmp> literal` against the bound
-output. For case `0001`, the engine runs `matches.rhai`, binds `{ matched: … }`, and
+output. For case `0001_regex_matches_uppercase`, the engine runs `matches.rhai`, binds `{ matched: … }`, and
 Cedar evaluates `.matched == true` — giving `"ABC" → true`, `"abc" → false`,
-`"AB12" → false`. For case `0006`, `document="violent"` scores VIOLENCE at 0.90 so
+`"AB12" → false`. For case `0006_set_arg_index_projection`, `document="violent"` scores VIOLENCE at 0.90 so
 `.lessThan(0.5)` is false (deny), `document="safe"` scores 0.10 so it is true
 (permit), and `document="hateful"` scores VIOLENCE at 0.10 (only HATE is 0.90) so it is
 also true (permit).
@@ -482,7 +482,7 @@ when guardrails {
 `guardrails { E }` is **transparent sugar** for a bare `when { E }`: its body is
 a full Cedar expression, parsed and lowered identically to an ordinary `when`
 clause. The tag adds nothing — it is retained only for surface compatibility
-with the reference-monitor dialect Dogwood descends from. Because the body is
+with existing policies. Because the body is
 plain Cedar, everything an ordinary `when` can do works here too: arithmetic on
 a provider's output, mixing provider calls with plain context conditions,
 `if`/`then`/`else`, and so on.

@@ -93,7 +93,7 @@ fn hand_built_declarations_match_the_json_backed_corpus_run() {
     let trace = std::fs::read_to_string(dir.join("trace_1.log")).expect("trace");
     let expected = std::fs::read_to_string(dir.join("expected_1.out")).expect("expected");
     let event_schema = std::fs::read_to_string(
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/request_resolution.dwschema"),
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/request_response.dwschema"),
     )
     .expect("event schema");
 

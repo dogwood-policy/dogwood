@@ -29,7 +29,8 @@ Guardrail types use `confidenceScore`, aligned with the canonical
 
 ## Embedded Corpus (`--features corpus`)
 
-Embeds all cases (~13MB) into the library for cross-package differential tests.
+Embeds all cases (~13MB) into the library so an alternative engine can be
+checked against them.
 Off by default.
 
 ## Running

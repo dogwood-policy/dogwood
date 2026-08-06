@@ -6,7 +6,7 @@ So you often will not hand-write a `.cedarschema`. Because the frontend works in
 
 From the command line, `dogwood schema mcp --manifest tools.json` generates the schema (write it out with `-o schema.cedarschema`); see [The command line](12-cli.md). The Rust equivalents are the `from_mcp_manifest` / `mcp_to_cedar_schema` constructors in [The API and workflow](07-api-and-workflow.md).
 
-The policy example on this page is a runnable bundle under `examples/`, checked by the `dogwood` CLI on every build.
+The policy example on this page is a runnable bundle under `examples/`.
 
 ## The manifest
 
@@ -33,7 +33,7 @@ A tool's `inputSchema.properties` becomes the Cedar `context.input` record and `
 
 1. parses the template `.cedarschema`,
 2. parses the manifest to a server description,
-3. seeds a schema generator with the template and the proven default config,
+3. seeds a schema generator with the template and the default config,
 4. layers **one Cedar action per MCP tool**, deriving `input`/`output` context records from each tool's JSON schema,
 5. serializes the result back to `.cedarschema` text.
 
@@ -77,7 +77,7 @@ permit(principal, action == Drupe::Action::"GetStockInfo", resource)
 when { context.input.stock == "AMZN" };
 ```
 
-> Runnable: [`examples/get_amzn_stock_info/`](../examples/get_amzn_stock_info.md) — `dogwood validate` and `dogwood replay`.
+> Runnable: [`examples/get_amzn_stock_info/`](../examples/get_amzn_stock_info/) — `dogwood validate` and `dogwood replay`.
 
 Feeding the generated schema through `PolicySchema::from_cedarschema_str` and pairing it with a default `ServiceSchema` (so `request` is a decision kind) lets the policy above lower and validate cleanly.
 

@@ -1,4 +1,4 @@
-// `previous` with a resolution predicate and an output-field filter. Permit a
+// `previous` with a response predicate and an output-field filter. Permit a
 // Read only if the immediately preceding event (within 1h) was the same
 // user's SUCCESSFUL Login (output.result: true). At timepoint 0 there is no
 // predecessor, so the rule never fires there.

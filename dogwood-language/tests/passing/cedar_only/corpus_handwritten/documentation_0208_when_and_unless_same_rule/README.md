@@ -5,7 +5,7 @@ The rule fires only when every `when` body holds AND every
 `unless` body fails. Read the rule below as: *permit small
 sales, except for blocked stocks.*
 
-```guardlogic
+```dogwood
 permit (
     principal,
     action == Drupe::Action::"SellShares",
@@ -20,7 +20,7 @@ unless { context.input.stock == "BLOCKED" };
 The rule above is logically the same as folding the exception
 into a single `when`:
 
-```guardlogic
+```dogwood
 when { context.input.shares <= 1000
     && !(context.input.stock == "BLOCKED") }
 ```

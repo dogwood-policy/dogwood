@@ -46,6 +46,23 @@ thread_local! {
     static IN_SCOPE_CONTEXT: Cell<bool> = const { Cell::new(false) };
 }
 
+/// RAII guard that sets `IN_SCOPE_CONTEXT` to `true` on creation and resets
+/// it to `false` on drop — even if the enclosed code panics.
+struct ScopeContextGuard;
+
+impl ScopeContextGuard {
+    fn enter() -> Self {
+        IN_SCOPE_CONTEXT.with(|c| c.set(true));
+        ScopeContextGuard
+    }
+}
+
+impl Drop for ScopeContextGuard {
+    fn drop(&mut self) {
+        IN_SCOPE_CONTEXT.with(|c| c.set(false));
+    }
+}
+
 fn span_of(pair: &Pair<'_>) -> Span {
     let s = pair.as_span();
     Span::new(s.start(), s.end())
@@ -732,9 +749,9 @@ fn build_variable_def(pair: Pair<'_>) -> Result<(String, ScopeTail), RawParseErr
                     .next()
                     .filter(|p| p.as_rule() == Rule::expr)
                     .ok_or_else(|| err("scope operator is missing its operand", span))?;
-                IN_SCOPE_CONTEXT.with(|c| c.set(true));
+                let _guard = ScopeContextGuard::enter();
                 let result = build_expr(expr);
-                IN_SCOPE_CONTEXT.with(|c| c.set(false));
+                drop(_guard);
                 op = Some((op_str, result?));
             }
             _ => {}

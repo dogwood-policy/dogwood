@@ -1,6 +1,6 @@
 # read_prev_login_success
 
-`previous` with a **resolution predicate** and an **output-field filter**.
+`previous` with a **response predicate** and an **output-field filter**.
 Permit a `Read` only if the *immediately preceding* event (within 1h) was the
 same user's **successful** `Login` — i.e. a `Login::response` whose
 `output.result` is `true`. Because `previous` looks only at timepoint `i - 1`,

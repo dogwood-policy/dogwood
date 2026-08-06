@@ -2,19 +2,18 @@
 // ANCHOR-SHARED correlation var, at the same-step guard window.
 //
 // `!Heartbeat{server: x} since Login{server: x}` holds for a server that has
-// been SILENT since its login. The temporal engine's negated read rejects an
-// anchor when the guard fires at the current step — but the unconstrained
-// same-step EXISTS tested only the guard's predicate SHAPE, so a heartbeat
-// from a DIFFERENT server wrongly rejected s1's silence → wrong DENY (the
-// opposite divergence direction from 0919, pinning that a fix must key the
-// check rather than weaken or strengthen it globally).
+// been SILENT since its login. A negated `since` must reject an anchor when
+// the guard fires at the current step — but if that same-step check tests only
+// the guard's predicate SHAPE, a heartbeat from a DIFFERENT server wrongly
+// rejects s1's silence → wrong DENY. That is the opposite error direction from
+// 0919, which together pin that the check must be keyed rather than weakened
+// or strengthened globally.
 //
 // @10 is the trap: s2's heartbeat must NOT count against s1's binding →
 // permit. @20 is the control: s1's OWN heartbeat must reject s1 → deny.
 // @30 pins the streak-history deny (s1 broke at @20; s2 has no anchor).
 //
-// Interpreter is the oracle (see expected_1.out). Found by independent
-// review of the temporal-compiler same-step guard compensation.
+// Expected verdicts are in expected_1.out.
 permit (
     principal,
     action == Drupe::Action::"Heartbeat",

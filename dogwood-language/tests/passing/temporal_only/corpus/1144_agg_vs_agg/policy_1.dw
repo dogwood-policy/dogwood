@@ -1,9 +1,9 @@
 // Aggregate on BOTH sides of a comparison (a shape the let-migration never
 // produces — it only ever compares one aggregate to a literal). "More
-// Transfer requests than resolutions in the window" = some transfers are
+// Transfer requests than responses in the window" = some transfers are
 // still pending, expressed by comparing two counts. The left aggregate is
 // parenthesized so its greedy `where` body does not swallow the `<`
-// operator (design §3.2); the right aggregate is rightmost so it needs no
+// operator; the right aggregate is rightmost so it needs no
 // parens.
 
 permit (

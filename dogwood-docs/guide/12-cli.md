@@ -36,7 +36,7 @@ I/O error (a missing file, a bad flag), **2** rejected input (a policy, schema,
 or trace that does not check out). That `0` vs `2` split lets a CI job tell "the
 tool broke" from "the policy was rejected".
 
-### `validate` — the workhorse
+### `validate`
 
 ```text
 dogwood validate policy.dw --policy-schema schema.cedarschema \
@@ -97,7 +97,7 @@ $ dogwood replay examples/write_after_read/policy.dw \
 Each line is `@<timestamp> (time point <index>): ALLOW|DENY`, optionally followed
 by `[rules: …]` — the indices of the `.dw` rules that determined the decision.
 History-only events (a non-decision event kind) update the history but produce
-no line. This is the single best way to catch a policy that validates but does
+no line. This is the way to catch a policy that validates but does
 not *mean* what you intended — a mis-pinned "same user" correlation, or a window
 that is too narrow. `--format json` emits a structured verdict stream.
 
@@ -105,11 +105,13 @@ A trace is one event per line. The events in `examples/write_after_read/trace.lo
 look like:
 
 ```text
-@0 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") Drupe::Action::"ApproveSale"::request(input: { shares: 5, stock: "AMZN" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u1")
+@0 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { shares: 5, stock: "AMZN" }) Drupe::Action::"ApproveSale"::request(input: { shares: 5, stock: "AMZN" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u1")
 ```
 
-— a timestamp, an optional request `scope(...)`, and the fully-qualified action
-with its explicit `::request` (or other) kind and its `input` record. See
+— a timestamp, optional request envelopes (`scope(...)`, and here
+`request_context(...)` — the context the Cedar request is built from), and the
+fully-qualified action with its explicit `::request` (or other) kind and its logged
+`input` record. See
 [The event schema](03-event-schema.md) for the event model.
 
 ### `lower` — see the generated Cedar
@@ -164,6 +166,5 @@ dogwood lower policy.dw --policy-schema schema.cedarschema --emit cedar-policies
 
 The CLI covers checking and replaying policies over files. When you need to
 *embed* the engine — build events programmatically, feed them one at a time,
-read each `Response`, or swap in an external policy engine or a
-database-backed temporal engine — use the Rust API instead. See
-[The API and workflow](07-api-and-workflow.md).
+read each `Response`, or replace the policy or temporal engine with your own
+— use the Rust API instead. See [The API and workflow](07-api-and-workflow.md).

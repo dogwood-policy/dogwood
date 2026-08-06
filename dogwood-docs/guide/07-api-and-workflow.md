@@ -1,13 +1,13 @@
 # The API and Workflow
 
-This page is the Rust API reference for the `dogwood_language` crate and the end-to-end tutorial for using it. It walks through the canonical authorization workflow — build the two **schema** halves, parse and lower a **LoweredPolicySet**, type-check it with a **Validator**, then drive **Event**s through a stateful **Authorizer** to get a **Response** — with a complete, runnable-looking example. It then documents every public type grouped by role, explains the engine seam that lets you plug in an external Cedar policy engine or a database-backed temporal backend, and covers trace replay, MCP schema generation, and Cedar export. If you have never called the crate before, read the tutorial first; if you already know the shape and want a specific signature, jump to the grouped reference.
+This page is the Rust API reference for the `dogwood_language` crate and the end-to-end tutorial for using it. It walks through the authorization workflow — build the two **schema** halves, parse and lower a **LoweredPolicySet**, type-check it with a **Validator**, then drive **Event**s through a stateful **Authorizer** to get a **Response** — with a complete, runnable-looking example. It then documents every public type grouped by role, explains the engine seam that lets you replace the policy or temporal engine with your own, and covers trace replay, MCP schema generation, and Cedar export. If you have never called the crate before, read the tutorial first; if you already know the shape and want a specific signature, jump to the grouped reference.
 
-The API deliberately mirrors the `cedar-policy` crate. Wherever a concept has a Cedar counterpart the name matches: `Validator`, `Authorizer`, `Response`, `Decision`, `Diagnostics`, `ValidationResult`. The schema and policy-set types differ because a Dogwood policy set is bound to its (augmented) schema at lower time and Dogwood's schema splits into two halves: Cedar's single `Schema` becomes a `ServiceSchema` + `PolicySchema`, and Cedar's `PolicySet` becomes a `LoweredPolicySet` (with a `ParsedPolicySet` for the schema-free parse phase). Two signatures then depart from Cedar's: `LoweredPolicySet::from_str` *takes* the schemas, and `Validator::new()` takes *none* (details in the Validator section below). Two further divergences are semantic — things Cedar cannot express — and both live on the authorizer:
+The API mirrors the `cedar-policy` crate. Wherever a concept has a Cedar counterpart the name matches: `Validator`, `Authorizer`, `Response`, `Decision`, `Diagnostics`, `ValidationResult`. The schema and policy-set types differ because a Dogwood policy set is bound to its (augmented) schema at lower time and Dogwood's schema splits into two halves: Cedar's single `Schema` becomes a `ServiceSchema` + `PolicySchema`, and Cedar's `PolicySet` becomes a `LoweredPolicySet` (with a `ParsedPolicySet` for the schema-free parse phase). Two signatures then depart from Cedar's: `LoweredPolicySet::from_str` *takes* the schemas, and `Validator::new()` takes *none* (details in the Validator section below). Two further divergences are semantic — things Cedar cannot express — and both live on the authorizer:
 
 1. `Authorizer` is **stateful** — each ingested `Event` folds into an accumulated history so temporal operators can see the past.
 2. `Authorizer::is_authorized` returns **`Option<Response>`** — `None` for a history-only event whose kind is not a decision kind.
 
-Everything public is re-exported at the crate root, so you reach the entire API through `dogwood_language::<T>`; the internal `pub mod` modules exist only to give rustdoc a home.
+Nearly all of the public API is re-exported at the crate root, so you reach it through `dogwood_language::<T>`; the internal `pub mod` modules exist only to give rustdoc a home (and a few AST types live under `dogwood_language::temporal_ast`).
 
 ---
 
@@ -15,11 +15,11 @@ Everything public is re-exported at the crate root, so you reach the entire API 
 
 The goal of this section is to get you from a schema and a policy to a verdict, and to understand *why* each step exists. The complete program is shown inline below. (If you only need to check or replay policies over files rather than embed the engine, you do not need this API — see [The command line](12-cli.md).)
 
-The scenario is a two-action agent schema (`Login`, `Read`) with a policy that permits `Read` only if the same user logged in within the last hour. That "within the last hour" clause is temporal, which is exactly what makes the whole thing stateful and impossible to express in plain Cedar.
+The scenario is a two-action agent schema (`Login`, `Read`) with a policy that permits `Read` only if the same user logged in within the last hour. That "within the last hour" clause is temporal, which is what makes this stateful and impossible to express in plain Cedar.
 
 ### The pipeline, one stage at a time
 
-The canonical sequence is always the same:
+The sequence is always the same:
 
 ```text
 ServiceSchema + PolicySchema  ->  LoweredPolicySet  ->  Validator  ->  Authorizer  ->  Event  ->  is_authorized  ->  Response
@@ -71,7 +71,7 @@ permit (
     resource
 )
 when temporal {
-    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+    formerly within 1h Drupe::Action::"Login"::response{ input.user: context.input.user }
 };
 "#;
 
@@ -145,7 +145,7 @@ assert_eq!(decisions, vec![Decision::Deny, Decision::Allow, Decision::Deny]);
 
 Three events went in and the verdict stream came out as `[Deny, Allow, Deny]`. The first `Read` is allowed because a `Login` for the same user landed within the 3600-second window; the second `Read` is denied because that login has expired (7200 > 3600). This is the two Cedar-inexpressible facts made concrete: the authorizer *remembered* the earlier login (statefulness), and — because every event was a decision-kind `request` — each call returned `Some(Response)` rather than `None`.
 
-### Ownership gotchas worth memorizing
+### Ownership gotchas
 
 - Both schema halves are only **borrowed** by `LoweredPolicySet::from_str(&service, &policy_schema)`, and the validator takes none, so they stay usable afterward — but a `LoweredPolicySet` is bound to the schema it was lowered against, so validation always uses that one.
 - `LoweredPolicySet` is **moved** into `Authorizer::new(policies)` / `Authorizer::builder(policies)`, so do any `as_cedar()` / `is_self_contained_cedar()` inspection *before* that.
@@ -183,7 +183,7 @@ impl ServiceSchemaBuilder {
 }
 ```
 
-`build()` parses the event-schema DSL (it does **not** derive it — that needs the action schema and happens at lowering). One guard is worth calling out: an **empty or whitespace-only** `event_schema_str` is explicitly rejected. A blank event schema parses to zero declarations, which yields a schema with no decision kinds, so `is_authorized` would return `None` for *every* event — a subtle footgun. If you want the default behavior, omit `event_schema_str` entirely rather than passing an empty string. (The default path always derives a `decision request` event, so this never trips there.)
+`build()` parses the event-schema DSL (it does **not** derive it — that needs the action schema and happens at lowering). An **empty or whitespace-only** `event_schema_str` is explicitly rejected. A blank event schema parses to zero declarations, which yields a schema with no decision kinds, so `is_authorized` would return `None` for *every* event — a subtle footgun. If you want the default behavior, omit `event_schema_str` entirely rather than passing an empty string. (The default path always derives a `decision request` event, so this never trips there.)
 
 The **`PolicySchema`** — the **action schema** (a Cedar `.cedarschema`: entity types + actions), which typically arrives later and varies per deployment. Supply Cedar text directly, or generate it from an MCP tool manifest (resolved eagerly at construction, so MCP-generation failures surface here):
 
@@ -206,7 +206,7 @@ impl PolicySchema {
 
 ### The parse/lower split
 
-Lowering is split into two phases along the one input that motivates it — the action schema:
+Lowering is split into two phases along the input that motivates it — the action schema:
 
 ```rust
 impl ParsedPolicySet {
@@ -310,7 +310,7 @@ impl Event {
 
 - `builder(action, kind)` — start building. `action` is the qualified Cedar action id, either bare (`"Login"`) or namespaced (`"Drupe::Action::Login"`); the builder splits it into `(namespace, id)`. `kind` is the event-kind string (`"request"`, `"response"`, …).
 - The **request scope is optional**: only an event that wraps a request carries a principal/resource, so history-only events return `None` from `principal()` / `resource()`.
-- `field(group, name)` reads one field of the **logged temporal record** (`field("input", "user")`); `fields(group)` yields all `(name, value)` pairs of a group — what a database-backed `TemporalEngine` persists on `observe`. There is no `input`-specific accessor: `input` is just the `"input"` group, read like any other. The **Cedar request context** a policy sees as `context.<group>.<name>` is a separate bag, read via `request_context_path`.
+- `field(group, name)` reads one field of the **logged temporal record** (`field("input", "user")`); `fields(group)` yields all `(name, value)` pairs of a group — what an engine that persists history outside the process would record on `observe`. There is no `input`-specific accessor: `input` is just the `"input"` group, read like any other. The **Cedar request context** a policy sees as `context.<group>.<name>` is a separate bag, read via `request_context_path`.
 - `from_request(&cedar::Request)` — interop bridge for callers coming from `cedar-policy`. It lifts a Cedar `Request` into a **`request`-kind** `Event` at **timestamp `0`**: principal/resource become the scope, the action becomes the qualified action, and `context.input` becomes the input fields. A stateless single-decision authorization is then just a fresh `Authorizer` fed this one event.
 
 ```rust
@@ -380,7 +380,7 @@ impl AuthorizerBuilder {
 ```
 
 - `policy_engine(engine)` — install the decision backend (e.g. a remote Cedar-based engine). Default `CedarPolicyEngine`.
-- `temporal_engine(engine)` — install the temporal backend (e.g. compile-to-DB). Default `InMemoryTemporalEngine`.
+- `temporal_engine(engine)` — install a custom temporal backend. Default `InMemoryTemporalEngine`.
 - `build()` — runs each backend's `prepare` (the policy engine gets the lowered Cedar policies plus schema; the temporal engine gets the temporal leaves plus schema). It **errors if a backend's `prepare` fails** (e.g. a compiling temporal engine rejects a leaf, or a remote policy engine cannot reach its policy store). This is why `builder()` is fallible while `new()` is not.
 
 ```rust
@@ -414,20 +414,20 @@ pub struct DogwoodRuleRef {
 
 ## The engine seam
 
-Why does the seam exist? A Dogwood `Authorizer` is really two decisions glued together: *what boolean does each temporal / provider leaf evaluate to right now* (the temporal seam), and *given those booleans folded into the context, does the Cedar policy allow the request* (the policy seam). Each of those has a built-in default, and each is a trait you can implement to replace it. That is how you point Dogwood at a **remote policy engine** for the final Cedar decision, or at a **database** for the temporal history. You install a custom backend through the builder:
+Why does the seam exist? A Dogwood `Authorizer` is really two decisions glued together: *what boolean does each temporal / provider leaf evaluate to right now* (the temporal seam), and *given those booleans folded into the context, does the Cedar policy allow the request* (the policy seam). Each of those has a built-in default, and each is a trait you can implement to replace it. That is how you point Dogwood at a **remote policy engine** for the final Cedar decision, or at an alternative **temporal engine** of your own for the history. You install a custom backend through the builder:
 
 ```rust
 let mut authorizer = Authorizer::builder(policies)
-    .policy_engine(my_remote_engine)   // decision seam
-    .temporal_engine(my_db_engine)  // temporal seam
-    .build()?;                       // fallible: runs each backend's prepare()
+    .policy_engine(my_remote_engine)     // decision seam
+    .temporal_engine(my_temporal_engine) // temporal seam
+    .build()?;                           // fallible: runs each backend's prepare()
 ```
 
 You can swap either or both; anything you do not specify falls back to the default.
 
 ### The policy-decision seam (Cedar authorization-service shaped)
 
-This trait is deliberately shaped like a Cedar authorization service's `IsAuthorized` (minus the token- and batch-authorization variants Dogwood does not use), so you can implement `PolicyEngine` by **calling a remote Cedar-based service instead of evaluating Cedar locally**.
+This trait is shaped like a Cedar authorization service's `IsAuthorized` (minus the token- and batch-authorization variants Dogwood does not use), so you can implement `PolicyEngine` by **calling a remote Cedar-based service instead of evaluating Cedar locally**.
 
 ```rust
 pub struct AuthorizationRequest<'a> {
@@ -450,9 +450,9 @@ pub trait PolicyEngine: Send {
 
 `prepare` is called once at authorizer-build time (analogous to creating and populating a policy store); `is_authorized` decides one request. Implementations **must not panic** — surface problems through `AuthorizationDecision::errors` with a fail-closed `Deny`.
 
-The built-in default is `CedarPolicyEngine` (`#[derive(Default)]`, with `CedarPolicyEngine::new()`). Its `prepare` keeps the policy set; its `is_authorized` runs `cedar_policy::Authorizer::new().is_authorized(request, policies, entities)` and maps the decision, determining ids, and errors across. If it was never prepared it returns a `Deny` with an error string.
+The built-in default is `CedarPolicyEngine` (implements `Default`, with `CedarPolicyEngine::new()`). Its `prepare` keeps the policy set; its `is_authorized` runs `cedar_policy::Authorizer::new().is_authorized(request, policies, entities)` and maps the decision, determining ids, and errors across. If it was never prepared it returns a `Deny` with an error string.
 
-### The temporal-evaluation seam (DB-backed monitor)
+### The temporal-evaluation seam
 
 This trait computes the boolean value of each hoisted `temporal { … }` leaf for the current decision point.
 
@@ -461,7 +461,7 @@ pub type ExtensionId = String;                          // the context.<id> slot
 pub type TemporalBindings = BTreeMap<ExtensionId, bool>; // per-leaf booleans for one decision point
 
 pub trait TemporalEngine: Send {
-    fn prepare(&mut self, leaves: &[TemporalField], schema: &cedar_policy::Schema) -> Result<(), Error>;
+    fn prepare(&mut self, leaves: &[TemporalField], schema: &cedar_policy::Schema, events: &[EventSignature]) -> Result<(), Error>;
     fn observe(&mut self, event: &Event);
     fn evaluate(&mut self) -> Result<TemporalBindings, String>;
 }
@@ -469,23 +469,27 @@ pub trait TemporalEngine: Send {
 
 The lifecycle has three points:
 
-- `prepare(leaves, schema)` — **once**, at authorizer-build time. A compiling backend turns each leaf into a query and creates its tables here.
-- `observe(event)` — for **every** ingested event (decision or history-only), in timestamp order, before any `evaluate` that includes it. A backend persists the event (in memory, or as an insert into a database).
-- `evaluate()` — at each decision point, **after** that point's event has been observed. It returns each leaf's boolean keyed by id. An in-memory backend re-runs the interpreter; a database backend queries its compiled functions. A failure (e.g. the DB is unreachable) **fails the decision closed** by returning `Err(String)`.
+- `prepare(leaves, schema, events)` — **once**, at authorizer-build time. A custom backend does its one-time setup here (an engine that precomputes queries against a store, say, would build them now); `events` carries the declared signature of every event kind the policy set can see (each field's dotted path and type), which such a backend needs to emit type-correct comparisons.
+- `observe(event)` — for **every** ingested event (decision or history-only), in timestamp order, before any `evaluate` that includes it. A backend persists the event (in memory, or in an external store).
+- `evaluate()` — at each decision point, **after** that point's event has been observed. It returns each leaf's boolean keyed by id. The in-memory backend re-runs the interpreter; a custom backend evaluates however it prepared. A failure (an external store being unreachable, say) **fails the decision closed** by returning `Err(String)`.
 
-The built-in default is `InMemoryTemporalEngine` (`#[derive(Default)]`, with `InMemoryTemporalEngine::new()`): it keeps the event history in memory and re-runs the in-process temporal interpreter over the trace so far. `prepare` stores the leaves (no compilation), `observe` appends to an in-memory log, and `evaluate` runs the interpreter at the last timepoint.
+The built-in default is `InMemoryTemporalEngine` (implements `Default`, with `InMemoryTemporalEngine::new()`): it keeps the event history in memory and re-runs the in-process temporal interpreter over the trace so far. `prepare` stores the leaves (no compilation), `observe` appends to an in-memory log, and `evaluate` runs the interpreter at the last timepoint.
 
 The leaves handed to `prepare` are `TemporalField`s:
 
 ```rust
 pub struct TemporalField {
-    pub id: ExtensionId,     // the context.<id> slot its boolean binds into
-    pub action: ActionScope, // the action scope its rule pins
-    pub condition: Temporal, // the parsed temporal condition
+    pub id: ExtensionId,            // the context.<id> slot its boolean binds into
+    pub action: ActionScope,        // the action scope its rule pins, as written
+    pub target_actions: Vec<ActionRef>, // concrete actions `action` resolves to (a group to its
+                                    // members, Unconstrained to all) — what the leaf is checked against
+    pub principal: ScopeConstraint, // entity-type axis the rule's `principal` scope admits
+    pub resource: ScopeConstraint,  // likewise for `resource`
+    pub condition: Temporal,        // the parsed temporal condition
 }
 ```
 
-Supporting types a compiling engine will name:
+Supporting types a custom engine will name:
 
 ```rust
 pub struct ActionRef {
@@ -503,8 +507,14 @@ impl ActionScope {
     pub fn actions_to_check(&self) -> &[ActionRef]; // one concrete / each listed; Unconstrained => empty slice
 }
 
+pub enum ScopeConstraint {
+    Any,                 // bare `principal` / `resource`: every type the action permits
+    IsType(String),      // `is Ns::T`
+    Uid { .. },          // `== Ns::T::"x"` or `in Ns::T::"x"`
+}
+
 pub struct Temporal {
-    pub condition: Condition, // parsed temporal condition (Condition is crate-internal AST)
+    pub condition: Condition, // parsed temporal condition; the Condition AST is public via `dogwood_language::temporal_ast`
     pub span: Span,           // span of the block body in the .dw source
 }
 impl Temporal {
@@ -512,12 +522,12 @@ impl Temporal {
 }
 ```
 
-A compiling engine reads `TemporalField::condition` to build its query; the in-memory engine interprets it directly. `Temporal` is re-exported so a custom engine can name the type it must compile — its inner `condition` AST is crate-internal, and a compiling engine walks it.
+A custom engine reads `TemporalField::condition` to decide what to evaluate; the in-memory engine interprets it directly. `Temporal` is re-exported so a custom engine can name the type, and its inner `condition` AST is public via `dogwood_language::temporal_ast` to walk.
 
 The practical recipe for swapping either backend:
 
 - **Swap the decision backend** (any Cedar-based store): implement `PolicyEngine` and pass it to `Authorizer::builder(policies).policy_engine(...)`. `PolicySet::as_cedar()` / `cedar_schema()` give you the Cedar policies and schema to load into the store.
-- **Swap the temporal backend** (compile-to-DB): implement `TemporalEngine` (`prepare` compiles `&[TemporalField]` into queries/tables, `observe` inserts events, `evaluate` queries at the decision point) and pass it to `.temporal_engine(...)`.
+- **Swap the temporal backend** (a custom evaluation strategy): implement `TemporalEngine` (`prepare` does one-time setup over `&[TemporalField]`, `observe` records each event, `evaluate` computes the leaves at the decision point) and pass it to `.temporal_engine(...)`.
 
 ---
 
@@ -597,7 +607,7 @@ A brief note on terminology you will meet at the boundary: the policy-level clau
 
 ## Errors
 
-Dogwood has a deliberate **two-channel-plus-runtime** error model, and knowing which channel a problem lands in tells you where to look for it.
+Dogwood has a **two-channel-plus-runtime** error model, and knowing which channel a problem lands in tells you where to look for it.
 
 1. **Fatal — `Error`.** Returned by `ParsedPolicySet::parse` / `lower`, `LoweredPolicySet::from_str`, and `ServiceSchema`/`PolicySchema` construction. This is the fatal prefix: a syntax / macro / lowering / schema failure means there is nothing well-formed to validate or authorize.
 2. **Findings — `ValidationResult`.** Returned by `Validator::validate`. The policy is well-formed but wrong against the schema (type errors, dialect-check failures). These do **not** appear in `Error`.
@@ -620,6 +630,8 @@ pub enum Error {
     EventSchema(String),                      // event-schema DSL failed to parse / derive
     Leaf { id: String, message: String },     // a hoisted extension leaf failed to prepare
     InvalidDistincter(String),                // lower_with_distincter got a non-identifier
+    SchemaSerialize(String),                  // rendering the augmented Cedar schema to text failed
+    PartitioningUnsupported,                  // a pin-partitioning request the built-ins cannot honor
     // #[non_exhaustive]: more kinds may be added without a breaking change.
 }
 ```

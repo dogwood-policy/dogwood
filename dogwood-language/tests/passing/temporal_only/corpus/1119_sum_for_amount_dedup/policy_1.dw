@@ -1,4 +1,4 @@
-// §1.2 example 3 — the new dedup form, impossible before:
+// The dedup form, which an implicit domain cannot express:
 //   sum a for (a: Long). where formerly within 1h (Withdraw(amount: a))
 //
 // Project onto `amount` ALONE (no `t`): equal values at different

@@ -3,7 +3,7 @@
 //! is applied.
 //!
 //! A parsed policy's head (`principal, action, resource`) is stored internally
-//! as `cedar_policy_core::ast` scope constraints (see [`crate::ast::Scope`]),
+//! as `cedar_policy_core::ast` scope constraints (see `crate::ast::Scope`),
 //! but `cedar-policy-core` is a lower-level crate Dogwood deliberately keeps
 //! *out* of its public surface — only the high-level `cedar-policy` crate is
 //! re-exported (see the [`cedar`](crate::cedar) module). So rather than leak

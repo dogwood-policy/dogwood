@@ -1,6 +1,6 @@
 // Exercises a per-case custom event schema (event.dwschema): the event
 // kinds are author-defined (`attempt` is the decision kind, `outcome` is
-// history — NOT request/resolution), and the injected principal field is
+// history — NOT request/response), and the injected principal field is
 // renamed `actor` (not `callerPrincipal`).
 //
 // A Read is permitted only if the SAME actor formerly logged in. The

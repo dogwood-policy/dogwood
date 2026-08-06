@@ -48,7 +48,7 @@ fn request_event(shares: i64) -> Event {
 
 /// Parse the policy and authorize one `SellShares` event.
 fn authorize(shares: i64) -> dogwood_language::Response {
-    // The default event schema (request/resolution) makes `request` a
+    // The default event schema (request/response) makes `request` a
     // decision kind, so `is_authorized` decides rather than returning `None`.
     let service = ServiceSchema::defaults();
     let policy_schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("schema");

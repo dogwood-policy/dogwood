@@ -306,10 +306,10 @@ mod tests {
             .unwrap_or_else(|| panic!("expected parse error for `{src}`"))
     }
 
-    /// The request/resolution convention from the design doc parses to the
+    /// The request/response convention from the design doc parses to the
     /// expected shape.
     #[test]
-    fn request_resolution_schema_parses() {
+    fn request_response_schema_parses() {
         let s = parse(
             r#"
             decision event <A>::request {
@@ -362,7 +362,7 @@ mod tests {
         }
 
         let res = &s.decls[1];
-        assert!(!res.decision, "resolution is not a decision kind");
+        assert!(!res.decision, "response is not a decision kind");
         assert_eq!(res.kind, "response");
         // ...inputs(A) + ...outputs(A) + 3 named.
         assert_eq!(res.fields.len(), 5);

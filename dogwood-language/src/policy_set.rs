@@ -109,7 +109,7 @@ impl ParsedPolicySet {
     /// The `distincter` must be a valid Cedar identifier
     /// (`[_A-Za-z][_A-Za-z0-9]*`), since it is interpolated into Cedar policy
     /// ids and `context.<id>` attribute names; otherwise this returns
-    /// [`Error::InvalidDistincter`](crate::Error::InvalidDistincter).
+    /// [`Error::InvalidDistincter`].
     ///
     /// Note that the plain [`lower`](ParsedPolicySet::lower) path uses the
     /// namespace `policy`, so it is **not** automatically distinct from a call
@@ -227,7 +227,7 @@ impl ParsedPolicySet {
             }
         }
 
-        for (policy_idx, policy) in self.parsed.policies().iter().enumerate() {
+        for (_policy_idx, policy) in self.parsed.policies().iter().enumerate() {
             for (block_idx, temporal_block) in policy.temporal_conditions().into_iter().enumerate()
             {
                 if condition_has_array(temporal_block) {
@@ -354,7 +354,7 @@ impl<'a> ParsedPolicy<'a> {
     // ── scope ───────────────────────────────────────────────────────────
 
     /// This policy's scope (`principal, action, resource`) as a Dogwood-owned
-    /// [`PolicyScope`] view.
+    /// [`PolicyScope`](crate::policy_view::PolicyScope) view.
     ///
     /// A pre-lowering, read-only projection of the policy head — the analog of
     /// reading a `cedar_policy` policy's three scope constraints, but available
@@ -362,7 +362,7 @@ impl<'a> ParsedPolicy<'a> {
     /// [`cedar_policy::EntityUid`](crate::cedar::EntityUid) /
     /// [`EntityTypeName`](cedar_policy::EntityTypeName), and a template slot
     /// (`?principal` / `?resource`) reads as `None` — so no `cedar-policy-core`
-    /// or Dogwood-internal AST type is exposed. See [`PolicyScope`].
+    /// or Dogwood-internal AST type is exposed. See [`PolicyScope`](crate::policy_view::PolicyScope).
     pub fn scope(&self) -> crate::policy_view::PolicyScope {
         crate::policy_view::PolicyScope::from_scope(&self.policy.scope)
     }

@@ -1,8 +1,8 @@
 # read_after_login_success
 
-Resolution predicate + output-field filter: permit a `Read` only if the **same
+Response predicate + output-field filter: permit a `Read` only if the **same
 user** had a `Login` that **succeeded** (`output.result: true`) within the last
-hour. A resolution predicate reads `output.*` fields and matches the *result*
+hour. A response predicate reads `output.*` fields and matches the *result*
 event, not the request — so it can gate on the login's outcome.
 
 The trace shows both verdicts:

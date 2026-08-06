@@ -1,8 +1,8 @@
-// A multi-day look-back: permit a Read only if the same user logged in within
-// the last 7 days. A `formerly within 7d` window exceeds the 24h default cap,
-// so this policy validates ONLY because the event schema raises the cap to 30d
-// (see event.dwschema). Under the default event schema this would be a
-// `max_window` validation error.
+// A multi-day look-back: permit a Read only if the same user successfully
+// logged in within the last 7 days. A `formerly within 7d` window exceeds the
+// 24h default cap, so this policy validates ONLY because the event schema
+// raises the cap to 30d (see event.dwschema). Under the default event schema
+// this would be a `max_window` validation error.
 @id("read_after_recent_login_7d")
 permit (
     principal,
@@ -10,7 +10,7 @@ permit (
     resource
 )
 when temporal {
-    formerly within 7d Drupe::Action::"Login"::request{
+    formerly within 7d Drupe::Action::"Login"::response{
         input.user: context.input.user
     }
 };

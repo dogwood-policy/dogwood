@@ -29,9 +29,10 @@
 //! pin** — a field pinned on *every* declared event kind whose pin value is
 //! the field's own path on the current request (`pin f: T = context.f`, or
 //! the reserved scope aliases `pin callerPrincipal = principal` /
-//! `pin callerResource = resource`). Schemas without such pins
-//! (including the default schema, which has none) are untouched — the
-//! rewrite is opt-in by schema, and existing corpora are unaffected.
+//! `pin callerResource = resource`). Schemas without such pins are
+//! untouched — the rewrite is opt-in by schema. The default schema declares
+//! one (on `callerPrincipal`), so its leaves are relativized; verdicts are
+//! unchanged because the rewrite is verdict-preserving.
 //!
 //! # The encodings (and why they are range-restricted)
 //!
@@ -774,8 +775,8 @@ mod tests {
     /// With no universal pins, `relativize_condition` is the identity — the
     /// authored leaf is returned unchanged. This is the structural counterpart
     /// to the "slice is the specification" claim the differential suites rely
-    /// on: a schema without a qualifying pin (notably the default) keeps the
-    /// global-trace semantics untouched. A regression that started rewriting
+    /// on: a schema without a qualifying pin keeps the global-trace semantics
+    /// untouched. A regression that started rewriting
     /// unconditionally would fail here.
     #[test]
     fn empty_pins_relativize_is_identity() {

@@ -1,5 +1,5 @@
 // Permit Transfer when a prior Transfer for this user resolved (any output).
-// Empty -> {} accepts any resolution regardless of output field values. The decimal filter is absent here
+// Empty -> {} accepts any response regardless of output field values. The decimal filter is absent here
 // so any Transfer amount satisfies the body.
 // At a Read timepoint the Transfer scope prevents this from being a
 // determining policy even though the resolved predicate body is still satisfied.

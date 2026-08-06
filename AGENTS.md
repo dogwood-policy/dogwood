@@ -21,9 +21,10 @@ The lifecycle and its skills (dependency order):
    → [`.claude/skills/authoring-action-schema/SKILL.md`](.claude/skills/authoring-action-schema/SKILL.md)
    (gate: `dogwood schema action schema.cedarschema`)
 2. **Service schema (only if needed)** — the event schema (`.dwschema`: event
-   kinds, decision vs history points, pins) and/or information providers
-   (`providers.json` + Rhai). Optional; defaults sensibly (only `request`
-   decides, no providers, no macros).
+   kinds, decision vs history points, pins, the `max_window` look-back cap)
+   and/or information providers (`providers.json` + Rhai). Optional; defaults
+   sensibly (request/response/error kinds with only `request` deciding, a
+   universal principal pin, a 24h window cap, no providers, standard macros).
    → [`.claude/skills/authoring-service-schema/SKILL.md`](.claude/skills/authoring-service-schema/SKILL.md)
    (gate: `dogwood schema event`/`providers`, then composite `dogwood validate`)
 3. **Policies** — turn a natural-language authorization requirement ("permit X

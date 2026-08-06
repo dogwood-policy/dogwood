@@ -7,7 +7,7 @@
 //! Each case is driven through the Cedar-parity public API: build a
 //! [`PolicySchema`] from the action schema and a [`ServiceSchema`] from the
 //! event schema (the case's `event.dwschema` override when present, otherwise
-//! the shared `request_resolution` fixture); parse the policy into a
+//! the shared `request_response` fixture); parse the policy into a
 //! [`LoweredPolicySet`] via [`LoweredPolicySet::from_str`]; then replay the
 //! trace with [`replay_log`], comparing the verdict stream to the expected
 //! output.
@@ -99,7 +99,7 @@ fn run_temporal_case(dir: &Path, shared_schema: &str, event_schema: &str) -> Cas
             // Build the policy schema from the action schema and the service
             // schema from this case's event schema (the per-case
             // `event.dwschema` override when present, else the shared
-            // `request_resolution` fixture). A build or parse Err is mapped to
+            // `request_response` fixture). A build or parse Err is mapped to
             // the failure string, exactly as the old `authorize_trace` Err was.
             // `replay_log` consumes the LoweredPolicySet, so assemble it fresh
             // per trace.
@@ -144,7 +144,7 @@ fn temporal_corpus_verdicts() {
     }
 
     let event_schema = std::fs::read_to_string(
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/request_resolution.dwschema"),
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/request_response.dwschema"),
     )
     .expect("event schema");
 

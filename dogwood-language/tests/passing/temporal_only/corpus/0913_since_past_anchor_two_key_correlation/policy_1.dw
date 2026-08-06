@@ -1,14 +1,11 @@
-// Adjacent to 0904: the same past-anchor `since` divergence, but the left side
+// Adjacent to 0904: the same past-anchor `since` shape, but the left side
 // correlates on TWO current-request keys (`input.user` AND `input.region`).
 //
-// This guards against a fix that threads only ONE correlation column through
-// the since-anchor branch of the §5.3 rewrite: a one-column fix would still
-// drop `region`, so the outer identity join would fail on the second key and
-// the verdict would (still wrongly) be false. Both keys must be carried.
-//
-// The interpreter is the oracle (see expected_1.out); the temporal engine is a known
-// verdict divergence until the temporal-compiler since-left correlation fix
-// lands. Found by the SMT differential fuzzer.
+// This guards against an implementation that threads only ONE correlation
+// column through the since-anchor branch of the vacuity rewrite: a one-column
+// implementation would still drop `region`, so the outer identity join would
+// fail on the second key and the verdict would wrongly be false. Both keys
+// must be carried. Expected verdicts are in expected_1.out.
 permit (
     principal,
     action == Drupe::Action::"Transfer",

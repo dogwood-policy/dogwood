@@ -1,6 +1,6 @@
 // stdlib `count_unresolved_within` (schema-conditional): count Transfer
 // requests within the window whose `requestId` has no matching Transfer
-// resolution in the window. Permit an Alert when there is at least one such
+// response in the window. Permit an Alert when there is at least one such
 // unresolved (pending) transfer in the last hour.
 
 permit (

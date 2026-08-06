@@ -7,7 +7,7 @@ an `unless` clause. `unless { B }` is just sugar for
 
 ## Shape
 
-```guardlogic
+```dogwood
 forbid (
     principal,
     action == Drupe::Action::"SellShares",

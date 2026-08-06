@@ -64,7 +64,7 @@ const MAX_MAP_SIZE: usize = 4096;
 /// *pure* standard packages. This is `StandardPackage` minus
 /// `BasicTimePackage`; the guarantee lives here at the construction site
 /// rather than depending on a global `no_time` Cargo feature (features are
-/// additive across the version set, so another consumer could re-enable
+/// additive across a dependency graph, so another consumer could re-enable
 /// time). rhai 1.25's scripting stdlib exposes no RNG, so time is the only
 /// impurity to exclude. The only capabilities beyond pure rhai are the
 /// host functions registered below, which are themselves pure.

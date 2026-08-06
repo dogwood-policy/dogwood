@@ -54,6 +54,8 @@ pub fn mcp_to_cedar_schema_with_template(
     manifest_json: &str,
     template: &str,
 ) -> Result<String, String> {
+    let manifest_json = manifest_json.strip_prefix('\u{FEFF}').unwrap_or(manifest_json);
+    let template = template.strip_prefix('\u{FEFF}').unwrap_or(template);
     let template = Fragment::<RawName>::from_cedarschema_str(template, Extensions::all_available())
         .map_err(|e| format!("template parse: {e}"))?
         .0;

@@ -1,6 +1,6 @@
 // Permit ApproveSale only after the tool has resolved with
 // `approved: true`. The `output` field on `context` is optional —
-// pre-resolution requests do not carry one — so we must guard the
+// pre-response requests do not carry one — so we must guard the
 // access with `context has output` before reading `context.output.approved`.
 // Without that guard, the access is undefined for pre-output requests.
 

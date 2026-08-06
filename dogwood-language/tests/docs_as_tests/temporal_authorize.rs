@@ -2,7 +2,7 @@
 //! per-timepoint verdict stream for a temporal policy.
 //!
 //! New Cedar-parity lifecycle: build a [`PolicySchema`] (action schema) plus a
-//! [`ServiceSchema`] (the `request_resolution` event schema), lower the policy
+//! [`ServiceSchema`] (the `request_response` event schema), lower the policy
 //! text into a [`LoweredPolicySet`] with [`LoweredPolicySet::from_str`], then
 //! [`replay_log`] the trace to obtain the verdict stream string.
 
@@ -18,12 +18,12 @@ fn authorize_formerly_within_window() {
     let trace = std::fs::read_to_string(dir.join("trace_1.log")).unwrap();
     let expected = std::fs::read_to_string(dir.join("expected_1.out")).unwrap();
     let event_schema = std::fs::read_to_string(
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/request_resolution.dwschema"),
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/request_response.dwschema"),
     )
     .unwrap();
 
     // Build the policy schema from the action schema plus a service schema
-    // from the request/resolution event schema fixture, then lower the policy
+    // from the request/response event schema fixture, then lower the policy
     // into a LoweredPolicySet.
     let policy_schema = PolicySchema::from_cedarschema_str(&action_schema).expect("schema");
     let service = ServiceSchema::builder()

@@ -177,9 +177,9 @@ fn deep_predicate_arg_does_not_match_when_nested_values_differ() {
 
 // ─── (1) Deep predicate arg from a nested OUTPUT record ─────────────────
 //
-// The same recursion applies to `...outputs(A)`. A `resolution` event carries
+// The same recursion applies to `...outputs(A)`. A `response` event carries
 // output fields; a record-typed output member (`detail: Detail`) must nest so
-// `output.detail.code` is a matchable predicate-arg leaf. A `resolution` is a
+// `output.detail.code` is a matchable predicate-arg leaf. A `response` is a
 // history event (not a decision point), so we gate a later `Read` decision on
 // a formerly-seen `Review::response` whose deep output leaf matches.
 
@@ -202,7 +202,7 @@ namespace Drupe {
 }
 "#;
 
-// Permit a Read only if a Review resolution with a formerly-seen nested output
+// Permit a Read only if a Review response with a formerly-seen nested output
 // code == 7 exists in the last hour. The predicate arg pins a DEEP OUTPUT leaf.
 const PERMIT_DEEP_OUTPUT_ARG: &str = r#"
 permit ( principal, action == Drupe::Action::"Read", resource )
@@ -221,8 +221,8 @@ fn detail(code: i64) -> Value {
     Value::Object(m)
 }
 
-/// A Review resolution (history) event carrying a nested output `detail.code`.
-fn review_resolution(ts: i64, code: i64) -> Event {
+/// A Review response (history) event carrying a nested output `detail.code`.
+fn review_response(ts: i64, code: i64) -> Event {
     let mut output = BTreeMap::new();
     output.insert("verdict".to_string(), Value::String("ok".to_string()));
     output.insert("detail".to_string(), detail(code));
@@ -263,14 +263,14 @@ fn deep_output_predicate_arg_validates() {
 fn deep_output_predicate_arg_matches_when_nested_value_agrees() {
     let service = ServiceSchema::defaults();
     let mut auth = Authorizer::new(lower_ex(PERMIT_DEEP_OUTPUT_ARG, OUTPUT_SCHEMA, &service));
-    auth.is_authorized(&review_resolution(100, 7)); // history: code == 7
+    auth.is_authorized(&review_response(100, 7)); // history: code == 7
     let resp = auth
         .is_authorized(&output_read_event(200))
         .expect("request is a decision point");
     assert_eq!(
         resp.decision(),
         Decision::Allow,
-        "a formerly-seen Review resolution with output.detail.code == 7 must \
+        "a formerly-seen Review response with output.detail.code == 7 must \
          fire the guard — the deep OUTPUT predicate arg genuinely matched"
     );
 }
@@ -279,14 +279,14 @@ fn deep_output_predicate_arg_matches_when_nested_value_agrees() {
 fn deep_output_predicate_arg_does_not_match_when_nested_value_differs() {
     let service = ServiceSchema::defaults();
     let mut auth = Authorizer::new(lower_ex(PERMIT_DEEP_OUTPUT_ARG, OUTPUT_SCHEMA, &service));
-    auth.is_authorized(&review_resolution(100, 9)); // history: code == 9 (≠ 7)
+    auth.is_authorized(&review_response(100, 9)); // history: code == 9 (≠ 7)
     let resp = auth
         .is_authorized(&output_read_event(200))
         .expect("request is a decision point");
     assert_eq!(
         resp.decision(),
         Decision::Deny,
-        "a Review resolution whose output.detail.code != 7 must NOT fire the \
+        "a Review response whose output.detail.code != 7 must NOT fire the \
          guard (the deep output leaf is genuinely compared)"
     );
 }

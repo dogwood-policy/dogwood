@@ -11,14 +11,14 @@
 //                         apply. (Writes dave's guard streak.)
 //   @30 dave Approve    — dave DID transfer at @20 → deny.
 //   @40 eve Approve     — dave's Transfer must NOT count against EVE's
-//                         binding → permit. A value-agnostic guard (the
-//                         pre-fix streak key) wrongly denies here; an
-//                         over-narrowed same-step check wrongly permits @30.
+//                         binding → permit. A value-agnostic guard wrongly
+//                         denies here; an over-narrowed same-step check
+//                         wrongly permits @30.
 //
-// The compiled backend's negated read (`select_since_negated`) must key the
-// guard-streak lookup by the request's user and constrain the same-step
-// guard check to that binding — the deny at @30 and the permit at @40 pin
-// the two directions. Interpreter is the oracle (see expected_1.out).
+// A negated `since` must key the guard-streak lookup by the request's user and
+// constrain the same-step guard check to that binding — the deny at @30 and
+// the permit at @40 pin the two directions. Expected verdicts are in
+// expected_1.out.
 permit (
     principal,
     action == Drupe::Action::"Approve",

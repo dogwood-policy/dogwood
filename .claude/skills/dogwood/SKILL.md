@@ -32,9 +32,10 @@ before it — **you cannot skip forward**.
    every policy needs, and it is **required before anything else**.
    → skill: **authoring-action-schema**
 2. **Service schema** — *only if needed*. Customize the **event schema** (event
-   *kinds* beyond the default `request`/`resolution`) and/or declare
-   **information providers** (computed facts / `guardrails`). Both default
-   sensibly, so most setups skip this step entirely.
+   *kinds* beyond the default `request`/`response`/`error`, pins, the
+   `max_window` look-back cap) and/or declare **information providers**
+   (computed facts / `guardrails`). Both default sensibly, so most setups skip
+   this step entirely.
    → skill: **authoring-service-schema**
 3. **Policies** — turn a natural-language rule ("permit X only if Y", "deny
    after Z", "no more than N per hour") into a validated `.dw` policy.
@@ -52,8 +53,9 @@ Route on what you are trying to do:
   have an MCP tool manifest to turn into a schema, or you have no schema yet at
   all → **authoring-action-schema** (step 1; do this first).
 - **"My policies need event kinds beyond a plain request"** (history-only
-  resolutions, custom decision kinds) **or a computed fact / guardrail / risk
-  score / regex / denylist** that isn't just a field of the request →
+  responses, custom decision kinds), **a look-back longer than 24h or
+  any-principal (global-trace) semantics**, **or a computed fact / guardrail /
+  risk score / regex / denylist** that isn't just a field of the request →
   **authoring-service-schema** (step 2; only after you have an action schema).
 - **"I have a schema and want to write a policy from a plain-English rule"** →
   **autoformalize-policies** (step 3; requires an action schema, and a service

@@ -55,12 +55,12 @@ impl Span {
     }
 }
 
-/// A placeholder [`Span`] (`[0, 0)`) for AST nodes that have **no source
+/// A placeholder `Span` (`[0, 0)`) for AST nodes that have **no source
 /// location** — e.g. nodes an external client constructs programmatically
 /// rather than parsing from `.dw` text.
 ///
 /// The temporal AST node types (see [`crate::temporal_ast`]) carry a `span`
-/// field, but the [`Span`] type *name* is intentionally not exported (spans are
+/// field, but the `Span` type *name* is intentionally not exported (spans are
 /// a crate-internal source-mapping detail — a client reading a Dogwood-produced
 /// tree can copy a node's `.span`, but there is no exported way to *name* the
 /// type or mint a fresh one). This free function lets a downstream crate fill
@@ -94,7 +94,7 @@ impl From<Span> for SourceSpan {
 /// miette::Report::new(err))` just works, with no `with_source_code` needed.
 /// This mirrors Cedar, whose parse and validation errors both embed a `Loc`.
 ///
-/// The `Diagnostic` impls that use it (via [`impl_diagnostic_source_loc!`])
+/// The `Diagnostic` impls that use it (via `impl_diagnostic_source_loc!`)
 /// produce both the primary label and the `source_code` from these two
 /// fields.
 #[derive(Debug, Clone)]

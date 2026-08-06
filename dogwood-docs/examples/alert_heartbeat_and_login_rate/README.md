@@ -19,7 +19,7 @@ when temporal {
 Schema is lifted from the `temporal_only` corpus case `0059_count_threshold`
 (it declares `Heartbeat`/`Login`/`Alert` with a `server` input); the trace is
 lifted from that case's `trace_1.log`. The default event schema
-(request/resolution) is used.
+(request/response) is used.
 
 ## What the trace shows
 

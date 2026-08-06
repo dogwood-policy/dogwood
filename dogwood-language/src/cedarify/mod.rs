@@ -605,7 +605,7 @@ mod tests {
         set.add_static(policy).expect("add_static");
 
         // The load-bearing conversion. If this line fails to compile, the
-        // `#[doc(hidden)] TryFrom<ast::PolicySet>` is gone — see §3.1.
+        // `#[doc(hidden)] TryFrom<ast::PolicySet>` is gone.
         let public = cedar_policy::PolicySet::try_from(set)
             .expect("ast::PolicySet -> cedar_policy::PolicySet");
         assert_eq!(public.policies().count(), 1);

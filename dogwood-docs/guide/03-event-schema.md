@@ -1,10 +1,10 @@
 # The Event Schema
 
-This is an Advanced-topics deep dive on Dogwood's event-schema DSL. The core guide takes the event schema as **given** — the default request/response schema that ships out of the box — and you never have to think about it to write ordinary policies. This page is for authors who need to *customize* the event model: which event kinds exist, what fields each kind carries, and which kinds are decision points that actually trigger an authorization decision. Everything here is optional; omit an event schema entirely and Dogwood uses the default described at the end.
+This is an Advanced-topics deep dive on Dogwood's event-schema DSL. The core guide takes the event schema as **given** — the default schema that ships out of the box, which declares three event kinds: `request`, `response`, and `error`. The examples in this guide use only `request` and `response`. This page is for authors who need to *customize* the event model: which event kinds exist, what fields each kind carries, and which kinds are decision points that trigger an authorization decision. Everything here is optional; omit an event schema entirely and Dogwood uses the default described at the end.
 
 ## The event schema DSL (`.dwschema`)
 
-The event schema is a **generic, schema-independent** description of how to derive event signatures from *any* action schema. It is a sequence of event declarations; each one names a kind of event (`request`, `response`, …) for a symbolic action `<A>` and lists the fields that kind carries. Parsing the event schema never looks at your action schema — the two are bound together in a later derivation pass. That is what lets a single event schema (like the default) serve every application.
+The event schema is a **generic template** that describes how to derive event signatures from *any* action schema. It is a sequence of event declarations; each one names a kind of event (`request`, `response`, …) for a symbolic action `<A>` and lists the fields that kind carries. Parsing the event schema never looks at your action schema — the two are bound together in a later derivation pass. That is what lets a single event schema (like the default) serve every application.
 
 ### The shape of a declaration
 
@@ -95,9 +95,10 @@ At derivation time each pinned leaf records its full dotted path plus the contex
 A pin becomes more than a per-predicate correlation when it is **universal**
 and **symmetric**:
 
-- **Universal** — the same pin is declared on **every** event kind in the
-  schema (both `request` and `response` in the default layout, plus any
-  custom kinds).
+- **Universal** — the same pin is declared on **every** event kind the
+  schema derives (`request`, `response`, and `error` in the default
+  layout, plus any custom kinds). If a kind is left out the pin is not
+  universal, and the partition guarantee does not apply.
 - **Symmetric** — the pin's value is the field's own path on the current
   request (`pin session_id: String = context.session_id`), or one of the
   reserved scope-alias pairs (`pin callerPrincipal: principalType(A) =
@@ -125,11 +126,14 @@ universally-pinned field* (the request's "slice"). Concretely:
 
 This is implemented by a lowering-time rewrite of the leaf formulas (the
 authored form is what validation checks and error messages point at; the
-rewritten form is what engines evaluate — including the database-backed
-temporal engine, so the in-memory interpreter and the compiled
-engine agree). With no universal symmetric pin — including under the
-default event schema, which declares no pins — nothing changes: leaves
-keep the global-trace semantics described in
+rewritten form is what engines evaluate, so any conforming engine agrees
+with the in-memory interpreter). The default event schema carries such a
+pin, on `callerPrincipal`, so key-local semantics apply unless
+you replace it: every temporal leaf is keyed on the requesting principal,
+and events from other principals are invisible to it. With no universal
+symmetric pin — an event schema that declares none, or declares one that is
+partial or asymmetric — nothing changes: leaves keep the global-trace
+semantics described in
 [Temporal expressions](04-temporal-expressions.md).
 
 **A pin that is not universal silently keeps global semantics — with no
@@ -144,13 +148,13 @@ event kind; otherwise assume global-trace semantics.
 The payoff is the **partition guarantee**: with a universal symmetric pin
 on field `f`, a verdict for a request with key `f = v` depends *only* on
 events whose `f` equals `v`. Events may therefore be stored, evaluated,
-retained, and scaled **per key** — a per-session or per-principal
-database is provably equivalent to a global one — and no policy, present
-or future, can write a temporal expression that escapes the key, because
-pins are unforgeable. One consequence to weigh before adopting a
-universal pin: it applies to *every* predicate, so cross-key policies
+and retained **per key** — a per-session or per-principal database is
+equivalent to a global one — and no policy, present or future, can write
+a temporal expression that escapes the key. One consequence to weigh
+before adopting a universal pin: it applies to *every* predicate, so
+cross-key policies
 ("more than N logins by *any* user") become inexpressible under it —
-that is precisely the isolation being bought.
+that is the isolation being bought.
 
 ### How request references resolve in policies
 
@@ -161,11 +165,11 @@ Both a pin's right-hand side and a policy's request references resolve against t
 
 This distinction matters: an injected field can be renamed `actor` and still be correlated against the scope principal with `actor: principal`, while a declared context field like `__drupe_sessionid` is reached by its own name (`context.__drupe_sessionid`).
 
-### Worked examples from the corpus (cases 1110–1118)
+### Worked examples from the corpus
 
-These are real, passing `event.dwschema` files from the tested corpus — the authoritative examples of the full DSL.
+These are real, passing `event.dwschema` files from the tested corpus. Each case named below is a directory under `dogwood-language/tests/passing/temporal_only/corpus/`.
 
-**Author-defined kinds and a renamed principal field (1110).** Nothing forces the kinds to be `request`/`response`; here they are `attempt` (a decision) and `outcome` (history-only), and the injected principal is renamed `actor`:
+**Author-defined kinds and a renamed principal field (`1110_custom_event_schema_renamed_reserved`).** Nothing forces the kinds to be `request`/`response`; here they are `attempt` (a decision) and `outcome` (history-only), and the injected principal is renamed `actor`:
 
 ```text
 decision event <A>::attempt {
@@ -181,7 +185,7 @@ event <A>::outcome {
 
 The policy then correlates `actor: principal`.
 
-**An extra flat reserved field (1111).** This adds `__drupe_sessionid` alongside the standard reserved leaves:
+**A renamed flat reserved field (`1111_custom_injected_sessionid`).** This replaces the default's `sessionId` with `__drupe_sessionid`, keeping the other three reserved leaves:
 
 ```text
 decision event <A>::request {
@@ -203,15 +207,15 @@ event <A>::response {
 
 A policy can then reach the field by name: `…::request{ input.user: context.input.user, __drupe_sessionid: context.__drupe_sessionid }`.
 
-**Input/output field-name collision (1112).** This case uses the *default* schema (no custom `event.dwschema`) and relies on the `input` / `output` grouping to keep two same-named fields distinct as `input.x` and `output.x`.
+**Input/output field-name collision (`1112_input_output_field_name_collision`).** This uses the *default* schema (no custom `event.dwschema`) and relies on the `input` / `output` grouping to keep two same-named fields distinct as `input.x` and `output.x`.
 
-**Nested reserved field (1113).** `__drupe: { sessionid: String }` derives the leaf `__drupe.sessionid`; the policy correlates `__drupe.sessionid: context.__drupe.sessionid`.
+**Nested reserved field (`1113_nested_reserved_field_correlation`).** `__drupe: { sessionid: String }` derives the leaf `__drupe.sessionid`; the policy correlates `__drupe.sessionid: context.__drupe.sessionid`.
 
-**Depth-3 nested fields (1114 / 1116).** `__drupe: { session: { id: String, region: String } }` derives `__drupe.session.id`. Case 1114 correlates it directly; case 1116 injects the same correlation through a `def temporal same_session(?w, ?s)` macro (see [Macros](06-macros.md)).
+**Depth-3 nested fields (`1114_deep_nested_field_correlation` / `1116_injection_onto_deep_path`).** `__drupe: { session: { id: String, region: String } }` derives `__drupe.session.id`. `1114_deep_nested_field_correlation` correlates it directly; `1116_injection_onto_deep_path` injects the same correlation through a `def temporal same_session(?w, ?s)` macro (see [Macros](06-macros.md)).
 
-**Two deep siblings (1115).** Both `__drupe.session.id` and `__drupe.session.region` are carried under the one group and constrained together.
+**Two deep siblings (`1115_multiple_deep_path_constraints`).** Both `__drupe.session.id` and `__drupe.session.region` are carried under the one group and constrained together.
 
-**Top-level pin (1117).** The pin forces every predicate for this event to share the request's principal, even though no policy writes `callerPrincipal`:
+**Top-level pin (`1117_pin_principal_correlation`).** The pin forces every predicate for this event to share the request's principal, even though no policy writes `callerPrincipal`. It is declared on both kinds, which is what makes it universal:
 
 ```text
 decision event <A>::request {
@@ -229,7 +233,7 @@ event <A>::response {
 }
 ```
 
-**Nested-leaf pin (1118).** A pin can sit on a leaf *inside* a record group; here it conjoins `__drupe.session_id: context.__drupe.session_id` onto every predicate:
+**Nested-leaf pin (`1118_pin_nested_session_id`).** A pin can sit on a leaf *inside* a record group; here it conjoins `__drupe.session_id: context.__drupe.session_id` onto every predicate:
 
 ```text
 decision event <A>::request {
@@ -239,22 +243,31 @@ decision event <A>::request {
     requestId:       String,
     __drupe: { pin session_id: String = context.__drupe.session_id },
 }
+event <A>::response {
+    ...inputs(A),
+    ...outputs(A),
+    callerPrincipal: principalType(A),
+    callerResource:  resourceType(A),
+    requestId:       String,
+    __drupe: { pin session_id: String = context.__drupe.session_id },
+}
 ```
 
-**A pin cannot be bypassed by a hand-written field (1119–1122).** These all have the policy *write* the pinned field, proving the append is unconditional. Three are bypass attempts that fail:
+**A pin cannot be bypassed by a hand-written field (`1119_pin_not_bypassed_by_wildcard`, `1120_pin_agrees_with_author_written_field`, `1121_pin_not_bypassed_by_fresh_binder`, `1122_pin_disagree_denies_despite_author_literal`).** These all have the policy *write* the pinned field, proving the append is unconditional. Three are bypass attempts that fail:
 
-- **1119 — wildcard.** The policy writes `callerPrincipal: _` (accept a Login by any principal). The pin is still injected, so the wildcard adds nothing and the cross-principal Login is still excluded.
-- **1121 — fresh variable.** The policy writes `callerPrincipal: p` where `p` is used nowhere else — a variable that binds but never constrains, so on its own it too accepts any principal. The pin still forces the correlation.
-- **1122 — disagreeing concrete value.** Using the nested-session schema of 1118, the policy hard-codes `__drupe.session_id: "sess-1"` (the historical Login's session). That literal alone would permit every trace; the pin adds `context.__drupe.session_id`, so when the *current* request's session differs the two constraints on the one field disagree, the predicate is unsatisfiable, and the Read is denied. This is the "disagree → unsatisfiable" outcome end to end.
+- **`1119_pin_not_bypassed_by_wildcard` — wildcard.** The policy writes `callerPrincipal: _` (accept a Login by any principal). The pin is still injected, so the wildcard adds nothing and the cross-principal Login is still excluded.
+- **`1121_pin_not_bypassed_by_fresh_binder` — fresh variable.** The policy writes `callerPrincipal: p` where `p` is used nowhere else — a variable that binds but never constrains, so on its own it too accepts any principal. The pin still forces the correlation.
+- **`1122_pin_disagree_denies_despite_author_literal` — disagreeing concrete value.** Using the nested-session schema of `1118_pin_nested_session_id`, the policy hard-codes `__drupe.session_id: "sess-1"` (the historical Login's session). That literal alone would permit every trace; the pin adds `context.__drupe.session_id`, so when the *current* request's session differs the two constraints on the one field disagree, the predicate is unsatisfiable, and the Read is denied. This is the "disagree → unsatisfiable" outcome end to end.
 
-The fourth, **1120 — agreeing value**, writes the pin's exact value (`callerPrincipal: principal`); the appended pin is then a redundant no-op and the verdicts match 1117. Together they cover both documented outcomes of a hand-written pinned field: a weaker one (wildcard, variable, or a disagreeing value) can only narrow the pin, never relax it, and an agreeing one is a no-op.
+The fourth, **`1120_pin_agrees_with_author_written_field` — agreeing value**, writes the pin's exact value (`callerPrincipal: principal`); the appended pin is then a redundant no-op and the verdicts match `1117_pin_principal_correlation`. Together they cover both documented outcomes of a hand-written pinned field: a weaker one (wildcard, variable, or a disagreeing value) can only narrow the pin, never relax it, and an agreeing one is a no-op.
 
 ### How derived fields appear on an ingested event
 
-To make the derivation concrete, here is an event from case 1113's trace (against the Login/Read action schema from [The policy language](02-policy-language.md)) — the fields the event schema derived, filled in with real values:
+To make the derivation concrete, here is an event from `1113_nested_reserved_field_correlation`'s trace (against the Login/Read action schema from [The policy language](02-policy-language.md)) — the fields the event schema derived, filled in with real values:
 
 ```text
 @0  scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1")
+    request_context(…)
     Drupe::Action::"Login"::request(
       input: { user: "alice" },
       callerPrincipal: Drupe::OAuthUser::"alice",
@@ -263,7 +276,7 @@ To make the derivation concrete, here is an event from case 1113's trace (agains
       __drupe: { sessionid: "sess-1" })
 ```
 
-`input.user` came from the `...inputs(A)` spread; the three `caller*` leaves and the nested `__drupe.sessionid` came from the injected fields.
+`input.user` came from the `...inputs(A)` spread; `callerPrincipal`, `callerResource`, `requestId` and the nested `__drupe.sessionid` came from the injected fields. The `request_context(…)` bag is elided here because it is not derived from the event schema — it is the request's own context record, which every `context.<path>` reference reads, whether in a Cedar condition or in a temporal correlation like this case's. A real trace line spells it out.
 
 ---
 
@@ -272,7 +285,7 @@ To make the derivation concrete, here is an event from case 1113's trace (agains
 A temporal policy looks back over event history with a `within <interval>`
 window (see [Temporal expressions](04-temporal-expressions.md)). The event
 schema can put a ceiling on how far back *any* policy may look with an optional
-`max_window` directive at the very top of the file:
+`max_window` directive at the top of the file:
 
 ```text
 max_window = 24h
@@ -293,7 +306,7 @@ The rules:
   temporal windows (`s`, `m`, `h`, `d`) — e.g. `24h`, `30m`, `7d`. A zero
   window (`max_window = 0h`) is a parse error, since it would forbid every
   `within` clause; omit the directive instead if you want no custom cap.
-- **Absent, the cap defaults to `24h`.** Simply omitting `max_window` — as
+- **Absent, the cap defaults to `24h`.** Omitting `max_window` — as
   every schema shown elsewhere in this guide does — uses the 24h default.
 - **The bound is inclusive.** A `within` window *equal* to the cap is allowed;
   only a window *strictly greater* than the cap is rejected. So under the
@@ -311,26 +324,24 @@ policies may do (`max_window = 1h`).
 
 ## Decision kinds: when authorization runs
 
-The `decision` prefix is the most consequential piece of the event schema, because it decides *when Dogwood actually authorizes*.
+The `decision` prefix determines when Dogwood authorizes.
 
 Dogwood ingests a stream of events. Ingesting an event of a **decision kind** runs authorization and produces a verdict; ingesting any other (history-only) kind updates the engine's state but yields no verdict. This is the mechanism behind temporal policies: a `response` records that a tool call completed (history), and a later `request` for another tool can ask about it (decision).
 
 - `LoweredPolicySet::decision_kinds()` exposes the set of kinds marked `decision` (with `is_decision_kind(kind)` for a single check).
-- The **default** event schema marks **only `request`** as a decision kind. `request` runs authorization; `response` is history-only.
-- A custom schema may mark any kinds — case 1110 makes `attempt` the decision kind and `outcome` history-only.
-
-There is one guard worth knowing about. If you *explicitly supply* an event schema that is blank (empty, whitespace, or comment-only), it declares zero events, so authorization could never run — `build()` rejects it with an `EventSchema` error and points you at the default. Simply *omitting* the event schema uses the default (which does declare `decision request`), so this guard never trips on the default path.
+- The **default** event schema marks **only `request`** as a decision kind. `request` runs authorization; `response` and `error` are history-only.
+- A custom schema may mark any kinds — `1110_custom_event_schema_renamed_reserved` makes `attempt` the decision kind and `outcome` history-only.
 
 ---
 
-## The default event schema (request / response)
+## The default event schema (request / response / error)
 
 If you never supply an event schema, Dogwood uses `DEFAULT_EVENT_SCHEMA`. Here it is in full:
 
 ```text
 decision event <A>::request {
     ...inputs(A),
-    callerPrincipal:   principalType(A),
+    pin callerPrincipal: principalType(A) = principal,
     callerResource:    resourceType(A),
     requestId:         String,
     sessionId:         String,
@@ -339,7 +350,7 @@ decision event <A>::request {
 event <A>::response {
     ...inputs(A),
     ...outputs(A),
-    callerPrincipal:   principalType(A),
+    pin callerPrincipal: principalType(A) = principal,
     callerResource:    resourceType(A),
     requestId:         String,
     sessionId:         String,
@@ -347,7 +358,7 @@ event <A>::response {
 
 event <A>::error {
     ...inputs(A),
-    callerPrincipal:   principalType(A),
+    pin callerPrincipal: principalType(A) = principal,
     callerResource:    resourceType(A),
     requestId:         String,
     sessionId:         String,
@@ -358,7 +369,7 @@ Reading it part by part:
 
 - **`decision event <A>::request`** — for every action `A`, a `request` event that is a decision point (runs authorization).
   - `...inputs(A)` — the tool's arguments, nested under the `input` group (`input.user`, `input.document`, …).
-  - `callerPrincipal: principalType(A)` — a top-level leaf holding the request principal's entity-type set (the full `appliesTo` set, kept whole).
+  - `pin callerPrincipal: principalType(A) = principal` — a top-level leaf holding the request principal's entity-type set (the full `appliesTo` set, kept whole), pinned to the request's scope principal.
   - `callerResource: resourceType(A)` — the resource entity-type set.
   - `requestId: String` — the event's unique id, a flat leaf.
   - `sessionId: String` — the session this request belongs to.
@@ -369,7 +380,7 @@ Reading it part by part:
   - `...inputs(A)` — the attempted call's arguments, so a policy can correlate on what was attempted.
   - the same reserved leaves (no `...outputs(A)` since the call failed).
 
-So against the `Login`/`Read` schema, `Login::request` derives `input.user`, `callerPrincipal`, `callerResource`, `requestId`, `sessionId`; `request` does **not** splice outputs, while `response` splices both. The default declares **no** pins.
+So against the `Login`/`Read` schema, `Login::request` derives `input.user`, `callerPrincipal`, `callerResource`, `requestId`, `sessionId`; `request` does **not** splice outputs, while `response` splices both. The `callerPrincipal` pin is declared on every kind and is symmetric, so the default carries a universal symmetric pin: temporal leaves run under [key-local semantics](#universal-symmetric-pins-key-local-semantics-and-the-partition-guarantee), keyed on the requesting principal. To get global-trace semantics instead, supply an event schema without that pin.
 
 ---
 

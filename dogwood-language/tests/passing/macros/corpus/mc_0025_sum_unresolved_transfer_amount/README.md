@@ -3,13 +3,13 @@
 The `sum` companion to `mc_0022_count_unresolved_transfer`. A macro,
 `sum_unresolved_transfer_amount_within(?w)`, sums the `input.amount` of
 every Transfer request in the last `?w` that has **no matching
-resolution** — the total value of still-pending, in-flight transfers.
+response** — the total value of still-pending, in-flight transfers.
 
 ## The "requested but not yet resolved" idiom
 
-A request and its resolution share a `requestId`. "In-flight" means a
+A request and its response share a `requestId`. "In-flight" means a
 `Transfer::request` whose uid has *not* (yet) appeared on a
-`Transfer::resolution`:
+`Transfer::response`:
 
 ```
 formerly within ?w Transfer::request{ requestId: $q, input.amount: a }
@@ -20,7 +20,7 @@ formerly within ?w Transfer::request{ requestId: $q, input.amount: a }
 The left conjunct enumerates each request, binding the per-occurrence
 uid `$q` and the summed value `a` (from `input.amount`). The negated
 inner `exists` drops any request whose uid already has an in-window
-resolution. `tp($r)` range-restricts the inner existential (the §7-safe
+response. `tp($r)` range-restricts the inner existential (the §7-safe
 negated-exists shape). The `sum a for (a: Long), ($q: String). where …`
 then adds up `a` across the surviving (pending) requests.
 
@@ -38,6 +38,6 @@ Three transfers are requested — `u1: 10`, `u2: 20`, `u3: 30` — and
 
 The `Transfer::request` timepoints (`@0`/`@2`/`@3`) are decision events
 but the `Alert`-scoped policy never applies to them, so each is `false`;
-the `resolution` events (`@1`/`@6`) are history-only and produce no
+the `response` events (`@1`/`@6`) are history-only and produce no
 verdict. This is the exact same verdict stream as `mc_0022`'s count
 version (count ≥ 2 ⇔ pending total 50 here), by construction.

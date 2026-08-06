@@ -4,7 +4,7 @@ Example 0002 narrowed a permit with `context.input.shares < 100`.
 This case is the same shape with two refinements: it uses `<=`
 instead of `<`, and it names the type explicitly. `shares` is
 declared as `Long` in the `SellShares` tool schema, and `Long`
-is GuardLogic's integer type.
+is Dogwood's integer type.
 
 ```
 when {

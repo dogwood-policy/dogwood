@@ -5,7 +5,7 @@
 @id("sell_after_approval_valid_ticker")
 permit ( principal, action == Drupe::Action::"SellShares", resource )
 when temporal {
-    formerly within 1h Drupe::Action::"ApproveSale"::request{ input.stock: context.input.stock }
+    formerly within 1h Drupe::Action::"ApproveSale"::response{ input.stock: context.input.stock }
 }
 when guardrails {
     Strings::Matches(context.input.stock, "^[A-Z]+$").matched == true

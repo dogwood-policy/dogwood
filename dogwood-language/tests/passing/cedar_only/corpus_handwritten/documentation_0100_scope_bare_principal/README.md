@@ -18,7 +18,7 @@ specific tool; here even that constraint is dropped.
 
 ## The four request entities
 
-A GuardLogic authorization request is a 4-tuple. Three of them
+A Dogwood authorization request is a 4-tuple. Three of them
 are named in the rule scope; the fourth lives outside it:
 
 - **`principal`** — who is making the request (e.g. an

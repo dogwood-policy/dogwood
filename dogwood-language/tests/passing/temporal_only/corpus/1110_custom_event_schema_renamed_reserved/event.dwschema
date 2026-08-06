@@ -1,6 +1,6 @@
 // A custom event schema exercising the per-case override: the event kinds
 // are `attempt` (the decision kind) and `outcome` (history), NOT the
-// conventional request/resolution, and the injected principal field is
+// conventional request/response, and the injected principal field is
 // named `actor` rather than `callerPrincipal`. This probes that (a) the
 // harness honors a per-case event.dwschema, (b) author-defined kinds work
 // end to end, and (c) a renamed injected reserved field is usable.

@@ -778,7 +778,7 @@ const TWO_GROUP_SCHEMA: &str = r#"
 "#;
 
 fn lower_two_group(policy: &str) -> LoweredPolicySet {
-    // The default request/resolution event schema derives a `Read::request`
+    // The default request/response event schema derives a `Read::request`
     // event from the action's inputs, so a temporal predicate can name it.
     LoweredPolicySet::from_str(
         policy,

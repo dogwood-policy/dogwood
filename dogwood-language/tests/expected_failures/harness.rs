@@ -84,7 +84,7 @@ fn load_cases() -> Vec<CaseFiles> {
     }
 
     let event_schema = std::fs::read_to_string(
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/request_resolution.dwschema"),
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/request_response.dwschema"),
     )
     .unwrap_or_default();
 

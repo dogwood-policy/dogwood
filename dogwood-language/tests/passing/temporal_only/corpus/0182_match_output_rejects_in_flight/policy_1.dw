@@ -1,5 +1,5 @@
-// Requires a resolution with result == true. An in-flight request
-// has no resolution at all — should NOT fire.
+// Requires a response with result == true. An in-flight request
+// has no response at all — should NOT fire.
 
 permit (
     principal,

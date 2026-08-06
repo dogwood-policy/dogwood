@@ -1,6 +1,5 @@
 // Non-vacuous `since` with a PAST anchor and a current-request correlation on
-// the left — a temporal engine divergence distinct from the `0875` current-anchor
-// vacuity case.
+// the left — the complement of the `0875` current-anchor vacuity case.
 //
 // The formula is `(A && C) since within 1h B` where
 //   A = Transfer{ input.user: context.input.user }   (correlate on the request)
@@ -9,19 +8,17 @@
 //
 // `0875` exercises the case where the CURRENT event is itself the anchor, so
 // the left is checked over the empty range `(i, i]` and is vacuously true
-// (the §5.3 `((A S B) ∧ C) ∨ B` rewrite handles that, and `0875` passes the temporal engine).
+// (the `((A S B) ∧ C) ∨ B` vacuity identity handles that).
 //
 // THIS case exercises the complementary shape: the anchor B is strictly in the
 // PAST (a prior `carol` Transfer), and the left `(A && C)` is checked over a
 // NON-empty range up to the current step, where A correlates on
-// `context.input.user` of the *current* request. The interpreter evaluates
-// this correctly (see expected_1.out); the temporal engine compiler returns the wrong
-// verdict at the decision step (it denies where the interpreter permits).
+// `context.input.user` of the *current* request. The expected verdicts are in
+// expected_1.out: the decision step permits, because a matching `carol` anchor
+// precedes it and every step in the range satisfies both A and C.
 //
-// Interpreter (oracle) verdicts are correct — this lives in the Passing corpus
-// for the interpreter and is a KNOWN temporal engine verdict divergence surfaced by the
-// SMT differential fuzzer (dogwood-fuzz-smt). Tracked for the temporal-compiler
-// `since` left-guard past-anchor compilation; see the compiler root-cause note.
+// An implementation that evaluates the left-hand correlation against the
+// anchor step rather than the current request will deny here instead.
 permit (
     principal,
     action == Drupe::Action::"Transfer",

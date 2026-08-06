@@ -5,7 +5,7 @@
 //
 // Because `output` is optional on tool actions in the schema, the
 // reference is guarded with `context has output` so the validator
-// is satisfied when no resolution is attached to the request.
+// is satisfied when no response is attached to the request.
 
 permit (
     principal,

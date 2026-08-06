@@ -20,13 +20,13 @@ use crate::error::{Diagnostic, OpError, project};
 /// *action schema* (a Cedar `.cedarschema`) is passed to each op directly as a
 /// `&str`, and the *service schema* — the event-schema DSL, provider
 /// declarations, and macro library — is optional and defaults to the
-/// request/resolution convention plus the default macros. All-`None` (the
+/// request/response convention plus the default macros. All-`None` (the
 /// [`Default`]) yields [`ServiceSchema::defaults`]. This is the one place the
 /// frontend's `ServiceSchema`/`ServiceSchemaBuilder` is touched.
 #[derive(Debug, Default, Clone)]
 pub struct SchemaInputs<'a> {
     /// Event-schema DSL source (`.dwschema` text). Omit for the default
-    /// request/resolution schema.
+    /// request/response schema.
     pub event_schema: Option<&'a str>,
     /// Provider declarations as `providers.json` text. Omit for no providers.
     pub providers: Option<&'a str>,
@@ -309,6 +309,7 @@ pub struct SchemaCheckReport {
 /// eager parser (which type-checks the schema and reports warnings) — unlike
 /// `PolicySchema::from_cedarschema_str`, which defers all checking to lowering.
 pub fn check_action_schema(source: &str) -> Result<SchemaCheckReport, OpError> {
+    let source = source.strip_prefix('\u{FEFF}').unwrap_or(source);
     match cedar::Schema::from_cedarschema_str(source) {
         Ok((_schema, warnings)) => Ok(SchemaCheckReport {
             kind: "action".to_string(),

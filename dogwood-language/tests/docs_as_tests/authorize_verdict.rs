@@ -18,13 +18,13 @@ fn schema_src() -> String {
 /// time, returning the response at each timepoint (`None` for non-decision
 /// points).
 fn run(policy: &str, action_schema: &str, trace_text: &str) -> Vec<Option<Response>> {
-    // This temporal policy uses the request/resolution convention, so pass
+    // This temporal policy uses the request/response convention, so pass
     // that event schema explicitly (it is also the built-in default).
     let event_schema = std::fs::read_to_string(concat!(
         env!("CARGO_MANIFEST_DIR"),
-        "/tests/fixtures/request_resolution.dwschema"
+        "/tests/fixtures/request_response.dwschema"
     ))
-    .expect("read request_resolution fixture");
+    .expect("read request_response fixture");
     let service = ServiceSchema::builder()
         .event_schema_str(&event_schema)
         .build()

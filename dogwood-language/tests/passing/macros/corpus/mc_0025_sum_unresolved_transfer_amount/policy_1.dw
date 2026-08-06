@@ -1,8 +1,8 @@
 // `sum_unresolved_transfer_amount_within(?w)` sums the `input.amount` of
-// every Transfer request in the last `?w` that has NO matching resolution
+// every Transfer request in the last `?w` that has NO matching response
 // — i.e. the total value of still-pending (in-flight) transfers. It is the
 // `sum` analogue of `count_unresolved_transfer_within` (mc_0022): the same
-// request/resolution correlation by shared `requestId`, but aggregating
+// request/response correlation by shared `requestId`, but aggregating
 // each pending request's amount instead of merely counting them.
 //
 //   sum a for (a: Long), ($q: String).
@@ -13,7 +13,7 @@
 // The `where` body enumerates each Transfer request, binding both the
 // per-occurrence uid `$q` (uid is unique per request) and the summed value
 // `a` from `input.amount`. The negated inner `exists` keeps a row only when
-// no past in-window resolution carries that same uid — the request is still
+// no past in-window response carries that same uid — the request is still
 // pending. `tp($r)` range-restricts the inner existential (the §7-safe
 // negated-exists shape).
 //

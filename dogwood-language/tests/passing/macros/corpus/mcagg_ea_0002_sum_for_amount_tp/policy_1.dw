@@ -1,4 +1,4 @@
-// §1.2 example 2 — recover today's `sum a` (per-occurrence) via the
+// Recover the implicit-domain `sum a` (per-occurrence) via the
 // explicit form:
 //   sum a for (a: Long), (t: Timepoint). where formerly within 1h (Withdraw(amount: a) ∧ tp(t))
 //

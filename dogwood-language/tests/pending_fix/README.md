@@ -1,14 +1,21 @@
 # Pending Fix
 
-Cases that currently produce incorrect results but will be fixed before GA.
+A holding area for temporal corpus cases whose verdict stream does not match
+their `expected_<n>.out`. It is currently empty.
 
-## temporal_divergences/ (21 cases)
+The `harness.rs` test in this directory asserts that every case present here
+still fails. If a case starts producing its expected verdict stream, the test
+fails and the case should be moved to `passing/temporal_only/corpus/`.
 
-Known verdict divergences from the reference monitor. These policies parse and evaluate but produce different verdicts than the proven reference monitor.
+## Layout
 
-Categories:
-- **Explicit false-verdict emission** (15 cases): a verdict mode where certain decision points emit `false` (not just silent deny); not yet modeled.
-- **UID-based event idempotence** (3 cases): duplicate events with the same `requestId` should not be re-counted as fresh anchors.
-- **Temporal edge semantics** (3 cases): corner cases in quote handling and entity correlation.
+Cases use the same on-disk shape as the other corpora:
 
-When a case is fixed, move it to `passing/temporal_only/temporal_corpus/`.
+```
+<case_name>/
+  policy_1.dw           one or more policy_<n>.dw, concatenated in order
+  schema.cedarschema    optional; falls back to the shared schema
+  event.dwschema        optional event-schema override
+  trace_<n>.log         paired with expected_<n>.out
+  expected_<n>.out
+```

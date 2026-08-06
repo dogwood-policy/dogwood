@@ -36,6 +36,7 @@ impl PolicySchema {
     /// Named to mirror `cedar_policy::Schema::from_cedarschema_str`. The text
     /// is not typechecked here — that happens during lowering / validation.
     pub fn from_cedarschema_str(action_schema_src: &str) -> Result<PolicySchema, Error> {
+        let action_schema_src = action_schema_src.strip_prefix('\u{FEFF}').unwrap_or(action_schema_src);
         Ok(PolicySchema {
             action_schema_src: action_schema_src.to_string(),
         })

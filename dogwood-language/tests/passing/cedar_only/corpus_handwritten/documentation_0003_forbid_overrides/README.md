@@ -26,7 +26,7 @@ when {
 ```
 
 A request to sell `AMZN` matches both rules. The permit says
-yes; the forbid says no. **The forbid wins.** This is GuardLogic's
+yes; the forbid says no. **The forbid wins.** This is Dogwood's
 combining rule: a request is permitted only if at least one
 `permit` matches *and* no `forbid` matches.
 
@@ -51,5 +51,5 @@ permit, the forbid would have nothing to carve out of, and every
 `permit` second. The verdict for every request is identical.
 
 This is by design: the deny-overrides combining rule is a property
-of the rule set, not of the source text. You can read a GuardLogic
+of the rule set, not of the source text. You can read a Dogwood
 file in any order and reason about it the same way.
