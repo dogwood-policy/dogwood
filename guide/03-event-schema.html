@@ -1,0 +1,572 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Event Schema - The Dogwood Guide</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="../favicon-8114d1fc.png">
+        <link rel="stylesheet" href="../css/variables-8adf115d.css">
+        <link rel="stylesheet" href="../css/general-e96d0476.css">
+        <link rel="stylesheet" href="../css/chrome-d279d366.css">
+        <link rel="stylesheet" href="../css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="../highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../dogwood-docs/mdbook-src/custom-cd47a9b0.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex-6a55f184.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc-982af72f.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">The Dogwood Guide</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/dogwood-policy/dogwood" title="Git repository" aria-label="Git repository">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/dogwood-policy/dogwood/edit/main/dogwood-docs/mdbook-src/guide/03-event-schema.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <span class=fa-svg id="git-edit-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M421.7 220.3l-11.3 11.3-22.6 22.6-205 205c-6.6 6.6-14.8 11.5-23.8 14.1L30.8 511c-8.4 2.5-17.5 .2-23.7-6.1S-1.5 489.7 1 481.2L38.7 353.1c2.6-9 7.5-17.2 14.1-23.8l205-205 22.6-22.6 11.3-11.3 33.9 33.9 62.1 62.1 33.9 33.9zM96 353.9l-9.3 9.3c-.9 .9-1.6 2.1-2 3.4l-25.3 86 86-25.3c1.3-.4 2.5-1.1 3.4-2l9.3-9.3H112c-8.8 0-16-7.2-16-16V353.9zM453.3 19.3l39.4 39.4c25 25 25 65.5 0 90.5l-14.5 14.5-22.6 22.6-11.3 11.3-33.9-33.9-62.1-62.1L314.3 67.7l11.3-11.3 22.6-22.6 14.5-14.5c25-25 65.5-25 90.5 0z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="the-event-schema"><a class="header" href="#the-event-schema">The Event Schema</a></h1>
+<p>This is an Advanced-topics deep dive on Dogwood’s event-schema DSL. The core guide takes the event schema as <strong>given</strong> — the default schema that ships out of the box, which declares three event kinds: <code>request</code>, <code>response</code>, and <code>error</code>. The examples in this guide use only <code>request</code> and <code>response</code>. This page is for authors who need to <em>customize</em> the event model: which event kinds exist, what fields each kind carries, and which kinds are decision points that trigger an authorization decision. Everything here is optional; omit an event schema entirely and Dogwood uses the default described at the end.</p>
+<h2 id="the-event-schema-dsl-dwschema"><a class="header" href="#the-event-schema-dsl-dwschema">The event schema DSL (<code>.dwschema</code>)</a></h2>
+<p>The event schema is a <strong>generic template</strong> that describes how to derive event signatures from <em>any</em> action schema. It is a sequence of event declarations; each one names a kind of event (<code>request</code>, <code>response</code>, …) for a symbolic action <code>&lt;A&gt;</code> and lists the fields that kind carries. Parsing the event schema never looks at your action schema — the two are bound together in a later derivation pass. That is what lets a single event schema (like the default) serve every application.</p>
+<h3 id="the-shape-of-a-declaration"><a class="header" href="#the-shape-of-a-declaration">The shape of a declaration</a></h3>
+<p>Every declaration has the form:</p>
+<pre><code class="language-text">[decision] event &lt;A&gt;::kind {
+    field,
+    field,
+    ...
+}
+</code></pre>
+<ul>
+<li><strong><code>&lt;A&gt;</code> — the binder.</strong> A symbolic name meaning “any action”. <em>Every</em> selector inside the body must reference this exact binder. Writing <code>...inputs(B)</code> inside <code>event &lt;A&gt;::…</code> is a parse error: <code>selector argument \</code>B` does not name the declared action binder `A``.</li>
+<li><strong><code>kind</code> — the event kind.</strong> An author-chosen name such as <code>request</code>, <code>response</code>, <code>attempt</code>, <code>outcome</code>, or <code>audit</code>. Kind names are <em>not</em> reserved; you pick them.</li>
+<li><strong>The angle brackets and body braces are mandatory.</strong> <code>event A::r { }</code> (no <code>&lt;&gt;</code>) and <code>event &lt;A&gt;::r</code> (no body) are both parse errors. An <em>empty</em> body is fine: <code>event &lt;A&gt;::ping {}</code> declares a kind with zero fields.</li>
+<li><strong><code>decision</code> prefix</strong> marks the kind as a decision point (see <a href="#decision-kinds-when-authorization-runs">Decision kinds</a>).</li>
+</ul>
+<p>Comments use <code>//</code> to end of line; a trailing comma after the last field is allowed.</p>
+<h3 id="the-four-selectors"><a class="header" href="#the-four-selectors">The four selectors</a></h3>
+<p>Selectors are how a declaration reaches into the bound action. There are exactly four, and each has a fixed role:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Selector</th><th>Spread as <code>...sel(A)</code>?</th><th>Used as a field <em>type</em> <code>sel(A)</code>?</th><th>Yields</th></tr>
+</thead>
+<tbody>
+<tr><td><code>inputs</code></td><td>yes → an <code>input</code> group</td><td>no (error)</td><td>the <code>context.input</code> field record</td></tr>
+<tr><td><code>outputs</code></td><td>yes → an <code>output</code> group</td><td>no (error)</td><td>the <code>context.output</code> field record</td></tr>
+<tr><td><code>principalType</code></td><td>no (error)</td><td>yes</td><td>the action’s <code>appliesTo</code> principal type set</td></tr>
+<tr><td><code>resourceType</code></td><td>no (error)</td><td>yes</td><td>the action’s <code>appliesTo</code> resource type set</td></tr>
+</tbody>
+</table>
+</div>
+<p><code>inputs</code> and <code>outputs</code> yield a <em>record of fields</em>, so they are meant to be <strong>spread</strong>. <code>principalType</code> and <code>resourceType</code> yield <em>entity types</em>, so they are meant to be used as a <strong>field type</strong>. Using one the wrong way is a derive error with a message that tells you which form to use instead — e.g. spreading <code>principalType</code> reports “cannot be spread (it yields entity types, not a field record); use it as a field type instead.”</p>
+<h3 id="spread-selectors-inputsa-and-outputsa"><a class="header" href="#spread-selectors-inputsa-and-outputsa">Spread selectors: <code>...inputs(A)</code> and <code>...outputs(A)</code></a></h3>
+<p>A spread splices every field the selector yields into the event, under a group named for the selector:</p>
+<ul>
+<li><code>...inputs(A)</code> mints a group named <strong><code>input</code></strong> whose members are the fields of the action’s <code>context.input</code> record. So a tool with <code>input: { user: String }</code> contributes the leaf <code>input.user</code>.</li>
+<li><code>...outputs(A)</code> mints a group named <strong><code>output</code></strong> from <code>context.output</code>.</li>
+</ul>
+<p>Two rules keep spreads unambiguous:</p>
+<ul>
+<li>The group name (<code>input</code> / <code>output</code>) must be unique in the declaration. It may not collide with a named field of the same name, nor may you spread the same selector twice.</li>
+<li>A spread always mints <em>its own</em> group, even nested inside a named record. Writing <code>meta: { ...inputs(A) }</code> produces <code>meta.input.user</code>, <strong>not</strong> <code>meta.user</code>.</li>
+</ul>
+<h3 id="named-injected-fields-name-type"><a class="header" href="#named-injected-fields-name-type">Named (injected) fields: <code>name: type</code></a></h3>
+<p>A named field injects one field with an explicit type. The type can take three forms:</p>
+<p><strong>1. A selector used as a type</strong> — <code>principalType(A)</code> or <code>resourceType(A)</code>. This yields the action’s declared <code>appliesTo</code> entity-type set, <strong>kept whole</strong> (no collapsing or unioning). For a two-principal action, both types are retained. (<code>inputs</code>/<code>outputs</code> may <em>not</em> be used as a type — spread them instead.)</p>
+<p><strong>2. A concrete Cedar type</strong> — an ordinary, possibly-qualified type name such as <code>String</code>, <code>Long</code>, or <code>Drupe::OAuthUser</code>.</p>
+<p><strong>3. A nested record</strong> — <code>{ … }</code>, a record type whose members are themselves field specs, addressed as <code>name.member</code>. This is how you opt a field into hierarchy. Members are derived recursively, so a spread inside a record is legal (<code>meta: { ...inputs(A) }</code>) and records nest arbitrarily deep.</p>
+<p>Field names must be unique <strong>at every level</strong>, not just the top — a duplicate name inside a nested record is also an error.</p>
+<h3 id="nested-records-and-deep-hierarchy"><a class="header" href="#nested-records-and-deep-hierarchy">Nested records and deep hierarchy</a></h3>
+<p>Records can nest as deeply as you like, and field identity is by <em>dotted path</em>:</p>
+<pre><code class="language-text">__drupe: { sessionid: String }          // leaf __drupe.sessionid
+a: { b: { c: String } }                      // leaf a.b.c; a and a.b are groups
+meta: { }                                    // a group with no leaves
+</code></pre>
+<p>Flat fields, depth-2, and depth-3 fields can coexist on one event, and a flat reserved field (like <code>requestId</code>) stays flat while a sibling nests. The derived list of a <code>Login::request</code> event against the Login/Read action schema from <a href="02-policy-language.html">The policy language</a> is, for example, <code>["input.user", "callerPrincipal", "callerResource", "requestId", "sessionId"]</code>.</p>
+<h3 id="pins-pin-name-type--request-reference"><a class="header" href="#pins-pin-name-type--request-reference">Pins: <code>pin name: type = &lt;request-reference&gt;</code></a></h3>
+<p>A <strong>pin</strong> forces a correlation. On <em>every</em> predicate that mentions the event, the pinned field is implicitly conjoined to a request reference — the current request’s <code>principal</code> / <code>resource</code> scope entity (± an attribute) or a <code>context.&lt;path&gt;</code> field — whether or not the policy author wrote it. This is how a schema author guarantees an invariant that individual policies cannot forget.</p>
+<pre><code class="language-text">pin callerPrincipal: principalType(A) = principal
+</code></pre>
+<p>The rules:</p>
+<ul>
+<li><strong><code>pin</code> and <code>= &lt;reference&gt;</code> go together.</strong> <code>pin foo: String</code> with no <code>=</code> is an error (<code>pinned field \</code>foo` is missing its pin value<code>), and </code>foo: String = context.foo<code>without</code>pin<code> is an error (</code>field `foo` has a `= context.&lt;…&gt;` value but is not marked `pin`<code>). The reference is either a scope entity (</code>principal<code>, </code>resource<code>, </code>principal.dept<code>) or a context field (</code>context.<path>`).</path></li>
+<li><strong>A pin may sit only on a leaf.</strong> Pinning a whole record group is an error; pin a leaf <em>inside</em> the group instead.</li>
+<li><strong><code>pin</code> is a contextual keyword.</strong> It only acts as the pin prefix when a field declaration (<code>ident :</code>) follows. So a field can still be <em>named</em> <code>pin</code> (<code>pin: String</code>), and a field named <code>pin</code> can itself be pinned (<code>pin pin: String = context.pin</code>).</li>
+</ul>
+<p>At derivation time each pinned leaf records its full dotted path plus the context path. The engine’s pin-injection pass then runs <em>after</em> macro expansion and <em>before</em> validation: for every predicate naming an event with pins, it appends the correlation. The pin is appended <strong>unconditionally</strong> — even if the policy already wrote that field. A hand-written copy can only <em>narrow</em> a pin, never relax it: if it agrees with the pin the appended correlation is a redundant no-op, and if it disagrees the two constraints on the same field make the predicate unsatisfiable. Because injection happens before validation, the pinned field is validated like any authored field, and because it is never skipped, a pin cannot be bypassed — not by omitting the field, and not by writing it with a weaker value (a wildcard, a different <code>context.&lt;path&gt;</code>, or a fresh variable).</p>
+<h3 id="universal-symmetric-pins-key-local-semantics-and-the-partition-guarantee"><a class="header" href="#universal-symmetric-pins-key-local-semantics-and-the-partition-guarantee">Universal symmetric pins: key-local semantics and the partition guarantee</a></h3>
+<p>A pin becomes more than a per-predicate correlation when it is <strong>universal</strong>
+and <strong>symmetric</strong>:</p>
+<ul>
+<li><strong>Universal</strong> — the same pin is declared on <strong>every</strong> event kind the
+schema derives (<code>request</code>, <code>response</code>, and <code>error</code> in the default
+layout, plus any custom kinds). If a kind is left out the pin is not
+universal, and the partition guarantee does not apply.</li>
+<li><strong>Symmetric</strong> — the pin’s value is the field’s own path on the current
+request (<code>pin session_id: String = context.session_id</code>), or one of the
+reserved scope-alias pairs (<code>pin callerPrincipal: principalType(A) = principal</code>, and likewise <code>callerResource</code>/<code>resource</code>). The alias uses the
+bare scope reference (<code>= principal</code> / <code>= resource</code>), <strong>not</strong> <code>= context.principal</code>: as noted below, <code>context.principal</code> is a context field
+literally named <code>principal</code>, not the scope entity, so it would <em>not</em> be the
+reserved alias and would not qualify. Symmetry is what makes an event’s <em>own</em>
+field value the key under which it is both stored and looked up.</li>
+</ul>
+<p>When at least one universal symmetric pin exists, Dogwood switches every
+temporal leaf to <strong>key-local semantics</strong>: the leaf is evaluated <em>as if the
+trace contained only the events agreeing with the current request on every
+universally-pinned field</em> (the request’s “slice”). Concretely:</p>
+<ul>
+<li><code>formerly</code>, aggregations, and the negated-left <code>since</code> idiom already
+behave this way under pins (a pinned predicate can never match another
+key’s event), so their meaning is unchanged.</li>
+<li><strong><code>previous</code> means “this key’s previous event.”</strong> Another key’s
+interleaved event no longer displaces it — and no longer <em>satisfies</em>
+it. The window still measures from the decision point, exactly.</li>
+<li><strong>The positive left of <code>since</code> quantifies over this key’s positions
+only.</strong> Another key’s interleaved event cannot break the “held at every
+step” continuity; the key’s <em>own</em> non-matching events still do.</li>
+</ul>
+<p>This is implemented by a lowering-time rewrite of the leaf formulas (the
+authored form is what validation checks and error messages point at; the
+rewritten form is what engines evaluate, so any conforming engine agrees
+with the in-memory interpreter). The default event schema carries such a
+pin, on <code>callerPrincipal</code>, so key-local semantics apply unless
+you replace it: every temporal leaf is keyed on the requesting principal,
+and events from other principals are invisible to it. With no universal
+symmetric pin — an event schema that declares none, or declares one that is
+partial or asymmetric — nothing changes: leaves keep the global-trace
+semantics described in
+<a href="04-temporal-expressions.html">Temporal expressions</a>.</p>
+<p><strong>A pin that is not universal silently keeps global semantics — with no
+error.</strong> A pin declared on only <em>some</em> event kinds (e.g. on <code>request</code> but
+not <code>response</code>), or one that is not symmetric, is a valid schema: it still
+acts as an ordinary per-predicate correlation, but it does <strong>not</strong> activate
+key-local semantics and the partition guarantee does <strong>not</strong> apply. Nothing
+warns you — the schema builds and evaluates, just without isolation. To buy
+the guarantee you must declare the <em>same</em> symmetric pin on <strong>every</strong> derived
+event kind; otherwise assume global-trace semantics.</p>
+<p>The payoff is the <strong>partition guarantee</strong>: with a universal symmetric pin
+on field <code>f</code>, a verdict for a request with key <code>f = v</code> depends <em>only</em> on
+events whose <code>f</code> equals <code>v</code>. Events may therefore be stored, evaluated,
+and retained <strong>per key</strong> — a per-session or per-principal database is
+equivalent to a global one — and no policy, present or future, can write
+a temporal expression that escapes the key. One consequence to weigh
+before adopting a universal pin: it applies to <em>every</em> predicate, so
+cross-key policies
+(“more than N logins by <em>any</em> user”) become inexpressible under it —
+that is the isolation being bought.</p>
+<h3 id="how-request-references-resolve-in-policies"><a class="header" href="#how-request-references-resolve-in-policies">How request references resolve in policies</a></h3>
+<p>Both a pin’s right-hand side and a policy’s request references resolve against the <strong>current decision request</strong>, mirroring Cedar’s four request variables:</p>
+<ul>
+<li><code>principal</code> / <code>resource</code> are the request scope’s principal / resource <strong>entities</strong> — regardless of what the schema happens to <em>name</em> its injected principal field. A trailing attribute (<code>principal.dept</code>) reads that entity’s attribute from the request’s entity store; a bare <code>principal</code> is the entity itself (for identity), and <code>principal.id</code> / <code>principal.type</code> project the uid.</li>
+<li><code>context.&lt;path&gt;</code> resolves to a field of the request <strong>context</strong> record at that dotted path (<code>context.input.user</code>, <code>context.__drupe_sessionid</code>, <code>context.__drupe.session.id</code>). This is Cedar’s <code>context</code> variable — a plain record — so <code>context.principal</code> would be a field literally <em>named</em> <code>principal</code> in that record, <strong>not</strong> the scope entity.</li>
+</ul>
+<p>This distinction matters: an injected field can be renamed <code>actor</code> and still be correlated against the scope principal with <code>actor: principal</code>, while a declared context field like <code>__drupe_sessionid</code> is reached by its own name (<code>context.__drupe_sessionid</code>).</p>
+<h3 id="worked-examples-from-the-corpus"><a class="header" href="#worked-examples-from-the-corpus">Worked examples from the corpus</a></h3>
+<p>These are real, passing <code>event.dwschema</code> files from the tested corpus. Each case named below is a directory under <code>dogwood-language/tests/passing/temporal_only/corpus/</code>.</p>
+<p><strong>Author-defined kinds and a renamed principal field (<code>1110_custom_event_schema_renamed_reserved</code>).</strong> Nothing forces the kinds to be <code>request</code>/<code>response</code>; here they are <code>attempt</code> (a decision) and <code>outcome</code> (history-only), and the injected principal is renamed <code>actor</code>:</p>
+<pre><code class="language-text">decision event &lt;A&gt;::attempt {
+    ...inputs(A),
+    actor: principalType(A),
+}
+event &lt;A&gt;::outcome {
+    ...inputs(A),
+    ...outputs(A),
+    actor: principalType(A),
+}
+</code></pre>
+<p>The policy then correlates <code>actor: principal</code>.</p>
+<p><strong>A renamed flat reserved field (<code>1111_custom_injected_sessionid</code>).</strong> This replaces the default’s <code>sessionId</code> with <code>__drupe_sessionid</code>, keeping the other three reserved leaves:</p>
+<pre><code class="language-text">decision event &lt;A&gt;::request {
+    ...inputs(A),
+    callerPrincipal:      principalType(A),
+    callerResource:       resourceType(A),
+    requestId:            String,
+    __drupe_sessionid:  String,
+}
+event &lt;A&gt;::response {
+    ...inputs(A),
+    ...outputs(A),
+    callerPrincipal:      principalType(A),
+    callerResource:       resourceType(A),
+    requestId:            String,
+    __drupe_sessionid:  String,
+}
+</code></pre>
+<p>A policy can then reach the field by name: <code>…::request{ input.user: context.input.user, __drupe_sessionid: context.__drupe_sessionid }</code>.</p>
+<p><strong>Input/output field-name collision (<code>1112_input_output_field_name_collision</code>).</strong> This uses the <em>default</em> schema (no custom <code>event.dwschema</code>) and relies on the <code>input</code> / <code>output</code> grouping to keep two same-named fields distinct as <code>input.x</code> and <code>output.x</code>.</p>
+<p><strong>Nested reserved field (<code>1113_nested_reserved_field_correlation</code>).</strong> <code>__drupe: { sessionid: String }</code> derives the leaf <code>__drupe.sessionid</code>; the policy correlates <code>__drupe.sessionid: context.__drupe.sessionid</code>.</p>
+<p><strong>Depth-3 nested fields (<code>1114_deep_nested_field_correlation</code> / <code>1116_injection_onto_deep_path</code>).</strong> <code>__drupe: { session: { id: String, region: String } }</code> derives <code>__drupe.session.id</code>. <code>1114_deep_nested_field_correlation</code> correlates it directly; <code>1116_injection_onto_deep_path</code> injects the same correlation through a <code>def temporal same_session(?w, ?s)</code> macro (see <a href="06-macros.html">Macros</a>).</p>
+<p><strong>Two deep siblings (<code>1115_multiple_deep_path_constraints</code>).</strong> Both <code>__drupe.session.id</code> and <code>__drupe.session.region</code> are carried under the one group and constrained together.</p>
+<p><strong>Top-level pin (<code>1117_pin_principal_correlation</code>).</strong> The pin forces every predicate for this event to share the request’s principal, even though no policy writes <code>callerPrincipal</code>. It is declared on both kinds, which is what makes it universal:</p>
+<pre><code class="language-text">decision event &lt;A&gt;::request {
+    ...inputs(A),
+    pin callerPrincipal: principalType(A) = principal,
+    callerResource:  resourceType(A),
+    requestId:       String,
+}
+event &lt;A&gt;::response {
+    ...inputs(A),
+    ...outputs(A),
+    pin callerPrincipal: principalType(A) = principal,
+    callerResource:  resourceType(A),
+    requestId:       String,
+}
+</code></pre>
+<p><strong>Nested-leaf pin (<code>1118_pin_nested_session_id</code>).</strong> A pin can sit on a leaf <em>inside</em> a record group; here it conjoins <code>__drupe.session_id: context.__drupe.session_id</code> onto every predicate:</p>
+<pre><code class="language-text">decision event &lt;A&gt;::request {
+    ...inputs(A),
+    callerPrincipal: principalType(A),
+    callerResource:  resourceType(A),
+    requestId:       String,
+    __drupe: { pin session_id: String = context.__drupe.session_id },
+}
+event &lt;A&gt;::response {
+    ...inputs(A),
+    ...outputs(A),
+    callerPrincipal: principalType(A),
+    callerResource:  resourceType(A),
+    requestId:       String,
+    __drupe: { pin session_id: String = context.__drupe.session_id },
+}
+</code></pre>
+<p><strong>A pin cannot be bypassed by a hand-written field (<code>1119_pin_not_bypassed_by_wildcard</code>, <code>1120_pin_agrees_with_author_written_field</code>, <code>1121_pin_not_bypassed_by_fresh_binder</code>, <code>1122_pin_disagree_denies_despite_author_literal</code>).</strong> These all have the policy <em>write</em> the pinned field, proving the append is unconditional. Three are bypass attempts that fail:</p>
+<ul>
+<li><strong><code>1119_pin_not_bypassed_by_wildcard</code> — wildcard.</strong> The policy writes <code>callerPrincipal: _</code> (accept a Login by any principal). The pin is still injected, so the wildcard adds nothing and the cross-principal Login is still excluded.</li>
+<li><strong><code>1121_pin_not_bypassed_by_fresh_binder</code> — fresh variable.</strong> The policy writes <code>callerPrincipal: p</code> where <code>p</code> is used nowhere else — a variable that binds but never constrains, so on its own it too accepts any principal. The pin still forces the correlation.</li>
+<li><strong><code>1122_pin_disagree_denies_despite_author_literal</code> — disagreeing concrete value.</strong> Using the nested-session schema of <code>1118_pin_nested_session_id</code>, the policy hard-codes <code>__drupe.session_id: "sess-1"</code> (the historical Login’s session). That literal alone would permit every trace; the pin adds <code>context.__drupe.session_id</code>, so when the <em>current</em> request’s session differs the two constraints on the one field disagree, the predicate is unsatisfiable, and the Read is denied. This is the “disagree → unsatisfiable” outcome end to end.</li>
+</ul>
+<p>The fourth, <strong><code>1120_pin_agrees_with_author_written_field</code> — agreeing value</strong>, writes the pin’s exact value (<code>callerPrincipal: principal</code>); the appended pin is then a redundant no-op and the verdicts match <code>1117_pin_principal_correlation</code>. Together they cover both documented outcomes of a hand-written pinned field: a weaker one (wildcard, variable, or a disagreeing value) can only narrow the pin, never relax it, and an agreeing one is a no-op.</p>
+<h3 id="how-derived-fields-appear-on-an-ingested-event"><a class="header" href="#how-derived-fields-appear-on-an-ingested-event">How derived fields appear on an ingested event</a></h3>
+<p>To make the derivation concrete, here is an event from <code>1113_nested_reserved_field_correlation</code>’s trace (against the Login/Read action schema from <a href="02-policy-language.html">The policy language</a>) — the fields the event schema derived, filled in with real values:</p>
+<pre><code class="language-text">@0  scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1")
+    request_context(…)
+    Drupe::Action::"Login"::request(
+      input: { user: "alice" },
+      callerPrincipal: Drupe::OAuthUser::"alice",
+      callerResource:  Drupe::Gateway::"gw1",
+      requestId: "u1",
+      __drupe: { sessionid: "sess-1" })
+</code></pre>
+<p><code>input.user</code> came from the <code>...inputs(A)</code> spread; <code>callerPrincipal</code>, <code>callerResource</code>, <code>requestId</code> and the nested <code>__drupe.sessionid</code> came from the injected fields. The <code>request_context(…)</code> bag is elided here because it is not derived from the event schema — it is the request’s own context record, which every <code>context.&lt;path&gt;</code> reference reads, whether in a Cedar condition or in a temporal correlation like this case’s. A real trace line spells it out.</p>
+<hr>
+<h2 id="capping-the-look-back-window-max_window"><a class="header" href="#capping-the-look-back-window-max_window">Capping the look-back window: <code>max_window</code></a></h2>
+<p>A temporal policy looks back over event history with a <code>within &lt;interval&gt;</code>
+window (see <a href="04-temporal-expressions.html">Temporal expressions</a>). The event
+schema can put a ceiling on how far back <em>any</em> policy may look with an optional
+<code>max_window</code> directive at the top of the file:</p>
+<pre><code class="language-text">max_window = 24h
+
+decision event &lt;A&gt;::request {
+    ...inputs(A),
+    callerPrincipal: principalType(A),
+    callerResource:  resourceType(A),
+    requestId:       String,
+}
+</code></pre>
+<p>The rules:</p>
+<ul>
+<li><strong>It goes first, at most once.</strong> The directive precedes all event
+declarations; placing it after one is a parse error.</li>
+<li><strong>The interval is a positive <code>&lt;amount&gt;&lt;unit&gt;</code></strong> using the same four units as
+temporal windows (<code>s</code>, <code>m</code>, <code>h</code>, <code>d</code>) — e.g. <code>24h</code>, <code>30m</code>, <code>7d</code>. A zero
+window (<code>max_window = 0h</code>) is a parse error, since it would forbid every
+<code>within</code> clause; omit the directive instead if you want no custom cap.</li>
+<li><strong>Absent, the cap defaults to <code>24h</code>.</strong> Omitting <code>max_window</code> — as
+every schema shown elsewhere in this guide does — uses the 24h default.</li>
+<li><strong>The bound is inclusive.</strong> A <code>within</code> window <em>equal</em> to the cap is allowed;
+only a window <em>strictly greater</em> than the cap is rejected. So under the
+default, <code>within 24h</code> (and the identical <code>within 1d</code>) pass, while <code>within 48h</code>
+or <code>within 7d</code> are rejected.</li>
+</ul>
+<p>The validator enforces the cap: any temporal <code>within</code> window in a policy that
+exceeds <code>max_window</code> is a validation error naming both the offending window and
+the cap, whether the window sits on a top-level <code>formerly</code>/<code>previous</code>/<code>since</code>
+or is nested inside an aggregation. Raise the cap here when a policy genuinely
+needs a longer history (<code>max_window = 30d</code>), or lower it to tighten what
+policies may do (<code>max_window = 1h</code>).</p>
+<hr>
+<h2 id="decision-kinds-when-authorization-runs"><a class="header" href="#decision-kinds-when-authorization-runs">Decision kinds: when authorization runs</a></h2>
+<p>The <code>decision</code> prefix determines when Dogwood authorizes.</p>
+<p>Dogwood ingests a stream of events. Ingesting an event of a <strong>decision kind</strong> runs authorization and produces a verdict; ingesting any other (history-only) kind updates the engine’s state but yields no verdict. This is the mechanism behind temporal policies: a <code>response</code> records that a tool call completed (history), and a later <code>request</code> for another tool can ask about it (decision).</p>
+<ul>
+<li><code>LoweredPolicySet::decision_kinds()</code> exposes the set of kinds marked <code>decision</code> (with <code>is_decision_kind(kind)</code> for a single check).</li>
+<li>The <strong>default</strong> event schema marks <strong>only <code>request</code></strong> as a decision kind. <code>request</code> runs authorization; <code>response</code> and <code>error</code> are history-only.</li>
+<li>A custom schema may mark any kinds — <code>1110_custom_event_schema_renamed_reserved</code> makes <code>attempt</code> the decision kind and <code>outcome</code> history-only.</li>
+</ul>
+<hr>
+<h2 id="the-default-event-schema-request--response--error"><a class="header" href="#the-default-event-schema-request--response--error">The default event schema (request / response / error)</a></h2>
+<p>If you never supply an event schema, Dogwood uses <code>DEFAULT_EVENT_SCHEMA</code>. Here it is in full:</p>
+<pre><code class="language-text">decision event &lt;A&gt;::request {
+    ...inputs(A),
+    pin callerPrincipal: principalType(A) = principal,
+    callerResource:    resourceType(A),
+    requestId:         String,
+    sessionId:         String,
+}
+
+event &lt;A&gt;::response {
+    ...inputs(A),
+    ...outputs(A),
+    pin callerPrincipal: principalType(A) = principal,
+    callerResource:    resourceType(A),
+    requestId:         String,
+    sessionId:         String,
+}
+
+event &lt;A&gt;::error {
+    ...inputs(A),
+    pin callerPrincipal: principalType(A) = principal,
+    callerResource:    resourceType(A),
+    requestId:         String,
+    sessionId:         String,
+}
+</code></pre>
+<p>Reading it part by part:</p>
+<ul>
+<li><strong><code>decision event &lt;A&gt;::request</code></strong> — for every action <code>A</code>, a <code>request</code> event that is a decision point (runs authorization).
+<ul>
+<li><code>...inputs(A)</code> — the tool’s arguments, nested under the <code>input</code> group (<code>input.user</code>, <code>input.document</code>, …).</li>
+<li><code>pin callerPrincipal: principalType(A) = principal</code> — a top-level leaf holding the request principal’s entity-type set (the full <code>appliesTo</code> set, kept whole), pinned to the request’s scope principal.</li>
+<li><code>callerResource: resourceType(A)</code> — the resource entity-type set.</li>
+<li><code>requestId: String</code> — the event’s unique id, a flat leaf.</li>
+<li><code>sessionId: String</code> — the session this request belongs to.</li>
+</ul>
+</li>
+<li><strong><code>event &lt;A&gt;::response</code></strong> — a history-only event (no <code>decision</code>), emitted when the tool call resolves successfully.
+<ul>
+<li><code>...inputs(A)</code> <strong>and</strong> <code>...outputs(A)</code> — both the argument (<code>input.*</code>) and result (<code>output.*</code>) groups, so a <code>response</code> carries the outcome.</li>
+<li>the same reserved leaves (<code>callerPrincipal</code>, <code>callerResource</code>, <code>requestId</code>, <code>sessionId</code>).</li>
+</ul>
+</li>
+<li><strong><code>event &lt;A&gt;::error</code></strong> — a history-only event emitted when the gateway/target returns an error.
+<ul>
+<li><code>...inputs(A)</code> — the attempted call’s arguments, so a policy can correlate on what was attempted.</li>
+<li>the same reserved leaves (no <code>...outputs(A)</code> since the call failed).</li>
+</ul>
+</li>
+</ul>
+<p>So against the <code>Login</code>/<code>Read</code> schema, <code>Login::request</code> derives <code>input.user</code>, <code>callerPrincipal</code>, <code>callerResource</code>, <code>requestId</code>, <code>sessionId</code>; <code>request</code> does <strong>not</strong> splice outputs, while <code>response</code> splices both. The <code>callerPrincipal</code> pin is declared on every kind and is symmetric, so the default carries a universal symmetric pin: temporal leaves run under <a href="#universal-symmetric-pins-key-local-semantics-and-the-partition-guarantee">key-local semantics</a>, keyed on the requesting principal. To get global-trace semantics instead, supply an event schema without that pin.</p>
+<hr>
+<h2 id="see-also"><a class="header" href="#see-also">See also</a></h2>
+<ul>
+<li><a href="02-policy-language.html">The policy language</a> — the action schema these events derive from.</li>
+<li><a href="04-temporal-expressions.html">Temporal expressions</a> — how decision-kind and history-kind events power past-looking policies (the consumer of decision kinds).</li>
+<li><a href="07-api-and-workflow.html">The API and workflow</a> — assembling <code>ServiceSchema</code> + <code>PolicySchema</code>.</li>
+<li><a href="10-provider-schema.html">The provider schema</a> — how information providers are declared (another input the <code>ServiceSchema</code> carries).</li>
+<li><a href="06-macros.html">Macros</a> — the macro library the <code>ServiceSchema</code> also carries.</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../guide/02-policy-language.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="../guide/04-temporal-expressions.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../guide/02-policy-language.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="../guide/04-temporal-expressions.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr-ef4e11c1.min.js"></script>
+        <script src="../mark-09e88c2c.min.js"></script>
+        <script src="../searcher-09f2665d.js"></script>
+
+        <script src="../clipboard-1626706a.min.js"></script>
+        <script src="../highlight-abc7f01d.js"></script>
+        <script src="../book-609e4cb8.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

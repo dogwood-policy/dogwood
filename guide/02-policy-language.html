@@ -1,0 +1,984 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Policy Language - The Dogwood Guide</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="../favicon-8114d1fc.png">
+        <link rel="stylesheet" href="../css/variables-8adf115d.css">
+        <link rel="stylesheet" href="../css/general-e96d0476.css">
+        <link rel="stylesheet" href="../css/chrome-d279d366.css">
+        <link rel="stylesheet" href="../css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="../highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../dogwood-docs/mdbook-src/custom-cd47a9b0.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex-6a55f184.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc-982af72f.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">The Dogwood Guide</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/dogwood-policy/dogwood" title="Git repository" aria-label="Git repository">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/dogwood-policy/dogwood/edit/main/dogwood-docs/mdbook-src/guide/02-policy-language.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <span class=fa-svg id="git-edit-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M421.7 220.3l-11.3 11.3-22.6 22.6-205 205c-6.6 6.6-14.8 11.5-23.8 14.1L30.8 511c-8.4 2.5-17.5 .2-23.7-6.1S-1.5 489.7 1 481.2L38.7 353.1c2.6-9 7.5-17.2 14.1-23.8l205-205 22.6-22.6 11.3-11.3 33.9 33.9 62.1 62.1 33.9 33.9zM96 353.9l-9.3 9.3c-.9 .9-1.6 2.1-2 3.4l-25.3 86 86-25.3c1.3-.4 2.5-1.1 3.4-2l9.3-9.3H112c-8.8 0-16-7.2-16-16V353.9zM453.3 19.3l39.4 39.4c25 25 25 65.5 0 90.5l-14.5 14.5-22.6 22.6-11.3 11.3-33.9-33.9-62.1-62.1L314.3 67.7l11.3-11.3 22.6-22.6 14.5-14.5c25-25 65.5-25 90.5 0z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="the-policy-language"><a class="header" href="#the-policy-language">The Policy Language</a></h1>
+<p>This page documents the <strong>core</strong> Dogwood policy language — the Cedar-derived surface
+syntax you write in a <code>.dw</code> file. It covers the anatomy of a policy rule
+(<code>permit</code>/<code>forbid</code>), the <code>(principal, action, resource)</code> scope and every constraint form
+it accepts, <code>when</code>/<code>unless</code> condition clauses, and the <em>complete</em> condition-expression
+language: every operator, literal, type, built-in method, set/record, and entity
+reference.</p>
+<p>Every policy example on this page is a runnable bundle under
+<a href="../examples/"><code>examples/</code></a>, checked on every build.</p>
+<p>Dogwood’s core language is an intentional re-implementation of upstream
+<a href="https://www.cedarpolicy.com/">Cedar</a> (the grammar is a faithful translation of
+<code>cedar-policy-core</code> v4.11.0), so its syntax follows Cedar’s. What
+Dogwood adds on top is the <code>temporal { … }</code> <em>marker clause</em> — which hands off to a
+dedicated sub-language — plus a thin <code>guardrails { … }</code> clause that is sugar for a
+bare <code>when</code> (it invokes information providers, which are ordinary Cedar calls). This page
+only <em>names</em> these forms and tells you where they attach; their contents are documented
+separately (see the <a href="#see-also">See also</a> list).</p>
+<p>How to read this page: the grammar is deliberately <strong>permissive</strong>, and the real
+semantics are enforced by the parser afterward. That means a
+number of things <em>parse</em> but are then <em>rejected</em> with an error. Wherever that matters,
+this page tells you the real, current behavior rather than what the grammar alone might
+suggest.</p>
+<p>Before the syntax, one thing a policy always assumes: an <strong>action schema</strong> that
+declares the entities and actions a policy scopes over, and the <code>context</code> shape a
+policy reads from. That comes first.</p>
+<hr>
+<h2 id="the-action-schema"><a class="header" href="#the-action-schema">The action schema</a></h2>
+<p>Every policy authorizes against an <strong>action schema</strong>: the declaration of your
+world — the entity types (principals, resources) and the actions (tools,
+operations) a policy may name — plus the <code>context</code> each action carries. It is a
+<strong>standard Cedar schema</strong> (<code>.cedarschema</code>). Dogwood parses it with Cedar’s own
+parser and adds <strong>no</strong> new schema syntax — it is Cedar <code>.cedarschema</code> verbatim.
+What Dogwood adds is a <em>convention</em> about how you lay out the <code>context</code> record,
+covered below.</p>
+<p>(The action schema is the one schema you always write. Dogwood composes two more
+schemas — the event schema and the provider declarations — plus a macro library,
+and all three have defaults, so the core language takes them as given;
+see <a href="03-event-schema.html">The event schema</a>,
+<a href="10-provider-schema.html">The provider schema</a>, and <a href="06-macros.html">Macros</a> when you
+need to customize them. You can also <em>generate</em> an action schema from an MCP tool
+manifest — see
+<a href="11-mcp-schema-generation.html">Generating the action schema from an MCP manifest</a>.)</p>
+<h3 id="a-real-action-schema"><a class="header" href="#a-real-action-schema">A real action schema</a></h3>
+<p>Here is a trimmed but complete schema from the tested corpus (case <code>1113</code>). It declares two tools, <code>Login</code> and <code>Read</code>:</p>
+<pre><code class="language-text">namespace Drupe {
+  type LoginInput  = { user: String };
+  type LoginOutput = { };
+  type ReadInput   = { document: String, user: String };
+  type ReadOutput  = { };
+  type SystemContext = { now: datetime };
+
+  entity Gateway;
+  entity OAuthUser = { id: String };
+
+  action "Login" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: LoginInput,
+      output?: LoginOutput,
+      system: SystemContext
+    }
+  };
+
+  action "Read" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: ReadInput,
+      output?: ReadOutput,
+      system: SystemContext
+    }
+  };
+}
+</code></pre>
+<p>The pieces:</p>
+<ul>
+<li><strong><code>namespace Drupe { … }</code></strong> is the namespace your actions live under. Dogwood’s derivation appends the literal segment <code>Action</code> to the namespace path, matching Cedar’s rule that all actions live under an implicit <code>Action</code> entity type. So the <code>Login</code> action is written <code>Drupe::Action::"Login"</code> in policies and traces.</li>
+<li><strong><code>entity</code> declarations</strong> (<code>OAuthUser</code>, <code>Gateway</code>) are the principal and resource types. They may carry attributes (<code>= { id: String }</code>) and, in the fuller template, <code>tags</code> (e.g. <code>entity OAuthUser = { id: String } tags String;</code>).</li>
+<li><strong><code>type</code> declarations</strong> are Cedar <em>common types</em> — reusable record types (<code>LoginInput</code>, <code>ReadOutput</code>, …) that the actions reference as their <code>input</code> / <code>output</code> records. Common types may be cross-namespace (<code>Shared::Addr</code>) or chained (<code>type Outer = Inner;</code>); Dogwood resolves both.</li>
+<li><strong><code>action "&lt;Id&gt;" appliesTo { principal, resource, context }</code></strong> declares one action per tool or operation. Actions may also sit in a group hierarchy with <code>in [...]</code> — for example the corpus schema at case <code>0407</code> has <code>CallTool in [Action::"Mcp"]</code> and <code>Login in [Action::"CallTool"]</code>, which is exactly the shape the MCP generator produces (see <a href="11-mcp-schema-generation.html">Generating the action schema from an MCP manifest</a>).</li>
+</ul>
+<h3 id="the-contextinput--contextoutput-convention"><a class="header" href="#the-contextinput--contextoutput-convention">The <code>context.input</code> / <code>context.output</code> convention</a></h3>
+<p><code>appliesTo.context</code> is an ordinary Cedar record, but Dogwood expects a specific layout so a policy — and the event stream — can find a tool’s arguments and results by a stable path:</p>
+<ul>
+<li><strong><code>input: &lt;Record&gt;</code></strong> — the tool’s arguments. A policy reads them as <code>context.input.&lt;field&gt;</code> (e.g. <code>context.input.stock</code>).</li>
+<li><strong><code>output?: &lt;Record&gt;</code></strong> — the tool’s result. Optional (usually present only after the action resolves), read as <code>context.output.&lt;field&gt;</code>.</li>
+<li><strong><code>system: SystemContext</code></strong> — the base context every action carries (<code>{ now: datetime }</code> in the Drupe template), read as <code>context.system.now</code>.</li>
+</ul>
+<p>This is <em>only</em> a convention: nothing in Cedar forces it. A policy references these fields the same way it references any Cedar record — for instance <code>context.input.stock == "AMZN"</code>.</p>
+<p>The <code>input</code> / <code>output</code> grouping also avoids a name collision. Because inputs nest under an <code>input</code> group and outputs under an <code>output</code> group, an action whose input and output <em>both</em> declare a field named <code>x</code> produces two distinct leaves, <code>input.x</code> and <code>output.x</code>, with possibly different types — something a flat context could not represent.</p>
+<p><strong>Rule of thumb:</strong> put a tool’s arguments under <code>context.input</code> and its result under <code>context.output</code>. (This is also what the event schema’s spread selectors read when deriving event fields; see <a href="03-event-schema.html">The event schema</a>.)</p>
+<hr>
+<h2 id="policy-anatomy"><a class="header" href="#policy-anatomy">Policy anatomy</a></h2>
+<p>A <code>.dw</code> file is a sequence of top-level items — <strong>macro definitions</strong> and <strong>policy
+rules</strong> — freely interleaved, each terminated by a semicolon (<code>;</code>). Comments are
+line-comments introduced by <code>//</code> and run to the end of the line; there are no block
+comments. By convention every policy in the corpus opens with a <code>//</code> doc comment
+describing its intent.</p>
+<p>Here is the simplest possible policy — a single <code>permit</code> with no extra conditions:</p>
+<pre><code class="language-text">// The simplest possible Dogwood policy: a single permit with
+// no further condition.
+permit ( principal, action == Drupe::Action::"GetStockInfo", resource );
+</code></pre>
+<blockquote>
+<p>Runnable: <a href="../examples/simplest_permit.html"><code>examples/simplest_permit/</code></a> — <code>dogwood validate</code>.</p>
+</blockquote>
+<p>Every policy rule has the same five-part shape, in this order:</p>
+<ol>
+<li>Zero or more <strong>annotations</strong> (<code>@id("…")</code>)</li>
+<li>An <strong>effect</strong> (<code>permit</code> or <code>forbid</code>)</li>
+<li>A parenthesized <strong>scope</strong> triple <code>( principal, action, resource )</code></li>
+<li>Zero or more <strong>condition clauses</strong> (<code>when { … }</code> / <code>unless { … }</code>)</li>
+<li>A terminating semicolon</li>
+</ol>
+<pre><code class="language-text">@id("sell_small_only")                                  // (1) annotation
+permit (                                                // (2) effect
+    principal,                                          // (3) scope
+    action == Drupe::Action::"SellShares",
+    resource
+)
+when { context.input.shares &lt;= 50 };                    // (4) condition, (5) terminator
+</code></pre>
+<blockquote>
+<p>Runnable: <a href="../examples/sell_small_only.html"><code>examples/sell_small_only/</code></a> — <code>dogwood validate</code> and <code>dogwood replay</code>.</p>
+</blockquote>
+<p>The sections below take each part in turn.</p>
+<h3 id="effect-permit-and-forbid"><a class="header" href="#effect-permit-and-forbid">Effect: <code>permit</code> and <code>forbid</code></a></h3>
+<p>The effect is the first keyword of the rule and must be exactly <code>permit</code> or <code>forbid</code>.
+Anything else is rejected with <code>policy effect must be </code>permit<code>or</code>forbid<code>, found </code>{other}``.</p>
+<p>Dogwood evaluates a request under <strong>deny-overrides with default-deny</strong> semantics:</p>
+<ul>
+<li>A request is <strong>allowed</strong> if and only if at least one <code>permit</code> rule matches <strong>and</strong> no
+<code>forbid</code> rule matches.</li>
+<li>If no rule matches at all, the default decision is <strong>deny</strong>.</li>
+</ul>
+<p>Because <code>forbid</code> always wins, source order does not matter — a <code>forbid</code> “carves a hole”
+out of whatever the <code>permit</code> rules allow, no matter where it appears in the file. This
+pair permits selling shares generally, but forbids selling AMZN:</p>
+<pre><code class="language-text">@id("permit-sell-shares")
+permit ( principal, action == Drupe::Action::"SellShares", resource );
+
+@id("forbid-sell-amzn")
+forbid ( principal, action == Drupe::Action::"SellShares", resource )
+when { context.input.stock == "AMZN" };
+</code></pre>
+<blockquote>
+<p>Runnable: <a href="../examples/deny_overrides_sell_not_amzn.html"><code>examples/deny_overrides_sell_not_amzn/</code></a> — <code>dogwood validate</code> and <code>dogwood replay</code>.</p>
+</blockquote>
+<h3 id="annotations-keyvalue"><a class="header" href="#annotations-keyvalue">Annotations: <code>@key("value")</code></a></h3>
+<p>An annotation attaches metadata to a rule. It is written <code>@</code> followed by an identifier
+key, optionally followed by a parenthesized string value:</p>
+<pre><code class="language-text">@id("sell_small_only")
+permit ( principal, action == Drupe::Action::"SellShares", resource )
+when { context.input.shares &lt;= 50 };
+</code></pre>
+<p>The value string is optional, so both <code>@id("x")</code> and a bare <code>@reviewed</code> are legal. A rule
+may carry any number of annotations. Annotations are purely for diagnostics and reporting
+(the <code>@id</code> key names a rule so tools can refer to it) — they never change whether a rule
+matches.</p>
+<h3 id="scope-and-conditions"><a class="header" href="#scope-and-conditions">Scope and conditions</a></h3>
+<p>The scope triple and the condition clauses are where all the matching logic lives; they
+each get their own full section below (<a href="#the-scope-triple">The scope triple</a> and
+<a href="#condition-clauses">Condition clauses</a>). The terminator is the <code>;</code> that ends every
+top-level item.</p>
+<hr>
+<h2 id="the-scope-triple"><a class="header" href="#the-scope-triple">The scope triple</a></h2>
+<p>Every policy’s scope is a parenthesized list of up to three variables: <code>principal</code>,
+<code>action</code>, <code>resource</code>. These are the three fixed dimensions of an authorization request —
+<em>who</em> is acting, <em>what</em> they are doing, and <em>what</em> they are acting on. The scope is the
+fast, coarse filter: a rule can only possibly apply to requests whose principal, action,
+and resource all satisfy the scope constraints. A trailing comma after the last variable is
+allowed.</p>
+<p>The variables may appear in <strong>any order</strong>, and any subset may be omitted — an omitted
+variable is treated as unconstrained (matches everything). The following are all valid:</p>
+<pre><code class="language-text">permit ( principal, action, resource );          // all three, standard order
+permit ( resource, action, principal );          // any order
+permit ( principal, action );                    // resource omitted → any resource
+permit ( );                                     // all omitted → matches everything
+</code></pre>
+<p>Each variable may appear <strong>at most once</strong> — duplicates are rejected with
+<code>duplicate \</code>principal` in scope<code>. If all three are present and a fourth element appears, the error is </code>this policy has an extra element in the scope: `{other}`<code>. If a variable name is unrecognized before all three are seen, the error is </code>unexpected scope variable `{other}`; expected `principal`, `action`, or `resource`<code>. Each of the three slots may be left **unconstrained** or given exactly one constraint. The available constraint forms differ slightly between </code>principal<code>/</code>resource<code>(which behave identically) and</code>action` (which is more restrictive).</p>
+<h3 id="unconstrained-bare--matches-everything"><a class="header" href="#unconstrained-bare--matches-everything">Unconstrained (bare) — matches everything</a></h3>
+<p>A bare variable name with no operator imposes no constraint on that dimension. A rule with
+all three bare matches <em>every</em> request:</p>
+<pre><code class="language-text">@id("allow_anything")
+permit (
+    principal,
+    action,
+    resource
+);
+</code></pre>
+<blockquote>
+<p>Runnable: <a href="../examples/allow_anything.html"><code>examples/allow_anything/</code></a> — <code>dogwood validate</code>.</p>
+</blockquote>
+<h3 id="--equality-to-a-specific-entity"><a class="header" href="#--equality-to-a-specific-entity"><code>==</code> — equality to a specific entity</a></h3>
+<p><code>== EntityRef</code> requires the dimension to be exactly that entity. On <code>principal</code> and
+<code>resource</code> the right-hand side must be an entity reference (<code>Ns::Type::"id"</code>) or a template
+slot; on <code>action</code> it must be an action reference (no slots allowed):</p>
+<pre><code class="language-text">permit (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+);
+</code></pre>
+<blockquote>
+<p>Runnable: <a href="../examples/sell_shares_eq_scope.html"><code>examples/sell_shares_eq_scope/</code></a> — <code>dogwood validate</code>.</p>
+</blockquote>
+<p>If the operand is not a valid entity reference you get
+<code>expected an entity reference (`Ns::Type::"id"`) or a template slot (`?principal`)</code>
+(for principal/resource) or <code>action scope expects an action reference (</code>Ns::Action::“id”<code>)</code>
+(for action).</p>
+<h3 id="in--membership-in-a-group-or-hierarchy"><a class="header" href="#in--membership-in-a-group-or-hierarchy"><code>in</code> — membership in a group or hierarchy</a></h3>
+<p><code>in</code> tests membership in an entity hierarchy (a group, a parent entity, etc.). On
+<code>principal</code> and <code>resource</code> the right-hand side is a single entity reference or slot. On
+<code>action</code> — and only on <code>action</code> — <code>in</code> may take a <strong>list</strong> of action references, meaning
+“any of these actions”:</p>
+<pre><code class="language-text">permit (
+    principal,
+    action in [Drupe::Action::"SellShares", Drupe::Action::"ApproveSale"],
+    resource
+);
+</code></pre>
+<blockquote>
+<p>Runnable: <a href="../examples/sell_or_approve_action_in.html"><code>examples/sell_or_approve_action_in/</code></a> — <code>dogwood validate</code>.</p>
+</blockquote>
+<p>A single action reference is also accepted after <code>action in</code> (i.e. the list brackets are
+optional for one element).</p>
+<h3 id="is-type-and-is-type-in-group--entity-type-test"><a class="header" href="#is-type-and-is-type-in-group--entity-type-test"><code>is Type</code> and <code>is Type in Group</code> — entity-type test</a></h3>
+<p><code>is Type</code> matches only when the dimension’s entity is of the named entity type;
+<code>is Type in Group</code> additionally requires membership in a group. This applies to
+<code>principal</code> and <code>resource</code>:</p>
+<pre><code class="language-text">permit (
+    principal is Drupe::OAuthUser,
+    action == Drupe::Action::"GetStockInfo",
+    resource
+);
+</code></pre>
+<blockquote>
+<p>Runnable: <a href="../examples/principal_is_oauth.html"><code>examples/principal_is_oauth/</code></a> — <code>dogwood validate</code>.</p>
+</blockquote>
+<p>To combine both, write the type test first and the group after <code>in</code>:</p>
+<pre><code class="language-text">permit (
+    principal is Drupe::OAuthUser in Drupe::Team::"traders",
+    action == Drupe::Action::"GetStockInfo",
+    resource
+);
+</code></pre>
+<blockquote>
+<p>Runnable: <a href="../examples/traders_is_in_group_scope.html"><code>examples/traders_is_in_group_scope/</code></a> — <code>dogwood validate</code>.</p>
+</blockquote>
+<p>Two restrictions to know:</p>
+<ul>
+<li><code>action is Type</code> is invalid — the <code>is</code> form is not allowed on the action slot. You
+will get <code>`action is Type` is not valid in the action scope</code>.</li>
+<li>Only <code>is Type in …</code> may follow an <code>is</code> test. Writing <code>is Type == …</code> is rejected with
+<code>`is Type {op} …` is not valid; only `is Type in …` is allowed</code>.</li>
+</ul>
+<h3 id="what-the-scope-rejects"><a class="header" href="#what-the-scope-rejects">What the scope rejects</a></h3>
+<p>The scope grammar is permissive but the parser only accepts <code>==</code> and <code>in</code> (plus the
+<code>is</code>/<code>is-in</code> forms above). Everything else is a parse-then-error:</p>
+<ul>
+<li>The legacy colon form <code>principal : User</code> is <strong>not</strong> supported — use <code>principal is User</code>.
+The error is <code>the `principal : Type` scope form is not supported; use `principal is Type`</code>.</li>
+<li>Writing <code>=</code> gets a targeted hint: <code>`=` is not a valid operator in this scope; did you mean `==`?</code>.</li>
+<li>Any other operator in a scope gives <code>scope only allows `==` or `in`, found `{other}`</code>.</li>
+</ul>
+<hr>
+<h2 id="condition-clauses"><a class="header" href="#condition-clauses">Condition clauses</a></h2>
+<p>The scope is a coarse filter; <strong>condition clauses</strong> express the fine-grained logic. A rule
+may carry any number of <code>when</code> and <code>unless</code> clauses, in any combination and order. They
+are implicitly <strong>conjoined</strong>: the rule fires if and only if <em>every</em> <code>when</code> body evaluates
+true <strong>and</strong> <em>no</em> <code>unless</code> body evaluates true. Put another way, <code>unless { B }</code> is exactly
+sugar for <code>when { !B }</code>.</p>
+<p>Each clause is a keyword (<code>when</code> or <code>unless</code>) followed by a braced Cedar expression <code>{ … }</code>,
+optionally preceded by the <code>temporal</code> marker or the <code>guardrails</code> tag (<code>temporal { … }</code> /
+<code>guardrails { … }</code>, covered at the end of this section). A condition keyword other than
+<code>when</code>/<code>unless</code> is rejected with
+<code>condition keyword must be `when` or `unless`, found `{other}`</code>.</p>
+<h3 id="when---"><a class="header" href="#when---"><code>when { … }</code></a></h3>
+<p>A <code>when</code> clause must hold for the rule to fire. Here we only permit selling under 100
+shares:</p>
+<pre><code class="language-text">permit ( principal, action == Drupe::Action::"SellShares", resource )
+when {
+    context.input.shares &lt; 100
+};
+</code></pre>
+<blockquote>
+<p>Runnable: <a href="../examples/sell_when_under_100/"><code>examples/sell_when_under_100/</code></a> — <code>dogwood validate</code>.</p>
+</blockquote>
+<h3 id="unless---"><a class="header" href="#unless---"><code>unless { … }</code></a></h3>
+<p>An <code>unless</code> clause blocks the rule when its body holds. Here we permit selling <em>unless</em> the
+order is enormous:</p>
+<pre><code class="language-text">permit ( principal, action == Drupe::Action::"SellShares", resource )
+unless {
+    context.input.shares &gt; 10000
+};
+</code></pre>
+<blockquote>
+<p>Runnable: <a href="../examples/sell_unless_huge.html"><code>examples/sell_unless_huge/</code></a> — <code>dogwood validate</code>.</p>
+</blockquote>
+<h3 id="multiple-clauses-on-one-rule"><a class="header" href="#multiple-clauses-on-one-rule">Multiple clauses on one rule</a></h3>
+<p>Because clauses are conjoined, you can stack them for readability instead of writing one
+giant <code>&amp;&amp;</code>. Two <code>when</code> clauses both must hold:</p>
+<pre><code class="language-text">permit( principal, action == Drupe::Action::"SellShares", resource )
+when { context.input.shares &lt; 100 }
+when { context.input.stock == "AMZN" };
+</code></pre>
+<blockquote>
+<p>Runnable: <a href="../examples/sell_two_when_small_amzn.html"><code>examples/sell_two_when_small_amzn/</code></a> — <code>dogwood validate</code>.</p>
+</blockquote>
+<p>You can freely mix <code>when</code> and <code>unless</code> on the same rule:</p>
+<pre><code class="language-text">permit ( principal, action == Drupe::Action::"SellShares", resource )
+when   { context.input.shares &lt;= 1000 }
+unless { context.input.stock == "BLOCKED" };
+</code></pre>
+<blockquote>
+<p>Runnable: <a href="../examples/sell_when_unless_mix.html"><code>examples/sell_when_unless_mix/</code></a> — <code>dogwood validate</code>.</p>
+</blockquote>
+<p>The same applies to <code>forbid</code> rules — this forbids large sells except for AMZN:</p>
+<pre><code class="language-text">forbid ( principal, action == Drupe::Action::"SellShares", resource )
+when   { context.input.shares &gt; 100 }
+unless { context.input.stock == "AMZN" };
+</code></pre>
+<blockquote>
+<p>Runnable: <a href="../examples/forbid_large_except_amzn.html"><code>examples/forbid_large_except_amzn/</code></a> — <code>dogwood validate</code> and <code>dogwood replay</code>.</p>
+</blockquote>
+<h3 id="the-temporal----marker-and-the-guardrails----clause"><a class="header" href="#the-temporal----marker-and-the-guardrails----clause">The <code>temporal { … }</code> marker and the <code>guardrails { … }</code> clause</a></h3>
+<p>Dogwood extends Cedar with two clause forms beyond a bare <code>when { … }</code>:</p>
+<ul>
+<li><code>temporal { … }</code> — a genuine <strong>marker</strong> into a dedicated sub-language for
+temporal (history-aware) expressions. See
+<a href="04-temporal-expressions.html">Temporal expressions</a>.</li>
+<li><code>guardrails { … }</code> — <strong>not</strong> a sub-language: <code>guardrails { E }</code> is transparent
+sugar for a bare <code>when { E }</code>, where <code>E</code> is ordinary Cedar. An information
+provider is invoked as a plain Cedar call (<code>Provider::Name(args)…</code>), recognized
+and hoisted at lowering — it needs no marker, and works in a bare <code>when</code> too.
+The tag is retained only for surface compatibility. See
+<a href="05-information-providers.html">Information providers</a>.</li>
+</ul>
+<p>The <code>temporal</code> marker can appear in two places. First, as an entire clause body (a full permit combining both a <code>when temporal</code> and a <code>when guardrails</code> clause is runnable at <a href="../examples/sell_after_approval_valid_ticker.html"><code>examples/sell_after_approval_valid_ticker/</code></a>):</p>
+<pre><code class="language-text">when temporal {
+    formerly within 1h Drupe::Action::"Login"::response{ input.user: context.input.approver }
+}
+when guardrails {
+    Strings::Matches(context.input.request_id, "^REQ-[0-9]+$").matched == true
+};
+</code></pre>
+<p>Second, a <code>temporal</code> marker is also a primary expression, so it may appear
+<em>inside</em> an ordinary Cedar expression (a full permit of this shape is runnable at
+<a href="../examples/sell_shares_temporal_subexpr.html"><code>examples/sell_shares_temporal_subexpr/</code></a>):</p>
+<pre><code class="language-text">when { context.input.shares &gt; 5 &amp;&amp; temporal { /* … */ } }
+</code></pre>
+<p>Both <code>unless temporal { … }</code> and <code>unless guardrails { … }</code> are equally valid.
+The temporal marker’s braced contents are out of scope for this page — see
+the linked docs. All this page records is that these forms exist and where they
+attach.</p>
+<hr>
+<h2 id="the-condition-expression-language"><a class="header" href="#the-condition-expression-language">The condition expression language</a></h2>
+<p>Everything inside a <code>when { … }</code> / <code>unless { … }</code> body (and inside a <code>def cedar</code> macro
+body) is a Cedar expression. The expression grammar is a strict precedence tower — from
+loosest to tightest binding: <code>if/then/else</code> → <code>||</code> → <code>&amp;&amp;</code> → relational (<code>&lt;</code>, <code>has</code>,
+<code>like</code>, <code>is</code>, …) → <code>+</code>/<code>-</code> → <code>*</code> → unary <code>!</code>/<code>-</code> → member access → primary. All binary
+operator chains associate to the <strong>left</strong>. The subsections below walk the tower from the
+top.</p>
+<h3 id="if--then--else"><a class="header" href="#if--then--else"><code>if / then / else</code></a></h3>
+<p><code>if C then A else B</code> is an expression (not a statement), so it produces a value and can
+appear anywhere a value is expected. Both branches must produce the same type.</p>
+<p>At the top level of a <code>when</code>, it reads like a conditional rule (runnable as a full
+rule at <a href="../examples/sell_threshold_by_stock.html"><code>examples/sell_threshold_by_stock/</code></a>):</p>
+<pre><code class="language-text">when {
+    if context.input.stock == "AMZN"
+    then context.input.shares &lt;= 10
+    else context.input.shares &lt;= 1000
+};
+</code></pre>
+<p>Because it is an expression, you can nest it and use it as an operand — here to pick a
+per-stock threshold (runnable as a full rule at
+<a href="../examples/sell_nested_if_threshold.html"><code>examples/sell_nested_if_threshold/</code></a>):</p>
+<pre><code class="language-text">when {
+    context.input.shares &lt;=
+        (if context.input.stock == "AMZN" then 10
+         else if context.input.stock == "MSFT" then 50
+         else 1000)
+};
+</code></pre>
+<p>A common idiom pairs <code>if</code> with <code>has</code> (see <a href="#has--attribute-existence">has</a>) to guard
+an optional field, falling back to <code>false</code> when the field is absent (runnable as a full
+rule at <a href="../examples/sell_zero_proceeds_if_has.html"><code>examples/sell_zero_proceeds_if_has/</code></a>):</p>
+<pre><code class="language-text">when {
+    if context has output
+    then context.output.proceeds == decimal("0.0")
+    else false
+};
+</code></pre>
+<h3 id="logical-operators---"><a class="header" href="#logical-operators---">Logical operators: <code>||</code>, <code>&amp;&amp;</code>, <code>!</code></a></h3>
+<p><code>||</code> (or) and <code>&amp;&amp;</code> (and) are the boolean connectives; <code>!</code> is boolean negation (a unary
+prefix, covered under <a href="#arithmetic-and-unary-operators">arithmetic and unary operators</a>).
+<code>&amp;&amp;</code> binds tighter than <code>||</code>, so parenthesize when you want the other grouping (runnable
+as a full rule at <a href="../examples/sell_logical_grouping.html"><code>examples/sell_logical_grouping/</code></a>):</p>
+<pre><code class="language-text">when {
+    (context.input.shares &lt; 100 || context.input.stock == "AMZN")
+    &amp;&amp; !(context.input.stock == "BLOCKED")
+};
+</code></pre>
+<h3 id="comparison-and-relational-operators"><a class="header" href="#comparison-and-relational-operators">Comparison and relational operators</a></h3>
+<p>The relational level covers ordinary comparison operators plus the keyword operators
+<code>has</code>, <code>like</code>, and <code>is</code>. The comparison operator set is:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Operator</th><th>Meaning</th></tr>
+</thead>
+<tbody>
+<tr><td><code>&lt;</code></td><td>less than</td></tr>
+<tr><td><code>&lt;=</code></td><td>less than or equal</td></tr>
+<tr><td><code>&gt;</code></td><td>greater than</td></tr>
+<tr><td><code>&gt;=</code></td><td>greater than or equal</td></tr>
+<tr><td><code>==</code></td><td>equal</td></tr>
+<tr><td><code>!=</code></td><td>not equal</td></tr>
+<tr><td><code>in</code></td><td>entity-hierarchy membership</td></tr>
+</tbody>
+</table>
+</div>
+<p>Comparisons chain and fold left, so you can write several in a single <code>&amp;&amp;</code> conjunction
+(runnable as a full rule at <a href="../examples/sell_comparison_chain.html"><code>examples/sell_comparison_chain/</code></a>):</p>
+<pre><code class="language-text">when {
+    context.input.shares &gt;= 1
+    &amp;&amp; context.input.shares &lt;= 1000
+    &amp;&amp; context.input.shares != 777
+};
+</code></pre>
+<p>Note there is <strong>no</strong> <code>=</code> operator — writing <code>=</code> is rejected with
+<code>`=` is not a valid operator in this scope; did you mean `==`?</code>.</p>
+<p><code>in</code> is not only a scope keyword; it is also an expression operator that tests
+entity-hierarchy membership, e.g. <code>principalGroup in someParent</code>.</p>
+<p>Which operators apply to which type matters, and is checked by the validator
+downstream (not by the parser). The rules of thumb:</p>
+<ul>
+<li>
+<p><strong>Long (integer)</strong> supports the full ordered set: <code>&lt;</code>, <code>&lt;=</code>, <code>&gt;</code>, <code>&gt;=</code>, <code>==</code>, <code>!=</code>.</p>
+</li>
+<li>
+<p><strong>String</strong> supports <code>==</code> and <code>!=</code> (and <code>like</code>, below). Ordered comparison is not
+meaningful. For example: <code>when { context.input.stock != "BLOCKED" };</code> (runnable as a
+full rule at <a href="../examples/sell_not_blocked_string.html"><code>examples/sell_not_blocked_string/</code></a>).</p>
+</li>
+<li>
+<p><strong>Bool</strong> is compared with <code>== true</code> / <code>== false</code>.</p>
+</li>
+<li>
+<p><strong>Decimal</strong> supports <strong>equality only</strong> (<code>==</code> / <code>!=</code>). Ordered comparison on decimals does
+<strong>not</strong> type-check — use the decimal methods (<code>.lessThan</code>, etc.) instead (runnable as a
+full rule at <a href="../examples/sell_nonzero_proceeds_decimal.html"><code>examples/sell_nonzero_proceeds_decimal/</code></a>):</p>
+<pre><code class="language-text">when { context has output &amp;&amp; context.output.proceeds != decimal("0.0") };
+</code></pre>
+</li>
+<li>
+<p><strong>Datetime</strong> supports the full ordered set, so you can express time windows directly
+(runnable as a full rule at <a href="../examples/sell_datetime_window.html"><code>examples/sell_datetime_window/</code></a>):</p>
+<pre><code class="language-text">when {
+    context.system.now &gt;= datetime("2025-01-01T00:00:00Z")
+    &amp;&amp; context.system.now &lt;  datetime("2026-01-01T00:00:00Z")
+};
+</code></pre>
+</li>
+</ul>
+<h3 id="arithmetic-and-unary-operators"><a class="header" href="#arithmetic-and-unary-operators">Arithmetic and unary operators</a></h3>
+<p>Dogwood supports integer addition and subtraction (<code>+</code>, <code>-</code>) and multiplication (<code>*</code>):</p>
+<ul>
+<li><code>+</code> and <code>-</code> are the additive operators.</li>
+<li><code>*</code> is the <strong>only</strong> multiplicative operator that is accepted. Division (<code>/</code>) and modulo
+(<code>%</code>) <em>parse</em> but are rejected with <code>`{other}` is not a supported operator</code>.</li>
+</ul>
+<p>There are two unary prefixes:</p>
+<ul>
+<li><code>!</code> is boolean negation (<code>UnaryOp::Not</code>).</li>
+<li><code>-</code> is arithmetic negation (<code>UnaryOp::Neg</code>).</li>
+</ul>
+<p>A prefix may be a <em>run</em> of the same symbol (<code>!!x</code>, <code>--x</code>), but you cannot mix them — <code>!-x</code>
+and <code>-!x</code> do not parse (neither <code>!</code> nor <code>-</code> can begin the value that the other prefix would
+apply to). The <code>!</code> prefix is what you saw above in <code>!(context.input.stock == "BLOCKED")</code>.</p>
+<p>One subtlety about negative integer literals: <code>-N</code> folds directly into a negative <code>Long</code>
+value. The one special case is <code>9223372036854775808</code> (2^63): a bare <code>2^63</code> overflows
+<code>i64</code> and is rejected, but <code>-9223372036854775808</code> is stored exactly as <code>i64::MIN</code>, so the
+most-negative integer is representable via negation.</p>
+<p>Datetime literals compare with the ordinary comparison operators (there is no <code>+</code>/<code>-</code>
+arithmetic <em>on</em> datetimes at the operator level — use the <code>.offset</code> / <code>.durationSince</code>
+methods for that, see <a href="#method-calls">method calls</a>) — runnable as a full rule at
+<a href="../examples/sell_after_2024_datetime/"><code>examples/sell_after_2024_datetime/</code></a>:</p>
+<pre><code class="language-text">when { context.system.now &gt; datetime("2024-01-01T00:00:00Z") };
+</code></pre>
+<h3 id="member-access-attributes-indexing-and-calls"><a class="header" href="#member-access-attributes-indexing-and-calls">Member access: attributes, indexing, and calls</a></h3>
+<p>After a primary expression you can chain member accessors. There are three forms.</p>
+<p><strong>Attribute access</strong> <code>e.attr</code> reads a field. Chained attribute access is the
+common form in Dogwood conditions:</p>
+<pre><code class="language-text">context.input.shares
+context.output.approved
+context.system.now
+</code></pre>
+<p><code>context</code> is the request context; its <code>input</code> / <code>output</code> / <code>system</code> layout follows
+<a href="#the-contextinput--contextoutput-convention">the convention above</a>, with the exact
+shape of <code>context.input</code> determined by the rule’s <code>action</code> scope.</p>
+<p><strong>Index access</strong> <code>e["key"]</code> reads a field by string key and is equivalent to attribute
+access. Cedar requires the key to be a <strong>string literal</strong> — a dynamic index is rejected
+with <code>index access requires a string-literal key, e.g. </code>record[“field”]``:</p>
+<pre><code class="language-text">context.output.categories["VIOLENCE"]
+</code></pre>
+<p><strong>Call syntax</strong> <code>e(args)</code> is only meaningful on a bare name (an
+<a href="#extension-functions-decimal-datetime-duration-ip">extension function</a> or macro call) or
+after a <code>.method</code> (<a href="#method-calls">method call</a>). A call applied to anything else is
+rejected with <code>unexpected call: only extension functions and methods can be called</code>.</p>
+<h3 id="has--attribute-existence"><a class="header" href="#has--attribute-existence"><code>has</code> — attribute existence</a></h3>
+<p><code>e has attr</code> tests whether an optional attribute is present, returning a boolean. It is the
+guard you use before reading a field that might not exist. The right-hand side may be a
+dotted path (<code>has a.b.c</code>), a string-literal name (<code>has "attr"</code>), or (per Cedar RFC 62) the
+reserved word <code>if</code> used as an attribute name (<code>has if.x</code>). This guard-then-read pattern is
+runnable as a full rule at <a href="../examples/approve_has_output_guard.html"><code>examples/approve_has_output_guard/</code></a>:</p>
+<pre><code class="language-text">when {
+    context has output &amp;&amp; context.output.approved == true
+};
+</code></pre>
+<p>Because <code>&amp;&amp;</code> short-circuits, the <code>has</code> guard on the left protects the attribute read on the
+right. The <code>if … then … else false</code> variant of this pattern was shown under
+<a href="#if--then--else">if/then/else</a>.</p>
+<h3 id="like--string-pattern-matching"><a class="header" href="#like--string-pattern-matching"><code>like</code> — string pattern matching</a></h3>
+<p><code>s like "pattern"</code> matches a string against a wildcard pattern. The right-hand side must be
+a string literal. Inside the pattern, <code>*</code> matches any number of characters, <code>\*</code> matches a
+literal star, and the usual escapes (including <code>\u{HEX}</code>) are supported (runnable as a full rule at
+<a href="../examples/sell_like_a_prefix.html"><code>examples/sell_like_a_prefix/</code></a>):</p>
+<pre><code class="language-text">when { context.input.stock like "A*" };
+</code></pre>
+<p>A common denylist idiom uses <code>like</code> under <code>unless</code> to reject a family of values (runnable
+as a full rule at <a href="../examples/sell_not_test_tickers_like.html"><code>examples/sell_not_test_tickers_like/</code></a>):</p>
+<pre><code class="language-text">unless { context.input.stock like "TEST_*" };
+</code></pre>
+<h3 id="is--entity-type-test-in-a-condition"><a class="header" href="#is--entity-type-test-in-a-condition"><code>is</code> — entity-type test in a condition</a></h3>
+<p><code>e is Type</code> tests whether an entity value has the given entity type, and the optional
+<code>is Type in group</code> additionally checks hierarchy membership. This is the expression-level
+counterpart of the <code>is</code> scope constraint (runnable as a full rule at
+<a href="../examples/cond_is_oauth_in_team.html"><code>examples/cond_is_oauth_in_team/</code></a>):</p>
+<pre><code class="language-text">principal is Drupe::OAuthUser in Drupe::Team::"traders"
+</code></pre>
+<p>The first operand after <code>is</code> is read as an entity <em>type</em> (not a value); the operand after
+<code>in</code> is a value expression.</p>
+<h3 id="extension-functions-decimal-datetime-duration-ip"><a class="header" href="#extension-functions-decimal-datetime-duration-ip">Extension functions: <code>decimal</code>, <code>datetime</code>, <code>duration</code>, <code>ip</code></a></h3>
+<p>A bare name immediately followed by <code>(args)</code> is an extension-function call. Dogwood
+recognizes four built-in constructors, each taking exactly one string argument, used to
+build the non-primitive literal types:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Call</th><th>Type</th><th>Meaning</th></tr>
+</thead>
+<tbody>
+<tr><td><code>decimal("…")</code></td><td>decimal</td><td>fixed-point decimal literal</td></tr>
+<tr><td><code>datetime("…")</code></td><td>datetime</td><td>ISO-8601 datetime literal</td></tr>
+<tr><td><code>duration("…")</code></td><td>duration</td><td>duration literal</td></tr>
+<tr><td><code>ip("…")</code></td><td>ipaddr</td><td>IP address / CIDR literal</td></tr>
+</tbody>
+</table>
+</div>
+<p>Examples:</p>
+<pre><code class="language-text">context.output.proceeds == decimal("0.0")
+context.system.now &gt; datetime("2024-01-01T00:00:00Z")
+duration("1h30m")
+ip("10.0.0.0/24")
+</code></pre>
+<p>Any <em>other</em> name-with-args (not one of these four) is treated as a <strong>macro call</strong> and is
+resolved during macro expansion (see <a href="06-macros.html">Macros</a>); an unresolved call is an
+error.</p>
+<h3 id="method-calls"><a class="header" href="#method-calls">Method calls</a></h3>
+<p>A <code>.method(args)</code> after a receiver expression is a method call. Methods come in two arities.</p>
+<p><strong>Zero-argument methods</strong> (<code>receiver.method()</code>):</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Method</th><th>Domain</th><th>Meaning</th></tr>
+</thead>
+<tbody>
+<tr><td><code>.isEmpty()</code></td><td>set</td><td>set is empty</td></tr>
+<tr><td><code>.isIpv4()</code></td><td>ipaddr</td><td>address is IPv4</td></tr>
+<tr><td><code>.isIpv6()</code></td><td>ipaddr</td><td>address is IPv6</td></tr>
+<tr><td><code>.isLoopback()</code></td><td>ipaddr</td><td>address is loopback</td></tr>
+<tr><td><code>.isMulticast()</code></td><td>ipaddr</td><td>address is multicast</td></tr>
+<tr><td><code>.toDate()</code></td><td>datetime</td><td>drop the time-of-day</td></tr>
+<tr><td><code>.toTime()</code></td><td>datetime</td><td>time-of-day component</td></tr>
+<tr><td><code>.toMilliseconds()</code></td><td>duration</td><td>duration as milliseconds</td></tr>
+<tr><td><code>.toSeconds()</code></td><td>duration</td><td>duration as seconds</td></tr>
+<tr><td><code>.toMinutes()</code></td><td>duration</td><td>duration as minutes</td></tr>
+<tr><td><code>.toHours()</code></td><td>duration</td><td>duration as hours</td></tr>
+<tr><td><code>.toDays()</code></td><td>duration</td><td>duration as days</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>One-argument methods</strong> (<code>receiver.method(arg)</code>):</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Method</th><th>Domain</th><th>Meaning</th></tr>
+</thead>
+<tbody>
+<tr><td><code>.contains(x)</code></td><td>set</td><td>set contains element <code>x</code></td></tr>
+<tr><td><code>.containsAll(s)</code></td><td>set</td><td>set ⊇ set <code>s</code></td></tr>
+<tr><td><code>.containsAny(s)</code></td><td>set</td><td>set ∩ set <code>s</code> is non-empty</td></tr>
+<tr><td><code>.getTag(k)</code></td><td>entity</td><td>read entity tag <code>k</code></td></tr>
+<tr><td><code>.hasTag(k)</code></td><td>entity</td><td>entity has tag <code>k</code></td></tr>
+<tr><td><code>.isInRange(cidr)</code></td><td>ipaddr</td><td>address is within CIDR</td></tr>
+<tr><td><code>.offset(d)</code></td><td>datetime</td><td>datetime + duration</td></tr>
+<tr><td><code>.durationSince(t)</code></td><td>datetime</td><td>datetime − datetime</td></tr>
+<tr><td><code>.lessThan(d)</code></td><td>decimal</td><td>decimal <code>&lt;</code></td></tr>
+<tr><td><code>.lessThanOrEqual(d)</code></td><td>decimal</td><td>decimal <code>&lt;=</code></td></tr>
+<tr><td><code>.greaterThan(d)</code></td><td>decimal</td><td>decimal <code>&gt;</code></td></tr>
+<tr><td><code>.greaterThanOrEqual(d)</code></td><td>decimal</td><td>decimal <code>&gt;=</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>Note the decimal comparison methods — since <code>&lt;</code>/<code>&lt;=</code>/<code>&gt;</code>/<code>&gt;=</code> do not type-check on
+decimals, these methods are how you order decimals (a full rule using <code>.lessThan</code> on a decimal output
+field is runnable at <a href="../examples/sell_small_proceeds_decimal_method.html"><code>examples/sell_small_proceeds_decimal_method/</code></a>):</p>
+<pre><code class="language-text">context.output.severityScore.lessThan(decimal("0.5"))
+context.input.tags.contains("approved")
+ip("192.168.1.5").isInRange(ip("192.168.0.0/16"))
+</code></pre>
+<p>Calling a method with the wrong number of arguments is rejected
+(<code>`{m}` takes no arguments…</code> / <code>`{m}` takes exactly one argument…</code>), and an
+unrecognized method name gives <code>unknown method `{other}`</code>.</p>
+<h3 id="primary-expressions-literals-variables-grouping-sets-records"><a class="header" href="#primary-expressions-literals-variables-grouping-sets-records">Primary expressions: literals, variables, grouping, sets, records</a></h3>
+<p>At the base of the tower, a <strong>primary</strong> is one of: a dialect marker, a literal, a template
+slot, an entity reference, a variable name, a parenthesized expression, a set literal, or a
+record literal.</p>
+<p><strong>Variable names.</strong> A bare name in value position must resolve to one of the four request
+variables: <code>principal</code>, <code>action</code>, <code>resource</code>, or <code>context</code>. Any other bare identifier is an
+error (<code>`{other}` is not a valid variable</code>).</p>
+<p><strong>Parenthesized expressions</strong> group to override precedence, as shown earlier:
+<code>(context.input.shares &lt; 100 || context.input.stock == "AMZN")</code>.</p>
+<p><strong>Set literals</strong> are square-bracketed, comma-separated expression lists (a trailing comma
+is allowed). They are what an <code>action in […]</code> scope list uses, and they are also ordinary
+values you can test with the set methods:</p>
+<pre><code class="language-text">["VIOLENCE", "HATE"]
+</code></pre>
+<p><strong>Record literals</strong> are brace-delimited <code>key: value</code> pairs. Keys must be string literals or
+bare identifiers; as a special case the reserved word <code>if</code> is allowed as a key:</p>
+<pre><code class="language-text">{ label: "review", count: 3, if: true }
+</code></pre>
+<hr>
+<h2 id="literals-and-types"><a class="header" href="#literals-and-types">Literals and types</a></h2>
+<p>The atomic literal forms are:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Literal</th><th>Type</th><th>Notes</th></tr>
+</thead>
+<tbody>
+<tr><td><code>true</code> / <code>false</code></td><td>Bool</td><td>boolean constants</td></tr>
+<tr><td><code>42</code>, <code>1000</code></td><td>Long</td><td>64-bit signed integer; positive at the token level (<code>-</code> is a unary op)</td></tr>
+<tr><td><code>"…"</code></td><td>String</td><td>double-quoted</td></tr>
+</tbody>
+</table>
+</div>
+<p>Beyond these three primitive literals, the non-primitive types — decimal, datetime,
+duration, and IP address — are constructed with the extension functions
+(<code>decimal("…")</code>, <code>datetime("…")</code>, <code>duration("…")</code>, <code>ip("…")</code>) covered above. Sets and
+records are built with <code>[ … ]</code> and <code>{ … }</code>, and entity references with the <code>Ns::Type::"id"</code>
+form covered next.</p>
+<p><strong>Integer range.</strong> An integer literal is parsed as a 64-bit value. The only literal that
+does not fit a signed <code>i64</code> is <code>9223372036854775808</code> (2^63): a bare <code>2^63</code> is out of range
+and rejected (<code>integer literal `…` is out of range</code>), but <code>-9223372036854775808</code> is exactly
+<code>i64::MIN</code>.</p>
+<p><strong>String escapes.</strong> Strings (and <code>like</code> patterns) support the escapes
+<code>\n \t \r \0 \\ \" \' \*</code> plus braced unicode <code>\u{HEX}</code>:</p>
+<pre><code class="language-text">"line1\nline2"
+"a literal quote: \""
+"a\u{2764}b"
+</code></pre>
+<h3 id="entity-references-nstypeid"><a class="header" href="#entity-references-nstypeid">Entity references: <code>Ns::Type::"id"</code></a></h3>
+<p>An <strong>entity reference</strong> names a specific entity by type and id, using one or more <code>::</code>-
+separated name segments followed by <code>::"id"</code>. This is how you refer to actions, users,
+groups, and any other entity:</p>
+<pre><code class="language-text">Drupe::Action::"SellShares"     // an action
+Drupe::OAuthUser                // just an entity type (no id) — used with `is`
+Drupe::Team::"traders"          // a group entity
+</code></pre>
+<p>Entity ids are ordinary strings and may contain escaped or special characters, e.g.
+<code>Drupe::Grant_Input_role::"o'admin"</code>.</p>
+<p>Note that the <code>Type::{ … }</code> entity-<em>initializer</em> syntax (with a record body) <strong>parses but is
+rejected</strong>: <code>entity initializer syntax `Type::{ … }` is not supported</code>. Use the
+<code>Type::"id"</code> form.</p>
+<h3 id="template-slots-principal-and-resource"><a class="header" href="#template-slots-principal-and-resource">Template slots: <code>?principal</code> and <code>?resource</code></a></h3>
+<p>Dogwood supports Cedar template slots, <code>?principal</code> and <code>?resource</code>, which act as
+placeholders in principal/resource scope operands (they are not allowed in an <code>action</code>
+scope):</p>
+<pre><code class="language-text">permit ( principal == ?principal, action, resource in ?resource );
+</code></pre>
+<p>A <code>?name</code> that is <strong>not</strong> <code>?principal</code> or <code>?resource</code> is a <strong>macro parameter reference</strong>,
+which is only legal inside a macro body (see <a href="06-macros.html">Macros</a>); using one anywhere
+else is rejected during macro expansion.</p>
+<hr>
+<h2 id="what-parses-but-is-rejected"><a class="header" href="#what-parses-but-is-rejected">What parses but is rejected</a></h2>
+<p>Because the grammar is deliberately permissive and the parser enforces the real rules
+afterward, several constructs <em>look</em> syntactically plausible but are always rejected. Do
+not use these:</p>
+<ul>
+<li><strong><code>=</code></strong> anywhere an operator is expected — rejected with a
+<code>did you mean </code>==<code>?</code> hint. There is no assignment operator and no single-<code>=</code> comparison.</li>
+<li><strong><code>/</code> and <code>%</code></strong> — division and modulo parse but are rejected
+(<code>`{other}` is not a supported operator</code>). Only <code>+</code>, <code>-</code>, and <code>*</code> are supported.</li>
+<li><strong>The colon scope form <code>principal : Type</code></strong> — rejected; use <code>principal is Type</code>.</li>
+<li><strong><code>action is Type</code></strong> in a scope — the <code>is</code> form is not valid on the action slot.</li>
+<li><strong><code>Type::{ … }</code></strong> entity-initializer syntax — parses but is not supported.</li>
+<li><strong>Ordered comparison on decimals</strong> (<code>&lt;</code>, <code>&lt;=</code>, <code>&gt;</code>, <code>&gt;=</code>) does not type-check — use
+the decimal comparison methods. Equality (<code>==</code> / <code>!=</code>) does work.</li>
+<li><strong>Integer <code>2^63</code></strong> as a bare literal — out of range (only reachable via negation).</li>
+</ul>
+<hr>
+<h2 id="the-temporal-hand-off-and-the-guardrails-sugar"><a class="header" href="#the-temporal-hand-off-and-the-guardrails-sugar">The <code>temporal</code> hand-off and the <code>guardrails</code> sugar</a></h2>
+<p>To recap the boundary of this page: the <code>temporal</code> marker hands off to a separate
+sub-language, while <code>guardrails</code> does not.</p>
+<ul>
+<li><code>temporal { … }</code> — history-aware conditions in a dedicated grammar. Appears either as a
+whole clause body (<code>when temporal { … }</code>) or as a primary inside a larger expression. Its
+braced contents are documented in <a href="04-temporal-expressions.html">Temporal expressions</a>.</li>
+<li><code>guardrails { … }</code> — sugar for a bare <code>when { … }</code> (the tag carries no semantics); its body
+is ordinary Cedar. Information providers such as content-safety checks are invoked as plain
+Cedar calls (<code>Provider::Name(args)…</code>) — the surface tag keyword is <code>guardrails</code>, the concept
+is “provider” everywhere else. See <a href="05-information-providers.html">Information providers</a>.</li>
+</ul>
+<p>Similarly, macro <em>definitions</em> (<code>def cedar name(?p) { … }</code> and <code>def temporal …</code>) let you
+name and reuse expressions. A <code>def cedar</code> body is an ordinary core expression (everything on
+this page applies), while a <code>def temporal</code> body is a temporal expression. Macro authoring —
+definition syntax, parameters, expansion, and the default macro standard library — is covered in
+<a href="06-macros.html">Macros</a>.</p>
+<hr>
+<h2 id="see-also"><a class="header" href="#see-also">See also</a></h2>
+<ul>
+<li><a href="00-introduction.html">Introduction</a> — what Dogwood is and how the pieces fit together.</li>
+<li><a href="01-getting-started.html">Getting started</a> — write and evaluate your first policy.</li>
+<li><a href="03-event-schema.html">The event schema</a> — the event-kind DSL, and how the <code>context.input</code>/<code>output</code> records above become event fields.</li>
+<li><a href="04-temporal-expressions.html">Temporal expressions</a> — the <code>temporal { … }</code> sub-language.</li>
+<li><a href="05-information-providers.html">Information providers</a> — providers as plain Cedar calls, and the <code>guardrails { … }</code> sugar clause.</li>
+<li><a href="06-macros.html">Macros</a> — <code>def cedar</code> / <code>def temporal</code> definitions and expansion.</li>
+<li><a href="07-api-and-workflow.html">API and workflow</a> — parsing, compiling, and evaluating policies from Rust.</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../guide/01-getting-started.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="../guide/03-event-schema.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../guide/01-getting-started.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="../guide/03-event-schema.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr-ef4e11c1.min.js"></script>
+        <script src="../mark-09e88c2c.min.js"></script>
+        <script src="../searcher-09f2665d.js"></script>
+
+        <script src="../clipboard-1626706a.min.js"></script>
+        <script src="../highlight-abc7f01d.js"></script>
+        <script src="../book-609e4cb8.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

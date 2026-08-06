@@ -1,0 +1,841 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>API and Workflow - The Dogwood Guide</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="../favicon-8114d1fc.png">
+        <link rel="stylesheet" href="../css/variables-8adf115d.css">
+        <link rel="stylesheet" href="../css/general-e96d0476.css">
+        <link rel="stylesheet" href="../css/chrome-d279d366.css">
+        <link rel="stylesheet" href="../css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="../highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../dogwood-docs/mdbook-src/custom-cd47a9b0.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex-6a55f184.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc-982af72f.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">The Dogwood Guide</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/dogwood-policy/dogwood" title="Git repository" aria-label="Git repository">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/dogwood-policy/dogwood/edit/main/dogwood-docs/mdbook-src/guide/07-api-and-workflow.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <span class=fa-svg id="git-edit-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M421.7 220.3l-11.3 11.3-22.6 22.6-205 205c-6.6 6.6-14.8 11.5-23.8 14.1L30.8 511c-8.4 2.5-17.5 .2-23.7-6.1S-1.5 489.7 1 481.2L38.7 353.1c2.6-9 7.5-17.2 14.1-23.8l205-205 22.6-22.6 11.3-11.3 33.9 33.9 62.1 62.1 33.9 33.9zM96 353.9l-9.3 9.3c-.9 .9-1.6 2.1-2 3.4l-25.3 86 86-25.3c1.3-.4 2.5-1.1 3.4-2l9.3-9.3H112c-8.8 0-16-7.2-16-16V353.9zM453.3 19.3l39.4 39.4c25 25 25 65.5 0 90.5l-14.5 14.5-22.6 22.6-11.3 11.3-33.9-33.9-62.1-62.1L314.3 67.7l11.3-11.3 22.6-22.6 14.5-14.5c25-25 65.5-25 90.5 0z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="the-api-and-workflow"><a class="header" href="#the-api-and-workflow">The API and Workflow</a></h1>
+<p>This page is the Rust API reference for the <code>dogwood_language</code> crate and the end-to-end tutorial for using it. It walks through the authorization workflow — build the two <strong>schema</strong> halves, parse and lower a <strong>LoweredPolicySet</strong>, type-check it with a <strong>Validator</strong>, then drive <strong>Event</strong>s through a stateful <strong>Authorizer</strong> to get a <strong>Response</strong> — with a complete, runnable-looking example. It then documents every public type grouped by role, explains the engine seam that lets you replace the policy or temporal engine with your own, and covers trace replay, MCP schema generation, and Cedar export. If you have never called the crate before, read the tutorial first; if you already know the shape and want a specific signature, jump to the grouped reference.</p>
+<p>The API mirrors the <code>cedar-policy</code> crate. Wherever a concept has a Cedar counterpart the name matches: <code>Validator</code>, <code>Authorizer</code>, <code>Response</code>, <code>Decision</code>, <code>Diagnostics</code>, <code>ValidationResult</code>. The schema and policy-set types differ because a Dogwood policy set is bound to its (augmented) schema at lower time and Dogwood’s schema splits into two halves: Cedar’s single <code>Schema</code> becomes a <code>ServiceSchema</code> + <code>PolicySchema</code>, and Cedar’s <code>PolicySet</code> becomes a <code>LoweredPolicySet</code> (with a <code>ParsedPolicySet</code> for the schema-free parse phase). Two signatures then depart from Cedar’s: <code>LoweredPolicySet::from_str</code> <em>takes</em> the schemas, and <code>Validator::new()</code> takes <em>none</em> (details in the Validator section below). Two further divergences are semantic — things Cedar cannot express — and both live on the authorizer:</p>
+<ol>
+<li><code>Authorizer</code> is <strong>stateful</strong> — each ingested <code>Event</code> folds into an accumulated history so temporal operators can see the past.</li>
+<li><code>Authorizer::is_authorized</code> returns <strong><code>Option&lt;Response&gt;</code></strong> — <code>None</code> for a history-only event whose kind is not a decision kind.</li>
+</ol>
+<p>Nearly all of the public API is re-exported at the crate root, so you reach it through <code>dogwood_language::&lt;T&gt;</code>; the internal <code>pub mod</code> modules exist only to give rustdoc a home (and a few AST types live under <code>dogwood_language::temporal_ast</code>).</p>
+<hr>
+<h2 id="your-first-authorization"><a class="header" href="#your-first-authorization">Your first authorization</a></h2>
+<p>The goal of this section is to get you from a schema and a policy to a verdict, and to understand <em>why</em> each step exists. The complete program is shown inline below. (If you only need to check or replay policies over files rather than embed the engine, you do not need this API — see <a href="12-cli.html">The command line</a>.)</p>
+<p>The scenario is a two-action agent schema (<code>Login</code>, <code>Read</code>) with a policy that permits <code>Read</code> only if the same user logged in within the last hour. That “within the last hour” clause is temporal, which is what makes this stateful and impossible to express in plain Cedar.</p>
+<h3 id="the-pipeline-one-stage-at-a-time"><a class="header" href="#the-pipeline-one-stage-at-a-time">The pipeline, one stage at a time</a></h3>
+<p>The sequence is always the same:</p>
+<pre><code class="language-text">ServiceSchema + PolicySchema  -&gt;  LoweredPolicySet  -&gt;  Validator  -&gt;  Authorizer  -&gt;  Event  -&gt;  is_authorized  -&gt;  Response
+</code></pre>
+<p>Each stage produces the input for the next, and one ownership handoff matters: a <code>LoweredPolicySet</code> is <em>moved</em> into the <code>Authorizer</code>, so inspect and reuse it before that. The two schema halves are only <em>borrowed</em> while lowering and are not needed again (the validator takes none), so they stay available throughout.</p>
+<p><strong>Stage 1 — Schemas.</strong> A Dogwood schema has two halves. The <code>ServiceSchema</code> holds the fixed, service-provided inputs — the event schema and provider declarations (both optional, both defaulted) plus the macro library; the <code>PolicySchema</code> holds the Cedar action schema. This policy uses only a temporal leaf, so the service defaults are exactly right (<code>ServiceSchema::defaults()</code>), and <code>PolicySchema::from_cedarschema_str</code> is the one-call shortcut for the action schema.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use dogwood_language::{
+    Authorizer, Decision, Event, LoweredPolicySet, PolicySchema, ServiceSchema, Validator, Value,
+};
+
+// A minimal agent schema: a `Login` action and a `Read` action, each with a
+// `user` input field.
+const SCHEMA: &amp;str = r#"
+namespace Drupe {
+  type LoginInput = { user: String };
+  type ReadInput = { user: String };
+  entity Gateway;
+  entity OAuthUser = { id: String } tags String;
+  action "Login" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: { input: LoginInput }
+  };
+  action "Read" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: { input: ReadInput }
+  };
+}
+"#;
+
+let service = ServiceSchema::defaults();                    // or ServiceSchema::builder()…build()
+let policy_schema = PolicySchema::from_cedarschema_str(SCHEMA)?;
+<span class="boring">}</span></code></pre>
+<p><strong>Stage 2 — LoweredPolicySet.</strong> Unlike Cedar’s <code>PolicySet::from_str</code>, Dogwood’s takes the two schema halves. Lowering the <code>temporal { … }</code> clause derives event signatures from the action schema and <em>augments</em> it — it hoists a synthesized <code>context.&lt;id&gt;</code> field that the lowered Cedar policies reference. Because those extra schema arguments do not fit <code>std::str::FromStr</code>, this is an <strong>inherent method</strong> named <code>from_str</code>: call <code>LoweredPolicySet::from_str(src, &amp;service, &amp;policy_schema)</code>, <strong>not</strong> <code>src.parse()</code>. (When the action schema arrives later than the source, split this into <code>ParsedPolicySet::parse(src, &amp;service)</code> then <code>.lower(&amp;policy_schema)</code> — see <a href="#the-parselower-split">The parse/lower split</a>.)</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Permit `Read` only if the same user logged in within the last hour. The
+// `temporal { … }` clause is what makes the authorizer stateful.
+const POLICY: &amp;str = r#"
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::response{ input.user: context.input.user }
+};
+"#;
+
+let policies = LoweredPolicySet::from_str(POLICY, &amp;service, &amp;policy_schema)?; // inherent fn, not .parse()
+
+// The policy hoisted a temporal leaf, so it is NOT self-contained Cedar:
+// reproducing it needs Dogwood's monitor, not just the exported Cedar.
+// (A pure-Cedar policy would report `true` here and could be shipped to
+// external store as-is via `as_cedar()` / `cedar_schema()`.)
+println!("self-contained Cedar = {}", policies.is_self_contained_cedar());
+<span class="boring">}</span></code></pre>
+<p><code>LoweredPolicySet::from_str</code> returns <code>Error</code> on syntax, macro, or lowering failure. It does <strong>not</strong> report type errors against the schema — those are validation findings, which is the next stage. Inspect the <code>LoweredPolicySet</code> (with <code>is_self_contained_cedar</code>, <code>as_cedar</code>, <code>cedar_schema</code>) <em>before</em> stage 4, because the authorizer consumes it.</p>
+<p><strong>Stage 3 — Validator.</strong> <code>Validator::new().validate(&amp;policies)</code>. It runs Cedar’s own validator over the lowered policies (against the augmented schema) plus each Dogwood dialect’s own checks, and rebases every finding to the originating <code>.dw</code> source span. Unlike Cedar’s <code>Validator::new(schema)</code>, Dogwood’s takes <strong>no</strong> schema: the schema a policy set was lowered against — augmented with its hoisted <code>context.&lt;id&gt;</code> fields — already travels on the <code>LoweredPolicySet</code>, and that is what validation runs against. (A Dogwood <code>LoweredPolicySet</code> is schema-bound at lower time, so unlike Cedar you cannot reuse one validator across policy sets built from different schemas.)</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let report = Validator::new().validate(&amp;policies);
+assert!(report.validation_passed());
+<span class="boring">}</span></code></pre>
+<p><strong>Stage 4 — Authorizer.</strong> <code>Authorizer::new</code> consumes the <code>LoweredPolicySet</code> and is infallible with the built-in backends. The authorizer is stateful: each <code>is_authorized</code> call folds the event into history so the temporal leaf can see prior events.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let mut authorizer = Authorizer::new(policies); // consumes policies
+<span class="boring">}</span></code></pre>
+<p><strong>Stage 5 — Event.</strong> An <code>Event</code> is Dogwood’s generalization of a Cedar <code>Request</code>. It carries a first-class <code>kind</code> (here <code>"request"</code>), an optional principal/resource scope, and input fields exposed to the policy as <code>context.input.&lt;name&gt;</code>.</p>
+<p><strong>Stage 6 &amp; 7 — is_authorized and Response.</strong> <code>is_authorized</code> takes <code>&amp;mut self</code> (stateful) and returns <code>Option&lt;Response&gt;</code>. Every event here is a <code>request</code> (a decision kind), so each yields <code>Some(response)</code>. Read the verdict from <code>response.decision()</code> and the explanation from <code>response.diagnostics()</code>.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let events = vec![
+    Event::builder("Drupe::Action::Login", "request")
+        .timestamp(0)
+        .principal("Drupe::OAuthUser::\"alice\"")
+        .resource("Drupe::Gateway::\"gw1\"")
+        .field("input", "user", Value::String("alice".to_string()))
+        .build(),
+    Event::builder("Drupe::Action::Read", "request")
+        .timestamp(10)
+        .principal("Drupe::OAuthUser::\"alice\"")
+        .resource("Drupe::Gateway::\"gw1\"")
+        .field("input", "user", Value::String("alice".to_string()))
+        .build(),
+    Event::builder("Drupe::Action::Read", "request")
+        .timestamp(7200)
+        .principal("Drupe::OAuthUser::\"alice\"")
+        .resource("Drupe::Gateway::\"gw1\"")
+        .field("input", "user", Value::String("alice".to_string()))
+        .build(),
+];
+
+let mut decisions = Vec::new();
+for event in &amp;events {
+    // `is_authorized` returns None for a non-decision (history-only) event;
+    // here every event is a `request`, so each yields a Response.
+    if let Some(response) = authorizer.is_authorized(event) {
+        println!("@{:&lt;5} {:?}", event.timestamp(), response.decision());
+        decisions.push(response.decision());
+    }
+}
+
+//   @0    Login → Deny  (the policy gates Read, not Login)
+//   @10   Read  → Allow (login within the 1h window)
+//   @7200 Read  → Deny  (login expired: 7200s &gt; 3600s)
+assert_eq!(decisions, vec![Decision::Deny, Decision::Allow, Decision::Deny]);
+<span class="boring">}</span></code></pre>
+<h3 id="what-just-happened"><a class="header" href="#what-just-happened">What just happened</a></h3>
+<p>Three events went in and the verdict stream came out as <code>[Deny, Allow, Deny]</code>. The first <code>Read</code> is allowed because a <code>Login</code> for the same user landed within the 3600-second window; the second <code>Read</code> is denied because that login has expired (7200 &gt; 3600). This is the two Cedar-inexpressible facts made concrete: the authorizer <em>remembered</em> the earlier login (statefulness), and — because every event was a decision-kind <code>request</code> — each call returned <code>Some(Response)</code> rather than <code>None</code>.</p>
+<h3 id="ownership-gotchas"><a class="header" href="#ownership-gotchas">Ownership gotchas</a></h3>
+<ul>
+<li>Both schema halves are only <strong>borrowed</strong> by <code>LoweredPolicySet::from_str(&amp;service, &amp;policy_schema)</code>, and the validator takes none, so they stay usable afterward — but a <code>LoweredPolicySet</code> is bound to the schema it was lowered against, so validation always uses that one.</li>
+<li><code>LoweredPolicySet</code> is <strong>moved</strong> into <code>Authorizer::new(policies)</code> / <code>Authorizer::builder(policies)</code>, so do any <code>as_cedar()</code> / <code>is_self_contained_cedar()</code> inspection <em>before</em> that.</li>
+<li><code>LoweredPolicySet::from_str(src, &amp;service, &amp;policy_schema)</code> is an inherent method, <strong>not</strong> <code>src.parse()</code>.</li>
+</ul>
+<p>A version of this tour that exercises every schema option at once — MCP-generated action schema, explicit event schema, a macro library, and provider declarations — is summarized in <a href="#mcp-schema-generation">MCP schema generation</a> and <a href="10-provider-schema.html">Information provider declarations</a>.</p>
+<hr>
+<h2 id="api-reference"><a class="header" href="#api-reference">API reference</a></h2>
+<p>Everything below is reachable as <code>dogwood_language::&lt;T&gt;</code>. The reference groups types by the role they play in the pipeline.</p>
+<h3 id="serviceschema-and-policyschema"><a class="header" href="#serviceschema-and-policyschema">ServiceSchema and PolicySchema</a></h3>
+<p>Cedar has one schema; Dogwood needs <strong>three parts plus a macro library</strong>, grouped into two halves by where each comes from.</p>
+<p>The <strong><code>ServiceSchema</code></strong> — the fixed, service-provided inputs, none of which need an action schema:</p>
+<ol>
+<li><strong>event schema</strong> — the Dogwood event-schema DSL describing how event kinds and their fields derive from the action schema. <strong>Optional</strong>; defaults to <code>DEFAULT_EVENT_SCHEMA</code> (the request/response convention). Held <em>parsed but unbound</em> — derivation against the action schema is deferred to lowering. See <a href="03-event-schema.html">The event schema</a>.</li>
+<li><strong>provider declarations</strong> — information-provider signatures and implementations (JSON). <strong>Optional</strong>; defaults to empty. See <a href="10-provider-schema.html">The provider schema</a>.</li>
+<li><strong>macro library</strong> — reusable <code>def cedar</code> / <code>def temporal</code> definitions merged into every policy set at parse time. <strong>Optional</strong>; defaults to <code>DEFAULT_MACROS</code>, which ships a small <strong>standard library</strong> of temporal aggregation macros (<code>count_within</code>, <code>sum_within</code>, <code>count_distinct_within</code>, <code>bind</code>). A policy’s own <code>def</code> of the same name takes precedence over a library macro. See <a href="06-macros.html">Macros</a>.</li>
+</ol>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl ServiceSchema {
+    pub fn builder() -&gt; ServiceSchemaBuilder;
+    pub fn defaults() -&gt; ServiceSchema;   // all three defaulted; == builder().build()
+}
+
+impl ServiceSchemaBuilder {
+    pub fn event_schema_str(mut self, src: &amp;str) -&gt; Self;   // omit for DEFAULT_EVENT_SCHEMA
+    pub fn providers(mut self, declarations: ProviderDeclarations) -&gt; Self; // omit for empty
+    pub fn macros_str(mut self, src: &amp;str) -&gt; Self;         // omit for DEFAULT_MACROS
+    pub fn build(self) -&gt; Result&lt;ServiceSchema, Error&gt;;
+}
+<span class="boring">}</span></code></pre>
+<p><code>build()</code> parses the event-schema DSL (it does <strong>not</strong> derive it — that needs the action schema and happens at lowering). An <strong>empty or whitespace-only</strong> <code>event_schema_str</code> is explicitly rejected. A blank event schema parses to zero declarations, which yields a schema with no decision kinds, so <code>is_authorized</code> would return <code>None</code> for <em>every</em> event — a subtle footgun. If you want the default behavior, omit <code>event_schema_str</code> entirely rather than passing an empty string. (The default path always derives a <code>decision request</code> event, so this never trips there.)</p>
+<p>The <strong><code>PolicySchema</code></strong> — the <strong>action schema</strong> (a Cedar <code>.cedarschema</code>: entity types + actions), which typically arrives later and varies per deployment. Supply Cedar text directly, or generate it from an MCP tool manifest (resolved eagerly at construction, so MCP-generation failures surface here):</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl PolicySchema {
+    pub fn from_cedarschema_str(action_schema_src: &amp;str) -&gt; Result&lt;PolicySchema, Error&gt;;
+    pub fn from_mcp_manifest(manifest_json: &amp;str) -&gt; Result&lt;PolicySchema, Error&gt;;
+    pub fn from_mcp_manifest_with_template(manifest_json: &amp;str, template: &amp;str) -&gt; Result&lt;PolicySchema, Error&gt;;
+}
+<span class="boring">}</span></code></pre>
+<ul>
+<li><code>from_cedarschema_str(src)</code> — Cedar <code>.cedarschema</code> text used verbatim. Mirrors <code>cedar_policy::Schema::from_cedarschema_str</code>.</li>
+<li><code>from_mcp_manifest(manifest_json)</code> — generate the action schema from an MCP <code>tools/list</code> manifest layered on the embedded Drupe template (the eager form of <code>mcp_to_cedar_schema</code>).</li>
+<li><code>from_mcp_manifest_with_template(manifest_json, template)</code> — as above but against a caller-supplied Cedar template stub instead of Drupe.</li>
+</ul>
+<p><strong>Constants:</strong></p>
+<ul>
+<li><code>DEFAULT_EVENT_SCHEMA: &amp;str</code> — the built-in request/response convention. For every action <code>A</code> it derives a <code>request</code> <strong>decision</strong> event (input fields, <code>callerPrincipal</code>, <code>callerResource</code>, <code>requestId</code>, and <code>sessionId</code>), a <code>response</code> <strong>history</strong> event (input plus output fields and the same reserved leaves), and an <code>error</code> <strong>history</strong> event (input fields and reserved leaves, no outputs).</li>
+<li><code>DEFAULT_MACROS: &amp;str</code> — the built-in macro library. It ships a small <strong>standard library</strong> of temporal aggregation macros (<code>count_within</code>, <code>sum_within</code>, <code>count_distinct_within</code>, <code>bind</code>), embedded at build time so they are available regardless of working directory. A policy’s own <code>def</code> of the same name takes precedence.</li>
+</ul>
+<h3 id="the-parselower-split"><a class="header" href="#the-parselower-split">The parse/lower split</a></h3>
+<p>Lowering is split into two phases along the input that motivates it — the action schema:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl ParsedPolicySet {
+    pub fn parse(source: &amp;str, service_schema: &amp;ServiceSchema) -&gt; Result&lt;ParsedPolicySet, Error&gt;;
+    pub fn lower(&amp;self, policy_schema: &amp;PolicySchema) -&gt; Result&lt;LoweredPolicySet, Error&gt;;
+    pub fn lower_with_distincter(&amp;self, policy_schema: &amp;PolicySchema, distincter: &amp;str) -&gt; Result&lt;LoweredPolicySet, Error&gt;;
+}
+<span class="boring">}</span></code></pre>
+<ul>
+<li><code>parse(source, &amp;service)</code> — <strong>phase 1</strong>, schema-free. Parses and macro-expands against the <code>ServiceSchema</code> alone; catches syntax and macro-resolution errors but <strong>not</strong> schema-dependent ones (unknown attributes, type errors) — those need the action schema. Useful to reject a broken policy before the action schema is available. The returned <code>ParsedPolicySet</code> carries its <code>ServiceSchema</code>, so phase 2 needs only the <code>PolicySchema</code>.</li>
+<li><code>lower(&amp;policy_schema)</code> — <strong>phase 2</strong>. Derives the event schema against the action schema, lowers to Cedar, augments the schema with hoisted <code>context.&lt;id&gt;</code> fields, and injects pins. Produces the <code>LoweredPolicySet</code>. Emitted policy ids and hoisted field names use the default <code>policy_&lt;index&gt;</code> namespace.</li>
+<li><code>lower_with_distincter(&amp;policy_schema, distincter)</code> — like <code>lower</code>, but namespaces this call’s policy ids and hoisted field names under <code>distincter</code> (ids become <code>&lt;distincter&gt;_&lt;index&gt;</code>). Supply a <strong>distinct</strong> value per call when combining independently-lowered sets into one Cedar <code>PolicySet</code> / policy store, or when feeding an augmented schema forward. The <code>distincter</code> must be a valid Cedar identifier (<code>[_A-Za-z][_A-Za-z0-9]*</code>) — else <code>Error::InvalidDistincter</code>. It is <strong>not</strong> derived from a source <code>@id</code>; distinctness is the caller’s decision. Note the plain <code>lower</code> path uses the namespace <code>policy</code>, so it is not automatically distinct from a <code>"policy"</code> distincter.</li>
+</ul>
+<p><code>LoweredPolicySet::from_str(src, &amp;service, &amp;policy_schema)</code> (below) is the fused form of <code>parse</code> then <code>lower</code> for when the action schema is already in hand.</p>
+<h3 id="loweredpolicyset-and-the-cedar-export-accessors"><a class="header" href="#loweredpolicyset-and-the-cedar-export-accessors">LoweredPolicySet and the Cedar export accessors</a></h3>
+<p><code>LoweredPolicySet</code> is opaque. It is produced by <code>ParsedPolicySet::lower</code> (or the fused <code>from_str</code> shortcut) and consumed by <code>Validator::validate</code> and <code>Authorizer::new</code> / <code>Authorizer::builder</code>. Beyond lowering, its accessors are the bridge to plain Cedar and external policy stores.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl LoweredPolicySet {
+    pub fn from_str(source: &amp;str, service_schema: &amp;ServiceSchema, policy_schema: &amp;PolicySchema) -&gt; Result&lt;LoweredPolicySet, Error&gt;;
+    pub fn as_cedar(&amp;self) -&gt; &amp;cedar_policy::PolicySet;
+    pub fn cedar_schema(&amp;self) -&gt; &amp;cedar_policy::Schema;
+    pub fn cedar_schema_str(&amp;self) -&gt; Result&lt;String, Error&gt;;
+    pub fn cedar_schema_json(&amp;self) -&gt; Result&lt;String, Error&gt;;
+    pub fn is_self_contained_cedar(&amp;self) -&gt; bool;
+    pub fn temporal_fields(&amp;self) -&gt; impl Iterator&lt;Item = &amp;TemporalField&gt;;
+    pub fn provider_fields(&amp;self) -&gt; impl Iterator&lt;Item = &amp;ProviderField&gt;;
+    pub fn rules(&amp;self) -&gt; impl Iterator&lt;Item = DogwoodRuleRef&gt; + '_;
+    pub fn rule_ref(&amp;self, cedar_policy_id: &amp;str) -&gt; Option&lt;DogwoodRuleRef&gt;;
+    pub fn decision_kinds(&amp;self) -&gt; impl Iterator&lt;Item = &amp;str&gt;;
+    pub fn is_decision_kind(&amp;self, kind: &amp;str) -&gt; bool;
+}
+<span class="boring">}</span></code></pre>
+<ul>
+<li><code>from_str(source, service, policy_schema)</code> — fused parse + lower. Inherent method; returns <code>Error</code> on syntax / macro / lowering failure. <strong>Type errors against the schema are not returned here</strong> — run <code>Validator::validate</code> for those.</li>
+<li><code>as_cedar()</code> — borrow the lowered Cedar policies (a real <code>cedar_policy::PolicySet</code>). This is the artifact to hand to the <code>cedar-policy</code> crate directly, or (rendered to policy text) to a policy store’s create-policy API.</li>
+<li><code>cedar_schema()</code> / <code>cedar_schema_str()</code> / <code>cedar_schema_json()</code> — the augmented Cedar schema (action schema plus hoisted <code>context.&lt;id&gt;</code> fields), respectively as an opaque <code>cedar_policy::Schema</code>, as <code>.cedarschema</code> text, and as the Cedar JSON schema form (what a Cedar policy store’s schema ingest accepts). The text form round-trips: it can seed a later lowering via <code>PolicySchema::from_cedarschema_str</code>.</li>
+<li><code>is_self_contained_cedar()</code> — <code>true</code> iff lowering hoisted <strong>no</strong> temporal or provider <code>context.&lt;id&gt;</code> fields, so the exported Cedar artifacts fully reproduce the policy’s semantics in plain Cedar with no extra context. When <code>false</code>, the policy uses <code>temporal { … }</code> and/or <code>guardrails { … }</code>: a Cedar policy store can still evaluate the exported policies, but each authorization call must be supplied the hoisted <code>context.&lt;id&gt;</code> values. Computing those values is Dogwood’s temporal-monitor / provider-evaluation job — so in that case <strong>Dogwood produces the enriched context and the policy store performs the final Cedar decision.</strong></li>
+<li><code>temporal_fields()</code> / <code>provider_fields()</code> — the hoisted leaves (each with its <code>context.&lt;id&gt;</code> field name, action, and what to evaluate). A consumer reimplementing the decision loop computes each leaf’s value and binds it into the request context.</li>
+<li><code>rules()</code> / <code>rule_ref(id)</code> — the Dogwood rules as <code>DogwoodRuleRef</code>s, and the reverse map from a Cedar policy id (as named in a decision) back to its originating rule.</li>
+<li><code>decision_kinds()</code> / <code>is_decision_kind(kind)</code> — which event kinds are decision points (authorization runs and yields a verdict); any other kind is history-only. This is the gate <code>Authorizer::is_authorized</code> applies before returning <code>Some</code>/<code>None</code>.</li>
+</ul>
+<h3 id="validator-validationresult"><a class="header" href="#validator-validationresult">Validator, ValidationResult</a></h3>
+<p>Validation is the second of Dogwood’s two error channels (see <a href="#errors">Errors</a>): the policy already parsed and lowered, and this stage checks whether it is <em>correct against the schema</em>.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl Validator {
+    pub fn new() -&gt; Self;   // takes no schema — see below
+    pub fn validate(&amp;self, policies: &amp;LoweredPolicySet) -&gt; ValidationResult;
+}
+
+impl ValidationResult {
+    pub fn validation_passed(&amp;self) -&gt; bool;                  // no errors (warnings ignored)
+    pub fn validation_passed_without_warnings(&amp;self) -&gt; bool; // no errors AND no warnings
+    pub fn validation_errors(&amp;self) -&gt; impl Iterator&lt;Item = &amp;ValidationError&gt;;
+    pub fn validation_warnings(&amp;self) -&gt; impl Iterator&lt;Item = &amp;ValidationWarning&gt;;
+}
+<span class="boring">}</span></code></pre>
+<ul>
+<li><strong>No schema argument</strong> (unlike <code>cedar_policy::Validator::new(schema)</code>). Cedar’s validator owns a schema so one validator can be reused across many policy sets — a Cedar schema is policy-independent. Dogwood’s is not: lowering <em>augments</em> the schema with the <code>context.&lt;id&gt;</code> fields hoisted from a policy set’s own temporal / provider clauses, so the effective validation schema is a function of the policies and already travels on the <code>PolicySet</code>. <code>validate</code> reads it from there; a schema argument would be redundant (the same one) or wrong (the un-augmented base).</li>
+<li>Under the hood, <code>validate</code> runs Cedar’s own validator on the lowered policies (against that augmented schema) <em>plus</em> each Dogwood dialect’s checks (temporal, provider) and the event-schema names check, rebasing every finding to the originating <code>.dw</code> source span. It always uses Cedar’s default (strict) mode — there is no mode argument, because the non-strict modes are not meaningful once a hoisted <code>context.&lt;id&gt;</code> field must typecheck.</li>
+<li><code>ValidationResult</code> collects every finding rather than stopping at the first. Warnings <strong>never</strong> make validation fail.</li>
+</ul>
+<p>Both finding types are <code>#[derive(Error, Diagnostic, Debug)]</code> (miette) and are <strong>self-rendering</strong>: each embeds its <code>.dw</code> source alongside the span, so <code>miette::Report::new(err)</code> prints the underlined snippet with <strong>no</strong> <code>with_source_code</code> — the same way the fatal <code>Error</code> from <code>LoweredPolicySet::from_str</code> renders, and the same way Cedar’s own errors do. There are <strong>no accessor methods</strong> on the finding enums; render via their <code>Display</code> / miette <code>Diagnostic</code> impls or match the variants directly.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub enum ValidationError {
+    Cedar { message, span, label, help, src, source },              // Cedar's validator rejected the lowered policy
+    Extension { code: &amp;'static str, message, span, label, help, src, source }, // dialect finding; code is "temporal" / "provider" / …
+}
+
+pub enum ValidationWarning {
+    Cedar(cedar_policy::ValidationWarning),                         // Cedar's own warning verbatim
+    Extension { code, message, span, label, help, src, source },    // dialect warning (no dialect emits one today)
+}
+// `src` is the embedded `.dw` source (Arc&lt;str&gt;) — this is what makes a finding
+// self-render, so `miette::Report::new(err)` needs no `with_source_code`.
+<span class="boring">}</span></code></pre>
+<h3 id="event-eventbuilder-value"><a class="header" href="#event-eventbuilder-value">Event, EventBuilder, Value</a></h3>
+<p>An <code>Event</code> is Dogwood’s generalization of <code>cedar_policy::Request</code>. Its distinguishing feature is a first-class <code>kind</code> string: a <code>request</code>-kind event is a decision point (it authorizes), while a <code>response</code>-kind event is history-only. <em>Which</em> kinds decide is data (the event schema’s <code>decision</code> flags, queryable via <code>Schema::decision_kinds()</code>), not a hardcoded convention.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl Event {
+    pub fn builder(action: &amp;str, kind: &amp;str) -&gt; EventBuilder;
+    pub fn kind(&amp;self) -&gt; &amp;str;
+    pub fn action(&amp;self) -&gt; &amp;str;             // unqualified id, e.g. "Login"
+    pub fn namespace(&amp;self) -&gt; &amp;[String];     // e.g. ["Drupe", "Action"]; empty if bare
+    pub fn timestamp(&amp;self) -&gt; i64;
+    pub fn principal(&amp;self) -&gt; Option&lt;String&gt;; // e.g. Drupe::OAuthUser::"alice"; None if history-only
+    pub fn resource(&amp;self) -&gt; Option&lt;String&gt;;  // e.g. Drupe::Gateway::"gw1"; None otherwise
+    pub fn field(&amp;self, group: &amp;str, name: &amp;str) -&gt; Option&lt;&amp;Value&gt;;      // one logged field, e.g. field("input", "user")
+    pub fn fields(&amp;self, group: &amp;str) -&gt; impl Iterator&lt;Item = (&amp;str, &amp;Value)&gt;; // all fields of a logged group
+    pub fn from_request(request: &amp;cedar_policy::Request) -&gt; Result&lt;Event, Error&gt;;
+}
+<span class="boring">}</span></code></pre>
+<ul>
+<li><code>builder(action, kind)</code> — start building. <code>action</code> is the qualified Cedar action id, either bare (<code>"Login"</code>) or namespaced (<code>"Drupe::Action::Login"</code>); the builder splits it into <code>(namespace, id)</code>. <code>kind</code> is the event-kind string (<code>"request"</code>, <code>"response"</code>, …).</li>
+<li>The <strong>request scope is optional</strong>: only an event that wraps a request carries a principal/resource, so history-only events return <code>None</code> from <code>principal()</code> / <code>resource()</code>.</li>
+<li><code>field(group, name)</code> reads one field of the <strong>logged temporal record</strong> (<code>field("input", "user")</code>); <code>fields(group)</code> yields all <code>(name, value)</code> pairs of a group — what an engine that persists history outside the process would record on <code>observe</code>. There is no <code>input</code>-specific accessor: <code>input</code> is just the <code>"input"</code> group, read like any other. The <strong>Cedar request context</strong> a policy sees as <code>context.&lt;group&gt;.&lt;name&gt;</code> is a separate bag, read via <code>request_context_path</code>.</li>
+<li><code>from_request(&amp;cedar::Request)</code> — interop bridge for callers coming from <code>cedar-policy</code>. It lifts a Cedar <code>Request</code> into a <strong><code>request</code>-kind</strong> <code>Event</code> at <strong>timestamp <code>0</code></strong>: principal/resource become the scope, the action becomes the qualified action, and <code>context.input</code> becomes the input fields. A stateless single-decision authorization is then just a fresh <code>Authorizer</code> fed this one event.</li>
+</ul>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl EventBuilder {
+    pub fn timestamp(mut self, ts: i64) -&gt; Self;              // default 0
+    pub fn principal(mut self, uid: &amp;str) -&gt; Self;            // e.g. User::"alice"; makes the event request-wrapping
+    pub fn resource(mut self, uid: &amp;str) -&gt; Self;             // e.g. Photo::"vacation.jpg"; makes it request-wrapping
+    pub fn field(mut self, group: &amp;str, name: &amp;str, value: Value) -&gt; Self;  // logged temporal record, e.g. field("input", "user", v)
+    pub fn request_context(mut self, group: &amp;str, name: &amp;str, value: Value) -&gt; Self; // Cedar request context (context.&lt;group&gt;.&lt;name&gt;)
+    pub fn build(self) -&gt; Event;
+}
+<span class="boring">}</span></code></pre>
+<ul>
+<li>Setting a principal <strong>or</strong> resource marks the event as wrapping an authorization request (it gains a principal/resource scope).</li>
+<li><code>timestamp</code> defaults to <code>0</code>; timestamps order events for temporal operators, and the first event of a fresh authorizer can safely stay at <code>0</code>.</li>
+<li><code>field(group, name, value)</code> accumulates into the logged record’s nested <code>group</code> object (<code>input</code> is one such group, not privileged). It is <strong>not</strong> read by a policy’s <code>context.&lt;group&gt;.&lt;name&gt;</code> clause — that reads the separate request-context bag set via <code>request_context(group, name, value)</code>. A field a policy reads <em>and</em> a temporal predicate correlates on must be supplied to <strong>both</strong>.</li>
+<li>Entity uid strings are parsed as <code>Type::"id"</code> (possibly namespaced); a string that is not of that shape yields no scope value.</li>
+</ul>
+<p><code>Value</code> is the runtime value type for event fields:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub enum Value {
+    Null,
+    Bool(bool),
+    Int(i64),
+    Decimal(String),          // canonical text; equality canonicalizes (1.5 == 1.50)
+    String(String),
+    Entity { ty: String, id: String },
+    Array(Vec&lt;Value&gt;),
+    Object(BTreeMap&lt;String, Value&gt;),
+}
+
+impl Value {
+    pub fn dom_eq(&amp;self, other: &amp;Value) -&gt; bool; // structural eq with decimal canonicalization
+    pub fn as_int(&amp;self) -&gt; Option&lt;i64&gt;;         // integer view; None if not an Int
+}
+<span class="boring">}</span></code></pre>
+<p>The constructors you will use most are <code>Value::String(s.to_string())</code> and <code>Value::Int(n)</code>, as in the tour. <code>Decimal</code> is canonical text; <code>Entity</code> / <code>Array</code> / <code>Object</code> build the structured shapes.</p>
+<h3 id="authorizer-authorizerbuilder-response-diagnostics-decision"><a class="header" href="#authorizer-authorizerbuilder-response-diagnostics-decision">Authorizer, AuthorizerBuilder, Response, Diagnostics, Decision</a></h3>
+<p>The <code>Authorizer</code> is the stateful monitor. It is built from a <code>LoweredPolicySet</code> and assembled from two swappable backends (see <a href="#the-engine-seam">The engine seam</a>): a <code>PolicyEngine</code> (decision; default <code>CedarPolicyEngine</code>) and a <code>TemporalEngine</code> (temporal-leaf evaluation; default <code>InMemoryTemporalEngine</code>).</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl Authorizer {
+    pub fn new(policies: LoweredPolicySet) -&gt; Self;                  // built-in backends; infallible
+    pub fn builder(policies: LoweredPolicySet) -&gt; AuthorizerBuilder; // to substitute backends
+    pub fn is_authorized(&amp;mut self, event: &amp;Event) -&gt; Option&lt;Response&gt;;
+}
+<span class="boring">}</span></code></pre>
+<ul>
+<li><code>new(policies)</code> — built-in backends, <strong>infallible</strong> (the defaults’ <code>prepare</code> cannot fail). Consumes the <code>LoweredPolicySet</code>.</li>
+<li><code>builder(policies)</code> — for custom backends.</li>
+<li><code>is_authorized(&amp;mut self, event)</code> — <code>&amp;mut self</code> (stateful) returning <code>Option&lt;Response&gt;</code>:
+<ul>
+<li>The event is <strong>always</strong> handed to the temporal engine (<code>observe</code>) so it sees the history.</li>
+<li>A <strong>decision-kind</strong> event additionally triggers temporal evaluation, request construction, and the policy engine’s decision, yielding <code>Some(Response)</code>.</li>
+<li>A <strong>history-only</strong> event (a kind that is not a decision kind, e.g. <code>response</code>) yields <code>None</code>: it updates temporal state but produces no verdict.</li>
+<li><strong>Evaluation failures do not abort:</strong> a failure (a provider that errors, the temporal engine erroring, a decision event missing a principal/resource) is recorded in <code>Response::diagnostics().errors()</code>, and this reference implementation resolves it to <code>Deny</code>. Note that for provider errors specifically this is an implementation choice, not a guarantee — an erroring provider is undefined behavior under <a href="05-information-providers.html#the-provider-contract">the provider contract</a>.</li>
+</ul>
+</li>
+</ul>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl AuthorizerBuilder {
+    pub fn policy_engine(mut self, engine: impl PolicyEngine + 'static) -&gt; Self;
+    pub fn temporal_engine(mut self, engine: impl TemporalEngine + 'static) -&gt; Self;
+    pub fn build(self) -&gt; Result&lt;Authorizer, Error&gt;;
+}
+<span class="boring">}</span></code></pre>
+<ul>
+<li><code>policy_engine(engine)</code> — install the decision backend (e.g. a remote Cedar-based engine). Default <code>CedarPolicyEngine</code>.</li>
+<li><code>temporal_engine(engine)</code> — install a custom temporal backend. Default <code>InMemoryTemporalEngine</code>.</li>
+<li><code>build()</code> — runs each backend’s <code>prepare</code> (the policy engine gets the lowered Cedar policies plus schema; the temporal engine gets the temporal leaves plus schema). It <strong>errors if a backend’s <code>prepare</code> fails</strong> (e.g. a compiling temporal engine rejects a leaf, or a remote policy engine cannot reach its policy store). This is why <code>builder()</code> is fallible while <code>new()</code> is not.</li>
+</ul>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl Response {
+    pub fn decision(&amp;self) -&gt; Decision;    // Allow or Deny
+    pub fn diagnostics(&amp;self) -&gt; &amp;Diagnostics;
+    pub fn allowed(&amp;self) -&gt; bool;         // convenience: decision == Allow
+}
+
+impl Diagnostics {
+    pub fn reason(&amp;self) -&gt; impl Iterator&lt;Item = &amp;DogwoodRuleRef&gt;; // determining rules; empty for implicit Deny
+    pub fn errors(&amp;self) -&gt; impl Iterator&lt;Item = &amp;str&gt;;           // evaluation errors (degrade, not throw)
+}
+<span class="boring">}</span></code></pre>
+<ul>
+<li><code>reason()</code> — the Dogwood rules that drove the decision. Empty for an implicit <code>Deny</code> (no rule matched), exactly as Cedar’s <code>reason()</code> is.</li>
+<li><code>errors()</code> — problems encountered while evaluating (missing attribute, provider that could not run, decision event with no principal/resource). Evaluation degrades rather than aborting, so these are reported here rather than thrown.</li>
+</ul>
+<p><code>DogwoodRuleRef</code> is the enriched analog of Cedar’s <code>PolicyId</code> in <code>reason()</code>. Where Cedar names the lowered policy id, Dogwood maps it back to the originating <code>.dw</code> rule:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct DogwoodRuleRef {
+    pub rule_index: usize,       // 0-based index of the rule in the source policy set
+    pub cedar_policy_id: String, // synthesized Cedar policy id, e.g. "policy0"
+}
+<span class="boring">}</span></code></pre>
+<p><code>Decision</code> is <code>pub use cedar_policy::Decision;</code> — re-exported so consumers need no direct <code>cedar-policy</code> dependency. Its values are <code>Decision::Allow</code> and <code>Decision::Deny</code>, and it is the type returned by <code>Response::decision()</code>.</p>
+<hr>
+<h2 id="the-engine-seam"><a class="header" href="#the-engine-seam">The engine seam</a></h2>
+<p>Why does the seam exist? A Dogwood <code>Authorizer</code> is really two decisions glued together: <em>what boolean does each temporal / provider leaf evaluate to right now</em> (the temporal seam), and <em>given those booleans folded into the context, does the Cedar policy allow the request</em> (the policy seam). Each of those has a built-in default, and each is a trait you can implement to replace it. That is how you point Dogwood at a <strong>remote policy engine</strong> for the final Cedar decision, or at an alternative <strong>temporal engine</strong> of your own for the history. You install a custom backend through the builder:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let mut authorizer = Authorizer::builder(policies)
+    .policy_engine(my_remote_engine)     // decision seam
+    .temporal_engine(my_temporal_engine) // temporal seam
+    .build()?;                           // fallible: runs each backend's prepare()
+<span class="boring">}</span></code></pre>
+<p>You can swap either or both; anything you do not specify falls back to the default.</p>
+<h3 id="the-policy-decision-seam-cedar-authorization-service-shaped"><a class="header" href="#the-policy-decision-seam-cedar-authorization-service-shaped">The policy-decision seam (Cedar authorization-service shaped)</a></h3>
+<p>This trait is shaped like a Cedar authorization service’s <code>IsAuthorized</code> (minus the token- and batch-authorization variants Dogwood does not use), so you can implement <code>PolicyEngine</code> by <strong>calling a remote Cedar-based service instead of evaluating Cedar locally</strong>.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct AuthorizationRequest&lt;'a&gt; {
+    pub request: &amp;'a cedar_policy::Request,   // &lt;principal, action, resource, context&gt;
+    pub entities: &amp;'a cedar_policy::Entities, // Dogwood supplies an empty set; field exists so a
+                                              // remote engine can forward its managed entities
+}
+
+pub struct AuthorizationDecision {
+    pub decision: Decision,                   // Allow or Deny
+    pub determining_policy_ids: Vec&lt;String&gt;,  // ids of determining policies (empty for implicit Deny)
+    pub errors: Vec&lt;String&gt;,                  // evaluation errors (folded into diagnostics; Deny, not throw)
+}
+
+pub trait PolicyEngine: Send {
+    fn prepare(&amp;mut self, policies: &amp;cedar_policy::PolicySet, schema: &amp;cedar_policy::Schema) -&gt; Result&lt;(), Error&gt;;
+    fn is_authorized(&amp;self, request: AuthorizationRequest&lt;'_&gt;) -&gt; AuthorizationDecision;
+}
+<span class="boring">}</span></code></pre>
+<p><code>prepare</code> is called once at authorizer-build time (analogous to creating and populating a policy store); <code>is_authorized</code> decides one request. Implementations <strong>must not panic</strong> — surface problems through <code>AuthorizationDecision::errors</code> with a fail-closed <code>Deny</code>.</p>
+<p>The built-in default is <code>CedarPolicyEngine</code> (implements <code>Default</code>, with <code>CedarPolicyEngine::new()</code>). Its <code>prepare</code> keeps the policy set; its <code>is_authorized</code> runs <code>cedar_policy::Authorizer::new().is_authorized(request, policies, entities)</code> and maps the decision, determining ids, and errors across. If it was never prepared it returns a <code>Deny</code> with an error string.</p>
+<h3 id="the-temporal-evaluation-seam"><a class="header" href="#the-temporal-evaluation-seam">The temporal-evaluation seam</a></h3>
+<p>This trait computes the boolean value of each hoisted <code>temporal { … }</code> leaf for the current decision point.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub type ExtensionId = String;                          // the context.&lt;id&gt; slot a leaf's boolean binds into (e.g. "__temporal_0")
+pub type TemporalBindings = BTreeMap&lt;ExtensionId, bool&gt;; // per-leaf booleans for one decision point
+
+pub trait TemporalEngine: Send {
+    fn prepare(&amp;mut self, leaves: &amp;[TemporalField], schema: &amp;cedar_policy::Schema, events: &amp;[EventSignature]) -&gt; Result&lt;(), Error&gt;;
+    fn observe(&amp;mut self, event: &amp;Event);
+    fn evaluate(&amp;mut self) -&gt; Result&lt;TemporalBindings, String&gt;;
+}
+<span class="boring">}</span></code></pre>
+<p>The lifecycle has three points:</p>
+<ul>
+<li><code>prepare(leaves, schema, events)</code> — <strong>once</strong>, at authorizer-build time. A custom backend does its one-time setup here (an engine that precomputes queries against a store, say, would build them now); <code>events</code> carries the declared signature of every event kind the policy set can see (each field’s dotted path and type), which such a backend needs to emit type-correct comparisons.</li>
+<li><code>observe(event)</code> — for <strong>every</strong> ingested event (decision or history-only), in timestamp order, before any <code>evaluate</code> that includes it. A backend persists the event (in memory, or in an external store).</li>
+<li><code>evaluate()</code> — at each decision point, <strong>after</strong> that point’s event has been observed. It returns each leaf’s boolean keyed by id. The in-memory backend re-runs the interpreter; a custom backend evaluates however it prepared. A failure (an external store being unreachable, say) <strong>fails the decision closed</strong> by returning <code>Err(String)</code>.</li>
+</ul>
+<p>The built-in default is <code>InMemoryTemporalEngine</code> (implements <code>Default</code>, with <code>InMemoryTemporalEngine::new()</code>): it keeps the event history in memory and re-runs the in-process temporal interpreter over the trace so far. <code>prepare</code> stores the leaves (no compilation), <code>observe</code> appends to an in-memory log, and <code>evaluate</code> runs the interpreter at the last timepoint.</p>
+<p>The leaves handed to <code>prepare</code> are <code>TemporalField</code>s:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct TemporalField {
+    pub id: ExtensionId,            // the context.&lt;id&gt; slot its boolean binds into
+    pub action: ActionScope,        // the action scope its rule pins, as written
+    pub target_actions: Vec&lt;ActionRef&gt;, // concrete actions `action` resolves to (a group to its
+                                    // members, Unconstrained to all) — what the leaf is checked against
+    pub principal: ScopeConstraint, // entity-type axis the rule's `principal` scope admits
+    pub resource: ScopeConstraint,  // likewise for `resource`
+    pub condition: Temporal,        // the parsed temporal condition
+}
+<span class="boring">}</span></code></pre>
+<p>Supporting types a custom engine will name:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct ActionRef {
+    pub namespace: Option&lt;String&gt;, // None = top-level (unnamespaced) action
+    pub id: String,
+}
+
+pub enum ActionScope {
+    Concrete(ActionRef),           // action == Ns::Action::"X"
+    List(Vec&lt;ActionRef&gt;),          // action in [ … ]
+    Unconstrained,                 // bare `action` scope, may fire on any action
+}
+impl ActionScope {
+    pub fn concrete(&amp;self) -&gt; Option&lt;&amp;ActionRef&gt;;   // the single == action, else None
+    pub fn actions_to_check(&amp;self) -&gt; &amp;[ActionRef]; // one concrete / each listed; Unconstrained =&gt; empty slice
+}
+
+pub enum ScopeConstraint {
+    Any,                 // bare `principal` / `resource`: every type the action permits
+    IsType(String),      // `is Ns::T`
+    Uid { .. },          // `== Ns::T::"x"` or `in Ns::T::"x"`
+}
+
+pub struct Temporal {
+    pub condition: Condition, // parsed temporal condition; the Condition AST is public via `dogwood_language::temporal_ast`
+    pub span: Span,           // span of the block body in the .dw source
+}
+impl Temporal {
+    pub fn parse(body: &amp;str, body_span: Span) -&gt; Result&lt;Temporal, String&gt;;
+}
+<span class="boring">}</span></code></pre>
+<p>A custom engine reads <code>TemporalField::condition</code> to decide what to evaluate; the in-memory engine interprets it directly. <code>Temporal</code> is re-exported so a custom engine can name the type, and its inner <code>condition</code> AST is public via <code>dogwood_language::temporal_ast</code> to walk.</p>
+<p>The practical recipe for swapping either backend:</p>
+<ul>
+<li><strong>Swap the decision backend</strong> (any Cedar-based store): implement <code>PolicyEngine</code> and pass it to <code>Authorizer::builder(policies).policy_engine(...)</code>. <code>PolicySet::as_cedar()</code> / <code>cedar_schema()</code> give you the Cedar policies and schema to load into the store.</li>
+<li><strong>Swap the temporal backend</strong> (a custom evaluation strategy): implement <code>TemporalEngine</code> (<code>prepare</code> does one-time setup over <code>&amp;[TemporalField]</code>, <code>observe</code> records each event, <code>evaluate</code> computes the leaves at the decision point) and pass it to <code>.temporal_engine(...)</code>.</li>
+</ul>
+<hr>
+<h2 id="trace-replay"><a class="header" href="#trace-replay">Trace replay</a></h2>
+<p><code>parse_trace</code> and <code>replay_log</code> are conveniences over the core <code>Authorizer</code> loop for driving a recorded <code>.log</code> event trace — useful for regression testing and for reproducing a sequence of events without hand-building each <code>Event</code>.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub fn parse_trace(log: &amp;str) -&gt; Result&lt;Vec&lt;Event&gt;, Error&gt;;
+pub fn replay_log(policies: LoweredPolicySet, log: &amp;str) -&gt; Result&lt;String, Error&gt;;
+<span class="boring">}</span></code></pre>
+<ul>
+<li><code>parse_trace(log)</code> — parse a <code>.log</code> trace into its sequence of <code>Event</code>s. Each non-blank line is one timepoint of the form <code>@&lt;ts&gt; [envelopes] &lt;Action&gt;(&lt;field&gt;: &lt;value&gt;, …)</code> (the optional <code>scope</code> / <code>entities</code> / <code>request_context</code> envelopes are described below). Values use Cedar surface forms (entity refs <code>Ns::Type::"id"</code>, strings, integers, decimals, <code>true</code>/<code>false</code>, arrays, objects). Feed the events to an <code>Authorizer</code> in order to replay them. On failure it returns <code>Error::TraceParse("…")</code>.</li>
+<li><code>replay_log(policies, log)</code> — replay a whole <code>.log</code> trace through <code>policies</code> and return the per-timepoint verdict stream: one <code>@&lt;ts&gt; (time point &lt;i&gt;): &lt;bool&gt;</code> line for <strong>every decision point</strong> (<code>true</code> for <code>Allow</code>, <code>false</code> for <code>Deny</code>), newline-joined. This is the corpus-comparison format. It <strong>consumes</strong> the <code>LoweredPolicySet</code> (it drives a fresh stateful <code>Authorizer</code>, so temporal leaves see prior events as history). History-only events (non-decision kinds) contribute <strong>no line</strong>.</li>
+</ul>
+<pre><code class="language-text">@0 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") Drupe::Action::"Login"::request(input: { user: "alice" })
+@10 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") Drupe::Action::"Read"::request(input: { user: "alice" })
+@7200 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") Drupe::Action::"Read"::request(input: { user: "alice" })
+</code></pre>
+<p>Each <code>.log</code> line is: the <code>@&lt;timestamp&gt;</code>, then up to three optional <strong>request-supplement envelopes</strong> in a fixed order, then the event itself — a <strong>quoted, fully-qualified</strong> action id (<code>Drupe::Action::"Read"</code>) with an explicit <strong><code>::&lt;kind&gt;</code></strong> segment (<code>::request</code>) and its trailing <code>(&lt;field&gt;: …)</code> group. That trailing group is the <strong>logged</strong> record (the temporal-history fields a predicate correlates on); the envelopes carry the request-only supplements, each parsed positionally when present:</p>
+<ul>
+<li><code>scope(principal: …, resource: …)</code> — the request’s principal and resource entities. (A decision-kind event omitting <code>scope(...)</code> has no principal/resource and fails closed to <code>Deny</code>.)</li>
+<li><code>entities(&lt;uid&gt;: { &lt;attr&gt;: … }, …)</code> — the entity attribute store: each <code>uid</code> (e.g. <code>Drupe::OAuthUser::"alice"</code>) maps to its attributes, so a policy can read <code>principal.&lt;attr&gt;</code> / <code>resource.&lt;attr&gt;</code> or a provider can resolve one. A uid <code>"id"</code> containing <code>"</code> or <code>\</code> is escaped as in Cedar (<code>"a\"b"</code>).</li>
+<li><code>request_context(&lt;group&gt;: { … }, …)</code> — the request-only context the Cedar request is built from (<code>input</code>, <code>system</code>, …), distinct from the trailing logged group. A field a policy reads via <code>context.&lt;group&gt;.&lt;name&gt;</code> must appear here; a field a temporal predicate correlates on must appear in the trailing logged group. A field both need (<code>input</code>) is supplied in both.</li>
+</ul>
+<p>The envelopes appear in that order (<code>scope</code>, then <code>entities</code>, then <code>request_context</code>) before the event group, and any may be omitted. Parsing is <strong>strict</strong>: an unterminated envelope, or a <strong>duplicate key</strong> within any group (a repeated uid in <code>entities(...)</code>, a repeated group in <code>scope</code>/<code>request_context</code>, a repeated field in the logged group or a nested record), is a <code>TraceParse</code> error rather than a silent last-wins — so a hand-written trace cannot mis-decide on an accidental duplicate.</p>
+<p>Running <code>replay_log</code> on the trace above (which uses only <code>scope(...)</code>) with the tour’s policy produces one line per <code>request</code>-kind timepoint:</p>
+<pre><code class="language-text">@0 (time point 0): false
+@10 (time point 1): true
+@7200 (time point 2): false
+</code></pre>
+<p>— the same <code>[Deny, Allow, Deny]</code> shape you saw in the tutorial (<code>false</code>/<code>true</code> = <code>Deny</code>/<code>Allow</code>; note <code>replay_log</code> emits a line for <em>every</em> decision point, not only allows).</p>
+<hr>
+<h2 id="mcp-schema-generation"><a class="header" href="#mcp-schema-generation">MCP schema generation</a></h2>
+<p>Because a Dogwood action schema <em>is</em> an MCP tool manifest, you can generate the Cedar <code>.cedarschema</code> text directly from a Model Context Protocol <code>tools/list</code> payload rather than writing it by hand. The <code>PolicySchema::from_mcp_manifest</code> path is the usual entry point, but the underlying functions are also public:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub const DRUPE_TEMPLATE: &amp;str; // embedded Drupe .cedarschema template stub
+pub fn mcp_to_cedar_schema(manifest_json: &amp;str) -&gt; Result&lt;String, String&gt;;
+pub fn mcp_to_cedar_schema_with_template(manifest_json: &amp;str, template: &amp;str) -&gt; Result&lt;String, String&gt;;
+<span class="boring">}</span></code></pre>
+<ul>
+<li><code>manifest_json</code> is an MCP <code>tools/list</code> payload (or a JSON array of tool descriptions).</li>
+<li><code>mcp_to_cedar_schema</code> uses <code>DRUPE_TEMPLATE</code>; <code>mcp_to_cedar_schema_with_template</code> takes a caller-supplied template.</li>
+<li>The generator config matches the regression harness: <code>include_outputs(true)</code>, <code>encode_numbers_as_decimal(true)</code>, and <code>flatten_namespaces(true)</code> (so action names are unqualified).</li>
+<li><code>DRUPE_TEMPLATE</code> supplies the principals (<code>OAuthUser</code> / <code>IamEntity</code> / <code>UnauthenticatedUser</code>), the <code>Gateway</code> resource, the <code>system</code> context, and the base MCP action hierarchy. The generator layers one Cedar action per MCP tool (with input/output context records) on top of the template.</li>
+<li>Note the return type: these return <code>Result&lt;String, String&gt;</code> (a plain error string), whereas the <code>PolicySchema::from_mcp_manifest</code> path wraps failure as <code>Error::McpSchema</code>.</li>
+</ul>
+<p>For example, a manifest declaring <code>SellShares</code> / <code>ApproveSale</code> / <code>GetStockInfo</code> tools (each with <code>stock</code> / <code>shares</code> inputs) passed to <code>PolicySchema::from_mcp_manifest(MCP_MANIFEST)</code> layers them onto the Drupe template. See <a href="11-mcp-schema-generation.html">Generating the action schema from an MCP manifest</a> for the manifest format, the JSON→Cedar type mapping, and the Drupe template in depth.</p>
+<hr>
+<h2 id="cedar-export"><a class="header" href="#cedar-export">Cedar export</a></h2>
+<p>To hand Dogwood’s output to plain Cedar or to an external policy store, you use the <code>LoweredPolicySet</code> accessors together with the <code>dogwood_language::cedar</code> interop module.</p>
+<p>The <code>dogwood_language::cedar</code> submodule re-exports exactly the <code>cedar_policy</code> types that appear in Dogwood’s public API — <code>Entities</code>, <code>EntityUid</code>, <code>PolicySet</code>, <code>Request</code>, <code>Schema</code>. This lets a consumer name them (to implement a <code>PolicyEngine</code>, to read <code>PolicySet::as_cedar()</code> / <code>PolicySet::cedar_schema()</code>, or to bridge a <code>cedar::Request</code> via <code>Event::from_request</code>) <strong>without</strong> taking a direct, version-matched <code>cedar-policy</code> dependency of their own.</p>
+<p>The export workflow is:</p>
+<ul>
+<li><code>policies.as_cedar()</code> gives the lowered Cedar <code>PolicySet</code> — render it to policy text for a policy store’s create-policy API, or evaluate it with the <code>cedar-policy</code> crate directly.</li>
+<li><code>policies.cedar_schema()</code> gives the augmented Cedar <code>Schema</code> for a policy store’s schema ingest or Cedar’s validator.</li>
+<li><code>policies.is_self_contained_cedar()</code> tells you whether that export is the whole story. When it is <code>true</code>, the exported Cedar reproduces the policy exactly and a policy store can decide standalone. When it is <code>false</code>, the policy uses <code>temporal { … }</code> and/or <code>guardrails { … }</code> leaves, so each authorization call must be supplied the hoisted <code>context.&lt;id&gt;</code> values — and computing those is Dogwood’s job. In that split, <strong>Dogwood produces the enriched context and the policy store performs the final Cedar decision</strong> (the pattern a custom <code>PolicyEngine</code> follows).</li>
+</ul>
+<p>A brief note on terminology you will meet at the boundary: the policy-level clause keyword an author writes for an information provider is <code>guardrails { … }</code>, and for a temporal expression it is <code>temporal { … }</code>. Internally the hoisted provider artifact is called a <code>ProviderField</code>, but the surface keyword is always <code>guardrails</code>. See <a href="05-information-providers.html">Information providers</a>.</p>
+<hr>
+<h2 id="errors"><a class="header" href="#errors">Errors</a></h2>
+<p>Dogwood has a <strong>two-channel-plus-runtime</strong> error model, and knowing which channel a problem lands in tells you where to look for it.</p>
+<ol>
+<li><strong>Fatal — <code>Error</code>.</strong> Returned by <code>ParsedPolicySet::parse</code> / <code>lower</code>, <code>LoweredPolicySet::from_str</code>, and <code>ServiceSchema</code>/<code>PolicySchema</code> construction. This is the fatal prefix: a syntax / macro / lowering / schema failure means there is nothing well-formed to validate or authorize.</li>
+<li><strong>Findings — <code>ValidationResult</code>.</strong> Returned by <code>Validator::validate</code>. The policy is well-formed but wrong against the schema (type errors, dialect-check failures). These do <strong>not</strong> appear in <code>Error</code>.</li>
+<li><strong>Runtime.</strong> During authorization, any evaluation failure is recorded in <code>Response::diagnostics().errors()</code> and resolved to <code>Deny</code> by this implementation — never thrown. (Provider errors specifically are undefined behavior under <a href="05-information-providers.html#the-provider-contract">the provider contract</a>; the deny is a tendency, not a guarantee.)</li>
+</ol>
+<p>The construction error itself:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[non_exhaustive]
+pub enum Error {
+    Parse(ParseErrors),                       // one or more syntax errors (self-rendering)
+    Macro(MacroError),                        // def cedar / def temporal expansion failed
+    Cedarify(CedarifyError),                  // lowering Dogwood -&gt; Cedar failed
+    PolicySet(Box&lt;cedar_policy::PolicySetError&gt;),   // Cedar could not assemble the policy set
+    CedarSchema(Box&lt;cedar_policy::CedarSchemaError&gt;), // the augmented Cedar schema was invalid
+    McpSchema(String),                        // MCP -&gt; action schema generation failed
+    TraceParse(String),                       // a `.log` trace failed to parse
+    RequestMissingAction,                     // a Cedar Request had no action
+    ContextRead(String),                      // reading a Request's context failed
+    EventSchema(String),                      // event-schema DSL failed to parse / derive
+    Leaf { id: String, message: String },     // a hoisted extension leaf failed to prepare
+    InvalidDistincter(String),                // lower_with_distincter got a non-identifier
+    SchemaSerialize(String),                  // rendering the augmented Cedar schema to text failed
+    PartitioningUnsupported,                  // a pin-partitioning request the built-ins cannot honor
+    // #[non_exhaustive]: more kinds may be added without a breaking change.
+}
+<span class="boring">}</span></code></pre>
+<p><code>Error</code> is a <code>#[derive(miette::Diagnostic)]</code>: the spanned variants (<code>Parse</code>, <code>Macro</code>, <code>Cedarify</code>) embed their <code>.dw</code> source and self-render, and <code>PolicySet</code> / <code>CedarSchema</code> forward Cedar’s own diagnostic. <code>Parse</code> aggregates multiple <code>ParseError</code>s via <code>ParseErrors</code> (<code>.iter()</code> yields them all). Note again that <strong>type errors against the schema are not in <code>Error</code></strong> — run <code>Validator::validate</code> to see those as <code>ValidationResult</code> findings.</p>
+<hr>
+<h2 id="event-kinds-decisions-and-failure-handling"><a class="header" href="#event-kinds-decisions-and-failure-handling">Event kinds, decisions, and failure handling</a></h2>
+<p>Two behaviors thread through the whole API and deserve to be stated plainly.</p>
+<p><strong>Event kind is data, not convention.</strong> The event schema marks certain kinds as <code>decision</code> (queryable on a lowered set via <code>LoweredPolicySet::decision_kinds()</code> / <code>is_decision_kind(kind)</code>). With the default event schema, <code>request</code> is a decision kind and <code>response</code> is history-only. From that single fact everything else follows:</p>
+<ul>
+<li>A <strong>decision-kind event</strong> makes <code>is_authorized</code> return <code>Some(Response)</code> — it observes the event <em>and</em> decides.</li>
+<li>A <strong>history-only event</strong> makes <code>is_authorized</code> return <code>None</code> — it observes the event to update temporal state but yields no verdict, and contributes no line in <code>replay_log</code>.</li>
+<li><strong>Statelessness is just a special case:</strong> a single stateless decision is a fresh <code>Authorizer</code> fed one <code>request</code>-kind event (for example via <code>Event::from_request</code>).</li>
+</ul>
+<p><strong>Authorization never aborts, and this implementation resolves evaluation failures to <code>Deny</code>.</strong> Any evaluation failure — a provider that errors, the temporal engine erroring, a decision event missing a principal/resource, a policy engine that was never prepared — yields a <code>Deny</code> with the reason recorded in <code>Response::diagnostics().errors()</code>. (For provider errors this deny is a description of this implementation, not a semantic guarantee: an erroring provider is undefined behavior under <a href="05-information-providers.html#the-provider-contract">the provider contract</a>, so a policy set must never rely on deny-on-error.) The temporal seam’s <code>evaluate</code> returning <code>Err</code> and the policy seam’s <code>errors</code> vector both funnel into this same place. So a caller that wants to distinguish “denied by policy” from “denied because something broke” should always inspect <code>diagnostics().errors()</code>, not just <code>decision()</code>.</p>
+<p>Finally, the three policy-clause forms map cleanly onto the seams, which is a useful mental model when reading a policy:</p>
+<ul>
+<li><code>when { … }</code> — a plain Cedar condition, decided by the <code>PolicyEngine</code>.</li>
+<li><code>when temporal { … }</code> — hoisted to a <code>TemporalField</code> and evaluated by the <code>TemporalEngine</code> (not self-contained Cedar). See <a href="04-temporal-expressions.html">Temporal expressions</a>.</li>
+<li><code>when guardrails { … }</code> — an information-provider invocation, evaluated from <code>ProviderDeclarations</code> (not self-contained Cedar). See <a href="05-information-providers.html">Information providers</a>.</li>
+</ul>
+<hr>
+<h2 id="see-also"><a class="header" href="#see-also">See also</a></h2>
+<ul>
+<li><a href="00-introduction.html">Introduction</a> — what Dogwood is and why it exists.</li>
+<li><a href="01-getting-started.html">Getting started</a> — installing the crate and a first end-to-end run.</li>
+<li><a href="02-policy-language.html">Policy language</a> — the <code>permit</code>/<code>forbid</code> surface syntax, <code>when</code> clauses, and the action schema.</li>
+<li><a href="03-event-schema.html">The event schema</a> — the event-schema DSL and how decision kinds are declared.</li>
+<li><a href="04-temporal-expressions.html">Temporal expressions</a> — <code>formerly</code>, <code>previous</code>, <code>since</code>, aggregation, and what the <code>TemporalEngine</code> evaluates.</li>
+<li><a href="05-information-providers.html">Information providers</a> — calling providers; <a href="10-provider-schema.html">The provider schema</a> — <code>ProviderDeclarations</code> and the Rhai contract.</li>
+<li><a href="06-macros.html">Macros</a> — <code>def cedar</code> / <code>def temporal</code> and the macro library merged at lowering time.</li>
+<li><a href="11-mcp-schema-generation.html">Generating the action schema from an MCP manifest</a> — the manifest format behind <code>from_mcp_manifest</code>.</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../guide/06-macros.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="../guide/08-formal-specification.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../guide/06-macros.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="../guide/08-formal-specification.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr-ef4e11c1.min.js"></script>
+        <script src="../mark-09e88c2c.min.js"></script>
+        <script src="../searcher-09f2665d.js"></script>
+
+        <script src="../clipboard-1626706a.min.js"></script>
+        <script src="../highlight-abc7f01d.js"></script>
+        <script src="../book-609e4cb8.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

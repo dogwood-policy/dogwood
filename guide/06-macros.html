@@ -1,0 +1,807 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Macros - The Dogwood Guide</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="../favicon-8114d1fc.png">
+        <link rel="stylesheet" href="../css/variables-8adf115d.css">
+        <link rel="stylesheet" href="../css/general-e96d0476.css">
+        <link rel="stylesheet" href="../css/chrome-d279d366.css">
+        <link rel="stylesheet" href="../css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="../highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../dogwood-docs/mdbook-src/custom-cd47a9b0.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex-6a55f184.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc-982af72f.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">The Dogwood Guide</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/dogwood-policy/dogwood" title="Git repository" aria-label="Git repository">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/dogwood-policy/dogwood/edit/main/dogwood-docs/mdbook-src/guide/06-macros.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <span class=fa-svg id="git-edit-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M421.7 220.3l-11.3 11.3-22.6 22.6-205 205c-6.6 6.6-14.8 11.5-23.8 14.1L30.8 511c-8.4 2.5-17.5 .2-23.7-6.1S-1.5 489.7 1 481.2L38.7 353.1c2.6-9 7.5-17.2 14.1-23.8l205-205 22.6-22.6 11.3-11.3 33.9 33.9 62.1 62.1 33.9 33.9zM96 353.9l-9.3 9.3c-.9 .9-1.6 2.1-2 3.4l-25.3 86 86-25.3c1.3-.4 2.5-1.1 3.4-2l9.3-9.3H112c-8.8 0-16-7.2-16-16V353.9zM453.3 19.3l39.4 39.4c25 25 25 65.5 0 90.5l-14.5 14.5-22.6 22.6-11.3 11.3-33.9-33.9-62.1-62.1L314.3 67.7l11.3-11.3 22.6-22.6 14.5-14.5c25-25 65.5-25 90.5 0z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="macros"><a class="header" href="#macros">Macros</a></h1>
+<p>This page is the Advanced-topics deep dive on <strong>defining</strong> Dogwood macros:
+lowering-time templates that let you name and reuse a fragment of policy logic. It
+explains the two kinds of macro (<code>def cedar</code> and <code>def temporal</code>), the two
+parameter sigils (<code>?p</code> value parameters and <code>$t</code> fresh binders), how calls are
+checked for arity and kind, how hygiene keeps reused macros from capturing each
+other’s variables, every rule that will get a macro rejected, and
+how to ship a reusable macro library alongside a schema.</p>
+<p>If you just want to <em>call</em> a macro that already exists — where a call may appear
+and what shape its arguments take — see <a href="09-calling-macros.html">Calling macros</a>;
+this page is what you write to define one.</p>
+<h2 id="what-a-macro-is-and-is-not"><a class="header" href="#what-a-macro-is-and-is-not">What a macro is (and is not)</a></h2>
+<p>A Dogwood macro is a lowering-time template, not a runtime function. There is
+no call stack, no recursion, and nothing that survives into the lowered
+monitor. You declare a macro once at the top of a <code>.dw</code> file, and everywhere you
+call it expansion splices the macro body in — substituting the call
+arguments — before the policy is lowered. By the time the temporal evaluator or
+the Cedar backend sees your policy, there are no macro definitions and no calls
+left; the definitions have been consumed and every call has been replaced by its
+expanded body.</p>
+<p>Because macros are templates, they give you two things:</p>
+<ul>
+<li><strong>Naming.</strong> <code>is_small(context.input.shares)</code> names the check
+<code>context.input.shares &lt; 100</code>, and the threshold lives in exactly one place.</li>
+<li><strong>Reuse without duplication.</strong> A temporal pattern like “did this happen in the
+last hour” can be written once and called from many policies. Dogwood’s
+hygiene rules (see <a href="#hygiene-t-is-fresh-per-call-site">Hygiene</a>) make that
+reuse safe even when the pattern introduces its own bound variables.</li>
+</ul>
+<p>What macros are <em>not</em>: they are not first-class values, they cannot be passed
+around at runtime, they cannot call other macros from inside their own body (see
+<a href="#no-macro-in-macro">No macro-in-macro</a>), and they are not scoped blocks — a
+macro is always declared at the top level of a file, never inside a policy.</p>
+<h2 id="declaring-a-macro-the-two-kinds"><a class="header" href="#declaring-a-macro-the-two-kinds">Declaring a macro: the two kinds</a></h2>
+<p>A macro definition looks like a policy rule that starts with <code>def</code>, names a
+<em>kind</em>, gives the macro a name and a parameter list, wraps a body in braces, and
+ends with a mandatory semicolon:</p>
+<pre><code class="language-text">def cedar    &lt;name&gt;(?p, ?q, ...) { &lt;cedar expression&gt; } ;
+def temporal &lt;name&gt;(?w, ?s, ...) { &lt;temporal condition or aggregation&gt; } ;
+</code></pre>
+<p>The kind keyword after <code>def</code> — <code>cedar</code> or <code>temporal</code> — chooses the sub-language
+the body is parsed in, and that in turn decides where the macro may be called.
+Definitions may be interleaved with policies in any order; all definitions are
+collected first, then calls in the policies are expanded.</p>
+<p>The trailing <code>;</code> is required, exactly as it is on a policy rule. The
+parameter list is optional: a zero-argument macro is just <code>name()</code>.</p>
+<h3 id="def-cedar--a-pure-cedar-expression"><a class="header" href="#def-cedar--a-pure-cedar-expression"><code>def cedar</code> — a pure Cedar expression</a></h3>
+<p>A <code>def cedar</code> macro’s body is an ordinary Cedar expression. Wherever you would
+write that expression by hand — inside a <code>when { ... }</code> clause, or as part of a
+larger expression — you can instead call the macro.</p>
+<p>One example names a threshold:</p>
+<pre><code class="language-text">def cedar is_small(?n) { ?n &lt; 100 };
+</code></pre>
+<p>and is called as an expression:</p>
+<pre><code class="language-text">permit(principal, action, resource)
+when { is_small(context.input.shares) };
+</code></pre>
+<blockquote>
+<p>Runnable: <a href="../examples/cedar_is_small_threshold.html"><code>examples/cedar_is_small_threshold/</code></a> — <code>dogwood validate</code> (the macro library is supplied with <code>--macros</code>).</p>
+</blockquote>
+<p>Cedar macros compose with ordinary Cedar operators. Here two of them are joined
+with <code>&amp;&amp;</code>, and each takes an argument of a different type:</p>
+<pre><code class="language-text">def cedar is_eligible(?shares, ?stock) { ?shares &lt; 100 || ?stock == "FOO" };
+def cedar is_not_blocked(?stock) { !(?stock == "BLOCKED") };
+
+permit(principal, action, resource)
+when {
+    is_eligible(context.input.shares, context.input.stock)
+    &amp;&amp; is_not_blocked(context.input.stock)
+};
+</code></pre>
+<blockquote>
+<p>Runnable: <a href="../examples/cedar_eligible_not_blocked.html"><code>examples/cedar_eligible_not_blocked/</code></a> — <code>dogwood validate</code>.</p>
+</blockquote>
+<p>A Cedar macro body can be any Cedar expression, including <code>like</code> patterns and
+<code>if/then/else</code>:</p>
+<pre><code class="language-text">def cedar starts_with_f(?s) { ?s like "F*" };
+
+def cedar within_cap(?stock, ?shares) {
+    if ?stock == "FOO" then ?shares &lt;= 10 else ?shares &lt;= 1000
+};
+</code></pre>
+<blockquote>
+<p>Runnable: <a href="../examples/cedar_starts_with_f_like.html"><code>examples/cedar_starts_with_f_like/</code></a> and <a href="../examples/cedar_within_cap_if_else.html"><code>examples/cedar_within_cap_if_else/</code></a> — each wraps the macro in a full rule; <code>dogwood validate</code>.</p>
+</blockquote>
+<p>A Cedar macro can even build a record and be passed as an argument to another
+Cedar macro. This is the RFC 0061 <code>semver</code> worked example — two macros, where
+<code>semver</code> constructs a <code>{ major, minor, patch }</code> record that <code>semverGT</code> compares:</p>
+<pre><code class="language-text">def cedar semver(?major, ?minor, ?patch) {
+    { major: ?major, minor: ?minor, patch: ?patch }
+};
+def cedar semverGT(?a, ?b) {
+    if ?a.major == ?b.major
+    then (if ?a.minor == ?b.minor then ?a.patch &gt; ?b.patch else ?a.minor &gt; ?b.minor)
+    else ?a.major &gt; ?b.major
+};
+
+permit(principal, action, resource)
+when { semverGT(semver(2, 1, 1), semver(2, 1, 0)) };
+</code></pre>
+<blockquote>
+<p>Runnable: <a href="../examples/cedar_semver_gt.html"><code>examples/cedar_semver_gt/</code></a> — <code>dogwood validate</code>.</p>
+</blockquote>
+<p>This works because call <em>arguments</em> are expanded first, and the result is then
+spliced into the outer macro’s body — nesting one macro call as an argument to
+another is fine. (Nesting a call <em>inside a macro’s declared body</em> is not; see
+<a href="#no-macro-in-macro">No macro-in-macro</a>.)</p>
+<h3 id="def-temporal--a-temporal-condition-or-aggregation"><a class="header" href="#def-temporal--a-temporal-condition-or-aggregation"><code>def temporal</code> — a temporal condition or aggregation</a></h3>
+<p>A <code>def temporal</code> macro’s body is written in the temporal sub-language (the same
+one you write inside a <code>when temporal { ... }</code> clause; see
+<a href="04-temporal-expressions.html">Temporal expressions</a>). Depending on what the body
+matches, a <code>def temporal</code> macro comes in one of two flavours, chosen
+automatically by the parser:</p>
+<ul>
+<li>a <strong>temporal condition</strong> — for example a <code>formerly within ... ...</code> predicate,
+which is callable wherever a temporal condition is expected; or</li>
+<li>a <strong>temporal aggregation</strong> — a <code>count</code>/<code>sum</code> expression, which is callable
+only as an operand of a comparison (the value side of an aggregation), never
+as a standalone condition.</li>
+</ul>
+<p>The distinction matters at call sites, because Dogwood enforces which flavour
+may appear where (see <a href="#kind-checking">Kind checking</a>).</p>
+<p>A condition-flavoured temporal macro is frequently a wrapper. <code>once</code> takes a
+window <code>?w</code> and a whole condition <code>?s</code>, and wraps them in <code>formerly within</code>
+(<code>once</code> only puts a name on <code>formerly within</code> and adds no capability of its own;
+it is shown here for the shape a temporal macro takes, and the next example puts
+a macro to fuller use):</p>
+<pre><code class="language-text">def temporal once(?w, ?s) { formerly within ?w ?s };
+
+permit(principal, action in [Drupe::Action::"Read", Drupe::Action::"Write"], resource)
+when temporal {
+    once(1h, Drupe::Action::"Read"::request{
+        input.user: context.input.user,
+        input.document: context.input.document
+    })
+};
+</code></pre>
+<blockquote>
+<p>Runnable: <a href="../examples/temporal_once_read_recent.html"><code>examples/temporal_once_read_recent/</code></a> — <code>dogwood validate</code> and <code>dogwood replay</code>.</p>
+</blockquote>
+<p>Condition macros compose the same way Cedar ones do. Two of them joined with
+<code>&amp;&amp;</code> inside a single temporal block:</p>
+<pre><code class="language-text">def temporal recently_logged_in(?u) {
+    formerly within 1h Drupe::Action::"Login"::response{ input.user: ?u }
+};
+def temporal recently_read(?u, ?d) {
+    formerly within 1h Drupe::Action::"Read"::response{
+        input.user: ?u, input.document: ?d
+    }
+};
+
+permit(principal, action == Drupe::Action::"Write", resource)
+when temporal {
+    recently_logged_in(context.input.user)
+    &amp;&amp; recently_read(context.input.user, context.input.document)
+};
+</code></pre>
+<blockquote>
+<p>Runnable: <a href="../examples/temporal_login_then_read.html"><code>examples/temporal_login_then_read/</code></a> — <code>dogwood validate</code> and <code>dogwood replay</code>.</p>
+</blockquote>
+<p>An aggregation-flavoured temporal macro produces a <code>count</code> or <code>sum</code>. It is
+spliced into a comparison, never called on its own. <code>count_formerly</code> counts the
+timepoints in a window at which a predicate held:</p>
+<pre><code class="language-text">def temporal count_formerly(?w, ?s) {
+    count for ($t: Timepoint). where (formerly within ?w (?s &amp;&amp; tp($t)))
+};
+
+permit(principal, action == Drupe::Action::"Alert", resource)
+when temporal {
+    exists (n: Long). (
+        (count_formerly(1h, Drupe::Action::"Login"::request{
+            input.user: _, input.server: context.input.server
+        })) == n
+        &amp;&amp; n &gt; 0
+    )
+};
+</code></pre>
+<blockquote>
+<p>Runnable: <a href="../examples/temporal_count_formerly_login.html"><code>examples/temporal_count_formerly_login/</code></a> — <code>dogwood validate</code> and <code>dogwood replay</code>.</p>
+</blockquote>
+<p>An aggregate value is always compared inside an <code>exists</code> binder — that is what
+introduces the <code>n</code> the count is compared against (<code>exists</code> is the temporal
+sublanguage’s only binder; see
+<a href="04-temporal-expressions.html">Temporal expressions</a>). The macro call fills
+the aggregate slot.</p>
+<p>The <code>$t</code> in that body is a fresh binder the macro introduces itself,
+not a parameter. That is the subject of the next section.</p>
+<h2 id="parameters-two-sigils-two-jobs"><a class="header" href="#parameters-two-sigils-two-jobs">Parameters: two sigils, two jobs</a></h2>
+<p>Dogwood macros use two sigils, and they do different things. The distinction
+matters when writing temporal macros.</p>
+<h3 id="p--value--expression-parameters"><a class="header" href="#p--value--expression-parameters"><code>?p</code> — value / expression parameters</a></h3>
+<p>A <code>?p</code> parameter is declared in the parameter list and receives an argument at
+each call site. Expansion splices the call argument literally into every
+occurrence of <code>?p</code> in the body. This is ordinary template substitution.</p>
+<p><code>?p</code> parameters can stand for several different kinds of thing depending on
+where they appear in the body:</p>
+<ul>
+<li>an ordinary term/expression (<code>is_small(?n)</code> where <code>?n</code> is compared);</li>
+<li>a <strong>window</strong> in a <code>within</code> clause (<code>within ?w</code>), filled by an interval
+literal like <code>1h</code>;</li>
+<li>a <strong>whole condition</strong> (<code>once(?w, ?s)</code> where <code>?s</code> is an entire temporal
+condition); or</li>
+<li>a <strong>binder</strong> position — see below.</li>
+</ul>
+<p>In all of these, the rule is the same: <code>?p</code> is declared once in the parameter
+list, and each call supplies exactly one argument for it.</p>
+<p>The parameter list always stores names <em>without</em> the <code>?</code> internally, but you
+always <em>write</em> the <code>?</code> — both in the declaration and at every use inside the
+body. There is no whitespace allowed between the <code>?</code> and the name.</p>
+<h3 id="t--fresh-binders-introduced-inline-never-declared"><a class="header" href="#t--fresh-binders-introduced-inline-never-declared"><code>$t</code> — fresh binders (introduced inline, never declared)</a></h3>
+<p>A <code>$t</code> binder is spelled with a dollar sign and is <strong>not</strong> declared in the
+parameter list. It receives no call-site argument. Instead, it is a placeholder
+for a fresh bound variable that the macro introduces for its own internal use —
+typically the timepoint variable a <code>count</code>/<code>sum</code> iterates over.</p>
+<p>Look again at <code>count_formerly</code>:</p>
+<pre><code class="language-text">def temporal count_formerly(?w, ?s) {
+    count for ($t: Timepoint). where (formerly within ?w (?s &amp;&amp; tp($t)))
+};
+</code></pre>
+<p><code>?w</code> and <code>?s</code> are parameters (declared, filled by the caller). <code>$t</code> is a fresh
+binder: the macro needs a timepoint variable to count over, so it names one
+<code>$t</code>. The caller never passes a <code>$t</code> argument — it is entirely internal
+machinery. At expansion, each <code>$t</code> is renamed to a unique concrete name (see
+<a href="#hygiene-t-is-fresh-per-call-site">Hygiene</a>).</p>
+<p>The <code>$</code> sigil is distinct from <code>!</code> (negation) so it can never be
+confused with an operator; <code>$</code> is used nowhere else in the surface syntax. A
+<code>$t</code> may appear anywhere a regular identifier or binder can go: a term position,
+a binder list, a <code>tp(...)</code> argument, or a <code>sum</code>’s bound variable. It may <strong>not</strong>
+stand for a whole condition (see <a href="#what-gets-rejected">Rejection rules</a>).</p>
+<h3 id="binder-position-parameters-p-used-as-a-binder"><a class="header" href="#binder-position-parameters-p-used-as-a-binder">Binder-position parameters (<code>?p</code> used as a binder)</a></h3>
+<p>There is one subtle case that ties the two sigils together: a <code>?p</code> parameter can
+be used in a <em>binder</em> position — for example as the bound variable of a <code>sum</code>,
+or inside a <code>for (?a: Long)</code>. When a <code>?p</code> is used that way, the argument the
+caller passes for it must be a single bare identifier, because that
+identifier is going to <em>become</em> a bound variable name. Passing anything else (a
+literal, a compound expression) is a hard error.</p>
+<p>In <code>sum_formerly</code>, <code>?a</code> is used both as the <code>sum</code>
+bound variable and inside <code>for (?a: Long)</code>, so <code>?a</code> is a binder-position
+parameter, while <code>?w</code> is a window and <code>?body</code> is a condition, and <code>$t</code> is the
+macro’s own fresh timepoint binder:</p>
+<pre><code class="language-text">def temporal sum_formerly(?a, ?w, ?body) {
+    sum ?a for (?a: Long), ($t: Timepoint). where (formerly within ?w (?body &amp;&amp; tp($t)))
+};
+
+permit(principal, action == Drupe::Action::"Alert", resource)
+when temporal {
+    exists (total: Long). (
+        (sum_formerly(a, 1h, Drupe::Action::"Transfer"::request{
+            input.user: _, input.amount: a
+        })) == total
+        &amp;&amp; total &gt; 100
+    )
+};
+</code></pre>
+<blockquote>
+<p>Runnable: <a href="../examples/temporal_sum_formerly_transfer.html"><code>examples/temporal_sum_formerly_transfer/</code></a> — <code>dogwood validate</code> and <code>dogwood replay</code>.</p>
+</blockquote>
+<p>As with <code>count_formerly</code>, the aggregate is compared inside an <code>exists (total: Long). (…)</code> binder, which introduces <code>total</code>.</p>
+<p>The caller passes the bare identifier <code>a</code> for <code>?a</code>; that identifier fills the
+binder slot. If you called it with a non-identifier such as a literal, the
+call is rejected: “parameter <code>?a</code> is used in a binder position, so the
+call-site argument must be a single identifier”.</p>
+<p>There is a difference between <code>?a</code> (a binder-position <em>parameter</em> the caller
+names) and <code>$t</code> (a binder the <em>macro</em> names for itself). Use <code>?p</code> when the
+caller should choose the variable; use <code>$t</code> when the variable is purely internal
+and should be hygienically fresh.</p>
+<h2 id="calling-macros"><a class="header" href="#calling-macros">Calling macros</a></h2>
+<p>A call is written <code>name(arg, arg, ...)</code>. Where it may appear depends on the
+macro’s kind, and every call is checked in three ways: the call site’s kind must
+match the macro’s kind, the number of arguments must match the number of
+parameters, and each argument’s shape must match how the corresponding parameter
+is used in the body.</p>
+<h3 id="where-each-kind-is-callable"><a class="header" href="#where-each-kind-is-callable">Where each kind is callable</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Macro body kind</th><th>Callable in</th></tr>
+</thead>
+<tbody>
+<tr><td><code>def cedar</code></td><td>Cedar-expression position (<code>when { ... }</code>, or mid-expression)</td></tr>
+<tr><td>temporal condition</td><td>Temporal condition slot (<code>when temporal { ... }</code>, <code>&amp;&amp;</code>, a <code>formerly</code> body, etc.)</td></tr>
+<tr><td>temporal aggregation</td><td>Aggregation-value position (an operand of a comparison)</td></tr>
+</tbody>
+</table>
+</div>
+<p>A Cedar macro can even be conjoined with a temporal block mid-expression — the
+Cedar macro is expanded before the surrounding expression is lowered:</p>
+<pre><code class="language-text">def cedar level_ok(?n) { ?n &gt;= 2 };
+
+permit(principal, action, resource)
+when { level_ok(context.input.level) &amp;&amp; temporal { /* ... */ } };
+</code></pre>
+<blockquote>
+<p>Runnable: <a href="../examples/cedar_macro_plus_temporal_leaf.html"><code>examples/cedar_macro_plus_temporal_leaf/</code></a> — the bundle fills the <code>temporal { … }</code> leaf with a recent-Login check; <code>dogwood validate</code> and <code>dogwood replay</code>.</p>
+</blockquote>
+<h3 id="arity-checking"><a class="header" href="#arity-checking">Arity checking</a></h3>
+<p>The number of call arguments must exactly equal the number of declared
+parameters. A macro declared <code>foo(?a, ?b)</code> called as <code>foo(principal)</code> fails with
+“macro <code>foo</code> expects 2 argument(s), got 1”. This is checked on every call path —
+Cedar, temporal-condition, and aggregation.</p>
+<h3 id="kind-checking"><a class="header" href="#kind-checking">Kind checking</a></h3>
+<p>A call slot demands a specific macro kind, and a mismatch is a hard error, never
+a silent coercion. The messages are specific about what went wrong:</p>
+<ul>
+<li>Calling a temporal macro in a Cedar-expression position: “macro <code>&lt;name&gt;</code> is a
+temporal macro and cannot be called in a cedar expression position”.</li>
+<li>Calling a Cedar macro in a temporal condition position: “macro <code>&lt;name&gt;</code> is a
+cedar macro and cannot be called in a temporal condition position”.</li>
+<li>Calling an aggregation macro as if it were a condition: rejected — an
+aggregation macro must appear as a comparison operand, not as a standalone
+condition.</li>
+<li>Calling a condition macro in an aggregation-value position: rejected — a
+condition macro cannot be used where an aggregation value is expected.</li>
+</ul>
+<h3 id="argument-shape-checking"><a class="header" href="#argument-shape-checking">Argument-shape checking</a></h3>
+<p>Even with the right count and kind, each argument’s <em>shape</em> must match how the
+parameter is used inside the body:</p>
+<ul>
+<li>A whole-condition parameter (<code>?s</code> in <code>once</code>) must be given a temporal
+condition argument.</li>
+<li>A window parameter (<code>within ?w</code>) must be given a bare interval literal such
+as <code>1h</code> — not a <code>within</code> clause. The body writes <code>formerly within ?w (...)</code>,
+and the call supplies just <code>1h</code>.</li>
+<li>A term-position parameter must be given a term (an expression), not a
+condition or an interval.</li>
+<li>A binder-position parameter must be given a single bare identifier, as
+described above.</li>
+</ul>
+<p>Passing an argument whose shape does not match the parameter’s use is a hard
+error explaining the expected shape.</p>
+<h2 id="hygiene-t-is-fresh-per-call-site"><a class="header" href="#hygiene-t-is-fresh-per-call-site">Hygiene: <code>$t</code> is fresh per call site</a></h2>
+<p>Reusing a macro that introduces its own bound variable would break if the
+macro’s variable could collide with a variable the caller already has in scope.
+Consider <code>sum_formerly</code> again: its body binds <code>$t</code>, and the caller of
+<code>sum_formerly</code> might also have a variable named <code>t</code> in scope. If the macro’s
+<code>$t</code> and the caller’s <code>t</code> were the same name after expansion, they would
+capture each other and the policy would mean something the author never wrote.</p>
+<p>Dogwood prevents this with <strong>hygiene</strong>: at expansion, every distinct <code>$t</code> name
+in a macro body is renamed to a fresh, unique concrete name of the form
+<code>&lt;name&gt;$&lt;offset&gt;</code>, where <code>&lt;offset&gt;</code> is the byte position of the call site. So a
+<code>$t</code> becomes something like <code>t$412</code>, which cannot collide with a user’s <code>t</code>.</p>
+<p>Two properties make this both safe and predictable:</p>
+<ul>
+<li><strong>All occurrences of one <code>$t</code> name within a single expansion get the same
+gensym.</strong> The binder and its uses stay tied together — <code>count for ($t: ...)</code>
+and the <code>tp($t)</code> inside it become the same fresh name, so the count still
+iterates over the variable it binds.</li>
+<li><strong>Different call sites get different gensyms.</strong> Because the fresh name is
+derived from the call site’s byte offset, calling the same macro in two
+different policies produces two different fresh names. That is exactly what
+makes reusing a macro across policies safe.</li>
+</ul>
+<p>Concretely, if a caller passes its own identifier <code>t</code> as a bound-variable
+argument and the macro also uses <code>$t</code> internally, the macro’s <code>$t</code> expands to
+<code>t$&lt;offset&gt;</code>. A source identifier cannot contain <code>$</code>, so the fresh name is not
+expressible in the surface syntax and cannot collide with the caller’s <code>t</code>.
+And because the gensym is a deterministic function of the source position, the
+same source always produces the same name, keeping builds reproducible.</p>
+<h2 id="what-gets-rejected"><a class="header" href="#what-gets-rejected">What gets rejected</a></h2>
+<p>The following are all hard errors, caught during the macro-expansion pass.</p>
+<h3 id="reserved-names"><a class="header" href="#reserved-names">Reserved names</a></h3>
+<p>A macro name may not shadow a Cedar built-in or a temporal keyword. The reserved
+set is:</p>
+<pre><code class="language-text">decimal, datetime, duration, ip,        // Cedar built-in unary calls
+let, in, where, for, sum, count, tp,    // temporal keywords / operators
+formerly, previous, since,
+true, false                             // literals
+</code></pre>
+<p><code>let</code> is reserved although the language has no <code>let</code> form. Naming a macro
+<code>count</code>, for example, fails with “macro name <code>count</code> is reserved (built-in or
+keyword); pick a different name”.</p>
+<h3 id="duplicate-definitions"><a class="header" href="#duplicate-definitions">Duplicate definitions</a></h3>
+<p>Two <code>def</code>s with the same name in the merged set are rejected: “duplicate macro
+definition <code>&lt;name&gt;</code>”. (This does not apply to a library macro and a policy macro
+of the same name — see <a href="#precedence-a-policys-def-wins">Precedence</a>. In that case
+the library one is silently dropped rather than treated as a duplicate.)</p>
+<h3 id="undeclared-parameters-in-a-body"><a class="header" href="#undeclared-parameters-in-a-body">Undeclared parameters in a body</a></h3>
+<p>Every <code>?p</code> reference inside a body must name a declared parameter. A <code>def cedar</code>
+body that references <code>?x</code> when <code>?x</code> was never declared fails with “in <code>def cedar</code>
+body: <code>?x</code> does not name a declared parameter”. The same check applies to
+temporal bodies in every position a <code>?p</code> can appear (term, window, binder, and
+whole-condition positions).</p>
+<p><code>$t</code> binder names are the exception: they are <em>not</em> checked against the
+parameter list (they are never declared there), and are tied together by
+name at expansion.</p>
+<h3 id="no-macro-in-macro"><a class="header" href="#no-macro-in-macro">No macro-in-macro</a></h3>
+<p>A macro body may not contain a call to another macro. A <code>def cedar</code> body that
+calls another macro fails with “in <code>def cedar</code> body: macro-in-macro is not
+supported”; the temporal equivalent is “in <code>def temporal</code> body: macro-in-macro
+is not supported”.</p>
+<p>This is distinct from nesting a call as a call-site <em>argument</em>, which is allowed:
+<code>semverGT(semver(2, 1, 1), semver(2, 1, 0))</code> works because the arguments are
+expanded first and then spliced in. The restriction is only on a macro’s own
+declared body containing a call.</p>
+<h3 id="no-temporal-block-inside-a-cedar-macro-body"><a class="header" href="#no-temporal-block-inside-a-cedar-macro-body">No <code>temporal</code> block inside a Cedar macro body</a></h3>
+<p>A <code>def cedar</code> body must be a pure Cedar expression; it may not contain a
+<code>temporal { ... }</code> block. Attempting it fails with a message telling you to
+“lift the block to the call site instead”. The reason is that Cedar substitution
+does not descend into the temporal sub-language, so a <code>?p</code> inside one would never
+be substituted, and even a self-contained block would be re-evaluated per call
+site.</p>
+<p>An information-provider invocation (<code>Provider::Name(args)…</code>) is a <em>namespaced
+Cedar call</em>, not a block, so it is subject to the macro-in-macro rule above: a
+provider call inside a <code>def cedar</code> body fails with “macro-in-macro is not
+supported” — lift it to the call site. (There is no <code>guardrails { … }</code> to reject
+in a macro body: <code>guardrails</code> is a clause tag, not an expression form. See
+<a href="05-information-providers.html">Information providers</a>.)</p>
+<h3 id="stray-sigils-outside-a-macro-body"><a class="header" href="#stray-sigils-outside-a-macro-body">Stray sigils outside a macro body</a></h3>
+<p>A <code>?p</code> or <code>$t</code> that survives expansion outside any macro body is rejected,
+because there is nothing to substitute it. Writing <code>?something</code> in a policy that
+is not inside a macro body fails with “stray macro parameter reference
+<code>?something</code> outside a macro body”; a top-level <code>$t</code> in a <code>for</code>-binder fails with
+“stray macro binder reference <code>$t</code>”. (<code>?principal</code> and <code>?resource</code> in
+Cedar templates are a different feature — template slots — and are handled
+before the macro pass.)</p>
+<h3 id="a-whole-condition-t-has-no-meaning"><a class="header" href="#a-whole-condition-t-has-no-meaning">A whole-condition <code>$t</code> has no meaning</a></h3>
+<p>A <code>$t</code> cannot stand for an entire condition — a bare binder name is not a
+condition. This is rejected both by the grammar (only <code>?p</code>, never <code>$t</code>, may fill
+a whole-condition slot) and, if it somehow reaches expansion, with “macro binder
+<code>$&lt;name&gt;</code> used as a whole condition has no meaning”.</p>
+<h3 id="unknown-macro-call"><a class="header" href="#unknown-macro-call">Unknown macro call</a></h3>
+<p>A call whose name is neither a Cedar built-in nor a declared macro is rejected.
+In Cedar position: “unknown function or macro <code>&lt;name&gt;</code> (not a Cedar built-in and
+not a declared macro)”. In temporal position: “unknown macro <code>&lt;name&gt;</code> (no
+declared <code>def temporal</code>)”. (One exception exists that is not a macro: a
+call whose name is a declared information provider is left intact for the Cedar
+backend — see <a href="05-information-providers.html">Information providers</a>.)</p>
+<h2 id="the-macro-library"><a class="header" href="#the-macro-library">The macro library</a></h2>
+<p>Macros declared at the top of a <code>.dw</code> file are visible only to the policies in
+that file. To share macros across many policy files, Dogwood lets you attach a
+<strong>macro library</strong> to a schema. Reusable <code>def cedar</code> / <code>def temporal</code> definitions
+in the library are merged into every policy set lowered against that schema.</p>
+<h3 id="default_macros-the-built-in-standard-library"><a class="header" href="#default_macros-the-built-in-standard-library"><code>DEFAULT_MACROS</code>: the built-in standard library</a></h3>
+<p>If you build a schema without specifying a library, Dogwood uses a built-in
+default, <code>DEFAULT_MACROS</code>. It ships a small <strong>standard library</strong> of temporal
+aggregation macros, so every policy can call them without redeclaring them:</p>
+<ul>
+<li><code>count_within(?w, ?s)</code> — counts the timepoints within window <code>?w</code> at which
+condition <code>?s</code> held.</li>
+<li><code>sum_within(?a, ?w, ?body)</code> — sums the numeric value <code>?a</code> over occurrences of
+<code>?body</code> within window <code>?w</code>.</li>
+<li><code>count_distinct_within(?k, ?w, ?s)</code> — counts the distinct key values <code>?k</code>
+(a <code>String</code>) for which <code>?s</code> held within window <code>?w</code>.</li>
+<li><code>bind(?n, ?A, ?B)</code> — a “let”-style binder that names an aggregate result <code>?n</code>
+and uses it in the predicate <code>?B</code>, so an aggregate can be compared or
+thresholded via <code>?A == ?n</code>.</li>
+</ul>
+<p>The file backing <code>DEFAULT_MACROS</code> is embedded into the crate at build time via
+<code>include_str!</code>, so these macros are available to every caller regardless of
+working directory — there is no runtime file lookup. A policy’s own <code>def</code> of the
+same name still takes precedence over a default, so a policy can always override
+or shadow a standard-library macro with its own definition.</p>
+<h4 id="using-the-standard-library-macros"><a class="header" href="#using-the-standard-library-macros">Using the standard-library macros</a></h4>
+<p>All four are <code>def temporal</code> macros, so they are called inside a
+<code>when temporal { … }</code> block. Because they expand to an aggregate term, the usual
+idiom is to bind the aggregate’s value with <code>exists (n: Long). (… == n &amp;&amp; …)</code>
+and then threshold <code>n</code> — or let <code>bind</code> write that scaffold for you. The examples
+below assume an action schema with <code>Login</code>, <code>Transfer</code>, and <code>Alert</code> actions;
+each is a runnable corpus case (<code>tests/passing/macros/corpus/stdlib_default_*</code>).</p>
+<p><strong><code>count_within</code></strong> — permit an <code>Alert</code> only when more than two <code>Login</code>s to the
+same server occurred within the last hour:</p>
+<pre><code class="language-text">permit ( principal, action == Drupe::Action::"Alert", resource )
+when temporal {
+    exists (n: Long). (
+        count_within(1h, Drupe::Action::"Login"::request{
+            input.user: _, input.server: context.input.server
+        }) == n
+        &amp;&amp; n &gt; 2
+    )
+};
+</code></pre>
+<p><strong><code>sum_within</code></strong> — permit an <code>Alert</code> when the total amount transferred by any
+user exceeds 200 within the last hour. The first argument (<code>a</code>) names the value
+column to sum; it is bound from the predicate’s <code>input.amount: a</code>:</p>
+<pre><code class="language-text">permit ( principal, action == Drupe::Action::"Alert", resource )
+when temporal {
+    exists (total: Long). (
+        sum_within(a, 1h, Drupe::Action::"Transfer"::request{
+            input.user: _, input.amount: a
+        }) == total
+        &amp;&amp; total &gt; 200
+    )
+};
+</code></pre>
+<p><strong><code>count_distinct_within</code></strong> — permit an <code>Alert</code> when more than two <em>distinct</em>
+users logged in to the server within the last hour. The key <code>u</code> is a <code>for</code>-binder
+with no timepoint, so repeated values across timepoints deduplicate (contrast
+<code>count_within</code>, which counts events):</p>
+<pre><code class="language-text">permit ( principal, action == Drupe::Action::"Alert", resource )
+when temporal {
+    exists (d: Long). (
+        count_distinct_within(u, 1h, Drupe::Action::"Login"::request{
+            input.user: u, input.server: context.input.server
+        }) == d
+        &amp;&amp; d &gt; 2
+    )
+};
+</code></pre>
+<p><strong><code>bind</code></strong> — writes the <code>exists (n: Long). (agg == n &amp;&amp; pred)</code> scaffold for you.
+It composes with the aggregate macros, so the <code>count_within</code> example above can be
+written without the hand-rolled <code>exists</code>:</p>
+<pre><code class="language-text">permit ( principal, action == Drupe::Action::"Alert", resource )
+when temporal {
+    bind(
+        n,
+        count_within(1h, Drupe::Action::"Login"::request{
+            input.user: _, input.server: context.input.server
+        }),
+        n &gt; 2
+    )
+};
+</code></pre>
+<p><code>bind</code>’s value argument is any term-position aggregate, so it accepts a raw
+hand-written <code>count for (t: Timepoint). where (…)</code> just as readily as a
+<code>count_within(…)</code> call.</p>
+<h3 id="supplying-your-own-library-with-macros_str"><a class="header" href="#supplying-your-own-library-with-macros_str">Supplying your own library with <code>macros_str</code></a></h3>
+<p>The macro library is part of the <strong><code>ServiceSchema</code></strong> — the fixed,
+service-provided half of a schema (macros, providers, event schema). Provide the
+library source to the <code>ServiceSchemaBuilder</code> via <code>macros_str</code> (see
+<a href="07-api-and-workflow.html">API and workflow</a> for the full builder). The library
+source is ordinary Dogwood source containing <code>def</code> definitions:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let service = ServiceSchema::builder()
+    .macros_str(
+        "def temporal once(?w, ?s) { formerly within ?w ?s };\n\
+         def cedar    is_small(?n) { ?n &lt; 100 };",
+    )
+    .build()?;
+<span class="boring">}</span></code></pre>
+<p>Every policy set parsed against this service schema can then call <code>once</code> and
+<code>is_small</code> without redeclaring them (macro expansion runs in the parse phase,
+against the <code>ServiceSchema</code> alone — no action schema needed). Supplying
+<code>macros_str</code> <strong>replaces</strong> <code>DEFAULT_MACROS</code> entirely, so a custom library does
+not automatically include the standard-library macros; if you want them
+alongside your own, copy their definitions into your library source. If you omit
+<code>macros_str</code>, <code>DEFAULT_MACROS</code> (the standard library above) is used.</p>
+<blockquote>
+<p>Runnable: <a href="../examples/macro_library_once_is_small.html"><code>examples/macro_library_once_is_small/</code></a> — the same <code>once</code> + <code>is_small</code> library as a <code>macros.dw</code> file a policy calls via <code>dogwood validate --macros …</code> (and <code>dogwood replay</code>).</p>
+</blockquote>
+<p>Only the library’s <em>definitions</em> are used — if the library source happens to
+contain policies too, they are ignored. An empty or whitespace-only library
+(for example, one supplied via <code>macros_str</code> that contains only comments) adds
+nothing.</p>
+<h3 id="precedence-a-policys-def-wins"><a class="header" href="#precedence-a-policys-def-wins">Precedence: a policy’s <code>def</code> wins</a></h3>
+<p>If a policy file declares a macro with the same name as one in the library, the
+policy’s own definition takes precedence and the library’s same-named
+definition is dropped. This is a merge rule, not a duplicate error:
+the library can neither shadow a policy’s macro nor cause a
+duplicate-definition failure against one. So a policy author can always override a
+library macro locally by defining their own version of it.</p>
+<h2 id="see-also"><a class="header" href="#see-also">See also</a></h2>
+<ul>
+<li><a href="04-temporal-expressions.html">Temporal expressions</a> — the sub-language that
+<code>def temporal</code> macro bodies are written in (<code>formerly</code>, <code>previous</code>, <code>since</code>,
+<code>count</code>/<code>sum</code>, <code>tp</code>, <code>within</code>, and binders).</li>
+<li><a href="02-policy-language.html">Policy language</a> — the Cedar expressions that
+<code>def cedar</code> macro bodies expand into.</li>
+<li><a href="09-calling-macros.html">Calling macros</a> — the core counterpart to this page:
+where a call may appear and what shape its arguments take.</li>
+<li><a href="05-information-providers.html">Information providers</a> — why a Cedar macro body
+may not contain a provider call, and how provider calls differ from macro calls.</li>
+<li><a href="07-api-and-workflow.html">The API and workflow</a> — <code>ServiceSchemaBuilder::macros_str</code>, the
+lowering pipeline, and where macro expansion sits (the <code>ServiceSchema</code> a macro
+library attaches to).</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../guide/05-information-providers.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="../guide/07-api-and-workflow.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../guide/05-information-providers.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="../guide/07-api-and-workflow.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr-ef4e11c1.min.js"></script>
+        <script src="../mark-09e88c2c.min.js"></script>
+        <script src="../searcher-09f2665d.js"></script>
+
+        <script src="../clipboard-1626706a.min.js"></script>
+        <script src="../highlight-abc7f01d.js"></script>
+        <script src="../book-609e4cb8.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

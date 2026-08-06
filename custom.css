@@ -1,0 +1,37 @@
+/* Custom styles for Dogwood documentation */
+
+/* Hide individual example pages from the sidebar — they're still
+   built and reachable via links from the Examples index page. */
+.sidebar ol.section li.chapter-item a[href*="examples/"]:not([href$="examples/index.html"]) {
+  display: none !important;
+}
+/* Hide the li elements themselves for examples (not the index) */
+.sidebar ol.section li.chapter-item:has(a[href*="examples/"]:not([href$="examples/index.html"])) {
+  display: none !important;
+}
+
+/* Table row spacing */
+table td, table th {
+  padding: 0.75em 1em;
+}
+
+table tr {
+  border-bottom: 1px solid var(--table-border-color);
+}
+
+details {
+  margin: 1em 0;
+  padding: 0.5em 1em;
+  border: 1px solid var(--table-border-color);
+  border-radius: 4px;
+}
+
+details summary {
+  cursor: pointer;
+  padding: 0.5em 0;
+}
+
+details[open] summary {
+  margin-bottom: 0.5em;
+  border-bottom: 1px solid var(--table-border-color);
+}

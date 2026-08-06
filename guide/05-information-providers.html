@@ -1,0 +1,596 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Information Providers - The Dogwood Guide</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="../favicon-8114d1fc.png">
+        <link rel="stylesheet" href="../css/variables-8adf115d.css">
+        <link rel="stylesheet" href="../css/general-e96d0476.css">
+        <link rel="stylesheet" href="../css/chrome-d279d366.css">
+        <link rel="stylesheet" href="../css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="../highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../dogwood-docs/mdbook-src/custom-cd47a9b0.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex-6a55f184.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc-982af72f.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">The Dogwood Guide</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/dogwood-policy/dogwood" title="Git repository" aria-label="Git repository">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/dogwood-policy/dogwood/edit/main/dogwood-docs/mdbook-src/guide/05-information-providers.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <span class=fa-svg id="git-edit-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M421.7 220.3l-11.3 11.3-22.6 22.6-205 205c-6.6 6.6-14.8 11.5-23.8 14.1L30.8 511c-8.4 2.5-17.5 .2-23.7-6.1S-1.5 489.7 1 481.2L38.7 353.1c2.6-9 7.5-17.2 14.1-23.8l205-205 22.6-22.6 11.3-11.3 33.9 33.9 62.1 62.1 33.9 33.9zM96 353.9l-9.3 9.3c-.9 .9-1.6 2.1-2 3.4l-25.3 86 86-25.3c1.3-.4 2.5-1.1 3.4-2l9.3-9.3H112c-8.8 0-16-7.2-16-16V353.9zM453.3 19.3l39.4 39.4c25 25 25 65.5 0 90.5l-14.5 14.5-22.6 22.6-11.3 11.3-33.9-33.9-62.1-62.1L314.3 67.7l11.3-11.3 22.6-22.6 14.5-14.5c25-25 65.5-25 90.5 0z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="information-providers"><a class="header" href="#information-providers">Information Providers</a></h1>
+<p>This page covers <strong>using</strong> Dogwood’s <strong>information providers</strong>: values computed at
+authorize time by a small piece of sandboxed code, then folded back into a policy as
+if they had always been part of the request context. It explains how you call a
+provider from an ordinary <code>when { … }</code> clause, the arguments a provider can take, how
+its output composes with the rest of a condition, and how that output reaches you as
+<code>context.providers.&lt;id&gt;</code>. Corpus cases named below are directories under
+<code>dogwood-language/tests/passing/provider_only/corpus/</code>; each complete policy
+shown below is also a runnable bundle under <a href="../examples/"><code>examples/</code></a>.</p>
+<p>This page takes the providers themselves as <strong>given</strong>. Declaring one — the
+<code>providers.json</code> format, the Rhai implementation contract (the sandbox, host
+functions, decimal support, the off-by-default <code>net</code> feature), and the advanced
+features (output methods, no-implementation providers, and the <code>guardrails { … }</code>
+sugar) — is the subject of the Advanced-topics page
+<a href="10-provider-schema.html">The provider schema</a>.</p>
+<hr>
+<h2 id="what-an-information-provider-is-and-why"><a class="header" href="#what-an-information-provider-is-and-why">What an information provider is, and why</a></h2>
+<p>Cedar policies decide on the request they are given. Sometimes the fact you want to
+authorize on is not <em>in</em> the request — it has to be <strong>computed</strong>: does this document
+match a regex? Is this string on a denylist? What is the risk score of this content
+according to some classifier? An information provider lets you write that
+computation once, declare its shape, and then reference its result inside a policy as
+though it were an ordinary context attribute.</p>
+<p>A provider is lowering-time sugar over Cedar. When you write a
+provider invocation in a policy, Dogwood does <em>not</em> invent a new runtime evaluator.
+Instead, at lowering time it <strong>hoists</strong> the invocation out of the policy
+and rewrites it to a reference into <code>context.providers.&lt;id&gt;</code>. The Cedar that the
+engine ultimately evaluates contains no provider call at all — just a plain attribute
+access and comparison. Then, at authorize time, Dogwood runs the provider’s
+declared implementation, and binds its output record into
+<code>context.providers.&lt;id&gt;</code> before handing the request to Cedar.</p>
+<p>Because providers are hoisted at lowering time, the hoisted field must be typed and
+declared in the schema. A rule that calls a provider may use any action scope —
+<code>action == Ns::Action::"X"</code>, <code>action in [list]</code>, <code>action in Group</code>, or a bare
+unconstrained <code>action</code> — because the hoisted field is grafted onto every action’s
+context and the provider is evaluated for every decision event (see
+<a href="#the-provider-contract">The provider contract</a> below).</p>
+<hr>
+<h2 id="calling-a-provider"><a class="header" href="#calling-a-provider">Calling a provider</a></h2>
+<p>You call a provider directly inside an ordinary <code>when { … }</code> clause, exactly where
+you would write any other Cedar condition. There is no special marker: any
+namespace-qualified name (<code>Ns::Fn</code>) is read as a provider invocation. You invoke it, reach into
+its output, and compare — all as part of a normal Cedar expression:</p>
+<pre><code class="language-text">permit ( principal, action == Doc::Action::"read", resource )
+when {
+    Strings::Matches(context.input.document, "^[A-Z]+$").matched == true
+};
+</code></pre>
+<p>That reads as: call the <code>Strings::Matches</code> provider with the document and a regex,
+take the <code>matched</code> field of its output, and require it to be <code>true</code>.</p>
+<p>Because the call sits in ordinary Cedar, only the <em>call itself</em> is special — the
+projection (<code>.matched</code>) and comparison (<code>== true</code>) are plain Cedar. That means a
+provider’s output composes with the full Cedar expression language: arithmetic,
+<code>if</code>/<code>then</code>/<code>else</code>, any method, <code>&amp;&amp;</code>/<code>||</code>/<code>!</code>, comparisons against other context
+fields — anything Cedar allows.</p>
+<h3 id="the-shape-of-a-call"><a class="header" href="#the-shape-of-a-call">The shape of a call</a></h3>
+<p>A provider call has three parts, in order:</p>
+<ol>
+<li><strong>Invocation</strong> — <code>Ns::Fn(args)</code>. The function name must be namespace-qualified:
+it needs at least two <code>::</code>-separated segments (like <code>Strings::Matches</code>,
+<code>Content::Risk</code>, <code>Lists::Blocked</code>). A bare single-segment name is not a valid
+provider function. More segments are allowed (<code>Ns::Sub::Fn</code>).</li>
+<li><strong>Projection</strong> — zero or more accessors that reach into the provider’s output
+record: <code>.field</code> (field access) or <code>["key"]</code> (index access). Because Cedar has no
+positional list indexing, an index must be a <strong>string key</strong>: <code>record["k"]</code> reads
+the <code>k</code> field. The projection may be empty, in which case the output is compared
+directly.</li>
+<li><strong>Comparison</strong> — any Cedar comparison. Against a <code>bool</code>/<code>long</code>/<code>string</code> output you
+use the ordinary operators (<code>==</code>, <code>!=</code>, <code>&lt;</code>, <code>&lt;=</code>, <code>&gt;</code>, <code>&gt;=</code>). A <code>decimal</code> output
+supports <code>==</code> and <code>!=</code>; to <em>order</em> one, use Cedar’s decimal-extension methods
+(<code>lessThan</code>, <code>lessThanOrEqual</code>, <code>greaterThan</code>, <code>greaterThanOrEqual</code>) with a
+<code>decimal("…")</code> literal.</li>
+</ol>
+<h3 id="a-complete-worked-example"><a class="header" href="#a-complete-worked-example">A complete worked example</a></h3>
+<p>Here is a provider from the policy author’s side. It uses the <code>Strings::Matches</code>
+provider (corpus case <code>0001_regex_matches_uppercase</code>), which asks whether a document matches a regular
+expression. The policy (<code>policy_1.dw</code>):</p>
+<pre><code class="language-text">permit ( principal, action == Doc::Action::"read", resource )
+when {
+    Strings::Matches(context.input.document, "^[A-Z]+$").matched == true
+};
+</code></pre>
+<blockquote>
+<p>Runnable: <a href="../examples/provider_regex_matches_uppercase.html"><code>examples/provider_regex_matches_uppercase/</code></a> — <code>dogwood validate</code> and <code>dogwood replay</code>.</p>
+</blockquote>
+<p>Behind it, <code>Strings::Matches</code> is declared in a
+<code>providers.json</code> (with argument types <code>[string, string]</code>, an output record
+<code>{ matched: bool }</code>, and a small Rhai script) — the declaration side is covered in
+<a href="10-provider-schema.html">The provider schema</a>.</p>
+<p>What happens: at lowering time, <code>Strings::Matches(context.input.document, "^[A-Z]+$")</code>
+is hoisted to a <code>context.providers.&lt;id&gt;</code> reference, and the policy Cedar becomes
+<code>context.providers.&lt;id&gt;.matched == true</code>. At authorize time, Dogwood runs the
+provider’s <code>evaluate("...the document...", "^[A-Z]+$")</code>, gets back the record
+<code>{ matched: … }</code>, binds it into <code>context.providers.&lt;id&gt;</code>, and Cedar evaluates
+<code>.matched == true</code>. So <code>"ABC"</code> gives <code>true</code> (permit), <code>"abc"</code> gives <code>false</code>, and
+<code>"AB12"</code> gives <code>false</code>.</p>
+<h3 id="combining-providers-with-the-rest-of-a-condition"><a class="header" href="#combining-providers-with-the-rest-of-a-condition">Combining providers with the rest of a condition</a></h3>
+<p>Because a provider call is just part of an ordinary Cedar condition, it combines with
+<code>&amp;&amp;</code>, <code>||</code>, <code>!</code>, parentheses, other provider calls, and plain Cedar terms — the full
+expression language (see <a href="02-policy-language.html">The policy language</a>).</p>
+<p>Two providers combined with <code>&amp;&amp;</code> and <code>!</code> (the <code>Strings::Matches</code> and <code>Lists::Blocked</code>
+providers of case <code>0004_two_providers_and_not</code>) — a fragment; the full rule is the
+<a href="../examples/provider_matches_and_not_blocked.html"><code>provider_matches_and_not_blocked</code></a> bundle:</p>
+<pre><code class="language-text">when {
+    Strings::Matches(context.input.document, "^[a-z]+$").matched == true
+    &amp;&amp; !(Lists::Blocked(context.input.document).blocked == true)
+};
+</code></pre>
+<p>Disjunction and parentheses (the <code>Lists::Allowed</code> and <code>Strings::Length</code> providers of
+case <code>0007_boolean_or_parens</code>) — a fragment; the full rule is the
+<a href="../examples/provider_allowed_or_short.html"><code>provider_allowed_or_short</code></a> bundle:</p>
+<pre><code class="language-text">when {
+    (Lists::Allowed(context.input.document).allowed == true
+     || Strings::Length(context.input.document).length &lt; 4)
+};
+</code></pre>
+<p>Several calls to the same provider, each with plain-Cedar comparisons — case <code>0005_regex_operations</code>
+(a fragment; the full rule is the
+<a href="../examples/provider_regex_analyze_fields.html"><code>provider_regex_analyze_fields</code></a> bundle):</p>
+<pre><code class="language-text">when {
+    Regex::Analyze(context.input.document, "^[A-Z]").is_match == true
+    &amp;&amp; Regex::Analyze(context.input.document, "[0-9]").count &gt;= 3
+    &amp;&amp; Regex::Analyze(context.input.document, "[0-9]+").first_match == "42"
+};
+</code></pre>
+<p>Because the output is plain Cedar, it can feed ordinary Cedar expressions — for
+instance, an integer output used in <strong>arithmetic</strong> alongside an ordinary context
+field — case <code>0010_unwrapped_mixed_with_cedar</code> (a fragment; the full rule is the
+<a href="../examples/provider_int_arithmetic_trusted.html"><code>provider_int_arithmetic_trusted</code></a> bundle):</p>
+<pre><code class="language-text">when {
+    context.input.trusted == true
+    &amp;&amp; Strings::DigitCount(context.input.document).count + 1 &lt;= 3
+};
+</code></pre>
+<h3 id="the-comparison-in-two-forms"><a class="header" href="#the-comparison-in-two-forms">The comparison, in two forms</a></h3>
+<p>The comparison against a provider’s output comes in two flavors, depending on the
+output’s type.</p>
+<p><strong>Operator form</strong> uses one of <code>&lt;=</code>, <code>&gt;=</code>, <code>==</code>, <code>!=</code>, <code>&lt;</code>, <code>&gt;</code>. Verified examples
+across the corpus include <code>.matched == true</code> (case <code>0001_regex_matches_uppercase</code>), <code>.length &lt; 5</code>
+(case <code>0002_length_threshold</code>), and <code>.count &gt;= 2</code> (case <code>0008_greater_than_family</code>) — this fragment’s full rule is the
+<a href="../examples/provider_digitcount_operator_ge.html"><code>provider_digitcount_operator_ge</code></a> bundle:</p>
+<pre><code class="language-text">when {
+    Strings::DigitCount(context.input.document).count &gt;= 2
+};
+</code></pre>
+<p><strong>Method form</strong> uses Cedar’s decimal comparison methods —
+<code>lessThan</code>, <code>lessThanOrEqual</code>, <code>greaterThan</code>, <code>greaterThanOrEqual</code> — to compare a
+<code>decimal</code> output against a <code>decimal("…")</code> literal (the <code>Content::Risk</code> provider of
+case <code>0003_decimal_score_method</code>) — a fragment; the full rule is the
+<a href="../examples/provider_risk_decimal_method.html"><code>provider_risk_decimal_method</code></a> bundle:</p>
+<pre><code class="language-text">when {
+    Content::Risk(context.input.document).severityScore.lessThan(decimal("0.5"))
+};
+</code></pre>
+<p>Use the method form to order a <code>decimal</code> output; <code>==</code> and <code>!=</code> work on a <code>decimal</code>
+directly, and the operators cover <code>bool</code> / <code>long</code> / <code>string</code> outputs.</p>
+<h3 id="projection-reaching-into-the-output-record"><a class="header" href="#projection-reaching-into-the-output-record">Projection: reaching into the output record</a></h3>
+<p>The projection is the path between the invocation and the comparison. Field access
+(<code>.field</code>) and index access (<code>["key"]</code>) can be chained. Because Cedar has no
+positional list indexing, an index must be a string key: <code>record["k"]</code> reads the
+<code>k</code> field.</p>
+<p>The <code>Content::Filter</code> provider of case <code>0006_set_arg_index_projection</code> chains an index accessor and a field
+accessor, then compares with the decimal method form (a fragment; the full rule is the
+<a href="../examples/provider_filter_set_index_decimal.html"><code>provider_filter_set_index_decimal</code></a> bundle):</p>
+<pre><code class="language-text">when {
+    Content::Filter(context.input.document, ["VIOLENCE", "HATE"])["VIOLENCE"].severityScore.lessThan(decimal("0.5"))
+};
+</code></pre>
+<p>Here <code>["VIOLENCE"]</code> selects the <code>VIOLENCE</code> sub-record from the output, <code>.severityScore</code>
+reads its field, and <code>.lessThan(decimal("0.5"))</code> compares.</p>
+<h3 id="providers-work-under-permit-and-forbid"><a class="header" href="#providers-work-under-permit-and-forbid">Providers work under <code>permit</code> and <code>forbid</code></a></h3>
+<p>A provider call is independent of the rule’s effect: it works the same under <code>permit</code>
+and <code>forbid</code>. Here the <code>Strings::DigitCount</code> provider of case <code>0008_greater_than_family</code> gates a <code>forbid</code>
+(with a catch-all <code>permit</code> alongside):</p>
+<pre><code class="language-text">forbid ( principal, action == Doc::Action::"post", resource )
+when {
+    Strings::DigitCount(context.input.document).count &gt;= 2
+};
+</code></pre>
+<blockquote>
+<p>Runnable: <a href="../examples/provider_digitcount_forbid.html"><code>examples/provider_digitcount_forbid/</code></a> — the <code>forbid</code> plus a catch-all <code>permit</code>; <code>dogwood validate</code> and <code>dogwood replay</code>.</p>
+</blockquote>
+<h3 id="a-caution-on-names"><a class="header" href="#a-caution-on-names">A caution on names</a></h3>
+<p>A call is read as a provider invocation because of its shape — any
+namespace-qualified name — not because it is declared. Declaredness is a separate
+check, made at lowering: a namespace-qualified call that matches no declared provider
+(and no macro and no Cedar built-in) is a hard error, “unresolved call to <code>Ns::Fn</code>
+reached lowering — it is not a declared information provider, not a declared macro,
+and not a Cedar built-in”. So a mistyped provider name is caught, not silently
+ignored.</p>
+<hr>
+<h2 id="provider-arguments"><a class="header" href="#provider-arguments">Provider arguments</a></h2>
+<p>A provider invocation passes arguments positionally. Because a provider is
+resolved <em>before</em> Cedar runs (it helps build the context Cedar evaluates
+against), an argument must be a value Dogwood can read off the request event
+directly. The argument kinds are:</p>
+<ul>
+<li><strong>Attribute-path reference</strong> — <code>context.input.x</code>, <code>principal.id</code>,
+<code>resource.owner</code>. It begins with one of the roots <code>context</code> / <code>principal</code> /
+<code>resource</code>, followed by one or more <code>.ident</code> segments. At authorize time
+Dogwood resolves the path against the decision event: a <code>context</code> path is
+looked up on the event’s input (leading <code>context</code> skipped); <code>principal</code> /
+<code>resource</code> resolve to the request scope entity, and a trailing <code>.id</code> / <code>.type</code>
+projects that entity’s id or type. A path that does not resolve is null.</li>
+<li><strong>String literal</strong> — <code>"…"</code>.</li>
+<li><strong>Integer literal</strong> — an optionally-signed integer (<code>i64</code>).</li>
+<li><strong>Decimal literal</strong> — <code>decimal("0.5")</code> (chiefly a method threshold, e.g.
+<code>scoreAbove(decimal("0.5"))</code>).</li>
+<li><strong>Bool literals</strong> — <code>true</code> / <code>false</code>.</li>
+<li><strong>Set</strong> — <code>[ arg, … ]</code>, possibly empty, and possibly nesting other args (a set of
+strings, ints, bools, or nested sets/paths).</li>
+</ul>
+<p>Arbitrary Cedar (arithmetic, <code>if</code>/<code>then</code>/<code>else</code>) is <strong>not</strong> a provider argument —
+only the value forms above. This mirrors the temporal-logic argument restriction.</p>
+<p>Field-and-string arguments — case <code>0001_regex_matches_uppercase</code>:</p>
+<pre><code class="language-text">Strings::Matches(context.input.document, "^[A-Z]+$")
+</code></pre>
+<p>A principal-rooted argument — case <code>0015_principal_id_arg</code> (a fragment; the full rule is the
+<a href="../examples/provider_principal_id_allowlist.html"><code>provider_principal_id_allowlist</code></a> bundle):</p>
+<pre><code class="language-text">Access::Allowed(principal.id)
+</code></pre>
+<p>A set argument — cases <code>0006_set_arg_index_projection</code> / <code>0009_unwrapped_no_marker</code>:</p>
+<pre><code class="language-text">Content::Filter(context.input.document, ["VIOLENCE", "HATE"])
+</code></pre>
+<p>At authorize time, each argument is resolved to a runtime value (event fields and
+scope entities as above, literals as-is, sets recursively), and the values are
+passed positionally to the provider’s implementation, matched to its declared
+argument order.</p>
+<blockquote>
+<p><strong>Declaring a provider.</strong> The signature you invoke against — the argument types,
+the output record, and the implementation that computes it — is declared in a
+<code>providers.json</code> file, described in full in
+<a href="10-provider-schema.html">The provider schema</a>. This page assumes those
+declarations already exist and focuses on calling them from a policy.</p>
+</blockquote>
+<hr>
+<h2 id="how-a-provider-binds-to-contextprovidersid"><a class="header" href="#how-a-provider-binds-to-contextprovidersid">How a provider binds to <code>context.providers.&lt;id&gt;</code></a></h2>
+<p>Putting the pieces together, here is what happens to a provider invocation from the
+caller’s point of view.</p>
+<p><strong>Lowering time.</strong> Every provider invocation is hoisted: the call leaf is replaced
+with a reference into <code>context.providers.&lt;id&gt;</code>. The surrounding projection and
+comparison were already ordinary Cedar, so they lower natively — an index <code>["k"]</code>
+becomes <code>.k</code>, and the comparison stays as whatever Cedar op you wrote. (The
+generated field names and the Cedar-schema augmentation this entails are covered in
+<a href="10-provider-schema.html">The provider schema</a>.)</p>
+<p><strong>Authorize time.</strong> For each decision event Dogwood builds the Cedar request
+context. It passes <code>context.input</code> through from the event, evaluates <strong>every</strong>
+declared provider field (resolving each argument, then running the provider), and
+collects the outputs into a single <code>context.providers</code> object keyed by
+id. So <code>context.providers.&lt;id&gt;</code> holds that provider’s evaluated output record, and
+Cedar evaluates the (already-lowered) comparison against it.</p>
+<p>So you write the <em>surface</em> form <code>Ns::Fn(args).field &lt;cmp&gt; literal</code>, and
+the engine evaluates <code>context.providers.&lt;id&gt;.field &lt;cmp&gt; literal</code> against the bound
+output. For case <code>0001_regex_matches_uppercase</code>, the engine runs the provider, binds <code>{ matched: … }</code>, and
+Cedar evaluates <code>.matched == true</code> — giving <code>"ABC" → true</code>, <code>"abc" → false</code>,
+<code>"AB12" → false</code>. For case <code>0006_set_arg_index_projection</code>, <code>document="violent"</code> scores VIOLENCE at 0.90 so
+<code>.lessThan(0.5)</code> is false (deny), <code>document="safe"</code> scores 0.10 so it is true
+(permit), and <code>document="hateful"</code> scores VIOLENCE at 0.10 (only HATE is 0.90) so it is
+also true (permit).</p>
+<hr>
+<h2 id="the-provider-contract"><a class="header" href="#the-provider-contract">The provider contract</a></h2>
+<p>Provider execution is <strong>unconditional</strong>. A provider invocation belongs to a rule,
+but its evaluation is not gated by that rule — not by the rule’s action clause, its
+principal/resource constraints, its <code>when</code>/<code>unless</code> conditions, or whether the rule
+could fire at all. For every decision event, every provider invocation in the policy set
+is evaluated and its output bound into <code>context.providers</code>; <em>Cedar alone</em> then decides which
+policies fire, using its ordinary scope and condition semantics. (Deciding “could
+this rule match this event?” before running its provider would mean re-implementing
+Cedar’s scope semantics inside the provider machinery, so Dogwood does not.)</p>
+<p>Three consequences for provider authors:</p>
+<ol>
+<li>
+<p><strong>Providers must be pure.</strong> A provider may run for events its rule has nothing
+to do with, and implementations are free to skip, cache, reorder, or repeat
+evaluations whose results cannot affect the verdicts. A provider must be a
+deterministic function of its arguments with no observable effects. (Replay —
+<code>dogwood replay</code> — and checking one engine against another also assume this.)</p>
+</li>
+<li>
+<p><strong>Any argument may be absent.</strong> On an event whose context or scope entities do
+not carry the fields a provider reads (a different action’s input shape, a
+resource type without the attribute), the argument arrives as <strong>Null</strong> — in a
+Rhai script, the unit value <code>()</code>. Scripts must be <em>defensive</em>: detect unit
+arguments and return a <strong>sentinel</strong> that conforms to the declared <code>outputType</code>
+instead of erroring:</p>
+<pre><code class="language-text">fn evaluate(text) {
+    if type_of(text) == "()" {
+        return #{ length: -1 };
+    }
+    #{ length: text.len() }
+}
+</code></pre>
+<p>Choose the sentinel deliberately, and mind the <strong>polarity trap</strong>: a sentinel
+that makes a guard false is the <em>restrictive</em> direction under <code>permit</code> (the rule
+doesn’t fire) but the <em>permissive</em> direction under <code>forbid</code> (the denial doesn’t
+fire). Pick the sentinel that fails safe for the polarity of the rules reading
+it.</p>
+</li>
+<li>
+<p><strong>An erroring provider is undefined behavior.</strong> If a provider evaluation errors
+(a script that throws, an external resolver that fails), the decision outcome
+carries no guarantees. This reference interpreter fails closed: it denies the
+request and reports the error in the response’s diagnostics. That is an
+implementation choice, not a contract — other implementations, or future
+versions of this one, may avoid the error entirely (and reach a different
+verdict) or handle it differently. A policy set
+whose safety depends on an erroring provider denying is incorrect on <strong>every</strong>
+implementation, including this one. Defensive scripts (point 2) are the only
+defense.</p>
+</li>
+</ol>
+<p>The same contract applies to external providers supplied through a
+<code>ProviderResolver</code>: pure, tolerant of Null arguments, never relying on error
+behavior.</p>
+<hr>
+<h2 id="how-it-composes-with-the-rest-of-a-policy"><a class="header" href="#how-it-composes-with-the-rest-of-a-policy">How it composes with the rest of a policy</a></h2>
+<p>Providers slot into the same rule structure as everything else. A rule scopes a
+principal, action, and resource in the usual
+Cedar way (see <a href="02-policy-language.html">The policy language</a>), and the provider call
+lives in an ordinary <code>when { … }</code> clause, freely combined with plain Cedar conditions
+and with other providers.</p>
+<p>The companion feature is temporal expressions, written with <code>when temporal { … }</code> —
+see <a href="04-temporal-expressions.html">Temporal expressions</a>. Where a provider computes a
+value for the <em>current</em> request, a temporal expression reasons about the <em>history</em> of
+requests. Both are lowered into ordinary Cedar the engine can evaluate.</p>
+<hr>
+<h2 id="advanced-features"><a class="header" href="#advanced-features">Advanced features</a></h2>
+<p>Two provider features exist but most policies do not need them, and both are
+documented on the declaration-side page, <a href="10-provider-schema.html">The provider schema</a>:</p>
+<ul>
+<li><strong>The <code>guardrails { … }</code> clause</strong> — <code>when guardrails { E }</code> is transparent sugar
+for a bare <code>when { E }</code>; the tag carries no semantics and is retained for
+compatibility with existing policies. You can call a provider from an ordinary
+<code>when</code> just as well.</li>
+<li><strong>Output methods and no-implementation providers</strong> — post-processing a provider’s
+output with a declared method (<code>Provider::Fn(args).method(…)</code>), and declaring a
+provider with <em>no</em> implementation so its value is supplied by your own code.</li>
+</ul>
+<p>See <a href="10-provider-schema.html#advanced-and-undocumented-features">The provider schema</a>
+for both.</p>
+<hr>
+<h2 id="see-also"><a class="header" href="#see-also">See also</a></h2>
+<ul>
+<li><a href="10-provider-schema.html">The provider schema</a> — declaring a provider: the
+<code>providers.json</code> format, the Rhai implementation contract, and the advanced
+features above.</li>
+<li><a href="02-policy-language.html">The policy language</a> — rule structure and the Cedar
+condition language a provider call lives in.</li>
+<li><a href="04-temporal-expressions.html">Temporal expressions</a> — the companion feature,
+reasoning about request history.</li>
+<li><a href="09-calling-macros.html">Calling macros</a> — the other way to reuse logic across policies.</li>
+<li><a href="07-api-and-workflow.html">The API and workflow</a> — wiring provider declarations
+into a <code>ServiceSchema</code> (<code>ServiceSchemaBuilder::providers</code>) and the authorize-time
+flow that evaluates providers.</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../guide/04-temporal-expressions.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="../guide/06-macros.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../guide/04-temporal-expressions.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="../guide/06-macros.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr-ef4e11c1.min.js"></script>
+        <script src="../mark-09e88c2c.min.js"></script>
+        <script src="../searcher-09f2665d.js"></script>
+
+        <script src="../clipboard-1626706a.min.js"></script>
+        <script src="../highlight-abc7f01d.js"></script>
+        <script src="../book-609e4cb8.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>

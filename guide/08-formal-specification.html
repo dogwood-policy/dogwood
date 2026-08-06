@@ -1,0 +1,1264 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Formal Specification - The Dogwood Guide</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="../favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="../favicon-8114d1fc.png">
+        <link rel="stylesheet" href="../css/variables-8adf115d.css">
+        <link rel="stylesheet" href="../css/general-e96d0476.css">
+        <link rel="stylesheet" href="../css/chrome-d279d366.css">
+        <link rel="stylesheet" href="../css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="../highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../dogwood-docs/mdbook-src/custom-cd47a9b0.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "../";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "../searchindex-6a55f184.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="../toc-982af72f.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">The Dogwood Guide</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/dogwood-policy/dogwood" title="Git repository" aria-label="Git repository">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/dogwood-policy/dogwood/edit/main/dogwood-docs/mdbook-src/guide/08-formal-specification.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <span class=fa-svg id="git-edit-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M421.7 220.3l-11.3 11.3-22.6 22.6-205 205c-6.6 6.6-14.8 11.5-23.8 14.1L30.8 511c-8.4 2.5-17.5 .2-23.7-6.1S-1.5 489.7 1 481.2L38.7 353.1c2.6-9 7.5-17.2 14.1-23.8l205-205 22.6-22.6 11.3-11.3 33.9 33.9 62.1 62.1 33.9 33.9zM96 353.9l-9.3 9.3c-.9 .9-1.6 2.1-2 3.4l-25.3 86 86-25.3c1.3-.4 2.5-1.1 3.4-2l9.3-9.3H112c-8.8 0-16-7.2-16-16V353.9zM453.3 19.3l39.4 39.4c25 25 25 65.5 0 90.5l-14.5 14.5-22.6 22.6-11.3 11.3-33.9-33.9-62.1-62.1L314.3 67.7l11.3-11.3 22.6-22.6 14.5-14.5c25-25 65.5-25 90.5 0z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="a-formal-specification-of-dogwood"><a class="header" href="#a-formal-specification-of-dogwood">A formal specification of Dogwood</a></h1>
+<p>This chapter is the precise, semi-formal reference for the Dogwood language: its
+<strong>concrete syntax</strong> (BNF), its <strong>abstract syntax</strong>, and the three judgments that
+give it meaning — <strong>lowering</strong> (Dogwood → Cedar), <strong>validation</strong> (well-formedness
+and typing), and <strong>authorization</strong> (the operational semantics of a decision).</p>
+<p>Where the rest of the guide (from <a href="01-getting-started.html">Getting started</a> through
+<a href="07-api-and-workflow.html">The API and workflow</a>) explains <em>how to use</em> Dogwood, this
+chapter states <em>what it is</em>, at the level of detail a second implementation or a
+proof would need. Every rule is annotated
+with its source of record — the file and function; the code is authoritative, and
+this document tracks it.</p>
+<h2 id="contents"><a class="header" href="#contents">Contents</a></h2>
+<ol>
+<li><a href="#1-notation">Notation</a></li>
+<li><a href="#2-concrete-syntax">Concrete syntax</a></li>
+<li><a href="#3-abstract-syntax">Abstract syntax</a></li>
+<li><a href="#4-lowering-dogwood--cedar">Lowering: Dogwood ⇝ Cedar</a></li>
+<li><a href="#5-validation">Validation</a></li>
+<li><a href="#6-authorization">Authorization</a></li>
+<li><a href="#7-meta-properties">Meta-properties</a></li>
+</ol>
+<hr>
+<h2 id="1-notation"><a class="header" href="#1-notation">1. Notation</a></h2>
+<p>Dogwood is defined by <strong>translation</strong> into Cedar plus a stateful <strong>monitor</strong>.
+A source policy set is first <em>lowered</em> to a Cedar <code>PolicySet</code> together with an
+<em>augmented</em> Cedar schema; validation and authorization are then largely defined
+in terms of that Cedar artifact, with the temporal sub-language and the
+information providers supplying values that Cedar itself cannot compute. Three
+judgments capture this:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Judgment</th><th>Read as</th><th>Section</th></tr>
+</thead>
+<tbody>
+<tr><td><code>Γ ⊢ p ⇝ π</code></td><td>policy <code>p</code> <strong>lowers</strong> to Cedar policy <code>π</code> (recording hoisted leaves)</td><td><a href="#4-lowering-dogwood--cedar">§4</a></td></tr>
+<tr><td><code>Σ ⊢ L ✓</code></td><td>lowered artifact <code>L</code> is <strong>valid</strong> under schema <code>Σ</code> (no findings)</td><td><a href="#5-validation">§5</a></td></tr>
+<tr><td><code>⟨H, e⟩ ⇓ ⟨H′, r⟩</code></td><td>ingesting event <code>e</code> in history <code>H</code> yields history <code>H′</code> and result <code>r</code></td><td><a href="#6-authorization">§6</a></td></tr>
+</tbody>
+</table>
+</div>
+<p>Inference rules are written in the usual style — premises above the line,
+conclusion below, name at the right:</p>
+<pre><code>        premise₁      premise₂
+       ───────────────────────── (Rule-Name)
+              conclusion
+</code></pre>
+<p>A rule with no premises is an axiom. A <strong>side-condition</strong> is written in the
+premise position in prose. We write <code>⟦e⟧</code> for “the Cedar translation of <code>e</code>”,
+<code>fv(e)</code> for the free (unbound) variables of <code>e</code>, and <code>·</code> for sequence
+concatenation. Metavariables: <code>p</code> policies, <code>e</code> core expressions, <code>φ</code> temporal
+conditions, <code>t</code> terms, <code>A</code> actions, <code>k</code> event kinds, <code>H</code> histories, <code>β</code> temporal
+bindings, <code>Σ</code> a (composite) schema.</p>
+<p>Two channels of failure are distinguished throughout, and the distinction is
+load-bearing (see <a href="#51-the-two-channel-error-model">§5.1</a>):</p>
+<ul>
+<li>a <strong>fatal error</strong> (<code>Error</code>) aborts lowering — there is nothing well-formed to
+validate or authorize;</li>
+<li>a <strong>finding</strong> (<code>ValidationError</code> / <code>ValidationWarning</code>) is a validation result
+over an artifact that <em>did</em> lower.</li>
+</ul>
+<hr>
+<h2 id="2-concrete-syntax"><a class="header" href="#2-concrete-syntax">2. Concrete syntax</a></h2>
+<p>The grammar is given in EBNF: <code>{ x }</code> is zero-or-more, <code>[ x ]</code> is optional,
+<code>x | y</code> is alternation, <code>"lit"</code> is a terminal. It is transcribed from the three
+<code>pest</code> grammars of record:</p>
+<ul>
+<li>core policy — <code>src/parser/grammar.pest</code></li>
+<li>temporal — <code>src/extension/temporal/grammar.pest</code></li>
+<li>event schema — <code>src/event_schema/grammar.pest</code></li>
+</ul>
+<p>(There is no provider grammar: an information-provider invocation is ordinary
+Cedar recognized at lowering — see <a href="#25-information-provider-invocations-no-dedicated-grammar">§2.5</a>.)</p>
+<p>Whitespace and <code>//</code> line comments are insignificant between tokens (each grammar
+declares them implicit). Identifiers are <code>[A-Za-z_][A-Za-z0-9_]*</code>.</p>
+<h3 id="21-policy-sets-macros-rules"><a class="header" href="#21-policy-sets-macros-rules">2.1 Policy sets, macros, rules</a></h3>
+<p>A <code>.dw</code> source is a sequence of macro definitions and policy rules, in any order.</p>
+<pre><code class="language-ebnf">policies    ::= { def_decl | policy }
+
+def_decl    ::= "def" ("cedar" | "temporal") ident "(" [ params ] ")"
+                "{" block "}" ";"
+params      ::= param { "," param }
+param       ::= "?" ident
+
+policy      ::= { annotation } effect "(" scope ")" { cond } ";"
+annotation  ::= "@" ident [ "(" string ")" ]
+effect      ::= ident                       (* semantically: "permit" | "forbid" *)
+
+scope       ::= [ variable_def { "," variable_def } [ "," ] ]
+variable_def::= ident [ ":" name ] [ "is" add ] [ rel_op expr ]
+</code></pre>
+<p>Notes. <code>effect</code> is any identifier at the grammar level; a later pass requires it
+to be <code>permit</code> or <code>forbid</code> (this yields a better diagnostic than a parse
+failure). The <code>":"</code> form in <code>variable_def</code> (<code>principal : User</code>) is legacy and is
+accepted only so the semantic pass can emit a “use <code>is</code>” hint. <code>block</code> is the raw
+text between a marker’s braces, with balanced inner braces honored — it is
+dispatched to a sub-language parser.</p>
+<h3 id="22-condition-clauses"><a class="header" href="#22-condition-clauses">2.2 Condition clauses</a></h3>
+<pre><code class="language-ebnf">cond      ::= cond_kw ( extension_marker | guardrails_tag? "{" expr "}" )
+cond_kw   ::= ident                          (* semantically: "when" | "unless" *)
+
+extension_marker ::= dialect_tag "{" block "}"
+dialect_tag      ::= "temporal"
+guardrails_tag   ::= "guardrails"
+</code></pre>
+<p>A rule carries any number of <code>when</code> / <code>unless</code> clauses in any combination; they
+are implicitly conjoined (the rule fires iff every <code>when</code> holds and no <code>unless</code>
+holds — made precise in <a href="#4-lowering-dogwood--cedar">§4</a>).</p>
+<p><code>temporal</code> is a genuine sub-language: the <strong>tagged</strong> form <code>when temporal { … }</code>
+captures the braced body as raw <code>block</code> text dispatched to the temporal parser,
+and — because <code>extension_marker</code> is also a <code>primary</code>
+(<a href="#23-core-expressions-cedar-derived">§2.3</a>) — a temporal marker may appear
+<strong>inline</strong>, so <code>when { context.x &gt; 5 &amp;&amp; temporal { … } }</code> is legal (the tagged
+form alone cannot express this).</p>
+<p><code>guardrails</code>, by contrast, is <strong>not</strong> a sub-language: <code>guardrails { E }</code> is
+transparent sugar for a bare <code>{ E }</code> clause, where <code>E</code> is a full Cedar
+expression parsed identically to an untagged <code>when { … }</code>. An
+information-provider invocation inside it (<code>Ns::Fn(args)…</code>) is recognized and
+hoisted at <em>lowering</em> time exactly as in a bare <code>when { … }</code>
+(<a href="#44-information-provider-leaves">§4.4</a>), so the tag adds nothing semantically
+and the parser discards it. It is retained only for backward
+compatibility of the surface syntax. (“provider” is the term used
+everywhere else; <code>guardrails</code> is the surface keyword.) There is no closed
+provider grammar.</p>
+<h3 id="23-core-expressions-cedar-derived"><a class="header" href="#23-core-expressions-cedar-derived">2.3 Core expressions (Cedar-derived)</a></h3>
+<p>The core expression grammar is a <code>pest</code> transliteration of Cedar’s own
+(<code>cedar-policy-core</code> v4.x); precedence is encoded by the rule layering, exactly
+as in Cedar’s CST.</p>
+<pre><code class="language-ebnf">expr    ::= if_expr | or
+if_expr ::= "if" expr "then" expr "else" expr
+or      ::= and { "||" and }
+and     ::= rel { "&amp;&amp;" rel }
+rel     ::= add [ has_tail | like_tail | is_tail | { rel_op add } ]
+has_tail::= "has" ( "if" { mem_access } | add )
+like_tail ::= "like" add
+is_tail ::= "is" add [ "in" add ]
+rel_op  ::= "&lt;=" | "&gt;=" | "!=" | "==" | "&lt;" | "&gt;" | "in" | "="
+add     ::= mult { ("+" | "-") mult }
+mult    ::= unary { ("*" | "/" | "%") unary }
+unary   ::= [ "!"+ | "-"+ ] member
+member  ::= primary { mem_access }
+mem_access ::= "." ident | "(" [ expr { "," expr } ] ")" | "[" expr "]"
+
+primary ::= extension_marker | literal | slot | ref | name
+          | "(" expr ")" | list | record
+literal ::= "true" | "false" | number | string
+slot    ::= "?principal" | "?resource" | "?" ident
+name    ::= ident { "::" ident } | ident
+ref     ::= name "::" ( string | "{" [ ref_init { "," ref_init } ] "}" )
+list    ::= "[" [ expr { "," expr } ] "]"
+record  ::= "{" [ rec_init { "," rec_init } ] "}"
+</code></pre>
+<p><code>=</code> is captured by <code>rel_op</code> deliberately, so the semantic layer can emit a “did
+you mean <code>==</code>?” hint rather than a raw parse error. A run of <code>!</code> or <code>-</code> may not
+be mixed (<code>!-x</code> is rejected), matching Cedar. <code>/</code> and <code>%</code> parse but are rejected
+downstream (Cedar has no division). Surface operators <code>!=</code>, <code>&gt;</code>, <code>&gt;=</code> are
+retained here and desugared during lowering (<a href="#43-expression-translation">§4.3</a>).</p>
+<h3 id="24-temporal-sub-language"><a class="header" href="#24-temporal-sub-language">2.4 Temporal sub-language</a></h3>
+<p>The body of a <code>temporal { … }</code> block. Past-only; <code>within</code> is mandatory on every
+temporal operator.</p>
+<pre><code class="language-ebnf">condition   ::= conjunct_or_since { "&amp;&amp;" conjunct_or_since }
+conjunct_or_since ::= neg_conjunct [ "since" within atom ]
+neg_conjunct::= { "!" } conjunct
+conjunct    ::= comparison | parenthesized | temporal_op
+              | exists_op | tp_op | call | refinable
+
+temporal_op ::= "formerly" within atom | "previous" within atom
+exists_op   ::= "exists" typed_binder "." condition
+tp_op       ::= "tp" "(" binder_slot ")"
+parenthesized ::= "(" condition ")"
+atom        ::= "(" condition ")" | tp_op | call | refinable | comparison
+
+refinable   ::= ( predicate | param_ref ) { field_block }
+field_block ::= "{" [ named_args ] "}"
+predicate   ::= qualified_action "::" event_kind "{" [ named_args ] "}"
+qualified_action ::= ident { "::" ident } "::" string
+event_kind  ::= ident
+named_args  ::= named_arg { "," named_arg }
+named_arg   ::= field_path ":" term
+field_path  ::= ident { "." ident }
+
+comparison  ::= term cmp_op term
+cmp_op      ::= "&lt;=" | "&gt;=" | "==" | "&lt;" | "&gt;"
+
+agg_expr    ::= sum_expr | count_expr | call
+sum_expr    ::= "sum" binder_slot for_binders "where" condition
+count_expr  ::= "count" for_binders "where" condition
+for_binders ::= "for" typed_binder { "," typed_binder } "."
+typed_binder::= "(" binder_slot ":" type_expr ")"
+type_expr   ::= ident { "::" ident }
+
+within      ::= "within" ( param_ref | integer time_unit )
+time_unit   ::= "s" | "m" | "h" | "d"
+
+call        ::= ident "(" [ call_arg { "," call_arg } ] ")"
+call_arg    ::= interval_lit | condition | term
+interval_lit::= integer time_unit
+
+term        ::= entity | decimal_lit | paren_agg | agg_expr | integer
+              | string | "true" | "false" | array | context_field
+              | scope_field | wildcard | param_ref | binder_ref | ident
+entity      ::= ident { "::" ident } "::" string
+decimal_lit ::= "decimal" "(" string ")"
+context_field ::= "context" ("." ident)+           (* the context record  *)
+scope_field ::= ("principal" | "resource") ("." ident)*  (* scope entity ± attr *)
+wildcard    ::= "*"
+binder_slot ::= param_ref | binder_ref | ident
+param_ref   ::= "?" ident        (* macro value parameter    *)
+binder_ref  ::= "$" ident        (* macro fresh binder       *)
+</code></pre>
+<p>Precedence and scope. <code>&amp;&amp;</code> is loosest; <code>!</code> binds tighter than both <code>since</code> and
+<code>&amp;&amp;</code> (so <code>!a since W b</code> negates only <code>a</code>, and <code>!a &amp;&amp; b</code> negates only <code>a</code>).
+<code>exists</code> is a binding form with <strong>maximal right scope</strong>: <code>exists (x: T). φ &amp;&amp; ψ</code>
+binds <code>x</code> over <code>φ &amp;&amp; ψ</code>; parenthesize to stop it early. An aggregate is a
+<em>term</em> syntactically; the rule that an aggregate may appear <em>only</em> as a
+comparison operand is a validation rule (<a href="#54-temporal-acceptance-well-formedness">§5.4</a>),
+not a grammar rule. <code>param_ref</code> (<code>?p</code>) and <code>binder_ref</code> (<code>$t</code>) are legal <em>only</em>
+inside a macro body; the well-formedness pass rejects them elsewhere.</p>
+<h3 id="25-information-provider-invocations-no-dedicated-grammar"><a class="header" href="#25-information-provider-invocations-no-dedicated-grammar">2.5 Information-provider invocations (no dedicated grammar)</a></h3>
+<p>An information-provider invocation has <strong>no dedicated syntax</strong>: it is an
+ordinary Cedar expression (<a href="#23-core-expressions-cedar-derived">§2.3</a>) whose
+head is a namespace-qualified call, optionally followed by output <em>methods</em> and
+a field/index projection, then used in any Cedar position (comparison,
+arithmetic, boolean combination). All of the following are provider
+invocations, recognized <em>structurally</em> — a namespaced <code>Ns::Fn(…)</code> call — and
+hoisted at lowering (<a href="#44-information-provider-leaves">§4.4</a>):</p>
+<pre><code class="language-text">Strings::Matches(context.input.doc, "^[A-Z]+$").matched == true
+Content::Filter(context.input.doc, ["VIOLENCE"])["VIOLENCE"].severityScore.lessThan(decimal("0.5"))
+BedrockGuardrails::ContentFilter(context.input.doc).maxConfidenceScore() &lt; 50
+Access::Allowed(principal.id).allowed == true
+Strings::DigitCount(context.input.doc).count + 1 &lt;= 3
+</code></pre>
+<p>Because the invocation is plain Cedar, it composes with the full expression
+grammar — arithmetic on outputs, <code>if</code>/<code>then</code>/<code>else</code>, mixing provider and
+non-provider terms — with no restriction beyond what Cedar itself allows. This
+holds identically whether the invocation sits in a bare <code>when { … }</code> or a
+<code>guardrails { … }</code> clause (the latter is transparent sugar for the former, see
+<a href="#22-condition-clauses">§2.2</a>).</p>
+<p>Two surface shapes are relevant to the parser:</p>
+<ul>
+<li>
+<p><strong>Arguments.</strong> A provider argument is resolved <em>before</em> Cedar runs (it helps
+build the context Cedar evaluates against), so it must be a value the
+resolver can read off the request event: an attribute path rooted at
+<code>context</code>, <code>principal</code>, or <code>resource</code>; a literal (<code>string</code> / <code>integer</code> /
+<code>bool</code> / <code>decimal("…")</code>); or a set of those. This mirrors MFOTL’s argument
+rule; arbitrary arithmetic / <code>if</code> is not a provider argument. A non-conforming
+argument is a lowering error (<a href="#44-information-provider-leaves">§4.4</a>).</p>
+</li>
+<li>
+<p><strong>Methods.</strong> A method whose name is not a Cedar built-in (<code>isEmpty</code>,
+<code>contains</code>, <code>lessThan</code>, …) is deferred by the parser as a <code>MethodCall</code> node
+(Cedar built-ins are still desugared eagerly). At lowering, if the chain’s
+base is a provider invocation the method is a <strong>declared output method</strong>;
+otherwise it is a genuine unknown-method error. A method <em>post-processes</em> the
+output: <code>Fn(a).m(b)</code> binds <code>m(evaluate(a), b)</code>, and methods chain
+(<code>.m1().m2()</code> = <code>m2(m1(output))</code>). Each method has its own <code>argumentTypes</code> +
+<code>outputType</code> in the provider declaration’s <code>availableMethods</code> map, and
+resolves to a <code>fn name(input, args…)</code> in the provider’s Rhai script. The
+method chain is <strong>eager</strong> (evaluated in Rhai at authorize time); a
+field/index projection <em>after</em> the last method stays native Cedar over the
+hoisted value, and a projection may not precede a method in the same chain.</p>
+</li>
+</ul>
+<h3 id="26-event-schema-dsl"><a class="header" href="#26-event-schema-dsl">2.6 Event-schema DSL</a></h3>
+<p>A schema-independent description of how event signatures are derived from an
+action schema.</p>
+<pre><code class="language-ebnf">schema      ::= [ max_window ] { event_decl }
+max_window  ::= "max_window" "=" interval
+interval    ::= integer time_unit                  (* time_unit ∈ {s,m,h,d} *)
+event_decl  ::= [ "decision" ] "event" "&lt;" binder "&gt;" "::" event_kind
+                "{" [ fields ] "}"
+fields      ::= field { "," field } [ "," ]
+field       ::= spread | named_field
+spread      ::= "..." selector "(" binder_ref ")"
+named_field ::= [ "pin" ] ident ":" type_expr [ "=" pin_ref ]
+selector    ::= "inputs" | "outputs" | "principalType" | "resourceType"
+type_expr   ::= selector_call | record_type | concrete_type
+selector_call ::= selector "(" binder_ref ")"
+record_type ::= "{" [ fields ] "}"
+concrete_type ::= ident { "::" ident }
+pin_ref     ::= pin_scope | pin_context
+pin_scope   ::= ("principal" | "resource") ("." ident)*
+pin_context ::= "context" ("." ident)+
+</code></pre>
+<p><code>decision</code> marks the event kind as a <strong>decision kind</strong> (ingesting one runs
+authorization). <code>&lt;A&gt;</code> is the action binder; <code>...inputs(A)</code> splices the action’s
+<code>context.input</code> fields (likewise <code>outputs</code>); <code>principalType(A)</code> / <code>resourceType(A)</code>
+yield the action’s <code>appliesTo</code> entity type set. <code>pin</code> marks a field whose value
+is forced to a request-side value on every predicate for the event (a
+correlation); <code>pin</code> and the <code>= &lt;reference&gt;</code> clause must appear together, where
+the reference is a scope entity (<code>principal</code> / <code>resource</code>, ± an attribute tail)
+or a context field (<code>context.&lt;path&gt;</code>), and a pinned field must be a leaf. <code>pin</code>, <code>decision</code>, <code>event</code> are <em>contextual</em>
+keywords. This grammar is purely syntactic — binding the selectors to a concrete
+schema is the <strong>derivation</strong> pass, which runs inside lowering (<a href="#45-schema-derivation-and-augmentation">§4.5</a>).</p>
+<p>The optional leading <code>max_window = &lt;interval&gt;</code> directive caps how far back any
+policy’s temporal <code>within</code> window may look; it must precede the event
+declarations, appear at most once, and be a positive interval (a zero window is
+a parse error). Absent, derivation supplies a <strong>24h</strong> default. The cap is
+enforced by the temporal dialect (<a href="#55-temporal-dialect-validation-against-the-schema">§5.5</a>,
+<strong>TEMP-MaxWindow</strong>).</p>
+<hr>
+<h2 id="3-abstract-syntax"><a class="header" href="#3-abstract-syntax">3. Abstract syntax</a></h2>
+<p>Parsing produces the surface AST. The core spine and operators are Dogwood’s own
+(<code>src/ast.rs</code>); leaf <em>values</em> (literals, entity refs, patterns, entity types)
+reuse Cedar’s <code>cedar_policy_core::ast</code> types verbatim.</p>
+<pre><code>PolicySet  ::= (defs: MacroDef*,  policies: Policy*)
+Policy     ::= (annots: Annotation*, effect: Effect, scope: Scope, conds: Cond*)
+Effect     ::= Permit | Forbid
+Cond       ::= (kw: When | Unless, body: Expr)
+Scope      ::= (principal: PrincipalConstraint,          (* Cedar constraints,   *)
+                action:    ActionConstraint,             (* built by the parser, *)
+                resource:  ResourceConstraint)           (* carrying .dw Locs     *)
+
+Expr       ::= Lit ℓ | Var v | Slot s | Extension X
+             | UnaryApp(UnOp, Expr) | BinaryApp(BinOp, Expr, Expr)
+             | GetAttr(Expr, name) | HasAttr(Expr, name⁺) | Like(Expr, pat)
+             | Is(Expr, ety, Expr?) | IfThenElse(Expr, Expr, Expr)
+             | Set(Expr*) | Record((name × Expr)*)
+             | Call(name, Expr*) | MethodCall(Expr, name, Expr*)  (* both residual; see below *)
+             | ParamRef(name)                                     (* transient; see below *)
+X          ::= Temporal φ
+</code></pre>
+<p><code>UnOp</code> = <code>Not | Neg | IsEmpty</code> plus the extension constructors
+(<code>decimal | datetime | duration | ip</code>) and zero-argument extension methods
+(<code>isIpv4 | … | toDays</code>). <code>BinOp</code> = the core relational/boolean/arithmetic
+operators (including the surface-only <code>NotEq | Greater | GreaterEq</code>), the
+set/entity/tag operators, and the one-argument extension methods
+(<code>DecimalLessThan | … | isInRange | offset | durationSince</code>). <code>Extension</code> now
+carries only <code>Temporal</code> — an information provider is <em>not</em> an extension leaf but
+a residual <code>Call</code>/<code>MethodCall</code> recognized at lowering (below). <code>Call</code>,
+<code>MethodCall</code>, and <code>ParamRef</code> are <strong>residual</strong>: after macro expansion a <code>Call</code>
+survives only if it is a namespace-qualified (provider) invocation, a
+<code>MethodCall</code> survives only as a non-Cedar-builtin method (a provider output
+method), and <code>ParamRef</code> never survives — lowering hoists the provider forms
+(<a href="#44-information-provider-leaves">§4.4</a>) and rejects everything else.</p>
+<p><strong>Temporal abstract syntax</strong> (<code>src/extension/temporal/ast.rs</code>):</p>
+<pre><code>φ  (Condition)  ::= And(φ, φ) | Not(φ)
+                  | Formerly(W, φ) | Previous(W, φ) | Since(φ, W, φ)
+                  | Predicate P | Comparison(⋈, t, t)
+                  | Exists((x:T), φ) | Tp(x)
+                  | Call c | SigilRef(σ, name) | Refine(φ, NamedArg*)  (* transient *)
+P  (Predicate)  ::= (ns: name*, action: string, kind: string, args: NamedArg*)
+NamedArg        ::= (name: field_path, value: t)
+t  (Term)       ::= Entity(ty,id) | Int n | Decimal s | Str s | Bool b
+                  | ContextField(seg*) | Var x | Wildcard | Array(t*)
+                  | Agg a | ParamRef name | BinderRef name              (* last two transient *)
+a  (AggExpr)    ::= Sum(x, (x:T)*, φ) | Count((x:T)*, φ) | Call c
+⋈  (CmpOp)      ::= ≤ | &lt; | ≥ | &gt; | =
+W  (WithinSpec) ::= Concrete(n, unit) | ParamRef name                  (* ParamRef transient *)
+T  (Type)       ::= Timepoint | Named(name*)
+</code></pre>
+<p><code>Since</code>’s negative form (“left has <em>not</em> held since”) is <code>Not</code> around the left
+operand — there is no dedicated flag. <code>Tp(x)</code> binds <code>x</code> to the current
+timepoint. Binder type annotations are <strong>authoritative</strong>: validation seeds each
+declared type into the type environment and checks every use of the variable
+against it (see <a href="#55-temporal-dialect-validation-against-the-schema">§5.5</a>),
+rather than inferring the type from a use site. The <strong>transient</strong> nodes (<code>Call</code>, <code>SigilRef</code>, <code>Refine</code>, <code>Term::ParamRef</code>,
+<code>Term::BinderRef</code>, <code>BinderSlot::{ParamRef,BinderRef}</code>, <code>WithinSpec::ParamRef</code>,
+<code>AggExprKind::Call</code>) appear only inside an unexpanded macro body and are removed
+by macro expansion; a valid post-expansion tree contains none of them.</p>
+<p><strong>Provider data types</strong> (<code>src/extension/provider/ast.rs</code>): there is no provider
+expression AST — an invocation lives in the core <code>Expr</code> tree as a <code>Call</code> (with
+an optional <code>MethodCall</code> chain). The module holds only the data types the
+invocation is <em>lifted into</em> at lowering: <code>Invocation = (function: name*, args: Arg*)</code>, a <code>MethodCall = (name, args: Arg*)</code> for each output method, and
+<code>Arg ::= Field(seg*) | String | Integer | Decimal | Bool | Set(Arg*)</code>, where a
+<code>Field</code> path is rooted at <code>context</code> / <code>principal</code> / <code>resource</code>.</p>
+<hr>
+<h2 id="4-lowering-dogwood--cedar"><a class="header" href="#4-lowering-dogwood--cedar">4. Lowering: Dogwood ⇝ Cedar</a></h2>
+<p>Lowering is a <strong>translation semantics</strong>: a Dogwood policy set becomes a Cedar
+<code>PolicySet</code> (one static policy per rule) plus an <em>augmented</em> Cedar schema and a
+list of <em>hoisted leaves</em>. It is the crate-private <code>parse</code>/<code>lower</code> pipeline
+(<code>src/api.rs</code>), split into two phases along the one input that motivates the
+split — the action schema (see <a href="07-api-and-workflow.html">Chapter 07</a>):</p>
+<ul>
+<li><strong><code>parse(source, ServiceSchema)</code></strong> — pure syntax: parse, merge the macro
+library, macro-expand. No action schema. (<code>api.rs</code>, <code>ParsedPolicySet::parse</code>, rule <strong>L-Phase-Parse</strong>.)</li>
+<li><strong><code>lower(parsed, PolicySchema, distincter?)</code></strong> — derive the event schema
+against the action schema, translate each rule, augment the schema, inject
+pins, and assemble the <code>Lowered</code> artifact. (<code>api.rs</code>, <code>lower</code>, rule <strong>L-Phase-Lower</strong>.)</li>
+</ul>
+<p>The translation environment is <code>Γ = (𝓀, ι, D)</code> where <code>𝓀</code> is the current rule’s
+<strong>rule key</strong> (<a href="#41-rules-policy-ids-and-hoisting">§4.1</a>), <code>ι</code> a per-rule field
+ordinal, and <code>D</code> the provider declarations. We write <code>Γ ⊢ e ⇝ ⟦e⟧ ⊣ Γ′</code> for
+“<code>e</code> translates to the Cedar expression <code>⟦e⟧</code>, threading state <code>Γ → Γ′</code>” (the
+state carries the accumulating hoisted-leaf lists and the ordinal counter).</p>
+<h3 id="41-rules-policy-ids-and-hoisting"><a class="header" href="#41-rules-policy-ids-and-hoisting">4.1 Rules, policy ids, and hoisting</a></h3>
+<p>Each Dogwood rule becomes exactly one Cedar static policy.</p>
+<pre><code>   effect ↦ ε      scope = (P, A, R)      Γ₀ = Γ[𝓀 := key(δ, i), ι := 0]
+   Γ₀ ⊢ conds ⇝ γ ⊣ Γ′        id = key(δ, i)      annots ↦ ᾱ
+  ───────────────────────────────────────────────────────────────────── (L-EmitPolicy)
+   Γ ⊢ (rule i, effect, scope, conds, annots)
+        ⇝  StaticPolicy(PolicyID id, ᾱ, ε, P, A, R, γ)  ⊣ Γ′
+</code></pre>
+<p><em>(<code>cedarify/mod.rs</code> <code>emit_policy</code>.)</em> The scope constraints <code>P, A, R</code> pass through
+<strong>unchanged</strong> — the parser already built them as loc-bearing Cedar constraints
+(<strong>L-ScopePassthrough</strong>, <code>cedarify/mod.rs</code> <code>emit_policy</code>). Effect maps directly, <code>Permit ↦ Permit</code>,
+<code>Forbid ↦ Forbid</code> (<strong>L-Effect</strong>). Annotations map to Cedar annotations; a key
+that fails to parse as a Cedar id is silently dropped, and <code>@id</code> is <strong>not</strong>
+special-cased — it is an ordinary annotation, never the policy’s identity
+(<strong>L-Annotations</strong>, <code>cedarify/mod.rs</code> <code>emit_policy</code>). A rule containing an unfilled template slot
+(<code>?principal</code>/<code>?resource</code>) fails: <code>StaticPolicy::try_from</code> errors <em>“policy is not
+static”</em>.</p>
+<p><strong>Rule key.</strong> The <code>i</code>-th rule’s key — which is simultaneously the emitted Cedar
+<strong>PolicyID</strong>, the policy-store key, the decision token returned in a response, and
+the <strong>prefix on that rule’s hoisted field names</strong> — is</p>
+<pre><code>key(δ, i)  =  δ "_" i      if a distincter δ is supplied
+           =  "policy_" i   otherwise
+</code></pre>
+<p><em>(<code>cedarify/mod.rs</code> <code>rule_key</code>, rule <strong>L-RuleKey</strong>.)</em> It is deliberately <strong>not</strong> derived
+from <code>@id</code>; distinctness is the caller’s decision, so that independently-lowered
+sets can be combined without colliding ids (see <a href="07-api-and-workflow.html">Chapter 07</a>
+on <code>lower_with_distincter</code>). Two rules that mint the same id are a fatal error
+(<em>“duplicate policy id”</em>). The field ordinal <code>ι</code> resets to <code>0</code> at each rule
+boundary and is shared by both hoisting schemes below.</p>
+<h3 id="42-clause-folding"><a class="header" href="#42-clause-folding">4.2 Clause folding</a></h3>
+<p>A rule’s condition <code>γ</code> is the conjunction of its clauses, <code>when</code> verbatim and
+<code>unless</code> negated:</p>
+<pre><code>  ───────────────────────────── (L-Fold-Empty)
+   Γ ⊢ [] ⇝ true ⊣ Γ
+</code></pre>
+<pre><code>   Γ ⊢ e ⇝ ⟦e⟧ ⊣ Γ′
+  ────────────────────────────── (L-Fold-When)
+   Γ ⊢ (when e) ⇝ ⟦e⟧ ⊣ Γ′
+</code></pre>
+<pre><code>   Γ ⊢ e ⇝ ⟦e⟧ ⊣ Γ′
+  ─────────────────────────────────── (L-Fold-Unless)
+   Γ ⊢ (unless e) ⇝ !⟦e⟧ ⊣ Γ′
+</code></pre>
+<pre><code>   Γ ⊢ c ⇝ γ_c ⊣ Γ₁       Γ₁ ⊢ rest ⇝ γ_r ⊣ Γ₂       rest ≠ []
+  ──────────────────────────────────────────────────────────────── (L-Fold-Cons)
+   Γ ⊢ (c :: rest) ⇝ (γ_c &amp;&amp; γ_r) ⊣ Γ₂
+</code></pre>
+<p><em>(<code>cedarify/mod.rs</code> <code>emit_policy</code>.)</em> Clauses fold <strong>left-associatively in source
+order</strong>: <code>[c₁, c₂, c₃]</code> becomes <code>And(And(γ₁, γ₂), γ₃)</code>. A bare rule (no clauses)
+has condition literal <code>true</code> — note this is <code>Some(true)</code>, an explicit condition,
+not an absent one. The synthesized <code>Not</code> (for <code>unless</code>) and <code>And</code> (for the
+conjunction) nodes carry the <strong>whole-rule</strong> source location, since they
+correspond to no surface token; every other node carries its own span
+(<strong>L-NodeLoc</strong>).</p>
+<h3 id="43-expression-translation"><a class="header" href="#43-expression-translation">4.3 Expression translation</a></h3>
+<p>Non-extension expressions translate by a straightforward syntax-directed map,
+each node stamped with its <code>.dw</code> span. Leaves: <code>Lit ℓ ⇝ ℓ</code>, <code>Var v ⇝ v</code>,
+<code>Slot s ⇝ s</code> (<strong>L-Expr-Leaves</strong>). Structural nodes recurse and rebuild
+(<code>GetAttr</code>, <code>HasAttr</code>, <code>Like</code>, <code>Is</code>, <code>IfThenElse</code>, <code>Set</code>, <code>Record</code> —
+<strong>L-Expr-Structural</strong>). Operators desugar via Cedar’s own <code>ExprBuilder</code> — the
+same primitive Cedar’s text parser uses — so the output is identical to
+Cedar-parsed text. The <strong>surface-only</strong> operators desugar to negations:</p>
+<pre><code>   NotEq(l, r)     ⇝  !(⟦l⟧ == ⟦r⟧)
+   Greater(l, r)   ⇝  !(⟦l⟧ &lt;= ⟦r⟧)
+   GreaterEq(l, r) ⇝  !(⟦l⟧ &lt;  ⟦r⟧)
+</code></pre>
+<p><em>(<code>to_ast.rs</code> <code>lower_binary</code>, <strong>L-Binary-Table</strong>.)</em> Extension constructors and methods
+become <code>ExtensionFunctionApp</code>s keyed by the unqualified name: unary
+<code>decimal | datetime | duration | ip | isIpv4 | … | toDays</code>
+(<strong>L-Unary-Table</strong>, <code>to_ast.rs</code> <code>lower_unary</code>) and binary
+<code>isInRange | offset | durationSince | lessThan | lessThanOrEqual | greaterThan | greaterThanOrEqual</code>.
+A <code>Call</code> that is not a namespace-qualified (provider) invocation, and any
+<code>ParamRef</code>, are fatal at this point (<strong>L-Expr-Call</strong>) — a well-formed
+post-expansion tree has neither except a provider <code>Call</code>/<code>MethodCall</code>, which the
+provider rules below hoist.</p>
+<h3 id="44-information-provider-leaves"><a class="header" href="#44-information-provider-leaves">4.4 Information-provider leaves</a></h3>
+<p>A temporal marker and a provider invocation are the two forms that are not a
+pure syntactic map: each is <strong>replaced</strong> by a <code>context.&lt;id&gt;</code> reference and its
+content <strong>recorded</strong> as a hoisted leaf, evaluated by the monitor at
+authorization time. The <code>.dw</code> span of the replacement is the original node’s
+span, so a type error on a hoisted field points back at the source it came from.</p>
+<pre><code>   name = 𝓀 "__temporal_" ι      Γ′ = Γ[ι := ι+1, bool_fields ⊕ ⟨scope, name, φ⟩]
+  ─────────────────────────────────────────────────────────────────────────────── (L-Hoist-Temporal)
+   Γ ⊢ Temporal φ  ⇝  context.name  ⊣ Γ′
+</code></pre>
+<p><em>(<code>to_ast.rs</code> <code>lower_expr</code>.)</em> The recorded <code>ContextField</code> carries the rule’s scoped action
+(<code>Concrete</code> / <code>List</code> / <code>Unconstrained</code>, classified off the Cedar action
+constraint — <strong>L-ScopeAction-Classification</strong>, <code>cedarify/mod.rs</code> <code>scope_action</code>), the field name, and
+the temporal condition. Semantically the field is a pre-evaluated <code>Bool</code>.</p>
+<p>A <strong>provider invocation</strong> is a <code>Call</code> whose name is namespace-qualified
+(<strong>L-Expr-Call-Provider</strong>), or a <code>MethodCall</code> chain whose base peels down to such
+a <code>Call</code> (<strong>L-Expr-Method-Chain</strong>, <code>to_ast.rs:peel_provider_chain</code> — a
+<code>MethodCall</code> whose base is not a provider is the fatal unknown-method error). In
+both cases lowering collects the base <code>Invocation</code>, its eager output-method chain
+(in source order), and any <em>trailing</em> field/index projection after the last
+method. The rule may use any action scope (<code>==</code>, <code>in [list]</code>, <code>in Group</code>, or a
+bare <code>action</code>); the hoisted field is typed from the declarations, declared on
+<strong>every</strong> action’s context by schema augmentation, and evaluated for every
+decision event (execution is unconditional — see the provider contract in
+<a href="05-information-providers.html#the-provider-contract">Information providers</a>). It
+hoists to a <strong>two-level</strong> reference <code>context.providers.&lt;id&gt;</code>:</p>
+<pre><code>   name = 𝓀 "_p_" ι      τ = cedarType(D, invocation, methods)      Γ′ = Γ[ι := ι+1, provider_fields ⊕ …]
+  ──────────────────────────────────────────────────────────────────────────────────────────────────── (L-Hoist-Provider)
+   Γ ⊢ Invocation·methods  ⇝  context.providers.name  ⊣ Γ′
+</code></pre>
+<p><em>(<code>to_ast.rs</code> <code>lower_provider_invocation</code>.)</em> <code>τ</code> is the pipeline’s tail type: the
+last method’s <code>outputType</code> if the chain is non-empty, else the invocation’s
+<code>outputType</code>, looked up from the declarations <code>D</code> and defaulting to <code>String</code> when
+undeclared (the undeclared case — and an undeclared/misused method — is caught by
+validation, <a href="#56-provider-dialect">§5.6</a>). The invocation’s arguments are lifted
+to <code>Arg</code>s (attribute paths rooted at <code>context</code>/<code>principal</code>/<code>resource</code>, literals,
+sets; a non-conforming argument is fatal). The method chain is <strong>eager</strong>
+(evaluated in Rhai at authorize time and bound into the field); the trailing
+projection (<code>.field</code> / <code>["key"]</code>) lowers to a chain of native <code>GetAttr</code> over the
+hoisted value (a string index <code>r["k"]</code> is exactly <code>r.k</code>), and the surrounding
+comparison is ordinary Cedar (<strong>L-Provider-Projection</strong>). A projection may not
+precede a method in the same chain (fatal).</p>
+<p>Because the field name is prefixed by the rule key <code>𝓀</code> and suffixed by the
+per-rule ordinal <code>ι</code>, hoisted names are deterministic and unique across lowering
+calls with distinct distincters — the property that lets independently-lowered
+sets share one Cedar <code>PolicySet</code> / policy store.</p>
+<h3 id="45-schema-derivation-and-augmentation"><a class="header" href="#45-schema-derivation-and-augmentation">4.5 Schema derivation and augmentation</a></h3>
+<p>Two schema transformations happen inside <code>lower</code>:</p>
+<ol>
+<li>
+<p><strong>Derivation.</strong> The event-schema DSL (<a href="#26-event-schema-dsl">§2.6</a>) is bound
+against the concrete action schema, yielding, per action <code>A</code> and declaration,
+a derived event <code>(ns(A), A, kind, decision?, fields, pins)</code>. This is the sole
+place the symbolic selectors (<code>inputs</code>/<code>outputs</code>/<code>principalType</code>/<code>resourceType</code>)
+meet a real schema. The set of kinds marked <code>decision</code> becomes the
+<code>decision_kinds</code> used by the authorizer (<code>event_schema/derive.rs</code>).</p>
+</li>
+<li>
+<p><strong>Augmentation.</strong> The action schema is extended with the hoisted context
+fields the lowered policies reference: for each temporal leaf, a required
+<code>Bool</code> attribute <code>context.&lt;name&gt;</code> on its action(s); for provider leaves, a
+<code>providers</code> record grouping the fields, typed from the declarations. The
+augmentation <strong>merges</strong> into an existing <code>providers</code> record rather than
+replacing it, so feeding an augmented schema forward (incremental lowering)
+preserves earlier providers (<code>cedarify/schema_augment.rs</code>).</p>
+</li>
+</ol>
+<p>Finally the temporal leaves’ conditions have schema <strong>pins</strong> injected — a pinned
+event field <code>f</code> is conjoined <code>f: context.&lt;pin-path&gt;</code> onto every matching
+predicate, realizing the “same X” correlation (<code>event_schema/pin.rs</code>).</p>
+<p>After pin injection, leaves are <strong>relativized</strong> when the schema declares at
+least one <em>universal symmetric</em> pin — a pin present (identically) on every
+derived event kind whose context path is the field’s own path, or a reserved
+scope-alias pair (<code>callerPrincipal</code>/<code>principal</code>,
+<code>callerResource</code>/<code>resource</code> — the bare scope reference, not
+<code>context.principal</code>) (<strong>L-Relativize</strong>,
+<code>event_schema/relativize.rs</code>). Let μ be the disjunction, over every derived
+event kind, of a predicate carrying exactly the pinned correlations (“an event
+of any kind agreeing with the current request on every universally-pinned
+field”). The rewrite guards each temporal-scope body that does not already
+contain a positive predicate conjunct with <code>μ ∧ ·</code>; replaces
+<code>previous[0,W] φ</code> by a timepoint-encoded “most recent μ-position satisfies φ,
+within W of the decision point” (an anti-join over <code>tp</code>-bound positions); and
+replaces a <code>since</code> whose left is not a μ-confined negation by a
+count-equality encoding of “every μ-position in the anchor range satisfies the
+left”. The rewritten formula’s verdict over the global trace equals the
+original formula’s verdict over the sub-trace agreeing with the request on the
+pinned fields — the <strong>partition guarantee</strong>: storage and evaluation may be
+sharded by the pinned key without changing any verdict. Every synthesized
+binder is fresh (<code>__pin_*</code>) and range-restricted by a positive atom before any
+filter uses it. Validation (§5) runs on the <strong>pre-rewrite</strong> leaves, so
+findings point at authored structure; engines receive the rewritten leaves
+(<code>Lowered.temporal_rewritten</code>, surfaced by <code>temporal_fields()</code> /
+<code>temporal_leaves()</code>). With no universal symmetric pin the rewrite is the identity. The default event
+schema is not such a case: it pins <code>callerPrincipal</code> on every derived kind, so under
+the default the rewrite is active.</p>
+<p>The result is the <code>Lowered</code> artifact (<strong>L-Lowered-Artifact</strong>, <code>api.rs</code>, <code>struct Lowered</code>):
+the Cedar <code>policies</code>, the <code>augmented_schema</code> (+ its source text), the hoisted
+<code>temporal</code> and <code>provider</code> leaf lists, the parallel <code>rule_ids</code> / <code>rule_spans</code>
+(where <code>rule_ids[k]</code> is rule <code>k</code>’s PolicyID), the derived <code>event_schema</code>, and
+<code>decision_kinds</code>.</p>
+<hr>
+<h2 id="5-validation"><a class="header" href="#5-validation">5. Validation</a></h2>
+<p>Validation is the judgment <code>Σ ⊢ L ✓</code>: the lowered artifact <code>L</code>, with its
+augmented schema <code>Σ</code>, produces <strong>no error findings</strong>. It is <code>Validator::new().validate(&amp;L)</code>
+(<code>src/validate.rs</code>, <code>src/validator.rs</code>). The validator holds no schema of its
+own — the augmented schema travels on <code>L</code> — which is why, unlike Cedar’s
+<code>Validator::new(schema)</code>, Dogwood’s takes none.</p>
+<h3 id="51-the-two-channel-error-model"><a class="header" href="#51-the-two-channel-error-model">5.1 The two-channel error model</a></h3>
+<pre><code>   parse(src, S) = Ok(𝓅)     lower(𝓅, S′) = Ok(L)
+  ────────────────────────────────────────────────── (V-TwoChannel)
+   L is a proof object; validate(L) yields only findings, never a fatal Error
+</code></pre>
+<p><em>(<code>validate.rs</code>.)</em> A <strong>fatal <code>Error</code></strong> — a parse failure, a macro-expansion
+failure, a lowering failure, or an augmented-schema failure — aborts before a
+<code>Lowered</code> exists, so the validator never sees it. The existence of <code>L</code> <em>is</em> the
+proof that those four phases succeeded. Everything <code>validate</code> produces is a
+<strong>finding</strong> (<code>ValidationError</code> / <code>ValidationWarning</code>); it never returns a fatal
+error and never a syntax/lowering error. <code>Σ ⊢ L ✓</code> holds iff the error channel
+is empty.</p>
+<h3 id="52-order-of-checks"><a class="header" href="#52-order-of-checks">5.2 Order of checks</a></h3>
+<pre><code>   validate_cedar_side(L, Σ) = (E₁, W₁)
+   TemporalDialect.run(L.temporal, ctx) = (E₂, W₂)
+   ProviderDialect.run(L.providers, ctx) = (E₃, W₃)
+  ─────────────────────────────────────────────────────────── (V-Order)
+   validate(L) = ValidationResult(E₁·E₂·E₃, W₁·W₂·W₃)
+</code></pre>
+<p><em>(<code>validate.rs</code> <code>validate_impl</code>.)</em> Checks run in a fixed order — <strong>Cedar side, then temporal,
+then provider</strong> — accumulating into two channels with no short-circuit across
+checks. <code>ctx = (Σ = L.augmented_schema, event_schema = L.event_schema, dw_src)</code>.
+<code>Σ ⊢ L ✓ ⟺ E₁·E₂·E₃ = []</code>.</p>
+<h3 id="53-the-cedar-side"><a class="header" href="#53-the-cedar-side">5.3 The Cedar side</a></h3>
+<pre><code>   L.policies = []                                  L.policies ≠ []
+  ──────────────────── (V-Cedar-Empty)      ────────────────────────────────────────── (V-Cedar-Validate)
+   Cedar side = ([], [])                     Cedar side = CedarValidator(Σ).validate(
+                                                            L.policies, Strict)
+</code></pre>
+<p><em>(<code>validate.rs</code> <code>validate_impl</code>.)</em> Cedar’s own validator runs in <strong>strict</strong> mode over the
+augmented schema. Its errors become <code>ValidationError::Cedar</code> findings and its
+warnings pass through verbatim (<strong>V-Cedar-Warnings</strong>). Crucially, this pass is
+where several things are <em>deliberately delegated</em> rather than re-checked
+elsewhere: <strong>provider output/projection typing</strong>, <strong>provider field-path
+arguments</strong>, and <strong>context typing under an unconstrained action scope</strong>. Each
+finding is located in <code>.dw</code>: prefer the Cedar diagnostic’s own label span (the
+lowered AST carries <code>.dw</code> locations), else fall back to the originating rule’s
+whole span via <code>rule_ids → rule_spans</code>, else a 1-byte span at the start
+(<strong>V-Cedar-Span</strong>).</p>
+<h3 id="54-temporal-acceptance-well-formedness"><a class="header" href="#54-temporal-acceptance-well-formedness">5.4 Temporal acceptance (well-formedness)</a></h3>
+<p>Before a temporal condition is ever validated against a schema, it must pass the
+<strong>acceptance</strong> checker (<code>src/extension/temporal/check.rs</code>), run at parse time via
+<code>check_condition(φ, ∅)</code>. This enforces MFOTL-style <em>safe-range monitorability</em> —
+the conditions under which the condition denotes a finite, computable relation
+over the event history. These are the rules most likely to reject a
+plausible-looking policy, so they are given in full. All are <strong>conservative</strong>
+(“reject if unsure”) and are <strong>suspended</strong> in the presence of a macro sigil
+(re-checked post-expansion — <strong>WF-Sigil-Punt</strong>).</p>
+<p>We write <code>x ∈ RR(φ)</code> for “<code>x</code> is range-restricted by a positive atom of <code>φ</code>”,
+where <code>RR</code> collects restrictors from: predicate fields <code>P{f: x}</code>, <code>tp(x)</code>, a
+binding equality <code>(non-var, non-wildcard term) == x</code> or the mirror (<code>x == *</code> restricts nothing — a wildcard resolves to no value), the bodies of
+<code>formerly</code>/<code>previous</code>, and the <strong>right</strong> operand of <code>since</code> — descending through
+<code>&amp;&amp;</code> and nested <code>exists</code> (dropping the inner binder’s own fact). A negation
+contributes <strong>nothing, at any depth</strong>: <code>RR</code> does not descend into <code>!ψ</code> —
+the ¬-rule <em>discards</em> every restriction fact rather than flipping a
+parity, so a doubly-negated atom is <strong>not</strong> a positive restrictor (evaluation
+treats a negation as an opaque boolean filter whose rows carry no bindings).</p>
+<p><strong>Existential range restriction.</strong></p>
+<pre><code>   x ∈ RR(φ)          Γ, x ⊢ φ ✓wf
+  ──────────────────────────────────── (WF-Exists)
+   Γ ⊢ exists (x : T). φ  ✓wf
+</code></pre>
+<p><em>(<code>check.rs</code> <code>check_exists_safe</code>.)</em> An <code>exists</code>-bound variable must be range-restricted by a
+positive atom <strong>inside its body</strong>. Otherwise: <em>“existential variable <code>x</code> is not
+range-restricted by any positive atom in the <code>exists</code> body …”</em>. (Sigil slot or a
+sigil anywhere in the body ⇒ accept, deferring to post-expansion.)</p>
+<p><strong>Ordered conjunction (the demands rule).</strong> Every conjunct is a conditional
+restriction fact <code>demands(c) → RR(c)</code>: it <em>produces</em> the variables in <code>RR(c)</code>
+and <em>consumes</em> the variables in <code>demands(c)</code> — bindings that must already be
+in the environment when it evaluates. The standard formulation discharges such facts
+order-independently; this evaluator binds left-to-right, so the chain must be
+a valid discharge order. Flatten a <code>&amp;&amp;</code>-chain into <code>[c₁ … cₙ]</code> in source
+order and walk left to right with an accumulator <code>ρ</code>:</p>
+<pre><code>   for each i:  demands(ci) ⊆ ρ          ρ ⇐ ρ ∪ RR(ci)
+  ──────────────────────────────────────────────────────── (WF-Demands)
+   c₁ &amp;&amp; … &amp;&amp; cₙ   ✓wf
+</code></pre>
+<p><em>(<code>check.rs</code> <code>check_demands</code>/<code>check_chain</code>.)</em> The demanding conjuncts
+(<strong>WF-Demands-Classification</strong>):</p>
+<ul>
+<li>a <strong>pure filter</strong> — an <em>ordering</em> comparison (<code>&lt;</code>, <code>&lt;=</code>, <code>&gt;</code>, <code>&gt;=</code>), an
+equality that binds nothing (<code>x == y</code> with both bare vars, both sides
+ground, or a <code>*</code> wildcard side — a wildcard is never a resolvable value),
+or a guarded negation <code>!ψ</code> (<strong>WF-Neg-Guarded</strong>) — demands all its free
+variables and produces none. Otherwise: <em>“variable <code>v</code> is used in a filter
+… that is not range-restricted by a preceding conjunct …”</em>.</li>
+<li>a <strong>binding equality</strong> <code>x == v</code> produces <code>x</code> and demands the value side’s
+<em>outward</em> free variables — for an aggregate operand, <code>fv(body) ∖ for-list</code>
+(a correlated aggregate is only per-<code>u</code> when <code>u</code> is already bound; with
+<code>u</code> unbound the count/sum silently de-correlates). Otherwise: <em>“the
+equality binding <code>n</code> reads <code>u</code> inside its aggregate operand …”</em>.</li>
+<li>a <strong><code>since</code></strong> produces <code>RR(anchor)</code> and demands <code>fv(left) ∖ RR(anchor)</code>
+(the standard <code>free(β) ⊆ free(γ)</code> side condition, relaxed to “or restricted
+earlier”: the left is a per-step condition evaluated under the anchor’s
+bindings and binds nothing itself). Otherwise: <em>“variable <code>u</code> is used in
+the left operand of a <code>since</code> …”</em>.</li>
+</ul>
+<p>Demands propagate through non-chain wrappers (<code>formerly</code>/<code>previous</code> bodies,
+an <code>exists</code> body minus its binder). Nested <code>&amp;&amp;</code> chains are checked
+self-contained, <strong>seeded with <code>ρ</code> at their position</strong> (<strong>WF-Demands-Seed</strong>):
+the evaluator threads every binding produced by preceding conjuncts into
+nested structure, so an enclosing-chain restrictor genuinely discharges a
+nested demand — and grouping with parentheses never changes acceptance. An
+enclosing <strong>binder</strong> is still never a seed (a binder restricts nothing by
+itself), and a shadowing binder removes its name from the inherited seed.
+So <code>exists (a: Long). (a &gt; 100 &amp;&amp; P{f: a})</code> is <strong>rejected</strong> — the restrictor
+<code>P{f: a}</code> must precede the filter — while
+<code>exists (u). (P{f: u} &amp;&amp; exists (n). ((count … u …) == n &amp;&amp; n &gt;= 2))</code> is
+accepted: the nested chain inherits <code>u</code> from the enclosing one.</p>
+<p><strong>Leaf closedness.</strong> A temporal leaf must be <strong>closed</strong>: every variable bound by
+an <code>exists</code> binder or an aggregation <code>for</code> list.</p>
+<pre><code>   fv(φ) = ∅
+  ──────────────────── (WF-Closed)
+   φ   ✓wf as a leaf
+</code></pre>
+<p><em>(<code>check.rs</code> <code>check_leaf_closed</code>; run by <code>Temporal::parse</code> and again
+post-expansion.)</em> A leaf is evaluated <strong>boolean-ly</strong> at the decision point with
+no implicit existential closure, so a free variable’s bindings would not thread
+across conjuncts — the accepted formula would silently evaluate as an
+always-false (or mis-correlated) guard. Violation: <em>“variable <code>x</code> is free in
+this temporal condition …”</em>. Here <code>fv</code> is the standard free-variable set (an
+aggregate binds its <code>for</code> list over its <code>where</code> body; <code>exists</code> binds its
+binder; <code>tp(t)</code> outside any binder leaves <code>t</code> free). No sigil punt is needed:
+an unresolved macro call contributes no visible variables, and macro hygiene
+guarantees expansion can never capture a call-site variable, so a variable free
+at parse time is necessarily still free after expansion.</p>
+<p><strong>Monitoring scope must monitor (tp-dependence).</strong> Every scope that establishes a
+timepoint must actually vary with the current timepoint (<code>is_tp_dep</code>):</p>
+<pre><code>   ─────────────────────────── (WF-TpDep-Conjunct)   each top-level when/unless conjunct is tp-dependent
+   ─────────────────────────── (WF-TpDep-Op-Body)    the body of formerly/previous is tp-dependent
+   ─────────────────────────── (WF-TpDep-Since)       both sides of since are tp-dependent
+   ─────────────────────────── (WF-TpDep-Exists-Body) the body of exists is tp-dependent
+   ─────────────────────────── (WF-TpDep-Agg-Body)    the where-body of an aggregate is tp-dependent
+</code></pre>
+<p><em>(<code>check.rs</code>, <code>temporal/validate.rs</code> <code>check_tp_dependence</code>.)</em> A <code>Predicate</code>, a <code>Tp</code>, or an <code>Agg</code> is
+tp-dependent by construction; a <code>Var</code> is tp-dependent iff bound in the current
+scope; literals, <code>context</code> fields, and wildcards are not. Each violated scope
+emits a targeted message (e.g. <em>“this <code>when</code>/<code>unless</code> conjunct does not vary with
+the current timepoint; it monitors nothing”</em>). Binder harvesting is asymmetric: a
+variable bound only in a <strong>negated</strong> position or only inside an aggregation
+<code>for</code>-domain does not bind for the surrounding scope (<strong>TEMP-TpDep-BinderHarvest</strong>).</p>
+<p><strong>Aggregation binding.</strong> For <code>sum v for (g₁:T₁) … (gₙ:Tₙ). where ψ</code> (and <code>count</code>,
+which has no <code>v</code>):</p>
+<pre><code>   v ∈ {ḡ}       fv(ψ) ⊆ (Γ ∪ {ḡ})       ḡ ⊆ fv(ψ)       ∀g ∈ ḡ:  g ∈ RR(ψ)
+  ─────────────────────────────────────────────────────────────────────────── (WF-Agg-Domain)
+   sum v for ḡ. where ψ   ✓wf
+</code></pre>
+<p><em>(<code>check.rs</code> <code>check_aggregation</code>.)</em> Four obligations, checked in order:</p>
+<ol>
+<li>The summed variable must be one of this aggregation’s own <code>for</code> binders
+(<strong>WF-Agg-BoundVar-InDomain</strong>): the sum is computed over the relation
+projected onto the <code>for</code> columns, so a summand outside it would silently
+sum to 0. Otherwise: <em>“aggregation sums <code>v</code>, which is not one of its <code>for</code>
+binders …”</em>.</li>
+<li>Every free variable of the <code>where</code>-body must be bound by the <code>for</code>-list or
+an enclosing binder (<strong>WF-Agg-Domain-Binds-FreeVars</strong>). Otherwise:
+<em>“variable <code>u</code> is used in the aggregation body but is bound by neither …”</em>.</li>
+<li>Every <code>for</code> variable must <strong>occur</strong> in the body (<strong>WF-Agg-Domain-Occurs</strong>;
+the standard safe-range rule presupposes <code>ḡ ⊆ fv(ψ)</code>): an unused group key would group
+over an unbounded domain. Otherwise: <em>“<code>for</code>-variable <code>g</code> does not occur in
+the aggregation body …”</em>.</li>
+<li>Every <code>for</code> variable must be <strong>range-restricted</strong> by a positive atom of the
+body (<strong>WF-Agg-Domain-RR</strong>) — the aggregation analogue of WF-Exists, and
+what the monitorable fragment demands: the body must denote a <em>finite</em>
+relation over the <code>for</code> domain. Occurrence alone is not enough — a variable
+occurring only under a negation, or only in the <strong>left</strong> operand of a
+<code>since</code>, denotes an infinite relation (or one that does not range over the
+variable), and evaluation would silently degrade to a 0/1 witness count
+(a <code>sum</code> to 0). Otherwise: <em>“aggregation <code>for</code>-variable <code>g</code> is not
+range-restricted by any positive atom in the <code>where</code> body …”</em>.</li>
+</ol>
+<p><strong>Aggregate value.</strong> The rest of this section states <em>acceptance</em> obligations; the
+paragraphs under this heading state <strong>semantics</strong> instead. Nothing here can make a
+condition ill-formed, so §7’s meta-properties about what passes this section are
+unaffected. They sit with the other aggregation rules because that is where a reader
+looks for what <code>sum</code> means.
+<em>(<code>src/interpreter/eval.rs</code> <code>eval_agg_expr</code>, <code>sum_column</code>.)</em></p>
+<p><code>count</code> yields the number of rows in the projected relation. <code>sum</code> yields the total of
+its summand column over that relation, <strong>skipping</strong> any row whose summand is not a
+<code>Long</code> — which is observable, because <code>count</code> over the same relation still counts that
+row. Validation rejects the common ways a summand could be non-<code>Long</code> — chiefly a
+declared type that disagrees with whatever range-restricts it — but it does not rule
+the case out: a comparison is only checked where both sides have a type, and an
+optional attribute can be declared <code>Long</code> and still be absent. The skip is therefore
+observable in a validated policy, not only in an unvalidated one. Both aggregates are
+<code>Long</code>.</p>
+<p>Because an aggregate ranges over a <em>set</em>, its value does not depend on the order rows
+are visited, and it is exact for every total that a <code>Long</code> can hold — including totals
+reached by way of partial sums that a <code>Long</code> cannot hold.</p>
+<p>An aggregate value that is <strong>not</strong> representable as a <code>Long</code> is
+<strong>implementation-defined</strong>. The language does not say what such an aggregate compares
+as: a conforming implementation may clamp it to the <code>Long</code> range, evaluate the
+comparison at a wider precision, report an error, or otherwise yield an unspecified
+value. A policy whose verdict depends on which of those an implementation chose is not
+portable, and two implementations may disagree on it without either being wrong, so
+such a policy is not a sound basis for comparing them.</p>
+<p>Which policies those are depends on how the aggregate is used. Taking clamping and
+wider precision as the two readings — an erroring implementation differs from both for
+<em>every</em> comparison, interior thresholds included, so it is not covered by what follows:</p>
+<ul>
+<li>Compared <strong>directly</strong>, only a comparison against an <em>endpoint</em> of the <code>Long</code> range
+can distinguish the two; a threshold strictly inside the range cannot, whichever way
+the total left it. At the maximum, <code>==</code>, <code>!=</code>, <code>&gt;</code> and <code>&lt;=</code> distinguish them while
+<code>&gt;=</code> and <code>&lt;</code> do not; at the minimum, <code>==</code>, <code>!=</code>, <code>&lt;</code> and <code>&gt;=</code> distinguish them while
+<code>&lt;=</code> and <code>&gt;</code> do not.</li>
+<li><strong>Bound to a variable</strong>, as <code>exists (n: Long). ((A) == n &amp;&amp; B)</code> does, the reach is wider. An out-of-range total has <em>no</em> <code>Long</code> witness at all
+unless the implementation clamps, so a widening implementation empties the
+existential outright. The two readings then differ exactly when <code>B</code> holds of the
+clamped endpoint: they agree when it does not, so <code>B</code> = <code>n &gt; &lt;maximum&gt;</code> agrees
+(no <code>Long</code> exceeds the maximum) while most other <code>B</code> do not. Note also that emptying
+the existential is not uniformly restrictive — under <code>forbid</code> it stops the rule
+firing, so the divergence surfaces as a permit.</li>
+</ul>
+<p>If a policy must not depend on any of this, keep window totals inside the <code>Long</code> range
+— which for the aggregate to be meaningful is normally already true.</p>
+<p><strong>Aggregate position.</strong> An aggregate may appear <strong>only</strong> as the immediate operand
+of a comparison:</p>
+<pre><code>  ─────────────────────────────────────────────────────── (WF-Agg-Operand)
+   an Agg is well-placed iff it is a direct operand of a Comparison;
+   an Agg as a predicate-arg value, an array element, or otherwise nested ⟹ reject
+</code></pre>
+<p><em>(<code>check.rs</code> <code>check_operand</code>.)</em> Violation: <em>“an aggregate (<code>sum</code>/<code>count</code>) may appear only as
+the immediate operand of a comparison …”</em>. This makes the aggregate-binding idiom <code>exists (n: T). ((A) == n &amp;&amp; B)</code> well-formed: <code>(A) == n</code> binds
+<code>n</code> (restrictor), then <code>B</code>’s use of <code>n</code> is an already-restricted filter.</p>
+<h3 id="55-temporal-dialect-validation-against-the-schema"><a class="header" href="#55-temporal-dialect-validation-against-the-schema">5.5 Temporal dialect validation (against the schema)</a></h3>
+<p>Given an accepted condition, the temporal <em>dialect</em> checks it against the derived
+event schema and the augmented Cedar schema, per leaf, in order: <strong>event-schema
+names → entity types → context paths → tp-dependence → types</strong>
+(<code>temporal/validate.rs</code>, <strong>TEMP-Order</strong>). Authority is divided: <strong>event/field
+name resolution is owned solely by the event-schema checker</strong> (<a href="#57-event-schema-name-resolution">§5.7</a>);
+the dialect additionally checks:</p>
+<ul>
+<li><strong>Entity types</strong> — every <code>Entity(ty, id)</code> term must name a declared entity
+type; an action ref (<code>…::Action::"X"</code>) is skipped (Cedar reserves <code>Action</code>);
+an enum entity’s id must be a permitted eid (<strong>TEMP-EntityType-</strong>*).</li>
+<li><strong>Context paths</strong> — a <code>context.&lt;path&gt;</code> must resolve against the scoped
+action’s <strong>full</strong> declared context record (Cedar’s <code>context</code> variable —
+<code>context.input.&lt;field&gt;…</code>, <code>context.system.&lt;field&gt;…</code>, etc.), on <strong>every</strong>
+action the leaf’s scope pins; an unconstrained scope defers to Cedar
+(<strong>TEMP-ContextPath-</strong>*). A <code>principal</code> / <code>resource</code> <strong>scope</strong> term is
+separate (Cedar’s request scope entities, not a context field): the bare root
+types to the scoped action’s principal / resource entity type, and an
+attribute tail (<code>principal.dept</code>) is accepted and resolved at eval time
+against the request’s entity store (untyped here, as on the provider surface).</li>
+<li><strong>Types</strong> (best-effort) — from a monomorphic environment seeded by the concrete
+scoped action’s input fields <strong>and every binder’s declared annotation</strong>
+(<code>exists (x: T)</code> and each aggregation <code>for (v: T)</code>; the declared type is
+<strong>authoritative</strong>, not reverse-inferred from a use site). Against that
+environment: a predicate arg must match its declared field type; a use of a
+bound variable must be consistent with its declared type; an ordering
+comparison requires both operands <strong>numeric</strong> (only <code>int</code> is numeric — an
+aggregate types as <code>int</code>, decimal is <strong>not</strong> numeric here); an equality
+requires compatible types; and a <code>tp(x)</code> binder must be declared
+<code>Timepoint</code> — any other declaration conflates a timepoint index with a
+data value, making the condition permanently false (a validated dead
+guard). A check fires only when both types are known (<strong>TEMP-Type-</strong>*).</li>
+<li><strong>Max window</strong> — every <code>within</code> window in the leaf (on a <code>formerly</code>,
+<code>previous</code>, or <code>since</code>, at any depth including inside an aggregation <code>where</code>
+body) must be <strong>≤</strong> the event schema’s <code>max_window</code> cap, compared in seconds.
+A window strictly greater than the cap is rejected, located at the offending
+operator (<strong>TEMP-MaxWindow</strong>). The cap is the schema’s <code>max_window</code> directive
+or the 24h default (<a href="#26-event-schema-dsl">§2.6</a>); post-expansion every
+window is concrete, so macro-supplied windows are checked too.</li>
+</ul>
+<h3 id="56-provider-dialect"><a class="header" href="#56-provider-dialect">5.6 Provider dialect</a></h3>
+<p>For each hoisted provider leaf (<code>provider/validate.rs</code>):</p>
+<pre><code>   field.declaration = Some(decl)     |decl.argument_types| = |invocation.args|     ∀ (arg,param): accepts(param, arg)
+  ────────────────────────────────────────────────────────────────────────────────────────────────────────────────── (PROV-Ok)
+   provider leaf ✓
+</code></pre>
+<p>An <strong>undeclared</strong> provider is caught only here (lowering defaulted its output
+type permissively) — <em>“provider <code>k</code> is not present in the provider
+declarations”</em> (<strong>PROV-DeclaredProvider</strong>). Argument <strong>count</strong> must match
+(<strong>PROV-ArgCount</strong>); a directly-typed literal/set argument must match the
+declared <code>paramType</code> (<code>string</code>/<code>integer</code>|<code>long</code>/<code>bool</code>|<code>boolean</code>/<code>decimal</code>/<code>set</code>
+— <strong>PROV-ArgType</strong>); a field-path argument (<code>context</code>/<code>principal</code>/<code>resource</code>) is
+deferred to Cedar. Each <strong>output method</strong> in a chain is likewise checked here
+(<strong>PROV-Method-</strong>*): it must be declared in <code>availableMethods</code>, must not shadow a
+Cedar extension-method name, must be given the declared argument count/types,
+and — when it declares an <code>inputType</code> — must be fed a compatible value by the
+preceding pipeline stage (the running type starts at the invocation’s
+<code>outputType</code> and advances by each method’s <code>outputType</code>). Provider
+<strong>output/projection</strong> typing is not checked here — it was lowered to native Cedar
+and is checked by the Cedar side (<a href="#53-the-cedar-side">§5.3</a>, <strong>PROV-Output-Deferred</strong>).</p>
+<h3 id="57-event-schema-name-resolution"><a class="header" href="#57-event-schema-name-resolution">5.7 Event-schema name resolution</a></h3>
+<p>The authority on predicate names (<code>event_schema/validate.rs</code>), applied to every
+<code>Predicate</code> reachable in the (post-expansion) condition tree:</p>
+<pre><code>   schema.get(P.ns, P.action, P.kind) = Some(ev)     ∀ arg ∈ P.args:  ev.lookup(arg.path) = Leaf
+  ─────────────────────────────────────────────────────────────────────────────────────────────── (EVENT-Predicate)
+   Predicate P  ✓names
+</code></pre>
+<p><em>(<code>event_schema/validate.rs</code> <code>validate_condition</code>.)</em> A predicate must name a <strong>declared</strong> derived
+event (<strong>EVENT-Predicate-DeclaredEvent</strong>: else <em>“predicate <code>…</code> does not name a
+declared event …”</em>), and every <strong>mentioned</strong> field path must resolve to a
+declared <strong>leaf</strong> (<strong>EVENT-Field-Leaf</strong>). <em>Omitting</em> a field is legal (omission =
+wildcard); only a mentioned name is checked. A mentioned path resolving to a
+field <strong>group</strong> rather than a leaf (<strong>EVENT-Field-Group</strong>), or to nothing
+(<strong>EVENT-Field-Absent</strong>), is an error.</p>
+<hr>
+<h2 id="6-authorization"><a class="header" href="#6-authorization">6. Authorization</a></h2>
+<p>Authorization is <strong>stateful</strong> and event-driven. The judgment is</p>
+<pre><code>   ⟨H, e⟩ ⇓ ⟨H′, r⟩            r ∈ { None } ∪ { Some(ρ) : ρ a Response }
+</code></pre>
+<p>where <code>H</code> is the temporal engine’s observed history and <code>H′ = H · e</code> (the history
+always grows). A <code>Response ρ = (decision ∈ {Allow, Deny}, reason: DogwoodRuleRef*, errors: String*)</code>. This is <code>Authorizer::is_authorized</code> (<code>authorize/mod.rs</code>,
+<code>api.rs</code>). The <code>None</code> result — “this event decided nothing” — is the essential
+difference from Cedar.</p>
+<h3 id="61-observe-then-gate-on-decision-kind"><a class="header" href="#61-observe-then-gate-on-decision-kind">6.1 Observe, then gate on decision kind</a></h3>
+<p>Every event is observed first, unconditionally; then its kind decides whether a
+verdict is produced.</p>
+<pre><code>  ─────────────────────────── (A-Observe)     H′ := H · e   for every ingested e (observe runs first)
+</code></pre>
+<pre><code>   H′ = H · e        e.kind ∉ decision_kinds
+  ─────────────────────────────────────────────── (A-Ingest-History)
+   ⟨H, e⟩ ⇓ ⟨H′, None⟩
+</code></pre>
+<pre><code>   H′ = H · e        e.kind ∈ decision_kinds        ⟨H′, e⟩ ⇓_d ρ
+  ────────────────────────────────────────────────────────────────── (A-Ingest-Decide)
+   ⟨H, e⟩ ⇓ ⟨H′, Some(ρ)⟩
+</code></pre>
+<p><em>(<code>api.rs</code>, <code>ingest</code>.)</em> <code>observe(e)</code> runs for <em>both</em> decision and history-only events
+(<strong>A-Observe</strong>), so at a later decision point the temporal leaves see the full
+prefix history including interleaved history-only events (<strong>A-Stateful-Invariant</strong>).
+<code>⇓_d</code> is the decision judgment of <a href="#62-the-decision-pipeline-fail-closed">§6.2</a>.
+A stateless single decision is a fresh authorizer fed one decision-kind event.</p>
+<h3 id="62-the-decision-pipeline-fail-closed"><a class="header" href="#62-the-decision-pipeline-fail-closed">6.2 The decision pipeline (fail-closed)</a></h3>
+<p><code>⇓_d</code> runs four steps — evaluate temporal leaves, build context, build request,
+decide — each of the first three a <strong>fail-closed</strong> short-circuit. There are
+exactly three top-level fail-closed points (and <code>build_request</code> decomposes into
+four sub-causes). A fail-closed <code>Response</code> is always <code>(Deny, reason = [], errors = [msg…])</code>.</p>
+<pre><code>   temporal.evaluate(H) = β        β, providers, e ⊢ ctx ⇓ Ok(κ)        e, κ ⊢ req ⇓ Ok(q)
+   decide(q) = ρ₀        ρ = ρ₀ with pre-errors prepended
+  ────────────────────────────────────────────────────────────────────────────────────────── (A-Decide-Ok)
+   ⟨H, e⟩ ⇓_d ρ
+</code></pre>
+<pre><code>   temporal.evaluate(H) = Err(m)
+  ───────────────────────────────────────────────────────── (FailClosed-Temporal)
+   ⟨H, e⟩ ⇓_d (Deny, [], ["temporal evaluation: " · m])
+</code></pre>
+<pre><code>   β, providers, e ⊢ ctx ⇓ Err(m)
+  ─────────────────────────────────────── (FailClosed-Context)
+   ⟨H, e⟩ ⇓_d (Deny, [], [m])
+</code></pre>
+<pre><code>   e, κ ⊢ req ⇓ Err(m)
+  ─────────────────────────────────────── (FailClosed-Request)
+   ⟨H, e⟩ ⇓_d (Deny, [], [m])
+</code></pre>
+<p><em>(<code>api.rs</code>, <code>decide_at</code>.)</em> The rationale for <strong>FailClosed-Context</strong> is explicit
+in the code: authorizing against a <em>partial</em> context could let a <code>permit</code> fire
+whose guard can no longer be checked — a <code>Deny</code> silently flipping to <code>Allow</code>.
+<strong>Scope of this rule:</strong> it describes THIS reference implementation. For
+provider-originated errors (the dominant cause of a context-build failure) the
+language-level semantics is <em>undefined behavior</em> — an erroring provider carries
+no cross-implementation guarantee, and a policy set must not rely on
+deny-on-error (see <a href="05-information-providers.html#the-provider-contract">the provider
+contract</a>). The
+<strong>FailClosed-Request</strong> family below is NOT so scoped: a decision event with a
+missing or malformed principal/resource must deny in every implementation. <code>build_request</code> fails closed when the event’s
+labeled scope has <strong>no principal</strong> or <strong>no resource</strong>
+(<strong>FailClosed-Request-NoPrincipal/NoResource</strong>), when the principal/action/resource
+UID is <strong>malformed</strong> (<strong>FailClosed-Request-MalformedUID</strong> — a fabricated fallback
+would silently authorize against the wrong entity), or when Cedar <code>Request::new</code>
+rejects the request.</p>
+<h3 id="63-context-assembly"><a class="header" href="#63-context-assembly">6.3 Context assembly</a></h3>
+<p>The Cedar context <code>κ</code> is an ordered record with three groups of keys
+(<code>api.rs</code>, <code>build_context</code>, <strong>A-Context-Keys</strong>):</p>
+<ol>
+<li><code>input</code> → the event’s <code>input</code> record. Only a <code>Value::Object</code> is taken; any
+other shape (or absence) degrades to an empty record — it does <strong>not</strong> error
+(<strong>A-Context-Input</strong>).</li>
+<li>for each <code>(id, b) ∈ β</code>: <code>id → Bool(b)</code> — the hoisted <strong>temporal</strong> booleans, at
+top level, i.e. <code>context.&lt;id&gt;</code>.</li>
+<li>if any provider leaves exist: <code>providers → { id → v }</code> for <strong>every</strong>
+provider invocation in the policy set (<strong>A-Context-Providers</strong>) — i.e.
+<code>context.providers.&lt;id&gt;</code>, unconditional. There is no applicability
+filter of any kind: provider execution is not gated by the rule’s
+action clause, scope constraints, or conditions (see <a href="05-information-providers.html#the-provider-contract">the provider
+contract</a>).</li>
+</ol>
+<p>Value mapping (<code>value_to_expr</code>, <strong>A-Context-ValueMap</strong>) is the obvious one, with
+two lossy cases worth flagging: <code>Null</code> and a record-construction failure both
+collapse to the <strong>empty string</strong> literal. An entity <em>value inside the context</em>
+uses a <strong>sentinel</strong> (<code>Drupe::Gateway::"unknown"</code>) on a malformed UID rather
+than failing closed — the deliberate counterpart to the fail-closed treatment of
+the request’s principal/action/resource (<strong>A-Context-EntityValue-Sentinel</strong>).</p>
+<h3 id="64-provider-evaluation"><a class="header" href="#64-provider-evaluation">6.4 Provider evaluation</a></h3>
+<p>Each provider’s value is computed <strong>resolver-first, Rhai-fallback</strong>
+(<code>api.rs</code>, <code>eval_provider</code>):</p>
+<pre><code>   resolver present     resolver.resolve(name, args) = Some(res)
+  ──────────────────────────────────────────────────────────────── (A-Provider-Resolver)
+   eval_provider = res        (res = Ok(v) ⇒ v ; res = Err(m) ⇒ FailClosed-Context)
+</code></pre>
+<pre><code>   resolver absent ∨ resolver declines (None)     field.declaration = Some(decl)
+  ─────────────────────────────────────────────────────────────────────────────── (A-Provider-Rhai)
+   eval_provider = evaluate(invocation, decl, args)
+</code></pre>
+<p>A caller-supplied <code>ProviderResolver</code> gets first refusal on every invocation; if
+it declines, the declared sandboxed Rhai implementation runs. An invocation with
+no declaration and no resolver value is an error (⇒ <strong>FailClosed-Context</strong>):
+<em>“provider <code>k</code> was not declared … so it has no implementation to evaluate”</em>.
+Arguments are resolved against the event: a <code>context.&lt;path&gt;</code> argument reads the
+event’s field at that path (falling back to a bare last-segment lookup, then
+<code>Null</code>); literals and sets map directly (<strong>A-Provider-ArgResolve</strong>).</p>
+<h3 id="65-the-decision-core"><a class="header" href="#65-the-decision-core">6.5 The decision core</a></h3>
+<p>Once context and request are built, the decision is delegated to the pluggable
+<code>PolicyEngine</code> (default: local Cedar; alternatively, a remote Cedar-based engine) over the entity store
+<code>E</code> assembled by <code>build_entities</code>: the request’s <strong>scope entities</strong> (made
+present bare), any <strong>caller-supplied attributed entities</strong> from the event’s
+entity store — attributes and direct <code>memberOf</code> parents, validated against the
+augmented schema — and the schema’s <strong>action-hierarchy entities</strong> (so
+<code>action in [Group]</code> membership resolves). Cross-event state lives in the
+temporal history; per-event entity data flows through <code>E</code>:</p>
+<pre><code>   policy.is_authorized(q, E) = (d, ids, errs)
+   reason = [ DogwoodRuleRef(k, id) : id ∈ ids,  rule_ids[k] = id ]
+  ──────────────────────────────────────────────────────────────────── (A-Decide-Core)
+   decide(q) = (d, reason, errs)
+</code></pre>
+<p><em>(<code>api.rs</code>, <code>decide</code>.)</em> The engine returns a decision, the <strong>determining policy ids</strong>,
+and any errors. Each determining id is mapped <strong>back</strong> to its Dogwood rule by
+<code>rule_ids</code> (rule <code>k</code>’s PolicyID); an id not found there is dropped
+(<strong>A-Decide-RuleMap</strong>). An implicit <code>Deny</code> (no rule matched) has empty <code>reason</code>,
+exactly as Cedar’s does — which means a fail-closed <code>Deny</code> and an implicit <code>Deny</code>
+are indistinguishable in the <code>reason</code> channel and differ only in <code>errors</code>.</p>
+<hr>
+<h2 id="7-meta-properties"><a class="header" href="#7-meta-properties">7. Meta-properties</a></h2>
+<p>These follow from the rules above; they are the properties a caller may rely on.</p>
+<ul>
+<li><strong>Fail-closed.</strong> No evaluation failure produces <code>Allow</code>. Every error path in
+<code>⇓_d</code> yields <code>(Deny, [], errors)</code> (FailClosed-*), and the context is never
+partial when the policy engine runs — an incomplete context denies. <em>(§6.2.)</em></li>
+<li><strong>Lowering totality of the syntactic map.</strong> Every non-extension surface form
+has exactly one translation (<a href="#43-expression-translation">§4.3</a>); the only
+non-structural step is hoisting, which is deterministic given the rule key and
+ordinal. <em>(§4.4.)</em></li>
+<li><strong>Validation soundness of the proof object.</strong> <code>validate</code> presupposes a
+<code>Lowered</code>; parse/macro/lower/schema failures are a separate fatal channel and
+can never appear as findings. <code>Σ ⊢ L ✓</code> concerns type/dialect findings only.
+<em>(§5.1.)</em></li>
+<li><strong>Determinism of identity.</strong> A rule’s PolicyID and its hoisted field names are
+a pure function of the rule key <code>key(δ, i)</code> and the per-rule ordinal — so two
+lowerings with distinct distinguishers never collide, and the same input with
+the same distincter is byte-identical. <em>(§4.1, §4.4.)</em></li>
+<li><strong>Statefulness is confined to the temporal engine.</strong> The policy engine is
+invoked per-request over an empty entity set; all history-dependence flows
+through <code>observe</code>/<code>evaluate</code> and the hoisted <code>context.&lt;id&gt;</code> booleans. History-only
+events matter precisely because they mutate that state. <em>(§6.1, §6.5.)</em></li>
+<li><strong>Acceptance ⇒ monitorability.</strong> A temporal condition that passes <a href="#54-temporal-acceptance-well-formedness">§5.4</a>
+denotes a finite, computable relation over the history (safe-range): the
+leaf is closed (every variable <code>exists</code>- or <code>for</code>-bound), every bound
+variable — existential <em>and</em> aggregation <code>for</code> — is range-restricted by a
+positive atom (a negation restricts nothing, at any depth; a <code>since</code>
+restricts only through its anchor), filters follow their restrictors, and
+every monitoring scope varies with the timepoint.</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../guide/07-api-and-workflow.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="../guide/09-calling-macros.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../guide/07-api-and-workflow.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="../guide/09-calling-macros.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr-ef4e11c1.min.js"></script>
+        <script src="../mark-09e88c2c.min.js"></script>
+        <script src="../searcher-09f2665d.js"></script>
+
+        <script src="../clipboard-1626706a.min.js"></script>
+        <script src="../highlight-abc7f01d.js"></script>
+        <script src="../book-609e4cb8.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>
