@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-6a55f184.js";
+            window.path_to_searchindex_js = "searchindex-0ce79282.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-982af72f.js"></script>
@@ -1905,6 +1905,7 @@ when temporal {
     Drupe::Action::"Login"::request{ input.user: context.input.user }
 };
 </code></pre>
+<p>A positive left operand is rarely what you actually want: it demands that <code>left</code> match at <strong>every</strong> timepoint since the anchor, with no exceptions — including timepoints that are simply a different event kind (a <code>response</code>, or an unrelated action) and so never match <code>left</code> at all. In a realistic trace this is easy to fail by accident and hard to satisfy on purpose. The robust idiom is almost always a <em>negated</em> left, <code>!P since Q</code> (“<code>P</code> has <strong>not</strong> happened since <code>Q</code>”), which only requires the absence of something at each intervening step rather than an exact match — see the “open session” idiom just below.</p>
 <p><strong>Negated left — the “open session” idiom.</strong> There is no dedicated “hasn’t happened since” operator; you write it with a negated left operand, <code>!left since …</code>. Because negation binds tighter than <code>since</code> (see <a href="#conjunction-negation-and-precedence">Precedence</a>), <code>!A since within W B</code> negates only <code>A</code>. This expresses “no <code>A</code> has happened since <code>B</code>” — e.g. “the user has not been revoked since they were granted” (corpus <code>0156_without_since_access_control</code>; runnable as <a href="#access_not_revoked_since_grant"><code>examples/access_not_revoked_since_grant/</code></a>):</p>
 <pre><code class="language-text">when temporal {
     !Drupe::Action::"Revoke"::request{ input.user: context.input.user, input.resource: context.input.resource }
@@ -2421,7 +2422,14 @@ directly. The argument kinds are:</p>
 Dogwood resolves the path against the decision event: a <code>context</code> path is
 looked up on the event’s input (leading <code>context</code> skipped); <code>principal</code> /
 <code>resource</code> resolve to the request scope entity, and a trailing <code>.id</code> / <code>.type</code>
-projects that entity’s id or type. A path that does not resolve is null.</li>
+projects that entity’s id or type. A path that does not resolve is null <strong>at
+run time</strong>. Validation (see <a href="#how-invocations-are-validated-against-declarations">How invocations are validated against
+declarations</a>)
+rejects a field-path argument undeclared on — or typed incompatibly with — an
+action the rule is <em>scoped to</em>; but because provider execution is unconditional
+(see <a href="#the-provider-contract">The provider contract</a>), the same provider still
+runs on events for <em>other</em> actions, where the argument may be absent and arrive
+as null — so scripts must tolerate null regardless.</li>
 <li><strong>String literal</strong> — <code>"…"</code>.</li>
 <li><strong>Integer literal</strong> — an optionally-signed integer (<code>i64</code>).</li>
 <li><strong>Decimal literal</strong> — <code>decimal("0.5")</code> (chiefly a method threshold, e.g.
@@ -5094,24 +5102,57 @@ and a set of strings, and returns a nested record whose keys are content categor
 <p>When Dogwood validates a policy against its declarations, it checks each provider
 invocation:</p>
 <ol>
-<li>The invocation’s name (<code>Ns::Fn</code>) must be present in <code>availableProviders</code>, or you
-get “provider is not present in the provider declarations.”</li>
-<li>The argument <strong>count</strong> must equal the declared <code>argumentTypes</code> length, or you get
-“expects N argument(s) but got M.”</li>
-<li>Each <strong>directly-typed</strong> argument’s kind must match the declared <code>paramType</code>:
+<li>
+<p>The invocation’s name (<code>Ns::Fn</code>) must be present in <code>availableProviders</code>, or you
+get “provider is not present in the provider declarations.”</p>
+</li>
+<li>
+<p>The argument <strong>count</strong> must equal the declared <code>argumentTypes</code> length, or you get
+“expects N argument(s) but got M.”</p>
+</li>
+<li>
+<p>Each <strong>directly-typed</strong> argument’s kind must match the declared <code>paramType</code>:
 <code>String</code> → <code>string</code>; <code>Integer</code> → <code>integer</code>/<code>long</code>; <code>Decimal</code> → <code>decimal</code>;
 <code>Bool</code> → <code>bool</code>/<code>boolean</code>; <code>Set</code> → <code>set</code>. A mismatch reports the
-actual-vs-declared types.</li>
-<li>Each <strong>output method</strong> in a chain is checked: it must be declared in the
+actual-vs-declared types.</p>
+</li>
+<li>
+<p>Each <strong>output method</strong> in a chain is checked: it must be declared in the
 provider’s <code>availableMethods</code>, must not shadow a Cedar extension-method name,
 must be given the declared argument count/types, and — when it declares an
-<code>inputType</code> — must be fed a compatible value by the preceding pipeline stage.</li>
+<code>inputType</code> — must be fed a compatible value by the preceding pipeline stage.</p>
+</li>
+<li>
+<p>Each <strong>field-path</strong> argument (<code>context.input.x</code>, <code>principal.id</code>,
+<code>resource.owner</code>, including paths nested inside a set argument) is resolved
+against the schema — the SAME resolution Cedar and the temporal dialect apply
+to the same dereference — on <strong>every action the rule’s scope reaches</strong>:</p>
+<ul>
+<li><strong>Existence</strong>: a <code>context.&lt;path&gt;</code> undeclared on a scoped action, or a
+<code>principal.&lt;attr&gt;</code> / <code>resource.&lt;attr&gt;</code> absent from an entity type the scope
+admits, is an error. A present-but-<strong>optional</strong> context field resolves and
+is accepted. An action the rule’s <code>principal</code> / <code>resource</code> scope narrowing
+(<code>is</code> / <code>==</code> / <code>in</code>) makes <em>infeasible</em> (no valid request environment) is
+skipped, matching Cedar.</li>
+<li><strong>Type</strong>: the resolved type must match the declared <code>paramType</code> by category
+(scalar kind / set / record) and, for a <code>set</code>, by element type —
+recursively, so a <code>Set&lt;Set&lt;String&gt;&gt;</code> argument is checked to its leaves. A
+field of the wrong type on any scoped action is an error (an entity-typed
+field, for instance, matches no scalar / set / record arg). A
+<code>principal</code>/<code>resource</code> attribute whose resolved type <em>differs</em> across the
+admitted entity types is rejected outright — there is no single type to
+check. Record FIELDS are not compared (Cedar records are invariant, but
+exact field matching needs structured record types, which the shared
+resolver collapses to <code>object</code>) — a deliberate deferred boundary.</li>
+</ul>
+</li>
 </ol>
-<p>Field-path arguments (<code>context.input.x</code>, <code>principal.id</code>, …) are <strong>not</strong>
-type-checked here — they are deferred to Cedar/temporal schema validation, since
-their type comes from the schema. Likewise, the output projection and comparison
-are not re-checked in this pass: they were lowered to native Cedar, so Cedar’s own
-schema validator checks them against the synthesized <code>context.providers</code> type.</p>
+<p>This is a validation-time check; provider execution stays unconditional at
+runtime and still receives null for an absent argument (see <a href="#the-provider-contract">The provider
+contract</a>). The output
+projection and comparison are not re-checked in this pass: they were lowered to
+native Cedar, so Cedar’s own schema validator checks them against the synthesized
+<code>context.providers</code> type.</p>
 <hr>
 <h2 id="the-rhai-implementation-contract"><a class="header" href="#the-rhai-implementation-contract">The Rhai implementation contract</a></h2>
 <p>A provider’s implementation is a script in <a href="https://rhai.rs/">Rhai</a>, evaluated in a

@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-6a55f184.js";
+            window.path_to_searchindex_js = "../searchindex-0ce79282.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-982af72f.js"></script>
@@ -351,6 +351,7 @@ when temporal {
     Drupe::Action::"Login"::request{ input.user: context.input.user }
 };
 </code></pre>
+<p>A positive left operand is rarely what you actually want: it demands that <code>left</code> match at <strong>every</strong> timepoint since the anchor, with no exceptions — including timepoints that are simply a different event kind (a <code>response</code>, or an unrelated action) and so never match <code>left</code> at all. In a realistic trace this is easy to fail by accident and hard to satisfy on purpose. The robust idiom is almost always a <em>negated</em> left, <code>!P since Q</code> (“<code>P</code> has <strong>not</strong> happened since <code>Q</code>”), which only requires the absence of something at each intervening step rather than an exact match — see the “open session” idiom just below.</p>
 <p><strong>Negated left — the “open session” idiom.</strong> There is no dedicated “hasn’t happened since” operator; you write it with a negated left operand, <code>!left since …</code>. Because negation binds tighter than <code>since</code> (see <a href="#conjunction-negation-and-precedence">Precedence</a>), <code>!A since within W B</code> negates only <code>A</code>. This expresses “no <code>A</code> has happened since <code>B</code>” — e.g. “the user has not been revoked since they were granted” (corpus <code>0156_without_since_access_control</code>; runnable as <a href="../examples/access_not_revoked_since_grant.html"><code>examples/access_not_revoked_since_grant/</code></a>):</p>
 <pre><code class="language-text">when temporal {
     !Drupe::Action::"Revoke"::request{ input.user: context.input.user, input.resource: context.input.resource }

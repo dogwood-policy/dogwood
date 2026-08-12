@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-6a55f184.js";
+            window.path_to_searchindex_js = "../searchindex-0ce79282.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-982af72f.js"></script>
@@ -384,7 +384,14 @@ directly. The argument kinds are:</p>
 Dogwood resolves the path against the decision event: a <code>context</code> path is
 looked up on the event’s input (leading <code>context</code> skipped); <code>principal</code> /
 <code>resource</code> resolve to the request scope entity, and a trailing <code>.id</code> / <code>.type</code>
-projects that entity’s id or type. A path that does not resolve is null.</li>
+projects that entity’s id or type. A path that does not resolve is null <strong>at
+run time</strong>. Validation (see <a href="10-provider-schema.html#how-invocations-are-validated-against-declarations">How invocations are validated against
+declarations</a>)
+rejects a field-path argument undeclared on — or typed incompatibly with — an
+action the rule is <em>scoped to</em>; but because provider execution is unconditional
+(see <a href="#the-provider-contract">The provider contract</a>), the same provider still
+runs on events for <em>other</em> actions, where the argument may be absent and arrive
+as null — so scripts must tolerate null regardless.</li>
 <li><strong>String literal</strong> — <code>"…"</code>.</li>
 <li><strong>Integer literal</strong> — an optionally-signed integer (<code>i64</code>).</li>
 <li><strong>Decimal literal</strong> — <code>decimal("0.5")</code> (chiefly a method threshold, e.g.
