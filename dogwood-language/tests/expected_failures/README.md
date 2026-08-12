@@ -84,6 +84,50 @@ OVERWRITE=1 cargo test --test expected_failures -- --ignored generate_expected_e
     has/like/is, member access, records, sets)
   - `2048`–`2053`: entity references and annotations
   - `2054`–`2056`: literals (overflow, standalone operators)
+- **Invalid string-literal escapes** (`2094`–`2098`): string literals with an
+  escape Cedar rejects but the pre-fix hand-rolled `decode_string` accepted,
+  each covering a distinct buggy code path. Regression guards for commit
+  `fc46e9db`. Cedar decodes escapes with Rust's escape grammar and rejects all
+  of these at parse time (`the input <escape> is not a valid escape`); the old
+  decoder let each parse and validate cleanly against a real schema.
+  - `2094` — unknown escape `\q` (old decoder passed any unknown escape
+    through verbatim; there was no error path at all).
+  - `2095` — `\*`, meaningful only inside a `like` pattern, never in a plain
+    string literal (old decoder listed `\*` among its accepted escapes and
+    decoded it to `*`).
+  - `2096` — out-of-range hex `\xFF` (`\x` accepts only 0x00-0x7F; the old
+    decoder did not recognize `\x` at all and passed it through).
+  - `2097` — empty unicode `\u{}` (`from_str_radix("")` failed, so the old
+    decoder's "malformed — pass through" branch emitted it verbatim).
+  - `2098` — out-of-range unicode `\u{110000}`, above 0x10FFFF (the escape the
+    old decoder *tried* to handle: `char::from_u32` returned None and it passed
+    the text through — recognized the shape, still got it wrong; lone
+    surrogates like `\u{D800}` take the same path).
+
+  The wrong-value halves of the same fix — escapes the old decoder mis-decoded
+  to the WRONG value rather than mis-accepting — are verdict cases under
+  `passing/mixed/corpus/`: `0018_string_escape_hex_verdict` (`\x41` left as the
+  literal text instead of `A`) and `0019_string_escape_unicode_underscore_verdict`
+  (`\u{4_1}`, whose `_` separator `from_str_radix` rejected).
+- **Invalid `like`-pattern escapes** (`2141`–`2144`): the same divergence, but
+  in a `like` pattern rather than a plain string literal. `fc46e9db` left the
+  pattern decoder (`build_pattern`) unfixed because Cedar's `to_pattern` was
+  `pub(crate)`; this suite's fix reimplements `build_pattern` on the same
+  escaper Cedar uses. A `like` pattern shares the string escape grammar plus
+  `*` (wildcard) and `\*` (literal star), so every escape Cedar rejects in a
+  string it also rejects in a pattern.
+  - `2141` — out-of-range hex `\xFF`.
+  - `2142` — empty unicode `\u{}`.
+  - `2143` — out-of-range unicode `\u{110000}` (lone surrogates take the same
+    path).
+  - `2144` — unknown escape `\q` (the old `build_pattern` was worse than
+    accepting it: its `Some(other) => Char(other)` arm dropped the backslash,
+    turning `\q` into `q`).
+
+  The wrong-value halves for patterns are verdict cases under
+  `passing/mixed/corpus/`: `0020_pattern_escape_hex_verdict` (`\x41` decoded as
+  the pattern `x41`) and `0021_pattern_escape_unicode_underscore_verdict`
+  (`\u{4_1}` left as literal text).
 
 If a case both parses AND validates cleanly (e.g. a defect is reintroduced as
 valid), the harness panics.

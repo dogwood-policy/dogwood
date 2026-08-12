@@ -1,0 +1,19 @@
+// Regression case for commit fc46e9db: an underscore-separated `\u{...}`
+// escape must decode to the same value Cedar (and Rust) give it.
+//
+// Cedar delegates to Rust's string-escape grammar, which permits `_` digit
+// separators inside `\u{...}`: `"\u{4_1}"` decodes to the single character `A`
+// (0x41). The pre-fix decode_string parsed the braced body with
+// `u32::from_str_radix(hex, 16)`, which does NOT accept underscores, so it
+// silently fell through to its "malformed" branch and passed the literal
+// through verbatim as the six characters `\`, `u`, `{`, `4`, `_`, `1`, `}`.
+//
+// This is the insidious facet — not a rejection but a WRONG VALUE. The guard
+// `context.input.document == "\u{4_1}"` should match a real document == "A"
+// event (verdict true); on the buggy prefix it never matches (verdict false).
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when { context.input.document == "\u{4_1}" };

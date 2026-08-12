@@ -1,0 +1,8 @@
+﻿namespace Ns {
+  entity User;
+  entity Res;
+  action "Act" appliesTo {
+    principal: [User], resource: [Res],
+    context: { x: Long }
+  };
+}

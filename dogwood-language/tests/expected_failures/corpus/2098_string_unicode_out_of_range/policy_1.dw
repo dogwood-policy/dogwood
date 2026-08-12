@@ -1,0 +1,17 @@
+// Regression case for commit fc46e9db: a `\u{...}` escape above the Unicode
+// maximum (0x10FFFF) must be a parse error. Cedar rejects `"\u{110000}"` with
+// `the input \u{110000} is not a valid escape`.
+//
+// This is the escape the pre-fix decode_string EXPLICITLY tried to handle:
+// `u32::from_str_radix("110000", 16)` succeeds, then `char::from_u32` returns
+// None for a non-scalar value, and the code's `None => pass through` branch
+// emitted `\u{110000}` verbatim — accepted and validated cleanly instead of
+// rejected. The clearest illustration of the commit's claim that the hand-
+// rolled decoder "diverged from" Cedar: it recognized the shape and still got
+// the answer wrong. (Lone surrogates like `\u{D800}` take the same buggy path.)
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when { context.input.document == "\u{110000}" };

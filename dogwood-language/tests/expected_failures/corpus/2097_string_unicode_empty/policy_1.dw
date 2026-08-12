@@ -1,0 +1,13 @@
+// Regression case for commit fc46e9db: an empty `\u{}` escape must be a parse
+// error. Cedar rejects `"\u{}"` with `the input \u{} is not a valid escape`.
+//
+// The pre-fix decode_string parsed the braced body with
+// `u32::from_str_radix("", 16)`, which fails on the empty string, so the code
+// fell into its "malformed — pass through" branch and emitted `\`, `u`, `{`,
+// `}` verbatim — accepted and validated cleanly instead of rejected.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when { context.input.document == "\u{}" };

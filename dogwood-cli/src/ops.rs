@@ -309,6 +309,7 @@ pub struct SchemaCheckReport {
 /// eager parser (which type-checks the schema and reports warnings) — unlike
 /// `PolicySchema::from_cedarschema_str`, which defers all checking to lowering.
 pub fn check_action_schema(source: &str) -> Result<SchemaCheckReport, OpError> {
+    let source = source.strip_prefix('\u{FEFF}').unwrap_or(source);
     match cedar::Schema::from_cedarschema_str(source) {
         Ok((_schema, warnings)) => Ok(SchemaCheckReport {
             kind: "action".to_string(),
@@ -352,4 +353,32 @@ pub fn check_providers(json: &str) -> Result<SchemaCheckReport, OpError> {
 /// schema text for the caller to write out.
 pub fn generate_mcp_schema(manifest_json: &str) -> Result<String, OpError> {
     mcp_to_cedar_schema(manifest_json).map_err(OpError::message)
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const SCHEMA: &str = r#"namespace Ns {
+  entity User;
+  entity Res;
+  action "Act" appliesTo {
+    principal: [User], resource: [Res],
+    context: { x: Long }
+  };
+}"#;
+
+    #[test]
+    fn check_action_schema_with_bom_succeeds() {
+        let input = format!("\u{FEFF}{SCHEMA}");
+        let report = check_action_schema(&input).expect("BOM should be stripped");
+        assert!(report.ok);
+    }
+
+    #[test]
+    fn check_action_schema_without_bom_still_works() {
+        let report = check_action_schema(SCHEMA).expect("no BOM should work");
+        assert!(report.ok);
+    }
 }

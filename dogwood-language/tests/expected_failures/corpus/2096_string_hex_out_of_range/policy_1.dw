@@ -1,0 +1,15 @@
+// Regression case for commit fc46e9db: an out-of-range `\xHH` escape must be a
+// parse error. Cedar's `\x` accepts only 0x00-0x7F (a single ASCII byte), so
+// it rejects `"\xFF"` with `the input \xFF is not a valid escape`.
+//
+// The pre-fix decode_string did not recognize `\x` at ALL, so `\xFF` was
+// passed through verbatim as the four characters `\`, `x`, `F`, `F` — accepted
+// and validated cleanly. (Contrast 0018, where an IN-range `\x41` was likewise
+// passed through, producing a wrong runtime value rather than an error. This
+// case pins the reject half of the same `\x` gap.)
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when { context.input.document == "\xFF" };

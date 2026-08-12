@@ -21,6 +21,18 @@ miette = { version = "7" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 cedar-policy-core = "4.11"
+# The string/char escape decoder that Cedar's own `unescape` module is built
+# on. We drive it directly to build `like` patterns exactly as Cedar's
+# `pub(crate)` `to_pattern` does (see `build_pattern`). Pinned `=` to the exact
+# version cedar-policy-core resolves today, so `cargo` unifies both crates onto
+# one copy and our escaper is the same one Cedar decodes with. This freezes
+# *our* escaper; it does NOT keep us aligned if Cedar later moves to a newer
+# `rustc-literal-escaper` (that would split the tree into two copies and skew us
+# from Cedar). Alignment is actually enforced by the `pattern_escape_differential`
+# / `string_escape_differential` tests, which compare our output against Cedar's
+# parser directly — update this pin (and re-run them) whenever cedar-policy-core
+# bumps its own dependency.
+rustc-literal-escaper = "=0.0.7"
 # High-level Cedar API used for authorization (the public Authorizer /
 # Request / Response / Decision). Re-exported through the front door so
 # consumers don't depend on Cedar directly.

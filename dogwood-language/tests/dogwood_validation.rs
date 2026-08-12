@@ -83,6 +83,52 @@ namespace App {
 }
 "#;
 
+/// A variant of [`SCHEMA`] where `Read`'s `document` is **optional**
+/// (`document?`). `Login` still has no `document` at all. Used by the
+/// optional-attribute probes to see how Cedar treats a direct (unguarded)
+/// read of an optional context attribute, vs. the definitely-absent case.
+const SCHEMA_OPTIONAL_DOC: &str = r#"
+namespace App {
+  type LoginInput = { user: String, server: String };
+  type ReadInput = { user: String, document?: String, tags: Set<String> };
+
+  entity Gateway;
+  entity OAuthUser = { id: String };
+
+  action "Login" appliesTo {
+    principal: [OAuthUser], resource: [Gateway],
+    context: { input: LoginInput }
+  };
+  action "Read" appliesTo {
+    principal: [OAuthUser], resource: [Gateway],
+    context: { input: ReadInput }
+  };
+}
+"#;
+
+/// A variant where `document` is **required** in `Read` but **optional**
+/// (`document?`) in `Login` — present in BOTH actions, differing only in
+/// optionality. Used to ask whether an unguarded read errors when the scope
+/// spans a required environment and an optional one.
+const SCHEMA_MIXED_DOC: &str = r#"
+namespace App {
+  type LoginInput = { user: String, server: String, document?: String };
+  type ReadInput = { user: String, document: String, tags: Set<String> };
+
+  entity Gateway;
+  entity OAuthUser = { id: String };
+
+  action "Login" appliesTo {
+    principal: [OAuthUser], resource: [Gateway],
+    context: { input: LoginInput }
+  };
+  action "Read" appliesTo {
+    principal: [OAuthUser], resource: [Gateway],
+    context: { input: ReadInput }
+  };
+}
+"#;
+
 /// The standard request/response event schema (the same convention the
 /// other temporal tests use): for every action `A`, derive a `request`
 /// decision event and a `response` history event from the action's inputs.
@@ -231,6 +277,336 @@ when { true };
     );
 }
 
+// ─── Cedar core: a context field absent from *some* of a rule's scoped
+//     actions. The pure-Cedar counterparts of the temporal
+//     `when_action_in_list_scope_*` probes above. They pin what Cedar's own
+//     schema-aware validator does when a rule's action scope spans request
+//     environments with different `context.input` shapes — the analog of the
+//     "check every action" temporal behavior, on the path where the attribute
+//     access survives into the lowered Cedar (unlike a provider argument, which
+//     is hoisted away and never reaches the validator). ─────────────────────
+
+#[test]
+fn when_cedar_clause_field_absent_from_eq_scoped_action_then_cedar_error() {
+    // Pure-Cedar analog of `when_context_field_absent_from_scoped_action_*`
+    // (which exercises the temporal path): the rule is scoped
+    // `action == Login` (LoginInput = { user, server }), but the `when` reads
+    // `context.input.document`, a field only `Read` declares. The single Login
+    // request environment has no `document`, so Cedar's schema-aware validator
+    // rejects it — the field being present on *another* action (`Read`) does
+    // not excuse its absence from the *scoped* action. (Observed message form:
+    // "attribute `input.document` in context for App::Action::\"Login\" not
+    // found".)
+    let src = r#"
+permit (principal, action == App::Action::"Login", resource)
+when { context.input.document == "x" };
+"#;
+    let result = validate_source(src, SCHEMA, None);
+    assert!(
+        result.validation_errors().any(|e| matches!(
+            e,
+            ValidationError::Cedar { message, .. }
+                if message.contains("input.document")
+                    && message.contains("Login")
+                    && message.contains("not found")
+        )),
+        "expected a Cedar error: `context.input.document` is absent from the \
+         scoped action `Login`, got:\n{result:?}"
+    );
+}
+
+#[test]
+fn when_cedar_clause_field_present_on_some_listed_actions_not_others_then_cedar_error() {
+    // The scope lists two actions with different `context.input` shapes:
+    // `Read` declares `document`, `Login` does not. The `when` reads
+    // `context.input.document`.
+    //
+    // OBSERVED: Cedar's validator is *conjunctive over request environments* —
+    // it type-checks the condition against EVERY action the scope admits, and
+    // rejects if the access is invalid in ANY of them. So being valid under
+    // `Read` does not rescue the policy: the `Login` environment lacks
+    // `document`, and Cedar reports exactly that (same error as the `==` case).
+    // This mirrors the temporal validator's "check every listed action"
+    // behavior (`when_action_in_list_scope_field_absent_from_a_later_action_*`)
+    // and is the safe/strict direction: a rule may only read a context field
+    // guaranteed present in all of its scoped actions.
+    let src = r#"
+permit (principal, action in [App::Action::"Read", App::Action::"Login"], resource)
+when { context.input.document == "x" };
+"#;
+    let result = validate_source(src, SCHEMA, None);
+    assert!(
+        !result.validation_passed(),
+        "expected validation to fail: `document` is absent from `Login`, a \
+         listed action, so the access is not valid in every request \
+         environment the scope admits, got:\n{result:?}"
+    );
+    assert!(
+        result.validation_errors().any(|e| matches!(
+            e,
+            ValidationError::Cedar { message, .. }
+                if message.contains("input.document")
+                    && message.contains("Login")
+                    && message.contains("not found")
+        )),
+        "expected the Cedar error to name the `Login` environment that lacks \
+         `document`, even though `Read` (also listed) declares it, got:\n{result:?}"
+    );
+}
+
+#[test]
+fn when_cedar_clause_field_absent_under_wildcard_action_then_cedar_error() {
+    // Wildcard (unconstrained) action scope — the rule applies to EVERY action
+    // in the schema, so its request-environment set is the full action set
+    // (`Login` and `Read` here). `context.input.document` is declared by `Read`
+    // but not `Login`.
+    //
+    // OBSERVED: the conjunctive-over-environments rule (see the `==` and
+    // `action in [...]` probes above) extends to the wildcard case — a bare
+    // `action` is just the widest scope, admitting all actions, so the access
+    // must be valid in all of them. `Login` lacks `document`, so Cedar rejects
+    // with the same `UnsafeAttributeAccess` error (`may_exist: false`) it gives
+    // for the narrower scopes. Consequence for authors: a context field read
+    // under a wildcard action must be present in the `context.input` of *every*
+    // action the schema declares, or the policy fails validation.
+    let src = r#"
+permit (principal, action, resource)
+when { context.input.document == "x" };
+"#;
+    let result = validate_source(src, SCHEMA, None);
+    assert!(
+        !result.validation_passed(),
+        "expected validation to fail: under a wildcard action the access must \
+         hold for every action, and `Login` lacks `document`, got:\n{result:?}"
+    );
+    assert!(
+        result.validation_errors().any(|e| matches!(
+            e,
+            ValidationError::Cedar { message, .. }
+                if message.contains("input.document")
+                    && message.contains("Login")
+                    && message.contains("not found")
+        )),
+        "expected a Cedar error naming an action (`Login`) whose context lacks \
+         `document` under the wildcard scope, got:\n{result:?}"
+    );
+}
+
+// ─── Cedar core: an OPTIONAL context attribute (`document?`). The same
+//     scope-form suite as above, but now the field is declared optional in the
+//     action(s) that have it. The new axis these pin: Cedar treats an UNGUARDED
+//     read of an optional attribute as its own distinct error — "unable to
+//     guarantee safety of access to optional attribute" (`may_exist: true`) —
+//     as opposed to the definitely-absent "not found" (`may_exist: false`) of
+//     the required-but-missing case above. A `has` guard resolves it. Both stay
+//     in the error channel (warnings empty); nothing is promoted. ───────────
+
+/// Substring of Cedar's error for reading an optional attribute WITHOUT a
+/// `has` guard (the `may_exist: true` case).
+const OPTIONAL_UNSAFE: &str = "unable to guarantee safety of access to optional attribute";
+
+#[test]
+fn when_cedar_clause_reads_optional_field_unguarded_then_cedar_error() {
+    // `== Read`, where Read declares `document?` (optional). Read it directly,
+    // WITHOUT a `has` guard. OBSERVED: this is a Cedar *error* (not a warning,
+    // not a pass) — the optional-attribute safety check. It is a DIFFERENT
+    // error than the required-but-absent case: "unable to guarantee safety of
+    // access to optional attribute" rather than "not found".
+    let src = r#"
+permit (principal, action == App::Action::"Read", resource)
+when { context.input.document == "x" };
+"#;
+    let result = validate_source(src, SCHEMA_OPTIONAL_DOC, None);
+    assert!(
+        !result.validation_passed(),
+        "an unguarded optional-attribute read must fail validation, got:\n{result:?}"
+    );
+    assert!(
+        result.validation_errors().any(|e| matches!(
+            e,
+            ValidationError::Cedar { message, .. }
+                if message.contains(OPTIONAL_UNSAFE)
+                    && message.contains("input.document")
+                    && message.contains("Read")
+        )),
+        "expected the optional-attribute safety error naming `Read`, got:\n{result:?}"
+    );
+    // The finding is in the ERROR channel; the warning channel is empty — this
+    // is a genuine Cedar error, not a promoted warning.
+    assert_eq!(
+        result.validation_warnings().count(),
+        0,
+        "no warnings expected (the finding is a genuine error), got:\n{result:?}"
+    );
+}
+
+#[test]
+fn when_cedar_clause_reads_optional_field_has_guarded_then_ok() {
+    // The idiomatic safe form: guard the optional read with `has`. OBSERVED:
+    // validation passes cleanly — no errors, no warnings. This is the contrast
+    // that shows the unguarded case above is specifically about the missing
+    // guard, not about the field being optional per se.
+    let src = r#"
+permit (principal, action == App::Action::"Read", resource)
+when { context.input has document && context.input.document == "x" };
+"#;
+    let result = validate_source(src, SCHEMA_OPTIONAL_DOC, None);
+    assert!(
+        result.validation_passed(),
+        "a `has`-guarded optional read must validate cleanly, got:\n{result:?}"
+    );
+}
+
+#[test]
+fn when_cedar_clause_optional_field_in_list_scope_reports_each_failing_env() {
+    // `in [Read, Login]`: Read declares `document?` (optional), Login has no
+    // `document` at all. OBSERVED: Cedar checks every environment and reports a
+    // finding PER failing environment, of the appropriate kind:
+    //   * `Login` — definitely absent  -> "input.document ... not found"
+    //   * `Read`  — optional, unguarded -> the optional-safety error
+    // So the two failure modes coexist in one scope, each attributed to its
+    // action. Being optional in one environment does not mask being absent in
+    // another.
+    let src = r#"
+permit (principal, action in [App::Action::"Read", App::Action::"Login"], resource)
+when { context.input.document == "x" };
+"#;
+    let result = validate_source(src, SCHEMA_OPTIONAL_DOC, None);
+    assert!(!result.validation_passed(), "must fail, got:\n{result:?}");
+    let has_login_absent = result.validation_errors().any(|e| {
+        matches!(
+            e,
+            ValidationError::Cedar { message, .. }
+                if message.contains("input.document")
+                    && message.contains("Login")
+                    && message.contains("not found")
+        )
+    });
+    let has_read_optional = result.validation_errors().any(|e| {
+        matches!(
+            e,
+            ValidationError::Cedar { message, .. }
+                if message.contains(OPTIONAL_UNSAFE) && message.contains("Read")
+        )
+    });
+    assert!(
+        has_login_absent && has_read_optional,
+        "expected BOTH the `Login` not-found error and the `Read` optional-safety \
+         error, got:\n{result:?}"
+    );
+}
+
+#[test]
+fn when_cedar_clause_optional_field_under_wildcard_reports_each_failing_env() {
+    // Wildcard action — all actions. Read has `document?` (optional), Login
+    // lacks it entirely. OBSERVED: same as the explicit list — one finding per
+    // failing environment, each of its own kind (Login not-found, Read
+    // optional-unsafe). The wildcard is just the widest environment set.
+    let src = r#"
+permit (principal, action, resource)
+when { context.input.document == "x" };
+"#;
+    let result = validate_source(src, SCHEMA_OPTIONAL_DOC, None);
+    assert!(!result.validation_passed(), "must fail, got:\n{result:?}");
+    let has_login_absent = result.validation_errors().any(|e| {
+        matches!(
+            e,
+            ValidationError::Cedar { message, .. }
+                if message.contains("input.document")
+                    && message.contains("Login")
+                    && message.contains("not found")
+        )
+    });
+    let has_read_optional = result.validation_errors().any(|e| {
+        matches!(
+            e,
+            ValidationError::Cedar { message, .. }
+                if message.contains(OPTIONAL_UNSAFE) && message.contains("Read")
+        )
+    });
+    assert!(
+        has_login_absent && has_read_optional,
+        "expected BOTH the `Login` not-found error and the `Read` optional-safety \
+         error under the wildcard scope, got:\n{result:?}"
+    );
+}
+
+// ─── Cedar core: MIXED optionality across a scope's actions. `document` is
+//     REQUIRED in `Read` but OPTIONAL in `Login` (present in both, differing
+//     only in optionality). This isolates the question: does an unguarded read
+//     error when the scope spans a required (safe) environment AND an optional
+//     (unsafe-without-`has`) one? OBSERVED: yes — the optional environment
+//     alone forces the error, because Cedar requires the access to be safe in
+//     EVERY admitted action; a required, safe environment does not rescue an
+//     optional, unguarded one. The finding is attributed to the optional
+//     action. A `has` guard makes it safe in every environment at once. ──────
+
+#[test]
+fn when_cedar_clause_mixed_optionality_unguarded_then_cedar_error() {
+    // `in [Read, Login]`: `document` REQUIRED in Read (safe unguarded),
+    // OPTIONAL in Login (unsafe unguarded). The unguarded read errors, and the
+    // error names the OPTIONAL environment (`Login`) — not `Read`.
+    let src = r#"
+permit (principal, action in [App::Action::"Read", App::Action::"Login"], resource)
+when { context.input.document == "x" };
+"#;
+    let result = validate_source(src, SCHEMA_MIXED_DOC, None);
+    assert!(
+        !result.validation_passed(),
+        "the optional environment (Login) must force an error even though Read \
+         has `document` required, got:\n{result:?}"
+    );
+    assert!(
+        result.validation_errors().any(|e| matches!(
+            e,
+            ValidationError::Cedar { message, .. }
+                if message.contains(OPTIONAL_UNSAFE)
+                    && message.contains("input.document")
+                    && message.contains("Login")
+        )),
+        "expected the optional-attribute safety error attributed to `Login`, \
+         got:\n{result:?}"
+    );
+    assert_eq!(
+        result.validation_warnings().count(),
+        0,
+        "still an error, not a promoted warning, got:\n{result:?}"
+    );
+}
+
+#[test]
+fn when_cedar_clause_required_field_unguarded_is_safe() {
+    // Baseline that makes the mixed result meaningful: scoped to `Read` ALONE,
+    // where `document` is REQUIRED, an unguarded read validates cleanly. So the
+    // error in the mixed case is contributed purely by the optional `Login`
+    // environment, not by the read itself.
+    let src = r#"
+permit (principal, action == App::Action::"Read", resource)
+when { context.input.document == "x" };
+"#;
+    let result = validate_source(src, SCHEMA_MIXED_DOC, None);
+    assert!(
+        result.validation_passed(),
+        "an unguarded read of a REQUIRED attribute must be safe, got:\n{result:?}"
+    );
+}
+
+#[test]
+fn when_cedar_clause_mixed_optionality_has_guarded_then_ok() {
+    // The `has` guard makes the access safe in EVERY environment at once —
+    // required `Read` and optional `Login` alike — so the mixed scope validates
+    // cleanly once guarded.
+    let src = r#"
+permit (principal, action in [App::Action::"Read", App::Action::"Login"], resource)
+when { context.input has document && context.input.document == "x" };
+"#;
+    let result = validate_source(src, SCHEMA_MIXED_DOC, None);
+    assert!(
+        result.validation_passed(),
+        "a `has`-guarded read must validate across both the required and \
+         optional environments, got:\n{result:?}"
+    );
+}
 // ─── Temporal ───────────────────────────────────────────────────────
 
 #[test]
@@ -875,10 +1251,7 @@ namespace App {
   entity Gateway;
   entity OAuthUser = { id: String };
 
-  action "Trade" appliesTo {
-    principal: [OAuthUser], resource: [Gateway],
-    context: { }
-  };
+  action "Trade";
   action "Sell" in [Action::"Trade"] appliesTo {
     principal: [OAuthUser], resource: [Gateway],
     context: { input: SellInput }
@@ -894,10 +1267,11 @@ namespace App {
 fn when_provider_under_action_in_list_scope_then_no_errors() {
     // A provider call under an `action in [list]` scope must lower and
     // validate — the hoisted `context.providers.<id>` field is declared on
-    // every action's context. (Both `Login` and `Read` declare no `document`?
-    // `Read` does; `Login` does not — but the provider argument path is
-    // resolved by Dogwood, not type-checked into Cedar, so listing both is
-    // fine.) We list only `Read`, whose input has `document`.
+    // every action's context. We list only `Read`, whose input declares
+    // `document`. (Listing `Login` too would now ERROR: the provider dialect
+    // resolves the field-path argument against every listed action, and
+    // `Login` declares no `document` — see
+    // `when_provider_field_path_arg_absent_from_eq_scope_then_error`.)
     let src = r#"permit (principal, action in [App::Action::"Read"], resource) when guardrails {
   Strings::Matches(context.input.document, "^[A-Z]+$").matched == true
 };"#;
@@ -911,10 +1285,13 @@ fn when_provider_under_action_in_list_scope_then_no_errors() {
 #[test]
 fn when_provider_under_bare_action_scope_then_no_errors() {
     // A provider call under a bare `action` scope must lower and validate —
-    // the hoisted field is grafted onto every action's context. `Read` and
-    // `Login` both exist; the field lands on both.
+    // the hoisted field is grafted onto every action's context. The field-path
+    // ARGUMENT, however, must resolve on every action the bare scope reaches
+    // (`Login` and `Read`), so it uses `user`, which both declare. (Using
+    // `document` here would now ERROR: `Login` has no `document` — see
+    // `when_provider_field_path_arg_absent_under_wildcard_then_error`.)
     let src = r#"permit (principal, action, resource) when guardrails {
-  Strings::Matches(context.input.document, "^[A-Z]+$").matched == true
+  Strings::Matches(context.input.user, "^[A-Z]+$").matched == true
 };"#;
     let result = validate_source(src, SCHEMA, Some(&decls()));
     assert!(
@@ -926,10 +1303,10 @@ fn when_provider_under_bare_action_scope_then_no_errors() {
 #[test]
 fn when_provider_under_action_in_group_scope_then_no_errors() {
     // A provider call under an `action in Group` scope must lower and
-    // validate. The hoisted field is declared on every action's context
-    // (the group `Trade` itself carries no appliesTo/input and is skipped);
-    // the group scope determines which requests the rule fires for — its
-    // descendants `Sell` and `Approve`. `document` exists on both leaves.
+    // validate. The group `Trade` is a PURE group (no `appliesTo`), so the
+    // scope resolves to its descendants `Sell` and `Approve` — both of which
+    // declare `document`, so the field-path argument resolves on every action
+    // the scope reaches.
     let src = r#"permit (principal, action in [App::Action::"Trade"], resource) when guardrails {
   Strings::Matches(context.input.document, "^[A-Z]+$").matched == true
 };"#;
@@ -1261,5 +1638,1895 @@ when temporal { formerly within 1h App::Action::"Login"::request{input.user: con
         )),
         "expected a Temporal error: `document` is absent from `Login`, a listed \
          action, even though `Read` (listed first) declares it, got:\n{result:?}"
+    );
+}
+// ═══════════════════════════════════════════════════════════════════
+// CROSS-DIALECT MATRIX: how the three dialects validate an UNGUARDED field
+// reference `context.input.document` that is absent / optional / mixed across
+// a rule's scoped actions. All three lower the SAME schema; the only variable
+// is which dialect the reference lives in. Observed behavior (locked below):
+//
+//   scenario (field reference, unguarded)     | Cedar core | Temporal | Provider
+//   ------------------------------------------|-----------|----------|---------
+//   REQUIRED, absent from a scoped action     |  ERROR    |  ERROR   |  ERROR
+//     (== absent-action / in-list / wildcard) |           |          |
+//   OPTIONAL, read without a `has` guard      |  ERROR    |  ok      |  ok
+//   MIXED (req in one action, opt in another) |  ERROR    |  ok      |  ok
+//   nonexistent field name (e.g. `bogus`)     |  ERROR    |  ERROR   |  ERROR
+//
+// ONE axis of inconsistency remains (axis (A) was closed — see below):
+//
+//  (A) [CLOSED] A field ENTIRELY ABSENT from a scoped action is now rejected by
+//      all three dialects. The provider dialect resolves its field-path
+//      arguments against every scoped action (`extension/provider/validate.rs`)
+//      and errors on a definitely-missing context field, exactly as Cedar and
+//      Temporal do. This is a VALIDATION-time check only: providers still
+//      execute unconditionally at runtime and still receive Null for an absent
+//      argument, so the Null-tolerant sentinel contract (corpus 0050/0051, and
+//      the relocated ex-0052) is untouched. Before this, a provider argument
+//      was the one dereference in the language exempt from the check — keyed
+//      invisibly on the call being a provider.
+//
+//  (B) An OPTIONAL attribute read WITHOUT a `has` guard: Cedar rejects ("unable
+//      to guarantee safety of access to optional attribute"); Temporal and
+//      Provider both ACCEPT. Cedar is the strict outlier here — the temporal
+//      grammar has no `has` guard concept and its context-path resolver treats a
+//      declared-optional field as present, and the provider check likewise only
+//      rejects a flatly-undeclared field (a present-but-optional one resolves).
+//      Closing (B) needs Cedar-style `has`-narrowing over the hoisted leaf
+//      (typechecking work), deliberately deferred. So "declared but optional" is
+//      a safety error only in pure Cedar.
+//
+// The shared, consistent point: a field ENTIRELY ABSENT from a scoped action is
+// now caught by ALL THREE dialects. The remaining divergence is (B) optionality
+// being a Cedar-only safety concern.
+//
+// These tests LOCK the current behavior so any future convergence (e.g. teaching
+// the temporal/provider dialects to require a guard for optionals) is a
+// deliberate, visible change.
+// ═══════════════════════════════════════════════════════════════════
+
+/// True iff `result` carries a temporal-dialect error mentioning `document`.
+fn temporal_document_errors(result: &ValidationResult) -> bool {
+    result.validation_errors().any(|e| matches!(
+        e,
+        ValidationError::Extension { code: "temporal", message, .. } if message.contains("document")
+    ))
+}
+
+// ─── Temporal dialect ───────────────────────────────────────────────
+//
+// Vehicle: the RHS `context.input.document` of a predicate named-arg, which
+// resolves against the RULE SCOPE's actions (target_actions) — the same
+// conjunctive-over-environments resolution Cedar uses. The predicate is
+// anchored to `Login` (which declares `user` in every schema variant) purely to
+// make the leaf time-point dependent; only the rule scope + schema vary.
+
+#[test]
+fn when_temporal_field_absent_from_eq_scoped_action_then_error() {
+    // REQUIRED-elsewhere but ABSENT from the scoped action `Login`. Temporal
+    // rejects — consistent with Cedar core.
+    let src = r#"
+permit (principal, action == App::Action::"Login", resource)
+when temporal { formerly within 1h App::Action::"Login"::request{input.user: context.input.document} };
+"#;
+    let r = validate_source(src, SCHEMA, None);
+    assert!(
+        !r.validation_passed() && temporal_document_errors(&r),
+        "temporal must reject a field absent from the scoped action, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_temporal_field_absent_under_wildcard_then_error() {
+    // Wildcard action reaches every action, including `Login` (no `document`).
+    // Temporal rejects — consistent with Cedar core.
+    let src = r#"
+permit (principal, action, resource)
+when temporal { formerly within 1h App::Action::"Login"::request{input.user: context.input.document} };
+"#;
+    let r = validate_source(src, SCHEMA, None);
+    assert!(
+        !r.validation_passed() && temporal_document_errors(&r),
+        "temporal must reject an absent field under a wildcard scope, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_temporal_reads_optional_field_unguarded_then_accepted() {
+    // OPTIONAL `document?` in Read; scope == Read; read WITHOUT a `has` guard.
+    // DIVERGENCE FROM CEDAR: temporal ACCEPTS (it has no `has`-guard concept and
+    // treats a declared-optional field as present). Pure Cedar errors here with
+    // "unable to guarantee safety of access to optional attribute".
+    let src = r#"
+permit (principal, action == App::Action::"Read", resource)
+when temporal { formerly within 1h App::Action::"Login"::request{input.user: context.input.document} };
+"#;
+    let r = validate_source(src, SCHEMA_OPTIONAL_DOC, None);
+    assert!(
+        r.validation_passed(),
+        "temporal accepts an unguarded optional read (no `has` concept); if this \
+         now fails, the dialects have CONVERGED — update the matrix. got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_temporal_reads_optional_field_in_eq_scope_then_accepted() {
+    // OPTIONAL `document?` in Login; scope == Login. Same divergence as above.
+    let src = r#"
+permit (principal, action == App::Action::"Login", resource)
+when temporal { formerly within 1h App::Action::"Login"::request{input.user: context.input.document} };
+"#;
+    let r = validate_source(src, SCHEMA_MIXED_DOC, None);
+    assert!(
+        r.validation_passed(),
+        "temporal accepts an unguarded optional read, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_temporal_mixed_optionality_in_list_then_accepted() {
+    // MIXED: `document` REQUIRED in Read, OPTIONAL in Login; scope in [Read,
+    // Login]. Present (required or optional) in BOTH, so temporal ACCEPTS.
+    // DIVERGENCE: Cedar rejects, attributing the optional-safety error to Login.
+    let src = r#"
+permit (principal, action in [App::Action::"Read", App::Action::"Login"], resource)
+when temporal { formerly within 1h App::Action::"Login"::request{input.user: context.input.document} };
+"#;
+    let r = validate_source(src, SCHEMA_MIXED_DOC, None);
+    assert!(
+        r.validation_passed(),
+        "temporal accepts a field present-but-optional across the scope, got:\n{r:?}"
+    );
+}
+
+// ─── Provider dialect ───────────────────────────────────────────────
+//
+// Vehicle: a field-path argument to a declared provider,
+// `Strings::Matches(context.input.document, "x").matched == true`. The
+// invocation is hoisted to `context.providers.<id>` at lowering. The provider
+// dialect now resolves the field-path ARGUMENT against the scoped actions and
+// rejects a DEFINITELY-MISSING context field (matching Cedar/temporal) — a
+// validation-time check that leaves the unconditional runtime execution and
+// Null-tolerant sentinel contract untouched. A present-but-optional field is
+// still accepted (divergence axis (B), pending the `has`-narrowing work).
+
+#[test]
+fn when_provider_field_path_arg_absent_from_eq_scope_then_error() {
+    // `document` is ABSENT from the scoped action `Login`. Providers now MATCH
+    // Cedar and temporal: a definitely-missing context field-path argument is a
+    // validation error (closes divergence axis (A)). The provider still
+    // EXECUTES unconditionally at runtime — this is a validation-time check
+    // only — so the Null-tolerant sentinel contract is untouched.
+    let src = r#"
+permit (principal, action == App::Action::"Login", resource)
+when { Strings::Matches(context.input.document, "x").matched == true };
+"#;
+    let r = validate_source(src, SCHEMA, Some(&decls()));
+    assert!(
+        r.validation_errors().any(|e| matches!(
+            e,
+            ValidationError::Extension { code: "provider", message, .. }
+                if message.contains("context.input.document")
+                    && message.contains("not present")
+                    && message.contains("Login")
+        )),
+        "expected a provider error for a field-path arg absent from the scoped \
+         action `Login`, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_provider_field_path_arg_absent_under_wildcard_then_error() {
+    // Wildcard scope reaches every action, including `Login` (no `document`),
+    // so the definitely-missing check fires there — same as Cedar/temporal.
+    let src = r#"
+permit (principal, action, resource)
+when { Strings::Matches(context.input.document, "x").matched == true };
+"#;
+    let r = validate_source(src, SCHEMA, Some(&decls()));
+    assert!(
+        r.validation_errors().any(|e| matches!(
+            e,
+            ValidationError::Extension { code: "provider", message, .. }
+                if message.contains("context.input.document") && message.contains("not present")
+        )),
+        "expected a provider error for an absent field-path arg under a wildcard \
+         scope, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_provider_field_path_arg_names_nonexistent_field_then_error() {
+    // The starkest form: `bogus` is declared by NO action — the exact shape
+    // Cedar core rejects in `when_cedar_clause_uses_unknown_field_then_cedar_error`.
+    // The provider dialect now rejects it too (it resolves against `Read`'s
+    // context and finds no `bogus`).
+    let src = r#"
+permit (principal, action == App::Action::"Read", resource)
+when { Strings::Matches(context.input.bogus, "x").matched == true };
+"#;
+    let r = validate_source(src, SCHEMA, Some(&decls()));
+    assert!(
+        r.validation_errors().any(|e| matches!(
+            e,
+            ValidationError::Extension { code: "provider", message, .. }
+                if message.contains("context.input.bogus")
+                    && message.contains("not present")
+                    && message.contains("Read")
+        )),
+        "expected a provider error for a field-path arg naming a field no action \
+         declares, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_provider_wrong_arity_is_still_caught() {
+    // CONTROL: provider validation is not a no-op. Arity IS checked — so the
+    // acceptance above is specifically about field-path *arguments* being
+    // unresolved, not about the provider dialect skipping validation wholesale.
+    let src = r#"
+permit (principal, action == App::Action::"Read", resource)
+when { Strings::Matches(context.input.document).matched == true };
+"#;
+    let r = validate_source(src, SCHEMA, Some(&decls()));
+    assert!(
+        r.validation_errors().any(|e| matches!(
+            e,
+            ValidationError::Extension { code: "provider", message, .. }
+                if message.contains("expects 2 argument(s) but got 1")
+        )),
+        "provider arity must still be caught, got:\n{r:?}"
+    );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CROSS-DIALECT WRONG-TYPE MATRIX. Companion to the missing/present matrix
+// above, for the case where a field is declared with a DIFFERENT TYPE across
+// scoped actions (`amount` is Long on `Read`, String on `Login`) and used in a
+// type-specific way (`> 5`, or as a string-typed provider argument). Observed:
+//
+//   scenario                                      | Cedar core | Temporal | Provider
+//   ----------------------------------------------|-----------|----------|---------
+//   type matches the scoped action (== Read)      |  ok       |  ok      |  ok
+//   type wrong on the scoped action (== Login)    |  ERROR    |  ERROR   |  ERROR
+//   type wrong on some listed action (in / bare)  |  ERROR    |  ERROR   |  ERROR
+//
+// Cedar type-checks per request environment ("unexpected type: expected Long
+// but saw String"); the temporal dialect type-checks per action ("comparison
+// requires numeric operands ... got `string` and `int`"). Both reject a field
+// whose type is wrong on ANY scoped action.
+//
+// AXIS (C) — CLOSED for scalars. The provider dialect now compares a field-path
+// argument's resolved rich type against the declared `paramType` per scoped
+// action (`extension/provider/validate.rs::check_field_path_type`), reusing the
+// SAME `resolve_context_path` resolution as the existence check. A `Long` field
+// passed to a `string`-declared argument is rejected, on any scoped action,
+// consistent with Cedar/temporal and with how the provider's LITERAL arguments
+// are already type-checked. SCOPE OF THE CLOSURE: only clear scalar-vs-scalar
+// mismatches (String/Long/Bool/decimal) are rejected; non-scalar declared types
+// (`set`/`record`) and non-scalar resolved types (`array`/`object`/`entity`)
+// are still lenient (a documented, deliberate boundary — tightening set element
+// types / records / entities is a future step). The optional caveat from axis
+// (B) still applies: an optional field resolves as present, so it is
+// type-checked when its type is known.
+// ═══════════════════════════════════════════════════════════════════
+
+const SCHEMA_TYPEVARIES: &str = r#"
+namespace App {
+  type ReadInput  = { user: String, amount: Long };
+  type LoginInput = { user: String, amount: String };
+  entity Gateway;
+  entity OAuthUser = { id: String };
+  action "Read" appliesTo {
+    principal: [OAuthUser], resource: [Gateway], context: { input: ReadInput }
+  };
+  action "Login" appliesTo {
+    principal: [OAuthUser], resource: [Gateway], context: { input: LoginInput }
+  };
+}
+"#;
+
+/// True iff `result` carries a Cedar error whose message contains `needle`.
+fn cedar_error_contains(result: &ValidationResult, needle: &str) -> bool {
+    result.validation_errors().any(|e| {
+        matches!(
+            e,
+            ValidationError::Cedar { message, .. } if message.contains(needle)
+        )
+    })
+}
+
+// ── Cedar core ──
+#[test]
+fn when_cedar_wrong_type_on_matching_action_then_ok() {
+    // `amount` is Long on `Read`; `> 5` is well-typed there. Baseline.
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { context.input.amount > 5 };"#;
+    let r = validate_source(src, SCHEMA_TYPEVARIES, None);
+    assert!(
+        r.validation_passed(),
+        "Long amount `> 5` is well-typed, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_cedar_wrong_type_on_scoped_action_then_error() {
+    // `amount` is String on `Login`; `> 5` is a Cedar type error.
+    let src = r#"permit (principal, action == App::Action::"Login", resource) when { context.input.amount > 5 };"#;
+    let r = validate_source(src, SCHEMA_TYPEVARIES, None);
+    assert!(
+        cedar_error_contains(&r, "expected Long but saw String"),
+        "Cedar must reject `String > 5`, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_cedar_wrong_type_in_list_then_error() {
+    // Read(Long) OK, Login(String) is the type error — per request environment.
+    let src = r#"permit (principal, action in [App::Action::"Read", App::Action::"Login"], resource) when { context.input.amount > 5 };"#;
+    let r = validate_source(src, SCHEMA_TYPEVARIES, None);
+    assert!(
+        cedar_error_contains(&r, "expected Long but saw String"),
+        "Cedar must reject the type-wrong environment (Login), got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_cedar_wrong_type_under_wildcard_then_error() {
+    let src = r#"permit (principal, action, resource) when { context.input.amount > 5 };"#;
+    let r = validate_source(src, SCHEMA_TYPEVARIES, None);
+    assert!(
+        cedar_error_contains(&r, "expected Long but saw String"),
+        "Cedar must reject the type-wrong environment under a wildcard, got:\n{r:?}"
+    );
+}
+
+// ── Temporal ── (a `> 5` comparison inside a `formerly` body, anchored by a
+// predicate so the leaf is time-point dependent). The temporal type checker
+// resolves `context.input.amount` per scoped action and rejects the numeric
+// comparison where it is a String.
+#[test]
+fn when_temporal_wrong_type_on_scoped_action_then_error() {
+    let src = r#"permit (principal, action == App::Action::"Login", resource)
+when temporal { formerly within 1h (App::Action::"Read"::request{} && context.input.amount > 5) };"#;
+    let r = validate_source(src, SCHEMA_TYPEVARIES, None);
+    assert!(
+        r.validation_errors().any(|e| matches!(
+            e,
+            ValidationError::Extension { code: "temporal", message, .. }
+                if message.contains("numeric operands")
+        )),
+        "temporal must reject a numeric comparison on a String field, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_temporal_wrong_type_in_list_then_error() {
+    let src = r#"permit (principal, action in [App::Action::"Read", App::Action::"Login"], resource)
+when temporal { formerly within 1h (App::Action::"Read"::request{} && context.input.amount > 5) };"#;
+    let r = validate_source(src, SCHEMA_TYPEVARIES, None);
+    assert!(
+        r.validation_errors().any(|e| matches!(
+            e,
+            ValidationError::Extension { code: "temporal", message, .. }
+                if message.contains("numeric operands")
+        )),
+        "temporal must reject the type-wrong listed action (Login), got:\n{r:?}"
+    );
+}
+
+// ── Provider ── axis (C) CLOSED for scalars: field-path argument TYPE is
+// checked against the declared paramType per scoped action. `Strings::Matches`
+// declares arg0 `string`; `amount` is `Long` on `Read` — a mismatch, rejected.
+#[test]
+fn when_provider_wrong_type_field_path_arg_then_error() {
+    // Single action, unambiguous mismatch: a Long field into a string-declared
+    // provider argument. Rejected (was accepted before axis (C) closed).
+    let src = r#"permit (principal, action == App::Action::"Read", resource)
+when { Strings::Matches(context.input.amount, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_TYPEVARIES, Some(&decls()));
+    assert!(
+        r.validation_errors().any(|e| matches!(
+            e,
+            ValidationError::Extension { code: "provider", message, .. }
+                if message.contains("context.input.amount")
+                    && message.contains("has type `Long`")
+                    && message.contains("declares argument type `string`")
+                    && message.contains("Read")
+        )),
+        "provider must reject a Long field-path arg into a string-declared \
+         argument, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_provider_wrong_type_in_list_then_error() {
+    // Read(Long, mismatch) + Login(String, match). The mismatching action
+    // (Read) is rejected — "wrong on any", matching Cedar/temporal.
+    let src = r#"permit (principal, action in [App::Action::"Read", App::Action::"Login"], resource)
+when { Strings::Matches(context.input.amount, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_TYPEVARIES, Some(&decls()));
+    assert!(
+        r.validation_errors().any(|e| matches!(
+            e,
+            ValidationError::Extension { code: "provider", message, .. }
+                if message.contains("has type `Long`") && message.contains("Read")
+        )),
+        "provider must reject the type-mismatched action (Read) in a list scope, \
+         got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_provider_matching_type_field_path_arg_then_ok() {
+    // Control: on `Login`, `amount` is String, matching the declared `string`
+    // argument — so a single-action scope to Login validates. Confirms the
+    // check rejects only genuine mismatches, not the field per se.
+    let src = r#"permit (principal, action == App::Action::"Login", resource)
+when { Strings::Matches(context.input.amount, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_TYPEVARIES, Some(&decls()));
+    assert!(
+        r.validation_passed(),
+        "a String field into a string-declared arg must validate, got:\n{r:?}"
+    );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CHAIN RESOLUTION, TYPE ALIASES, CROSS-NAMESPACE TYPES, METHOD ARGS, and
+// principal/resource typing. These pin that the provider field-path checks
+// (existence axis A + scalar type axis C) resolve correctly through:
+//   * a DEEP nested record path (`context.input.profile.age`),
+//   * a CROSS-NAMESPACE common type (`Core::Profile` used in `App`),
+//   * a same-namespace type ALIAS (`type Age = Long`), resolved to Long,
+//   * the mid-chain failure modes `NestedMissing` and `NonRecord`,
+//   * a provider METHOD-CHAIN argument (`.taggedWith(context.input....)`).
+// All of the above resolve via the SAME `resolve_context_path` the temporal
+// dialect uses, against the augmented (common-types-inlined) schema.
+//
+// principal/resource: CLOSED. Cedar (and the temporal dialect, via
+// `resolve_scope_path`) type-check a `principal.<attr>` / `resource.<attr>`
+// tail. The provider dialect now does the same: `ProviderField` carries the
+// rule's `principal`/`resource` scope constraints, and the checks resolve a
+// scope-rooted argument via `resolve_scope_path` NARROWED by them — so a
+// missing attribute (`principal.bogus`) or a wrong scalar type (`principal.level`
+// Long into a string arg) is rejected, while a rule narrowed with
+// `principal is T` to a type that HAS the attribute is not falsely rejected
+// against sibling types it excludes. `Ambiguous` (attr present on every
+// admitted type but at different types) stays lenient, as with context.
+// ═══════════════════════════════════════════════════════════════════
+
+// Nested record reached via a CROSS-NAMESPACE common type (`Core::Profile`)
+// whose `age` field uses a same-namespace type ALIAS (`type Age = Long`).
+const SCHEMA_NESTED: &str = r#"
+namespace Core {
+  type Age = Long;
+  type Profile = { age: Age, name: String };
+}
+namespace App {
+  type ReadInput = { user: String, profile: Core::Profile };
+  entity Gateway;
+  entity OAuthUser = { id: String, dept: String };
+  action "Read" appliesTo {
+    principal: [OAuthUser], resource: [Gateway], context: { input: ReadInput }
+  };
+}
+"#;
+
+fn decls_method() -> ProviderDeclarations {
+    ProviderDeclarations::from_json(
+        r#"{ "availableProviders": {
+          "Doc::Check": {
+            "argumentTypes": [{ "paramType": "string" }],
+            "outputType": { "paramType": "record", "fields": { "ok": { "paramType": "bool" } }, "required": ["ok"] },
+            "availableMethods": {
+              "taggedWith": {
+                "argumentTypes": [{ "paramType": "string" }],
+                "outputType": { "paramType": "record", "fields": { "ok": { "paramType": "bool" } }, "required": ["ok"] }
+              }
+            }
+          }
+        }}"#,
+    )
+    .expect("decls_method parse")
+}
+
+/// True iff `result` has a provider error whose message contains `needle`.
+fn provider_error_contains(result: &ValidationResult, needle: &str) -> bool {
+    result.validation_errors().any(|e| {
+        matches!(
+            e,
+            ValidationError::Extension { code: "provider", message, .. } if message.contains(needle)
+        )
+    })
+}
+
+#[test]
+fn when_provider_deep_chain_type_matches_then_ok() {
+    // context.input.profile.name : String (reached through the cross-namespace
+    // common type Core::Profile) into a string-declared arg. Resolves and matches.
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { Strings::Matches(context.input.profile.name, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_NESTED, Some(&decls()));
+    assert!(
+        r.validation_passed(),
+        "deep cross-namespace String path must resolve, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_provider_deep_chain_type_mismatch_via_alias_then_error() {
+    // context.input.profile.age : Age = Long (a same-namespace ALIAS resolved to
+    // Long) into a string-declared arg. The type check sees through the alias.
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { Strings::Matches(context.input.profile.age, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_NESTED, Some(&decls()));
+    assert!(
+        provider_error_contains(&r, "context.input.profile.age")
+            && provider_error_contains(&r, "has type `Long`")
+            && provider_error_contains(&r, "declares argument type `string`"),
+        "aliased Long field must be caught as a type mismatch, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_provider_deep_chain_nested_missing_then_error() {
+    // context.input.profile.bogus : NestedMissing inside the nested record.
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { Strings::Matches(context.input.profile.bogus, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_NESTED, Some(&decls()));
+    assert!(
+        provider_error_contains(&r, "context.input.profile.bogus")
+            && provider_error_contains(&r, "not present"),
+        "a deep NestedMissing field must be caught, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_provider_deep_chain_non_record_then_error() {
+    // context.input.profile.age.x : `age` is Long, so `.x` is a NonRecord
+    // traversal — caught by the same existence check.
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { Strings::Matches(context.input.profile.age.x, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_NESTED, Some(&decls()));
+    assert!(
+        provider_error_contains(&r, "context.input.profile.age.x")
+            && provider_error_contains(&r, "not present"),
+        "descending into a scalar (NonRecord) must be caught, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_provider_method_chain_arg_missing_then_error() {
+    // A field-path argument in a METHOD-chain call is checked too.
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { Doc::Check(context.input.profile.name).taggedWith(context.input.profile.bogus).ok == true };"#;
+    let r = validate_source(src, SCHEMA_NESTED, Some(&decls_method()));
+    assert!(
+        provider_error_contains(&r, "context.input.profile.bogus")
+            && provider_error_contains(&r, "not present"),
+        "a missing field in a method-chain arg must be caught, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_provider_method_chain_arg_type_mismatch_then_error() {
+    // A method-chain field-path arg is type-checked against the method's
+    // declared argumentTypes (Long into taggedWith's string arg).
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { Doc::Check(context.input.profile.name).taggedWith(context.input.profile.age).ok == true };"#;
+    let r = validate_source(src, SCHEMA_NESTED, Some(&decls_method()));
+    assert!(
+        provider_error_contains(&r, "context.input.profile.age")
+            && provider_error_contains(&r, "has type `Long`"),
+        "a wrong-typed method-chain arg must be caught, got:\n{r:?}"
+    );
+}
+
+// ── principal/resource typing across dialects ──
+#[test]
+fn when_cedar_principal_attr_missing_then_error() {
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { principal.bogus == "x" };"#;
+    let r = validate_source(src, SCHEMA_NESTED, None);
+    assert!(
+        cedar_error_contains(&r, "attribute `bogus`") && cedar_error_contains(&r, "not found"),
+        "Cedar rejects a missing principal attribute, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_cedar_principal_attr_wrong_type_then_error() {
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { principal.dept > 5 };"#;
+    let r = validate_source(src, SCHEMA_NESTED, None);
+    assert!(
+        cedar_error_contains(&r, "expected Long but saw String"),
+        "Cedar type-checks a principal attribute, got:\n{r:?}"
+    );
+}
+
+// A scope with a MULTI-TYPE principal: `OAuthUser` has `dept`(String)/`level`(Long),
+// `Bot` has neither; `Gateway` (resource) has `owner`. Exercises scope-attribute
+// existence, type, narrowing, and the resource axis.
+const SCHEMA_SCOPE: &str = r#"
+namespace App {
+  type ReadInput = { user: String };
+  entity Gateway = { owner: String };
+  entity OAuthUser = { id: String, dept: String, level: Long };
+  entity Bot;
+  action "Read" appliesTo {
+    principal: [OAuthUser, Bot], resource: [Gateway], context: { input: ReadInput }
+  };
+}
+"#;
+
+#[test]
+fn when_provider_principal_attr_missing_then_error() {
+    // CLOSED: the provider now resolves a `principal.<attr>` argument against
+    // the entity types the rule's scope admits — `bogus` does not exist on
+    // OAuthUser (the only type `Read`'s principal admits here), so it errors,
+    // consistent with Cedar (above).
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { Strings::Matches(principal.bogus, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_NESTED, Some(&decls()));
+    assert!(
+        provider_error_contains(&r, "principal.bogus")
+            && provider_error_contains(&r, "not present"),
+        "provider must reject a missing principal attribute, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_provider_resource_attr_missing_then_error() {
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { Strings::Matches(resource.bogus, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_SCOPE, Some(&decls()));
+    assert!(
+        provider_error_contains(&r, "resource.bogus") && provider_error_contains(&r, "not present"),
+        "provider must reject a missing resource attribute, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_provider_resource_attr_present_then_ok() {
+    // `Gateway.owner` : String into a string-declared arg. Resolves and matches.
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { Strings::Matches(resource.owner, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_SCOPE, Some(&decls()));
+    assert!(
+        r.validation_passed(),
+        "resource.owner (String) must validate, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_provider_principal_attr_missing_on_one_type_then_error() {
+    // Multi-type principal, UNNARROWED: `dept` exists on OAuthUser but NOT on
+    // Bot, and the rule can fire for a Bot, so the read is rejected — Cedar's
+    // per-environment answer.
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { Strings::Matches(principal.dept, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_SCOPE, Some(&decls()));
+    assert!(
+        provider_error_contains(&r, "principal.dept") && provider_error_contains(&r, "not present"),
+        "an attribute absent from one admitted principal type must be rejected, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_provider_principal_narrowing_avoids_false_positive() {
+    // KEY CORRECTNESS PIN: with `principal is App::OAuthUser`, the scope narrows
+    // to OAuthUser (which HAS `dept`), so `principal.dept` resolves and the rule
+    // validates — the narrowing prevents a false rejection against the excluded
+    // `Bot` type. This is why ProviderField now carries the principal/resource
+    // constraints.
+    let src = r#"permit (principal is App::OAuthUser, action == App::Action::"Read", resource) when { Strings::Matches(principal.dept, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_SCOPE, Some(&decls()));
+    assert!(
+        r.validation_passed(),
+        "narrowing to OAuthUser (which has `dept`) must avoid a false positive, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_provider_principal_attr_wrong_type_then_error() {
+    // Narrowed to OAuthUser so existence is satisfied; `level` is Long, into a
+    // string-declared arg -> type mismatch (scope-path type check).
+    let src = r#"permit (principal is App::OAuthUser, action == App::Action::"Read", resource) when { Strings::Matches(principal.level, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_SCOPE, Some(&decls()));
+    assert!(
+        provider_error_contains(&r, "principal.level")
+            && provider_error_contains(&r, "has type `Long`"),
+        "a Long principal attribute into a string arg must be a type error, got:\n{r:?}"
+    );
+}
+
+// Scope entities with a NESTED record attribute reached via a CROSS-NAMESPACE
+// common type (`Core::Profile`) whose `age` field uses a type ALIAS
+// (`type Age = Long`). Verifies that principal/resource field-path resolution
+// (existence + scalar type) walks deep chains, cross-namespace types, and
+// aliases the same way the context path does.
+const SCHEMA_SCOPE_NESTED: &str = r#"
+namespace Core {
+  type Age = Long;
+  type Profile = { age: Age, name: String };
+}
+namespace App {
+  entity Gateway = { meta: Core::Profile };
+  entity OAuthUser = { id: String, profile: Core::Profile };
+  action "Read" appliesTo {
+    principal: [OAuthUser], resource: [Gateway], context: { input: { user: String } }
+  };
+}
+"#;
+
+#[test]
+fn when_provider_principal_deep_chain_type_matches_then_ok() {
+    // principal.profile.name : String (nested via cross-namespace Core::Profile).
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { Strings::Matches(principal.profile.name, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_SCOPE_NESTED, Some(&decls()));
+    assert!(
+        r.validation_passed(),
+        "deep principal String path must resolve, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_provider_principal_deep_chain_type_mismatch_via_alias_then_error() {
+    // principal.profile.age : Age = Long (alias) into a string-declared arg.
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { Strings::Matches(principal.profile.age, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_SCOPE_NESTED, Some(&decls()));
+    assert!(
+        provider_error_contains(&r, "principal.profile.age")
+            && provider_error_contains(&r, "has type `Long`"),
+        "an aliased Long nested principal attribute must be a type error, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_provider_principal_deep_chain_nested_missing_then_error() {
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { Strings::Matches(principal.profile.bogus, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_SCOPE_NESTED, Some(&decls()));
+    assert!(
+        provider_error_contains(&r, "principal.profile.bogus")
+            && provider_error_contains(&r, "not present"),
+        "a deep NestedMissing principal attribute must be caught, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_provider_principal_deep_chain_non_record_then_error() {
+    // principal.profile.age.x : `age` is Long, so `.x` is a NonRecord traversal.
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { Strings::Matches(principal.profile.age.x, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_SCOPE_NESTED, Some(&decls()));
+    assert!(
+        provider_error_contains(&r, "principal.profile.age.x")
+            && provider_error_contains(&r, "not present"),
+        "descending into a scalar principal attribute (NonRecord) must be caught, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_provider_resource_deep_chain_type_matches_then_ok() {
+    // resource.meta.name : String (nested via cross-namespace Core::Profile).
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { Strings::Matches(resource.meta.name, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_SCOPE_NESTED, Some(&decls()));
+    assert!(
+        r.validation_passed(),
+        "deep resource String path must resolve, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_provider_resource_deep_chain_type_mismatch_via_alias_then_error() {
+    // resource.meta.age : Age = Long (alias) into a string-declared arg.
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { Strings::Matches(resource.meta.age, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_SCOPE_NESTED, Some(&decls()));
+    assert!(
+        provider_error_contains(&r, "resource.meta.age")
+            && provider_error_contains(&r, "has type `Long`"),
+        "an aliased Long nested resource attribute must be a type error, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_provider_resource_deep_chain_nested_missing_then_error() {
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { Strings::Matches(resource.meta.bogus, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_SCOPE_NESTED, Some(&decls()));
+    assert!(
+        provider_error_contains(&r, "resource.meta.bogus")
+            && provider_error_contains(&r, "not present"),
+        "a deep NestedMissing resource attribute must be caught, got:\n{r:?}"
+    );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// NON-SCALAR TYPE MATRIX (Set, record). Companion to the scalar wrong-type
+// matrix, for the case where a field-path reference's type CATEGORY (set /
+// record / entity) is used where another category is expected. Observed:
+//
+//   Cedar rejects EVERY category mismatch, per request environment:
+//     Set == String          -> "the types String and Set<String> are not compatible"
+//     Set > 5                -> "unexpected type: expected Long but saw Set<String>"
+//     record == String       -> "the types String and {age: Long,} are not compatible"
+//     String.contains(...)   -> "expected Set<..> but saw String"
+//     Set<String>.contains(Long) -> "the types Long and String are not compatible" (element)
+//     Set<String>.contains(String) -> ok (baseline)
+//
+// AXIS (C) non-scalar sub-boundary — CATEGORY (#1) + SET ELEMENT (#2) now
+// CLOSED. The provider dialect's type check compares the resolved rich type
+// against the declared `paramType` by category (scalar kind / set / record),
+// and for a `set` also checks the element type when both are known. So a Set or
+// record field into a `string`-declared arg is rejected (the two provider pins
+// below), a Set<Long> field into a `Set<String>`-declared arg is rejected on the
+// element, etc. — matching Cedar's category and set-element checks. STILL OPEN
+// (#3): a record-declared arg accepts any record without comparing FIELDS —
+// Cedar records are invariant (probed below), but exact field matching needs
+// structured record types (the resolver collapses records to `object`) and is a
+// deliberate deferred boundary. These pins lock the behavior.
+// ═══════════════════════════════════════════════════════════════════
+const SCHEMA_NONSCALAR: &str = r#"
+namespace App {
+  type ReadInput = {
+    scalar: String,
+    tags: Set<String>,
+    nums: Set<Long>,
+    profile: { age: Long }
+  };
+  entity Gateway;
+  entity OAuthUser = { id: String };
+  action "Read" appliesTo {
+    principal: [OAuthUser], resource: [Gateway], context: { input: ReadInput }
+  };
+}
+"#;
+
+// ── Cedar core: category mismatches ──
+#[test]
+fn when_cedar_set_compared_to_scalar_then_error() {
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { context.input.tags == "x" };"#;
+    let r = validate_source(src, SCHEMA_NONSCALAR, None);
+    assert!(
+        cedar_error_contains(&r, "not compatible") && cedar_error_contains(&r, "Set<String>"),
+        "Cedar rejects Set == String, got:\n{r:?}"
+    );
+}
+#[test]
+fn when_cedar_set_in_numeric_op_then_error() {
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { context.input.tags > 5 };"#;
+    let r = validate_source(src, SCHEMA_NONSCALAR, None);
+    assert!(
+        cedar_error_contains(&r, "Set<String>"),
+        "Cedar rejects Set in a numeric op, got:\n{r:?}"
+    );
+}
+#[test]
+fn when_cedar_record_compared_to_scalar_then_error() {
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { context.input.profile == "x" };"#;
+    let r = validate_source(src, SCHEMA_NONSCALAR, None);
+    assert!(
+        cedar_error_contains(&r, "not compatible"),
+        "Cedar rejects record == String, got:\n{r:?}"
+    );
+}
+#[test]
+fn when_cedar_scalar_used_as_set_then_error() {
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { context.input.scalar.contains("x") };"#;
+    let r = validate_source(src, SCHEMA_NONSCALAR, None);
+    assert!(
+        cedar_error_contains(&r, "expected Set") && cedar_error_contains(&r, "String"),
+        "Cedar rejects `.contains` on a String, got:\n{r:?}"
+    );
+}
+#[test]
+fn when_cedar_set_element_type_mismatch_then_error() {
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { context.input.tags.contains(5) };"#;
+    let r = validate_source(src, SCHEMA_NONSCALAR, None);
+    assert!(
+        cedar_error_contains(&r, "not compatible"),
+        "Cedar rejects Set<String>.contains(Long) on the element type, got:\n{r:?}"
+    );
+}
+#[test]
+fn when_cedar_set_element_type_matches_then_ok() {
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { context.input.tags.contains("x") };"#;
+    let r = validate_source(src, SCHEMA_NONSCALAR, None);
+    assert!(
+        r.validation_passed(),
+        "Set<String>.contains(String) is well-typed, got:\n{r:?}"
+    );
+}
+
+// ── Provider: non-scalar category (#1) + set element (#2) now CLOSED ──
+#[test]
+fn when_provider_set_into_scalar_arg_then_error() {
+    // `tags` is Set<String> into a string-declared provider arg — a category
+    // mismatch, now rejected (was accepted before #1).
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { Strings::Matches(context.input.tags, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_NONSCALAR, Some(&decls()));
+    assert!(
+        provider_error_contains(&r, "context.input.tags")
+            && provider_error_contains(&r, "has type `Set<String>`")
+            && provider_error_contains(&r, "declares argument type `string`"),
+        "provider must reject a Set into a string-declared arg, got:\n{r:?}"
+    );
+}
+#[test]
+fn when_provider_record_into_scalar_arg_then_error() {
+    // `profile` is a record into a string-declared provider arg — category mismatch.
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { Strings::Matches(context.input.profile, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_NONSCALAR, Some(&decls()));
+    assert!(
+        provider_error_contains(&r, "context.input.profile")
+            && provider_error_contains(&r, "has type `record`"),
+        "provider must reject a record into a string-declared arg, got:\n{r:?}"
+    );
+}
+
+// EXPLORATORY: Cedar's record subtyping/compatibility, probed via `==`.
+const SCHEMA_RECSUB: &str = r#"
+namespace App {
+  type RecA = { x: Long };
+  type RecB = { x: Long, y: Long };
+  type RecC = { x: String };
+  type RecD = { x: Long, y?: Long };
+  type ReadInput = { a: RecA, b: RecB, c: RecC, d: RecD, flag: Bool };
+  entity Gateway;
+  entity OAuthUser = { id: String };
+  action "Read" appliesTo {
+    principal: [OAuthUser], resource: [Gateway], context: { input: ReadInput }
+  };
+}
+"#;
+#[test]
+fn when_cedar_record_types_are_invariant_for_eq() {
+    // Cedar record `==` requires EXACT type equality. `a == a` is fine; any
+    // structural difference — an extra required field (b), an extra OPTIONAL
+    // field (d), a required-vs-optional flag (b vs d), or a differing attribute
+    // type (c) — is "not compatible". Records are invariant: no width or depth
+    // (optional) subtyping.
+    let eq = |lhs: &str, rhs: &str| {
+        let src = format!(
+            "permit (principal, action == App::Action::\"Read\", resource) when {{ context.input.{lhs} == context.input.{rhs} }};"
+        );
+        validate_source(&src, SCHEMA_RECSUB, None)
+    };
+    assert!(eq("a", "a").validation_passed(), "a == a must validate");
+    for (lhs, rhs, why) in [
+        ("a", "b", "extra required field"),
+        ("a", "d", "extra optional field"),
+        ("a", "c", "differing attribute type"),
+        ("b", "d", "required vs optional flag"),
+    ] {
+        let r = eq(lhs, rhs);
+        assert!(
+            cedar_error_contains(&r, "not compatible"),
+            "Cedar must reject `{lhs} == {rhs}` ({why}) as incompatible, got:\n{r:?}"
+        );
+    }
+}
+
+#[test]
+fn when_cedar_record_lub_requires_exact_shape() {
+    // `if/then/else` computes the least-upper-bound of its branch types. Across
+    // a width difference (b vs a) or an extra-optional difference (d vs a), no
+    // LUB exists — a type error. Confirms records are invariant even under LUB,
+    // not just `==`.
+    let lub = |branch: &str| {
+        let src = format!(
+            "permit (principal, action == App::Action::\"Read\", resource) when {{ (if context.input.flag then context.input.{branch} else context.input.a).x == 1 }};"
+        );
+        validate_source(&src, SCHEMA_RECSUB, None)
+    };
+    assert!(!lub("b").validation_passed(), "LUB(b,a) width must fail");
+    assert!(!lub("d").validation_passed(), "LUB(d,a) optional must fail");
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// FULL CATEGORY MATRIX for the provider field-path TYPE check (#1 category +
+// #2 set element). A context with a field of every category, and providers
+// declaring an argument of every category; each pin feeds one resolved
+// category into one declared category and asserts match / mismatch.
+// ═══════════════════════════════════════════════════════════════════
+const SCHEMA_CATEGORIES: &str = r#"
+namespace App {
+  type ReadInput = {
+    s: String,
+    n: Long,
+    b: Bool,
+    d: decimal,
+    set_s: Set<String>,
+    set_n: Set<Long>,
+    rec: { k: Long },
+    ent: OAuthUser
+  };
+  entity Gateway;
+  entity OAuthUser = { id: String };
+  action "Read" appliesTo {
+    principal: [OAuthUser], resource: [Gateway], context: { input: ReadInput }
+  };
+}
+"#;
+
+fn decls_categories() -> ProviderDeclarations {
+    let out = r#"{ "paramType": "record", "fields": { "ok": { "paramType": "bool" } }, "required": ["ok"] }"#;
+    let json = format!(
+        r#"{{ "availableProviders": {{
+          "Cat::Str":  {{ "argumentTypes": [{{ "paramType": "string" }}],  "outputType": {out} }},
+          "Cat::Long": {{ "argumentTypes": [{{ "paramType": "long" }}],    "outputType": {out} }},
+          "Cat::Bool": {{ "argumentTypes": [{{ "paramType": "bool" }}],    "outputType": {out} }},
+          "Cat::Dec":  {{ "argumentTypes": [{{ "paramType": "decimal" }}], "outputType": {out} }},
+          "Cat::SetS": {{ "argumentTypes": [{{ "paramType": "set", "items": {{ "paramType": "string" }} }}], "outputType": {out} }},
+          "Cat::Rec":  {{ "argumentTypes": [{{ "paramType": "record", "fields": {{ "k": {{ "paramType": "long" }} }}, "required": ["k"] }}], "outputType": {out} }}
+        }} }}"#
+    );
+    ProviderDeclarations::from_json(&json).expect("decls_categories parse")
+}
+
+/// Validate `Provider(field).ok == true` against the category schema/decls.
+fn cat_case(call: &str) -> ValidationResult {
+    let src = format!(
+        "permit (principal, action == App::Action::\"Read\", resource) when {{ {call}.ok == true }};"
+    );
+    validate_source(&src, SCHEMA_CATEGORIES, Some(&decls_categories()))
+}
+fn cat_ok(call: &str) -> bool {
+    cat_case(call).validation_passed()
+}
+fn cat_type_err(call: &str) -> bool {
+    cat_case(call).validation_errors().any(|e| matches!(
+        e,
+        ValidationError::Extension { code: "provider", message, .. } if message.contains("has type")
+    ))
+}
+
+#[test]
+fn category_scalar_args_accept_only_the_same_scalar() {
+    // Diagonal: each scalar-declared arg accepts its own scalar.
+    assert!(cat_ok("Cat::Str(context.input.s)"), "string<-String");
+    assert!(cat_ok("Cat::Long(context.input.n)"), "long<-Long");
+    assert!(cat_ok("Cat::Bool(context.input.b)"), "bool<-Bool");
+    assert!(cat_ok("Cat::Dec(context.input.d)"), "decimal<-decimal");
+    // Off-diagonal scalar<->scalar: rejected.
+    assert!(cat_type_err("Cat::Str(context.input.n)"), "string<-Long");
+    assert!(cat_type_err("Cat::Str(context.input.b)"), "string<-Bool");
+    assert!(cat_type_err("Cat::Str(context.input.d)"), "string<-decimal");
+    assert!(cat_type_err("Cat::Long(context.input.s)"), "long<-String");
+    assert!(cat_type_err("Cat::Bool(context.input.n)"), "bool<-Long");
+    assert!(cat_type_err("Cat::Dec(context.input.n)"), "decimal<-Long");
+}
+
+#[test]
+fn category_scalar_arg_rejects_nonscalar() {
+    // A scalar-declared arg rejects a Set, a record, and an entity field.
+    assert!(cat_type_err("Cat::Str(context.input.set_s)"), "string<-Set");
+    assert!(
+        cat_type_err("Cat::Str(context.input.rec)"),
+        "string<-record"
+    );
+    assert!(
+        cat_type_err("Cat::Str(context.input.ent)"),
+        "string<-entity"
+    );
+}
+
+#[test]
+fn category_set_arg_checks_category_and_element() {
+    // #1 category: a `set`-declared arg accepts an array, rejects scalars/records.
+    assert!(
+        cat_ok("Cat::SetS(context.input.set_s)"),
+        "set<string><-Set<String>"
+    );
+    assert!(
+        cat_type_err("Cat::SetS(context.input.s)"),
+        "set<-String (category)"
+    );
+    assert!(
+        cat_type_err("Cat::SetS(context.input.rec)"),
+        "set<-record (category)"
+    );
+    // #2 element: Set<Long> into a Set<String>-declared arg is an element mismatch.
+    assert!(
+        cat_type_err("Cat::SetS(context.input.set_n)"),
+        "set<string><-Set<Long> (element)"
+    );
+}
+
+#[test]
+fn category_record_arg_checks_category_only() {
+    // #1 category: a `record`-declared arg accepts ANY record (fields deferred,
+    // #3), rejects scalars and sets.
+    assert!(
+        cat_ok("Cat::Rec(context.input.rec)"),
+        "record<-record (fields not compared, #3)"
+    );
+    assert!(
+        cat_type_err("Cat::Rec(context.input.s)"),
+        "record<-String (category)"
+    );
+    assert!(
+        cat_type_err("Cat::Rec(context.input.set_s)"),
+        "record<-Set (category)"
+    );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// `__cedar::` BUILTIN SPELLINGS. Cedar's reserved namespace can name the
+// primitives (`__cedar::String`, `__cedar::Long`, …), and Dogwood's own
+// common-type inlining pins bare builtins to that capture-proof spelling
+// internally — a historical source of bugs. These pins confirm the rich-type
+// projection reads Cedar's RESOLVED type (so `__cedar::String` classifies as
+// String, NOT an entity named `String`), for a schema that MIXES the `__cedar::`
+// and bare spellings, across both the provider and temporal type checks.
+// ═══════════════════════════════════════════════════════════════════
+const SCHEMA_CEDAR_NS: &str = r#"
+namespace App {
+  type ReadInput = {
+    cedar_s: __cedar::String,
+    cedar_n: __cedar::Long,
+    cedar_b: __cedar::Bool,
+    cedar_tags: Set<__cedar::String>,
+    plain_s: String,
+    plain_n: Long
+  };
+  entity Gateway;
+  entity OAuthUser = { id: String };
+  action "Read" appliesTo {
+    principal: [OAuthUser], resource: [Gateway], context: { input: ReadInput }
+  };
+}
+"#;
+
+#[test]
+fn when_provider_cedar_ns_string_field_matches_string_arg() {
+    // `__cedar::String` must classify as String and match a string-declared arg
+    // (not be treated as an entity named `String`).
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { Strings::Matches(context.input.cedar_s, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_CEDAR_NS, Some(&decls()));
+    assert!(
+        r.validation_passed(),
+        "__cedar::String must match a string arg, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_provider_cedar_ns_long_field_mismatches_string_arg() {
+    // `__cedar::Long` must classify as Long — a type mismatch against a string
+    // arg, proving the `__cedar::` spelling resolved to the primitive.
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { Strings::Matches(context.input.cedar_n, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_CEDAR_NS, Some(&decls()));
+    assert!(
+        provider_error_contains(&r, "context.input.cedar_n")
+            && provider_error_contains(&r, "has type `Long`"),
+        "__cedar::Long must be caught as a Long/String mismatch, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_provider_cedar_ns_set_field_mismatches_string_arg() {
+    // `Set<__cedar::String>` must classify as a Set (category mismatch vs string).
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { Strings::Matches(context.input.cedar_tags, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_CEDAR_NS, Some(&decls()));
+    assert!(
+        provider_error_contains(&r, "context.input.cedar_tags")
+            && provider_error_contains(&r, "has type `Set<String>`"),
+        "Set<__cedar::String> must be caught as a Set/String mismatch, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_provider_mixed_cedar_and_plain_spellings_agree() {
+    // The `__cedar::`-spelled field and the bare-spelled field of the same type
+    // behave identically — mixed use in one schema is consistent.
+    let ok_cedar = r#"permit (principal, action == App::Action::"Read", resource) when { Strings::Matches(context.input.cedar_s, "x").matched == true };"#;
+    let ok_plain = r#"permit (principal, action == App::Action::"Read", resource) when { Strings::Matches(context.input.plain_s, "x").matched == true };"#;
+    let err_cedar = r#"permit (principal, action == App::Action::"Read", resource) when { Strings::Matches(context.input.cedar_n, "x").matched == true };"#;
+    let err_plain = r#"permit (principal, action == App::Action::"Read", resource) when { Strings::Matches(context.input.plain_n, "x").matched == true };"#;
+    assert!(validate_source(ok_cedar, SCHEMA_CEDAR_NS, Some(&decls())).validation_passed());
+    assert!(validate_source(ok_plain, SCHEMA_CEDAR_NS, Some(&decls())).validation_passed());
+    assert!(!validate_source(err_cedar, SCHEMA_CEDAR_NS, Some(&decls())).validation_passed());
+    assert!(!validate_source(err_plain, SCHEMA_CEDAR_NS, Some(&decls())).validation_passed());
+}
+
+#[test]
+fn when_temporal_cedar_ns_string_field_is_typed_as_string() {
+    // In the temporal dialect too: `__cedar::String` resolves to String, so a
+    // numeric comparison on it is a "numeric operands" type error — confirming
+    // the projection is spelling-independent on the temporal path as well.
+    let src = r#"permit (principal, action == App::Action::"Read", resource)
+when temporal { formerly within 1h (App::Action::"Read"::request{} && context.input.cedar_s > 5) };"#;
+    let r = validate_source(src, SCHEMA_CEDAR_NS, None);
+    assert!(
+        r.validation_errors().any(|e| matches!(
+            e,
+            ValidationError::Extension { code: "temporal", message, .. }
+                if message.contains("numeric operands")
+        )),
+        "__cedar::String must type as String in temporal (numeric-op error), got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_temporal_cedar_ns_long_field_valid_numeric_then_ok() {
+    // The accept side on the temporal path: `__cedar::Long` types as Long, so a
+    // numeric comparison on it is well-typed and validates cleanly (confirming
+    // the spelling resolves to the primitive, not a spurious type error).
+    let src = r#"permit (principal, action == App::Action::"Read", resource)
+when temporal { formerly within 1h (App::Action::"Read"::request{} && context.input.cedar_n > 5) };"#;
+    let r = validate_source(src, SCHEMA_CEDAR_NS, None);
+    assert!(
+        r.validation_passed(),
+        "a numeric comparison on a __cedar::Long field must validate, got:\n{r:?}"
+    );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// FEASIBILITY-AWARE FIELD-PATH VALIDATION (paired Cedar ⟷ provider).
+//
+// TWO fixes are pinned here, each provider assertion paired with the Cedar
+// baseline it must mimic. Both provider dialects validate a field-path against
+// the RESOLVED schema type "per environment", exactly as Cedar does; the
+// provider dialect was doing it WRONG in two ways these pins expose:
+//
+//   FIX 1 (BLOCKING over-rejection): the provider checked a `context.*`
+//   field-path argument against EVERY action a rule names, even actions the
+//   rule's `principal is` / `resource is` scope head makes INFEASIBLE (no
+//   valid request environment). Cedar (and the temporal dialect, via
+//   `admits_any_env`) skip an infeasible (principal-type, action, resource-type)
+//   environment. The provider did not, so it REJECTED policies Cedar accepts.
+//
+//   FIX 2 (ambiguous divergent type): when a scope attribute exists on every
+//   admitted entity type but at DIFFERENT types (Long on one, String on
+//   another), Cedar rejects any *use* that is type-incompatible in some
+//   environment (while accepting `has` / a use valid in every environment).
+//   The provider ACCEPTED such an argument outright — it must instead reject it
+//   in the TYPE pass (the value cannot satisfy a single declared arg type in
+//   every environment), while still treating the attribute as PRESENT.
+//
+// Fixtures below are the minimal shapes that isolate these: no pre-existing
+// schema has disjoint principal types ACROSS actions (needed to make an action
+// infeasible under narrowing) nor a divergent-typed attribute across a
+// multi-type scope.
+// ═══════════════════════════════════════════════════════════════════
+
+/// Three actions spread over two principal entity types (OAuthUser, Bot) and
+/// two resource types (Gateway, Vault), so `principal is` / `resource is`
+/// narrowing can make a co-scoped action INFEASIBLE:
+///   Read  : principal OAuthUser, resource Gateway, context has `document`(String) + `value`(String)
+///   Login : principal Bot,       resource Gateway, context has NO `document`; `value` is Long
+///   Admin : principal OAuthUser, resource Vault,   context has neither `document` nor `value`
+const SCHEMA_ENV: &str = r#"
+namespace App {
+  type ReadInput  = { user: String, document: String, value: String };
+  type LoginInput = { user: String, value: Long };
+  type AdminInput = { user: String };
+  entity Gateway;  entity Vault;
+  entity OAuthUser = { id: String };  entity Bot = { id: String };
+  action "Read"  appliesTo { principal: [OAuthUser], resource: [Gateway], context: { input: ReadInput } };
+  action "Login" appliesTo { principal: [Bot],       resource: [Gateway], context: { input: LoginInput } };
+  action "Admin" appliesTo { principal: [OAuthUser], resource: [Vault],   context: { input: AdminInput } };
+}
+"#;
+
+/// A multi-type principal AND a multi-type resource where the SAME attribute
+/// has a DIFFERENT type on each admitted type (`level`/`size`: Long vs String),
+/// plus a `name` that is String on BOTH (the non-divergent control).
+const SCHEMA_AMBIG: &str = r#"
+namespace App {
+  entity Gateway = { size: Long };
+  entity Bucket  = { size: String };
+  entity OAuthUser  = { level: Long,   name: String };
+  entity ServiceBot = { level: String, name: String };
+  action "Read" appliesTo {
+    principal: [OAuthUser, ServiceBot], resource: [Gateway, Bucket],
+    context: { input: { doc: String } }
+  };
+}
+"#;
+
+// Scope-head fragments reused across the paired tests.
+const S_PRIN_READ_LOGIN: &str = r#"principal is App::OAuthUser, action in [App::Action::"Read", App::Action::"Login"], resource"#;
+const S_RES_READ_ADMIN: &str =
+    r#"principal, action in [App::Action::"Read", App::Action::"Admin"], resource is App::Gateway"#;
+const S_PRIN_READ_ADMIN: &str = r#"principal is App::OAuthUser, action in [App::Action::"Read", App::Action::"Admin"], resource"#;
+
+// ─── FIX 1: infeasible-environment gate ─────────────────────────────
+// Cedar baselines (GREEN — these DOCUMENT the behavior the provider must mimic).
+
+#[test]
+fn cedar_infeasible_principal_env_context_ref_accepted() {
+    // `principal is OAuthUser` + `action in [Read, Login]`: Login applies only to
+    // Bot, so the (OAuthUser, Login) environment is INFEASIBLE. The one feasible
+    // environment (OAuthUser, Read) declares `document`, so Cedar ACCEPTS —
+    // even though `Login` has no `document`.
+    let src = format!(r#"permit ({S_PRIN_READ_LOGIN}) when {{ context.input.document == "x" }};"#);
+    let r = validate_source(&src, SCHEMA_ENV, None);
+    assert!(
+        r.validation_passed(),
+        "Cedar skips the infeasible (OAuthUser, Login) env and accepts, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn cedar_infeasible_principal_env_divergent_type_accepted() {
+    // Same infeasible-Login scope, but `value` is String on Read and Long on
+    // Login. Only the Read env is feasible (value: String), so `== "x"` is
+    // well-typed and Cedar ACCEPTS — the Long-on-Login typing never applies.
+    let src = format!(r#"permit ({S_PRIN_READ_LOGIN}) when {{ context.input.value == "x" }};"#);
+    let r = validate_source(&src, SCHEMA_ENV, None);
+    assert!(
+        r.validation_passed(),
+        "Cedar ignores the infeasible env's `value: Long` typing and accepts, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn cedar_infeasible_resource_env_context_ref_accepted() {
+    // Resource axis: `resource is Gateway` + `action in [Read, Admin]`: Admin
+    // applies only to Vault, so (Gateway, Admin) is INFEASIBLE. The feasible
+    // (Gateway, Read) env has `document`, so Cedar ACCEPTS.
+    let src = format!(r#"permit ({S_RES_READ_ADMIN}) when {{ context.input.document == "x" }};"#);
+    let r = validate_source(&src, SCHEMA_ENV, None);
+    assert!(
+        r.validation_passed(),
+        "Cedar skips the infeasible (Gateway, Admin) env and accepts, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn cedar_feasible_env_missing_context_field_rejected() {
+    // CONTROL / boundary: `principal is OAuthUser` + `action in [Read, Admin]`.
+    // Admin applies to OAuthUser (feasible!) but its context has NO `document`,
+    // so Cedar REJECTS. This is the line the gate must NOT cross: skip only
+    // INFEASIBLE envs, never a feasible-but-missing one.
+    let src = format!(r#"permit ({S_PRIN_READ_ADMIN}) when {{ context.input.document == "x" }};"#);
+    let r = validate_source(&src, SCHEMA_ENV, None);
+    assert!(
+        cedar_error_contains(&r, "input.document")
+            && cedar_error_contains(&r, r#"App::Action::"Admin""#),
+        "Cedar must reject a field missing on the FEASIBLE Admin env, got:\n{r:?}"
+    );
+}
+
+// Provider pins. The three "infeasible" pins are RED on current code (the
+// provider errors on the infeasible action); the fix makes them pass. The
+// feasible-but-missing pin is a GREEN control that must STAY erroring.
+
+#[test]
+fn provider_infeasible_principal_env_context_existence_accepted() {
+    // FIX 1, existence pass (`check_one_field_path`), principal axis. Mirrors
+    // `cedar_infeasible_principal_env_context_ref_accepted`. RED today: the
+    // provider errors "`context.input.document` is not present … `Login`",
+    // rejecting a policy Cedar accepts because (OAuthUser, Login) is infeasible.
+    let src = format!(
+        r#"permit ({S_PRIN_READ_LOGIN}) when guardrails {{ Strings::Matches(context.input.document, "x").matched == true }};"#
+    );
+    let r = validate_source(&src, SCHEMA_ENV, Some(&decls()));
+    assert!(
+        r.validation_passed(),
+        "provider must skip the infeasible (OAuthUser, Login) env (existence), got:\n{r:?}"
+    );
+}
+
+#[test]
+fn provider_infeasible_principal_env_context_type_accepted() {
+    // FIX 1, TYPE pass (`check_field_path_type`), principal axis. `value` is
+    // String on Read (matches the string-declared arg) and Long on the
+    // infeasible Login. Mirrors `cedar_infeasible_principal_env_divergent_type_accepted`.
+    // RED today: the provider raises a type error against Login.
+    let src = format!(
+        r#"permit ({S_PRIN_READ_LOGIN}) when guardrails {{ Strings::Matches(context.input.value, "x").matched == true }};"#
+    );
+    let r = validate_source(&src, SCHEMA_ENV, Some(&decls()));
+    assert!(
+        r.validation_passed(),
+        "provider must skip the infeasible env's Long typing (type pass), got:\n{r:?}"
+    );
+}
+
+#[test]
+fn provider_infeasible_resource_env_context_existence_accepted() {
+    // FIX 1, existence pass, RESOURCE axis. Mirrors
+    // `cedar_infeasible_resource_env_context_ref_accepted`. RED today: the
+    // provider errors against the infeasible (Gateway, Admin) env.
+    let src = format!(
+        r#"permit ({S_RES_READ_ADMIN}) when guardrails {{ Strings::Matches(context.input.document, "x").matched == true }};"#
+    );
+    let r = validate_source(&src, SCHEMA_ENV, Some(&decls()));
+    assert!(
+        r.validation_passed(),
+        "provider must skip the infeasible (Gateway, Admin) env via resource narrowing, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn provider_infeasible_env_method_arg_accepted() {
+    // FIX 1 must cover a field-path in a METHOD argument too (method args flow
+    // through the same per-action `check_field_path_args` loop). `taggedWith`'s
+    // arg `context.input.document` is absent from the infeasible Login. RED today.
+    let src = format!(
+        r#"permit ({S_PRIN_READ_LOGIN}) when guardrails {{ Doc::Check(context.input.user).taggedWith(context.input.document).ok == true }};"#
+    );
+    let r = validate_source(&src, SCHEMA_ENV, Some(&decls_method()));
+    assert!(
+        r.validation_passed(),
+        "provider must skip the infeasible env for a METHOD-arg field-path, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn provider_feasible_env_missing_context_field_still_rejected() {
+    // GREEN CONTROL (guards against an over-broad fix): Admin is FEASIBLE under
+    // `principal is OAuthUser` and has no `document`. This must STAY a provider
+    // error after the gate is added — the gate skips only infeasible envs.
+    // Mirrors `cedar_feasible_env_missing_context_field_rejected`.
+    let src = format!(
+        r#"permit ({S_PRIN_READ_ADMIN}) when guardrails {{ Strings::Matches(context.input.document, "x").matched == true }};"#
+    );
+    let r = validate_source(&src, SCHEMA_ENV, Some(&decls()));
+    assert!(
+        provider_error_contains(&r, "context.input.document")
+            && provider_error_contains(&r, "not present")
+            && provider_error_contains(&r, r#"App::Action::"Admin""#),
+        "provider must still reject a field missing on the FEASIBLE Admin env, got:\n{r:?}"
+    );
+}
+
+// ─── FIX 2: ambiguous (divergent) scope-attribute type ──────────────
+// Cedar baselines.
+
+#[test]
+fn cedar_divergent_type_attr_used_as_string_rejected() {
+    // `level` is Long on OAuthUser and String on ServiceBot; both admitted.
+    // Comparing to a String literal is incompatible in the OAuthUser env, so
+    // Cedar REJECTS — the behavior the provider TYPE pass must mimic.
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { principal.level == "x" };"#;
+    let r = validate_source(src, SCHEMA_AMBIG, None);
+    assert!(
+        cedar_error_contains(&r, "not compatible"),
+        "Cedar must reject a divergent-typed attr used as a String, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn cedar_divergent_type_attr_existence_and_reflexive_accepted() {
+    // Cedar does NOT reject the mere reference: `has` and a use that is
+    // type-valid in EVERY environment (reflexive `==`) both pass. This is why
+    // the provider must treat an ambiguous attr as PRESENT (existence pass
+    // accepts) and only reject it in the TYPE pass.
+    let has = r#"permit (principal, action == App::Action::"Read", resource) when { principal has level };"#;
+    let refl = r#"permit (principal, action == App::Action::"Read", resource) when { principal.level == principal.level };"#;
+    assert!(
+        validate_source(has, SCHEMA_AMBIG, None).validation_passed(),
+        "Cedar accepts `principal has level` on a divergent-typed attr"
+    );
+    assert!(
+        validate_source(refl, SCHEMA_AMBIG, None).validation_passed(),
+        "Cedar accepts a reflexive use valid in every environment"
+    );
+}
+
+// Provider pins for FIX 2 (RED today: the provider accepts these).
+
+#[test]
+fn provider_ambiguous_principal_attr_type_rejected() {
+    // FIX 2, principal axis. `principal.level` is Long/String across the admitted
+    // types → the string-declared arg cannot be satisfied in every environment.
+    // The error must come from the TYPE pass (mention the attribute + a
+    // "different type" diagnosis), NOT the existence pass ("not present"): the
+    // attribute IS present, so mimicking Cedar means a type rejection.
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when guardrails { Strings::Matches(principal.level, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_AMBIG, Some(&decls()));
+    assert!(
+        provider_error_contains(&r, "principal.level")
+            && provider_error_contains(&r, "different type")
+            && !provider_error_contains(&r, "not present"),
+        "provider must reject an ambiguous principal attr in the TYPE pass, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn provider_ambiguous_resource_attr_type_rejected() {
+    // FIX 2, resource axis. `resource.size` is Long/String across Gateway/Bucket.
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when guardrails { Strings::Matches(resource.size, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_AMBIG, Some(&decls()));
+    assert!(
+        provider_error_contains(&r, "resource.size")
+            && provider_error_contains(&r, "different type")
+            && !provider_error_contains(&r, "not present"),
+        "provider must reject an ambiguous resource attr in the TYPE pass, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn provider_resolved_multi_type_attr_accepted() {
+    // GREEN CONTROL: `name` is String on BOTH admitted principal types, so the
+    // path resolves to a SINGLE type (Resolved, not Ambiguous) and matches the
+    // string arg. This distinguishes FIX 2 from a blanket "multi-type ⇒ reject":
+    // only a DIVERGENT type is rejected, a consistent one is accepted.
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when guardrails { Strings::Matches(principal.name, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_AMBIG, Some(&decls()));
+    assert!(
+        r.validation_passed(),
+        "a consistently-typed multi-type attr must be accepted, got:\n{r:?}"
+    );
+}
+
+// ─── FIX 1/2 REGRESSION CONTROLS (green now, must STAY green) ────────
+// These guard against an over-broad fix. The infeasible-env gate must skip a
+// co-scoped action ONLY because narrowing makes it infeasible — never because
+// several actions are listed, and never in a way that drops a FEASIBLE action's
+// existence OR type check. And the ambiguous arm must not fire when narrowing
+// has already resolved the attribute to a single type.
+
+#[test]
+fn cedar_unnarrowed_multi_action_missing_field_rejected() {
+    // No narrowing ⇒ both (OAuthUser,Read) and (Bot,Login) are feasible. `document`
+    // is absent from Login, so Cedar rejects. Baseline for the provider control.
+    let src = r#"permit (principal, action in [App::Action::"Read", App::Action::"Login"], resource) when { context.input.document == "x" };"#;
+    let r = validate_source(src, SCHEMA_ENV, None);
+    assert!(
+        cedar_error_contains(&r, "input.document")
+            && cedar_error_contains(&r, r#"App::Action::"Login""#),
+        "Cedar must reject a field missing on the feasible Login env, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn provider_unnarrowed_multi_action_missing_field_still_rejected() {
+    // EXISTENCE-pass reject guard, NO narrowing. Both actions feasible, so the
+    // gate must NOT skip Login; `document` absent there stays an error. Ensures
+    // the fix keys on infeasibility, not merely on a multi-action list.
+    let src = r#"permit (principal, action in [App::Action::"Read", App::Action::"Login"], resource) when guardrails { Strings::Matches(context.input.document, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_ENV, Some(&decls()));
+    assert!(
+        provider_error_contains(&r, "context.input.document")
+            && provider_error_contains(&r, "not present")
+            && provider_error_contains(&r, r#"App::Action::"Login""#),
+        "provider must still reject a field missing on the feasible Login env, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn cedar_unnarrowed_multi_action_divergent_type_rejected() {
+    // No narrowing ⇒ Login feasible; `value` is Long there, incompatible with a
+    // String literal → Cedar rejects. Baseline for the provider TYPE control.
+    let src = r#"permit (principal, action in [App::Action::"Read", App::Action::"Login"], resource) when { context.input.value == "x" };"#;
+    let r = validate_source(src, SCHEMA_ENV, None);
+    assert!(
+        cedar_error_contains(&r, "not compatible"),
+        "Cedar must reject the Long typing on the feasible Login env, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn provider_unnarrowed_multi_action_wrong_type_still_rejected() {
+    // TYPE-pass reject guard, NO narrowing (the complement of the existence
+    // control, and of the feasible-but-missing pin which only exercises the
+    // existence loop). Login is feasible and `value` is Long there → the type
+    // check must still fire. This is the pin that catches an over-broad gate in
+    // `check_field_path_type` specifically.
+    let src = r#"permit (principal, action in [App::Action::"Read", App::Action::"Login"], resource) when guardrails { Strings::Matches(context.input.value, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_ENV, Some(&decls()));
+    assert!(
+        provider_error_contains(&r, "context.input.value")
+            && provider_error_contains(&r, "has type `Long`")
+            && provider_error_contains(&r, r#"App::Action::"Login""#),
+        "provider must still type-reject on the feasible Login env, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn cedar_narrowing_resolves_ambiguous_type_error() {
+    // `principal is OAuthUser` collapses the divergent `level` to a single type
+    // (Long), so Cedar's error is the ordinary type incompatibility, not an
+    // "ambiguous" one. Baseline for the provider control below.
+    let src = r#"permit (principal is App::OAuthUser, action == App::Action::"Read", resource) when { principal.level == "x" };"#;
+    let r = validate_source(src, SCHEMA_AMBIG, None);
+    assert!(
+        cedar_error_contains(&r, "not compatible"),
+        "Cedar must reject the narrowed Long `level` as a String, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn provider_narrowing_resolves_ambiguous_to_plain_type_error() {
+    // AMBIGUOUS-arm guard: with `principal is OAuthUser`, `level` resolves to a
+    // SINGLE type (Long), so the provider must raise the ORDINARY scalar type
+    // error ("has type `Long`"), NOT the ambiguous-divergence diagnosis. Ensures
+    // the new ambiguous arm only fires on a genuinely divergent (un-narrowed)
+    // attribute, and that narrowing still short-circuits to a Resolved type.
+    let src = r#"permit (principal is App::OAuthUser, action == App::Action::"Read", resource) when guardrails { Strings::Matches(principal.level, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_AMBIG, Some(&decls()));
+    assert!(
+        provider_error_contains(&r, "principal.level")
+            && provider_error_contains(&r, "has type `Long`")
+            && !provider_error_contains(&r, "different type"),
+        "narrowed ambiguous attr must give the ordinary type error, not the ambiguous one, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn cedar_resource_narrowing_nonexcluding_missing_field_rejected() {
+    // `resource is Gateway` keeps BOTH Read and Login feasible (both apply to
+    // Gateway) — it excludes nothing. `document` is absent from Login, so Cedar
+    // rejects. Baseline for the resource-axis provider control below.
+    let src = r#"permit (principal, action in [App::Action::"Read", App::Action::"Login"], resource is App::Gateway) when { context.input.document == "x" };"#;
+    let r = validate_source(src, SCHEMA_ENV, None);
+    assert!(
+        cedar_error_contains(&r, "input.document")
+            && cedar_error_contains(&r, r#"App::Action::"Login""#),
+        "Cedar must reject a field missing on the feasible (Gateway, Login) env, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn provider_resource_narrowing_nonexcluding_missing_field_still_rejected() {
+    // RESOURCE-axis narrowed-feasible reject guard — the symmetric complement of
+    // the principal-axis `provider_feasible_env_missing_context_field_still_rejected`
+    // (pin 9). `resource is Gateway` narrows on the resource axis but keeps Login
+    // feasible; `document` absent there must STAY an error. Confirms the gate's
+    // resource-axis feasibility check (`admits_any_env(Any, Gateway)` = true for
+    // Login) does not drop a feasible action.
+    let src = r#"permit (principal, action in [App::Action::"Read", App::Action::"Login"], resource is App::Gateway) when guardrails { Strings::Matches(context.input.document, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_ENV, Some(&decls()));
+    assert!(
+        provider_error_contains(&r, "context.input.document")
+            && provider_error_contains(&r, "not present")
+            && provider_error_contains(&r, r#"App::Action::"Login""#),
+        "provider must still reject a field missing on the feasible (Gateway, Login) env, got:\n{r:?}"
+    );
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SET-LITERAL ARG ELEMENT VALIDATION + GROUP-MEMBER / UNDECLARED coverage.
+// The existence pass recurses into a set-literal argument (`Fn([a, b])`); the
+// TYPE pass must too, checking each element field-path against the declared
+// set's ELEMENT type — and the feasibility gate must apply inside that
+// recursion. These also close the previously-deferred set-wrapped and
+// group-scope-reject axes.
+// ═══════════════════════════════════════════════════════════════════
+
+/// Group `Trade` whose members disagree on `document`: `Sell` has it, `Approve`
+/// does not — so a field-path arg resolved over the group's members is rejected.
+const SCHEMA_HIER_MIXED: &str = r#"
+namespace App {
+  type SellInput = { document: String };
+  type ApproveInput = { user: String };
+  entity Gateway;
+  entity OAuthUser = { id: String };
+  action "Trade";
+  action "Sell" in [Action::"Trade"] appliesTo {
+    principal: [OAuthUser], resource: [Gateway], context: { input: SellInput }
+  };
+  action "Approve" in [Action::"Trade"] appliesTo {
+    principal: [OAuthUser], resource: [Gateway], context: { input: ApproveInput }
+  };
+}
+"#;
+
+#[test]
+fn provider_set_literal_element_wrong_type_rejected() {
+    // NB-1 (context axis): `Cat::SetS([context.input.n])` — element `n` is Long, the
+    // declared arg is `set<string>`, so the element mismatches. The type pass must
+    // recurse into the set (as the existence pass does) and reject it.
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when guardrails { Cat::SetS([context.input.n]).ok == true };"#;
+    let r = validate_source(src, SCHEMA_CATEGORIES, Some(&decls_categories()));
+    assert!(
+        provider_error_contains(&r, "context.input.n")
+            && provider_error_contains(&r, "has type `Long`"),
+        "a Long element in a set<string> set-literal arg must be a type error, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn provider_set_literal_element_scope_path_wrong_type_rejected() {
+    // NB-1 (scope axis): a set-literal element that is a principal attribute of the
+    // wrong type. `principal is OAuthUser` narrows so `level` (Long) resolves; as a
+    // `set<string>` element it mismatches.
+    let src = r#"permit (principal is App::OAuthUser, action == App::Action::"Read", resource) when guardrails { Cat::SetS([principal.level]).ok == true };"#;
+    let r = validate_source(src, SCHEMA_SCOPE, Some(&decls_categories()));
+    assert!(
+        provider_error_contains(&r, "principal.level")
+            && provider_error_contains(&r, "has type `Long`"),
+        "a Long principal attr as a set<string> element must be a type error, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn provider_set_literal_element_correct_type_accepted() {
+    // GREEN control: a String element matches the `set<string>` element type — the
+    // recursion must not over-reject.
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when guardrails { Cat::SetS([context.input.s]).ok == true };"#;
+    let r = validate_source(src, SCHEMA_CATEGORIES, Some(&decls_categories()));
+    assert!(
+        r.validation_passed(),
+        "a String set-literal element must be accepted, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn provider_set_literal_missing_element_rejected() {
+    // GREEN control (existence recursion already works): a missing element field-path
+    // in a set-literal arg is rejected by the existence pass.
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when guardrails { Cat::SetS([context.input.bogus]).ok == true };"#;
+    let r = validate_source(src, SCHEMA_CATEGORIES, Some(&decls_categories()));
+    assert!(
+        provider_error_contains(&r, "context.input.bogus")
+            && provider_error_contains(&r, "not present"),
+        "a missing set-literal element must be rejected (existence), got:\n{r:?}"
+    );
+}
+
+#[test]
+fn provider_set_literal_element_wrong_type_on_infeasible_action_accepted() {
+    // The feasibility gate must apply INSIDE the set recursion (type pass): with
+    // `principal is OAuthUser`, `Login` is infeasible; `value` is String on `Read`
+    // (matches the `set<string>` element) and Long on the skipped `Login`, so the
+    // set-literal arg is accepted. Guards that the new recursion still respects the
+    // gate rather than type-checking an infeasible action's element.
+    let src = r#"permit (principal is App::OAuthUser, action in [App::Action::"Read", App::Action::"Login"], resource) when guardrails { Cat::SetS([context.input.value]).ok == true };"#;
+    let r = validate_source(src, SCHEMA_ENV, Some(&decls_categories()));
+    assert!(
+        r.validation_passed(),
+        "a set-literal element wrong-typed only on an infeasible action must be accepted, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn cedar_action_in_group_scope_field_absent_from_member_rejected() {
+    // Baseline: `action in [Trade]` expands to the group's members; `document` is on
+    // `Sell` but not `Approve`, so Cedar rejects (per-environment, conjunctive).
+    let src = r#"permit (principal, action in [App::Action::"Trade"], resource) when { context.input.document == "x" };"#;
+    let r = validate_source(src, SCHEMA_HIER_MIXED, None);
+    assert!(
+        cedar_error_contains(&r, "input.document")
+            && cedar_error_contains(&r, r#"App::Action::"Approve""#),
+        "Cedar must reject a field absent from a group member, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn provider_action_in_group_scope_field_absent_from_member_rejected() {
+    // Provider counterpart: the field-path arg is resolved against every expanded
+    // group member; `Approve` lacks `document`, so it is rejected — matching Cedar.
+    let src = r#"permit (principal, action in [App::Action::"Trade"], resource) when guardrails { Strings::Matches(context.input.document, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_HIER_MIXED, Some(&decls()));
+    assert!(
+        provider_error_contains(&r, "context.input.document")
+            && provider_error_contains(&r, "not present")
+            && provider_error_contains(&r, r#"App::Action::"Approve""#),
+        "provider must reject a field absent from a group member, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn provider_undeclared_provider_skips_field_path_checks() {
+    // A field-path arg to an UNDECLARED provider must not crash or double-report: the
+    // undeclared-provider error fires and the field-path checks are skipped (no
+    // spurious "context.input.bogus is not present").
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when guardrails { Nope::Fn(context.input.bogus).ok == true };"#;
+    let r = validate_source(src, SCHEMA_CATEGORIES, Some(&decls_categories()));
+    assert!(
+        !r.validation_passed() && !provider_error_contains(&r, "context.input.bogus"),
+        "an undeclared provider must report only the declaration error, got:\n{r:?}"
+    );
+}
+
+const SCHEMA_NESTSET: &str = r#"
+namespace App {
+  type ReadInput = { nss: Set<Set<String>>, nsl: Set<Set<Long>>, s: String };
+  entity Gateway;
+  entity OAuthUser = { id: String };
+  action "Read" appliesTo {
+    principal: [OAuthUser], resource: [Gateway], context: { input: ReadInput }
+  };
+}
+"#;
+fn decls_nestset() -> ProviderDeclarations {
+    ProviderDeclarations::from_json(
+        r#"{ "availableProviders": {
+          "SS::Chk": {
+            "argumentTypes": [{ "paramType": "set", "items": { "paramType": "set", "items": { "paramType": "string" } } }],
+            "outputType": { "paramType": "record", "fields": { "ok": { "paramType": "bool" } }, "required": ["ok"] }
+          }
+        }}"#,
+    ).expect("decls_nestset parse")
+}
+
+// ─── Nested set types (Set<Set<T>>) — Cedar allows them; the provider's element
+// matching recurses (rich_type nests, param_matches_rich + check_arg_type recurse). ───
+
+#[test]
+fn cedar_nested_set_type_reflexive_accepted() {
+    // Baseline: Cedar accepts a Set<Set<String>> attribute and a use valid in every
+    // environment (reflexive). Confirms nested sets are a legal Cedar type.
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { context.input.nss == context.input.nss };"#;
+    let r = validate_source(src, SCHEMA_NESTSET, None);
+    assert!(
+        r.validation_passed(),
+        "Cedar must accept a Set<Set<String>> attribute, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn cedar_nested_set_type_mismatch_rejected() {
+    // Cedar rejects Set<Set<String>> vs Set<Set<Long>> — the inner element type
+    // differs. Baseline for the provider negative below.
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when { context.input.nss == context.input.nsl };"#;
+    let r = validate_source(src, SCHEMA_NESTSET, None);
+    assert!(
+        cedar_error_contains(&r, "Set<Set<Long>>") && cedar_error_contains(&r, "not compatible"),
+        "Cedar must reject Set<Set<String>> vs Set<Set<Long>>, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn provider_nested_set_field_matching_accepted() {
+    // A Set<Set<String>> field into a set<set<string>>-declared arg: the element
+    // matching recurses through the nesting and accepts.
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when guardrails { SS::Chk(context.input.nss).ok == true };"#;
+    let r = validate_source(src, SCHEMA_NESTSET, Some(&decls_nestset()));
+    assert!(
+        r.validation_passed(),
+        "Set<Set<String>> must match a set<set<string>> arg, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn provider_nested_set_field_inner_element_mismatch_rejected() {
+    // A Set<Set<Long>> field into a set<set<string>>-declared arg: the INNER element
+    // type mismatches, so the recursive match rejects it (Cedar rejects the analogous
+    // comparison above).
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when guardrails { SS::Chk(context.input.nsl).ok == true };"#;
+    let r = validate_source(src, SCHEMA_NESTSET, Some(&decls_nestset()));
+    assert!(
+        provider_error_contains(&r, "context.input.nsl")
+            && provider_error_contains(&r, "Set<Set<Long>>"),
+        "Set<Set<Long>> into a set<set<string>> arg must be rejected on the inner element, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn provider_nested_set_literal_matching_accepted() {
+    // A nested set LITERAL `[[s]]` (String element) into a set<set<string>> arg
+    // exercises `check_arg_type`'s own recursion through nested `Arg::Set`; accepts.
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when guardrails { SS::Chk([[context.input.s]]).ok == true };"#;
+    let r = validate_source(src, SCHEMA_CATEGORIES, Some(&decls_nestset()));
+    assert!(
+        r.validation_passed(),
+        "nested set-literal [[String]] must be accepted, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn provider_nested_set_literal_inner_element_mismatch_rejected() {
+    // A nested set literal whose inner element is Long (`[[n]]`) into a
+    // set<set<string>> arg: the recursion reaches the inner field-path and rejects
+    // the Long element against the declared `string`.
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when guardrails { SS::Chk([[context.input.n]]).ok == true };"#;
+    let r = validate_source(src, SCHEMA_CATEGORIES, Some(&decls_nestset()));
+    assert!(
+        provider_error_contains(&r, "context.input.n")
+            && provider_error_contains(&r, "has type `Long`"),
+        "nested set-literal [[Long]] must be rejected on the inner element, got:\n{r:?}"
+    );
+}
+
+/// A multi-type principal whose divergent attribute types render to strings that
+/// sort DIFFERENTLY from the `RichType` enum's declaration order (`Long`=`int`
+/// before `Bool`=`boolean`, but `"boolean" < "int"` lexicographically). Pins the
+/// `Ambiguous` diagnostic's type list to a stable STRING-sorted order.
+const SCHEMA_AMBIG_BL: &str = r#"
+namespace App {
+  entity Gateway;
+  entity OAuthUser  = { flag: Long };
+  entity ServiceBot = { flag: Bool };
+  action "Read" appliesTo {
+    principal: [OAuthUser, ServiceBot], resource: [Gateway], context: { input: { doc: String } }
+  };
+}
+"#;
+
+#[test]
+fn provider_ambiguous_type_list_is_string_sorted() {
+    // `flag` is Long (renders `int`) on one type and Bool (`boolean`) on the other.
+    // The ambiguous diagnostic must list them in STRING-sorted order
+    // (`boolean`, `int`) — NOT the RichType enum-declaration order (`int`,
+    // `boolean`). This keeps the message stable and matches the pre-refactor
+    // (stringly-typed) rendering byte-for-byte.
+    let src = r#"permit (principal, action == App::Action::"Read", resource) when guardrails { Strings::Matches(principal.flag, "x").matched == true };"#;
+    let r = validate_source(src, SCHEMA_AMBIG_BL, Some(&decls()));
+    assert!(
+        provider_error_contains(&r, "(`boolean`, `int`)"),
+        "ambiguous type list must be string-sorted (`boolean`, `int`), got:\n{r:?}"
     );
 }

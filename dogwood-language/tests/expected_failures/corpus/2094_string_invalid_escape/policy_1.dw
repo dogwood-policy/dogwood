@@ -1,0 +1,17 @@
+// Regression case for commit fc46e9db: an invalid string-literal escape must
+// be a parse error, exactly as Cedar rejects it.
+//
+// Cedar rejects `"a\qb"` with `the input \q is not a valid escape`. Before the
+// fix, Dogwood's hand-rolled decode_string accepted ANY unknown escape,
+// passing `\q` through verbatim as the two characters `\`, `q`. There was no
+// error path at all, so this policy parsed and validated cleanly against a
+// real schema — a silent divergence from Cedar. The schema below supplies a
+// real `Read` action so this case is rejected ONLY by the escape check: on the
+// pre-fix parser it is accepted (the bug), and the expected-failure harness
+// fails; after the fix it is a parse error.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when { context.input.document == "a\qb" };
