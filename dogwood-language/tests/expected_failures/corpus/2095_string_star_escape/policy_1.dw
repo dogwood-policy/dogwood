@@ -1,0 +1,16 @@
+// Regression case for commit fc46e9db: `\*` is NOT a valid escape in a plain
+// string literal (it is meaningful only inside a `like` pattern), so Cedar
+// rejects `"a\*b"` with `the input \* is not a valid escape`.
+//
+// Before the fix, Dogwood's hand-rolled decode_string listed `\*` among its
+// accepted escapes and decoded it to `*`, so this policy parsed and validated
+// cleanly against a real schema — a silent divergence from Cedar, which
+// confines `\*` to `like` patterns. The schema below supplies a real `Read`
+// action so this case is rejected ONLY by the escape check: on the pre-fix
+// parser it is accepted (the bug); after the fix it is a parse error.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when { context.input.document == "a\*b" };

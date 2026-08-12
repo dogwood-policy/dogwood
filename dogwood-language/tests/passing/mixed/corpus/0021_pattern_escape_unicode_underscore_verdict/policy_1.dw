@@ -1,0 +1,15 @@
+// Regression case for the `\u{4_1}` escape inside a `like` PATTERN -- the
+// build_pattern analogue of 0019. build_pattern is NOT fixed by fc46e9db.
+//
+// Cedar (via Rust's escape grammar) allows `_` digit separators in `\u{...}`,
+// so `like "\u{4_1}"` is the one-character pattern `A`. The current
+// build_pattern decodes the braced body with `u32::from_str_radix`, which
+// rejects underscores, so it falls into its "malformed -- pass through" branch
+// and emits the literal characters `\ u { 4 _ 1 }` as the pattern -- a wrong
+// pattern, not a parse error.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when { context.input.document like "\u{4_1}" };

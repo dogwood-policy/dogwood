@@ -1,0 +1,14 @@
+// Regression case for the build_pattern divergence (NOT fixed by fc46e9db):
+// an out-of-range `\xHH` escape inside a `like` pattern must be a parse error,
+// exactly as Cedar rejects it. Cedar's `\x` accepts only 0x00-0x7F, so it
+// rejects `like "\xFF"` with `the input \xFF is not a valid escape`.
+//
+// The current build_pattern does not recognize `\x` at all: it emits `x`, `F`,
+// `F` as ordinary pattern characters, so the policy parses and validates
+// cleanly. This pins the reject half of the `\x` gap for patterns.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when { context.input.document like "\xFF" };

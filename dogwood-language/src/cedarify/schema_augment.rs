@@ -700,6 +700,8 @@ mod tests {
                 args: vec![],
             },
             methods: vec![],
+            principal: crate::cedarify::ScopeConstraint::Any,
+            resource: crate::cedarify::ScopeConstraint::Any,
         }
     }
 
@@ -959,6 +961,8 @@ mod tests {
                 args: vec![],
             },
             methods: vec![],
+            principal: crate::cedarify::ScopeConstraint::Any,
+            resource: crate::cedarify::ScopeConstraint::Any,
         };
         let result = add_provider_context_fields(&mut fragment, &[field]);
         assert!(

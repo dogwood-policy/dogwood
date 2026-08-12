@@ -1,0 +1,16 @@
+// Regression case for the build_pattern divergence (NOT fixed by fc46e9db): an
+// unknown escape inside a `like` pattern must be a parse error. Cedar rejects
+// `like "a\qb"` with `the input \q is not a valid escape`. (Only `\*` -- a
+// literal star -- and the standard string escapes are valid in a pattern; `\q`
+// is not.)
+//
+// The current build_pattern is worse than merely accepting it: its
+// `Some(other) => Char(other)` arm DROPS the backslash, so `\q` becomes the
+// single character `q` and the pattern silently loses a character. Accepted,
+// validated, AND mis-decoded.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when { context.input.document like "a\qb" };

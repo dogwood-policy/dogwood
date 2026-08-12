@@ -1,0 +1,19 @@
+// Regression case for the string-literal `\xHH` escape (commit fc46e9db).
+//
+// Cedar decodes `"\x41"` to the single character `A`. Dogwood must agree,
+// since it shares Cedar's string-literal syntax. Before the fix,
+// `decode_string` did not recognize `\x` at all and produced the four
+// characters `\`, `x`, `4`, `1` instead — so this comparison silently never
+// matched a real `document == "A"` event, flipping the verdict from `true`
+// (permit) to `false` (deny).
+//
+// The trace supplies a Read whose document is exactly "A". With the fix the
+// literal below IS "A", the guard holds, and the verdict is `true`. On the
+// buggy prefix the literal is the 4-char string `\x41`, the guard fails, and
+// the verdict is the wrong `false`.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when { context.input.document == "\x41" };

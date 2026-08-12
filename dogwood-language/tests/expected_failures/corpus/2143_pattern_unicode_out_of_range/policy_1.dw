@@ -1,0 +1,16 @@
+// Regression case for the build_pattern divergence (NOT fixed by fc46e9db): a
+// `\u{...}` escape above the Unicode maximum (0x10FFFF) inside a `like` pattern
+// must be a parse error. Cedar rejects `like "\u{110000}"` with `the input
+// \u{110000} is not a valid escape`.
+//
+// This is the escape the current build_pattern EXPLICITLY tries to handle:
+// `u32::from_str_radix("110000", 16)` succeeds, `char::from_u32` returns None
+// for a non-scalar value, and the `None => pass through` branch emits
+// `\u{110000}` as literal pattern chars -- accepted and validated cleanly
+// instead of rejected. (Lone surrogates like `\u{D800}` take the same path.)
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when { context.input.document like "\u{110000}" };

@@ -1,0 +1,14 @@
+// Regression case for the build_pattern divergence (NOT fixed by fc46e9db):
+// an empty `\u{}` escape inside a `like` pattern must be a parse error. Cedar
+// rejects `like "\u{}"` with `the input \u{} is not a valid escape`.
+//
+// The current build_pattern parses the braced body with
+// `u32::from_str_radix("", 16)`, which fails, then falls into its "malformed --
+// pass through" branch and emits `\`, `u`, `{`, `}` as literal pattern chars --
+// accepted and validated cleanly instead of rejected.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when { context.input.document like "\u{}" };

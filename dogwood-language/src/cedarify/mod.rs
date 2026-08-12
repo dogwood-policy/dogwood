@@ -225,6 +225,14 @@ pub struct ProviderField {
     /// compatible). Each method is evaluated in Rhai at authorize time; the
     /// hoisted value is `mₙ(…m₁(evaluate(args))…)`.
     pub methods: Vec<crate::extension::provider::ast::MethodCall>,
+    /// What the rule's `principal` scope admits on the entity-type axis.
+    /// Recorded so the validator can resolve a `principal.<attr>` argument
+    /// against the entity types the rule can actually see (narrowing by
+    /// `principal is T` etc.). Mirrors [`ContextField::principal`].
+    pub principal: ScopeConstraint,
+    /// What the rule's `resource` scope admits on the entity-type axis. See
+    /// [`ProviderField::principal`].
+    pub resource: ScopeConstraint,
 }
 
 /// Mutable cedarify state threaded through the lowering.

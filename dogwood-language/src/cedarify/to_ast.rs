@@ -473,6 +473,8 @@ fn lower_provider_invocation(
         body_base,
         invocation: invocation.clone(),
         methods: methods.to_vec(),
+        principal: ctx.principal_scope.clone(),
+        resource: ctx.resource_scope.clone(),
     });
 
     // `context.providers.<field_name>`.

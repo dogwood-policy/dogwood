@@ -24,7 +24,7 @@ use super::ast::{
     AggExpr, AggExprKind, BinderSlot, CmpOp, Condition, ConditionKind, Interval, Predicate, Term,
     WithinSpec,
 };
-use super::schema_info::{ActionHandle, SchemaInfo};
+use super::schema_info::{ActionHandle, ArrayElem, PathResolution, RichType, SchemaInfo};
 use crate::error::{Span, ValidationError};
 
 /// A single temporal validation finding, located in the temporal block body
@@ -371,9 +371,10 @@ fn derive_temporal_help(message: &str) -> Option<String> {
 // comparison operands and predicate arguments; because a bound variable's
 // env entry is its declared type, those same checks enforce that every use
 // *respects the annotation* (e.g. `exists (x: Long). … x == "s"` is now a
-// type error, not silently reconciled). Types are the "rich" strings of
-// [`super::schema_info::FieldType`] (`"int"`, `"string"`, `"decimal"`,
-// `"boolean"`, `"timepoint"`, `"entity:X"`, `"array<T>"`, `"object"`).
+// type error, not silently reconciled). Types are values of
+// [`super::schema_info::RichType`] (`Long`, `String`, `Decimal`, `Bool`,
+// `Timepoint`, `Entity(..)`, `Array(..)`, `Record`), compared via its
+// `accepts` / `compatible` / `is_numeric` methods.
 // Type inference for temporal terms, re-bound to the native AST.
 // Entity subtyping is not modeled (the projection carries no ancestor
 // closure), so entity comparisons require equal tags or an untagged side —
@@ -477,14 +478,14 @@ fn check_types_for_action(
             var: BinderSlot::Name(name),
         } => {
             if let Some(ty) = env.get(name)
-                && ty != "timepoint"
+                && *ty != RichType::Timepoint
             {
                 errs.push(LeafError {
                     message: format!(
                         "`tp({name})` binds `{name}` to the current timepoint, \
                          but `{name}` is declared `{}`; a `tp` variable must be \
                          declared `Timepoint`",
-                        display_type(ty)
+                        ty.display()
                     ),
                     span: Some(node.span),
                 });
@@ -497,21 +498,21 @@ fn check_types_for_action(
             );
             if let (Some(l), Some(r)) = (lt, rt) {
                 let numeric = matches!(op, CmpOp::Lt | CmpOp::Le | CmpOp::Gt | CmpOp::Ge);
-                if numeric && !(is_numeric(&l) && is_numeric(&r)) {
+                if numeric && !(l.is_numeric() && r.is_numeric()) {
                     errs.push(LeafError {
                         message: format!(
                             "comparison requires numeric operands on both sides, got `{}` and `{}`",
-                            display_type(&l),
-                            display_type(&r)
+                            l.display(),
+                            r.display()
                         ),
                         span: Some(node.span),
                     });
-                } else if !numeric && !types_compatible(&l, &r) {
+                } else if !numeric && !l.compatible(&r) {
                     errs.push(LeafError {
                         message: format!(
                             "equality requires both sides to have the same type, got `{}` and `{}`",
-                            display_type(&l),
-                            display_type(&r)
+                            l.display(),
+                            r.display()
                         ),
                         span: Some(node.span),
                     });
@@ -643,23 +644,23 @@ fn sum_summand_type_error(summand: &str, ty: &super::ast::Type) -> Option<String
 #[allow(clippy::too_many_arguments)]
 fn check_arg_type(
     arg: &Term,
-    expected: &str,
+    expected: &RichType,
     action: &str,
     param: &str,
-    env: &BTreeMap<String, String>,
+    env: &BTreeMap<String, RichType>,
     rule_sig: Option<&ActionHandle>,
     narrow: ScopeNarrowing<'_>,
     pred_span: Span,
     errs: &mut Vec<LeafError>,
 ) {
     if let Some(got) = term_type(arg, env, rule_sig, narrow)
-        && !param_accepts(expected, &got)
+        && !expected.accepts(&got)
     {
         errs.push(LeafError {
             message: format!(
                 "argument `{param}` of `{action}` expects `{}` but got `{}`",
-                display_type(expected),
-                display_type(&got)
+                expected.display(),
+                got.display()
             ),
             span: Some(pred_span),
         });
@@ -682,7 +683,7 @@ fn build_type_env(
     c: &Condition,
     _info: &SchemaInfo,
     rule_sig: Option<&ActionHandle>,
-) -> BTreeMap<String, String> {
+) -> BTreeMap<String, RichType> {
     let mut env = BTreeMap::new();
     // Seed the scoped action's input field names with their types (a bare
     // `field` reference in the leaf resolves to the rule action's input).
@@ -703,8 +704,8 @@ fn build_type_env(
 /// every aggregation `for (v: T)` element. A binder still carrying a macro
 /// sigil (unresolved `?p`/`$b`) has no concrete name yet, so it is skipped —
 /// expansion re-runs validation on the substituted form.
-fn collect_declared_binders(c: &Condition, env: &mut BTreeMap<String, String>) {
-    let record = |binder: &super::ast::TypedBinder, env: &mut BTreeMap<String, String>| {
+fn collect_declared_binders(c: &Condition, env: &mut BTreeMap<String, RichType>) {
+    let record = |binder: &super::ast::TypedBinder, env: &mut BTreeMap<String, RichType>| {
         if let super::ast::BinderSlot::Name(name) = &binder.slot {
             // A binder's declared type is authoritative; if the same name is
             // introduced by nested binders, the innermost (last-walked) wins,
@@ -738,20 +739,20 @@ fn collect_declared_binders(c: &Condition, env: &mut BTreeMap<String, String>) {
 /// comparable to an integer); a named type maps through the same vocabulary
 /// as a schema field: the numeric/string/decimal/boolean scalars, or an
 /// `entity:<Name>` for anything else (a declared entity type).
-fn rich_type_of_annotation(ty: &super::ast::Type) -> String {
+fn rich_type_of_annotation(ty: &super::ast::Type) -> RichType {
     use super::ast::Type;
     match ty {
-        Type::Timepoint => "timepoint".to_string(),
+        Type::Timepoint => RichType::Timepoint,
         Type::Named(path) => {
             let last = path.last().map(String::as_str).unwrap_or_default();
             match last {
-                "Long" => "int".to_string(),
-                "String" => "string".to_string(),
-                "Bool" | "Boolean" => "boolean".to_string(),
-                "decimal" | "Decimal" => "decimal".to_string(),
+                "Long" => RichType::Long,
+                "String" => RichType::String,
+                "Bool" | "Boolean" => RichType::Bool,
+                "decimal" | "Decimal" => RichType::Decimal,
                 // Any other named type is a declared entity type; tag it with
                 // its simple name so entity comparisons check by tag.
-                other => format!("entity:{other}"),
+                other => RichType::Entity(Some(other.to_string())),
             }
         }
     }
@@ -761,24 +762,24 @@ fn rich_type_of_annotation(ty: &super::ast::Type) -> String {
 /// variable, wildcard, or an unresolved path).
 fn term_type(
     t: &Term,
-    env: &BTreeMap<String, String>,
+    env: &BTreeMap<String, RichType>,
     rule_sig: Option<&ActionHandle>,
     narrow: ScopeNarrowing<'_>,
-) -> Option<String> {
+) -> Option<RichType> {
     match t {
         Term::Var(v) => env.get(v).cloned(),
-        Term::Integer(_) => Some("int".to_string()),
-        Term::Decimal(_) => Some("decimal".to_string()),
-        Term::String(_) => Some("string".to_string()),
-        Term::Bool(_) => Some("boolean".to_string()),
-        Term::Entity { ty, .. } => Some(format!("entity:{}", simple_name(ty))),
+        Term::Integer(_) => Some(RichType::Long),
+        Term::Decimal(_) => Some(RichType::Decimal),
+        Term::String(_) => Some(RichType::String),
+        Term::Bool(_) => Some(RichType::Bool),
+        Term::Entity { ty, .. } => Some(RichType::Entity(Some(simple_name(ty).to_string()))),
         Term::Array(elems) => Some(array_literal_type(elems)),
         Term::ContextField(path) => context_field_type(path, rule_sig),
         Term::ScopeField(path) => scope_field_type(path, rule_sig, narrow),
-        // An aggregate (`count`/`sum`) yields a `Long`; typed as int so a
+        // An aggregate (`count`/`sum`) yields a `Long`; typed as Long so a
         // comparison against it (`(count …) == n`, `sum … > k`) checks like
         // any numeric operand.
-        Term::Agg(_) => Some("int".to_string()),
+        Term::Agg(_) => Some(RichType::Long),
         Term::Wildcard | Term::ParamRef(_) | Term::BinderRef(_) => None,
     }
 }
@@ -788,9 +789,9 @@ fn term_type(
 /// `context.input.x`, `context.system.now`, etc. all resolve. A `principal` /
 /// `resource` head is an ordinary context field (Cedar semantics), not the
 /// scope — the scope entities are typed by [`scope_field_type`].
-fn context_field_type(path: &[String], rule_sig: Option<&ActionHandle>) -> Option<String> {
+fn context_field_type(path: &[String], rule_sig: Option<&ActionHandle>) -> Option<RichType> {
     match rule_sig?.resolve_context_path(path) {
-        super::schema_info::PathResolution::Resolved(ty) => Some(ty),
+        PathResolution::Resolved(ty) => Some(ty),
         _ => None,
     }
 }
@@ -803,9 +804,9 @@ fn context_field_type(path: &[String], rule_sig: Option<&ActionHandle>) -> Optio
 /// non-record segment), which the event-schema names check already reports; a
 /// path that resolves to a group rather than a leaf yields that group's rich
 /// type (`"object"`), which `check_arg_type` compares like any other.
-fn predicate_field_type(path: &[String], sig: &ActionHandle) -> Option<String> {
+fn predicate_field_type(path: &[String], sig: &ActionHandle) -> Option<RichType> {
     match sig.resolve_context_path(path) {
-        super::schema_info::PathResolution::Resolved(ty) => Some(ty),
+        PathResolution::Resolved(ty) => Some(ty),
         _ => None,
     }
 }
@@ -836,7 +837,7 @@ fn scope_field_type(
     path: &[String],
     rule_sig: Option<&ActionHandle>,
     narrow: ScopeNarrowing<'_>,
-) -> Option<String> {
+) -> Option<RichType> {
     let sig = rule_sig?;
     match path {
         // Narrowed by the rule's scope: `principal is W::Staff` under a multi-type
@@ -866,11 +867,12 @@ fn simple_name(qualified: &str) -> &str {
         .unwrap_or(qualified)
 }
 
-/// Classify an array literal's element type: empty is bare `array`,
-/// homogeneous is `array<T>`, heterogeneous or unclassifiable is `array<?>`.
-fn array_literal_type(elems: &[Term]) -> String {
+/// Classify an array literal's element type: empty is a bare array (element
+/// unknown), homogeneous is `array<T>`, heterogeneous or unclassifiable is the
+/// mixed element.
+fn array_literal_type(elems: &[Term]) -> RichType {
     if elems.is_empty() {
-        return "array".to_string();
+        return RichType::Array(ArrayElem::Unknown);
     }
     let empty = BTreeMap::new();
     // No action signature in hand here, so no scope path can type anyway.
@@ -878,138 +880,21 @@ fn array_literal_type(elems: &[Term]) -> String {
         .iter()
         .map(|e| term_type(e, &empty, None, ScopeNarrowing::default()));
     let Some(Some(first)) = tys.next() else {
-        return "array<?>".to_string();
+        return RichType::Array(ArrayElem::Mixed);
     };
     if elems
         .iter()
         .any(|e| term_type(e, &empty, None, ScopeNarrowing::default()).is_none())
     {
-        return "array<?>".to_string();
+        return RichType::Array(ArrayElem::Mixed);
     }
     if tys
         .flatten()
-        .all(|t| t == first || (is_numeric(&t) && is_numeric(&first)))
+        .all(|t| t == first || (t.is_numeric() && first.is_numeric()))
     {
-        format!("array<{first}>")
+        RichType::Array(ArrayElem::Of(Box::new(first)))
     } else {
-        "array<?>".to_string()
-    }
-}
-
-fn is_numeric(t: &str) -> bool {
-    t == "int"
-}
-
-fn array_element(t: &str) -> Option<&str> {
-    t.strip_prefix("array<").and_then(|r| r.strip_suffix('>'))
-}
-
-fn split_entity(t: &str) -> (&str, Option<&str>) {
-    match t.split_once(':') {
-        Some(("entity", tag)) => ("entity", Some(tag)),
-        _ => (t, None),
-    }
-}
-
-/// Is `actual` acceptable where `expected` is declared? Equal types and a
-/// `null` actual always pass; entities accept an untagged side or equal
-/// tags (no ancestor closure is modeled); arrays match element-wise; a
-/// bare `array` pairs with any `array<T>`.
-fn param_accepts(expected: &str, actual: &str) -> bool {
-    if expected == actual || actual == "null" {
-        return true;
-    }
-    // UNLIKE `types_compatible`, a field pattern DOES require equal entity tags. The
-    // expected type here comes from a DECLARED field, which has exactly one entity type,
-    // so no multi-typed operand can arise on this path and rejecting restricts nothing
-    // legitimate. (An earlier comment here claimed the opposite; the relaxation it
-    // described was reverted — see the commit that restored this branch.)
-    //
-    // KNOWN FAIL-OPEN GAP: `_ => true` accepts an UNTAGGED side unconditionally, so a
-    // pattern binding a `Manager`-declared field to a bare `principal` is accepted
-    // whenever the action permits several principal types and the root therefore types as
-    // plain `entity`. Cedar flags its analogue at every arity. Two of the three producers
-    // of untagged `entity` are genuinely UNKNOWN types (`schema_info.rs:507`, `:509` —
-    // no type info, and Cedar's `AnyEntity`) where accepting is correct; only the
-    // multi-type scope root at `schema_info.rs:142` discards a known candidate set.
-    //
-    // Closing it is NOT a per-action disjointness test, which is the tempting shape since
-    // `check_types_for_action` already runs per action. Measured, Cedar makes no complaint
-    // when a comparison is dead under one reached action and live under another
-    // (`err=0 warn=0`), and warns only when it is dead under every reached action
-    // (`err=0 warn=1`). A per-action check would reject the first shape. The rule must
-    // therefore test the UNION of candidates across all reached actions, which needs a
-    // cross-action conjunction this function cannot express from two strings.
-    let (eb, et) = split_entity(expected);
-    let (ab, at) = split_entity(actual);
-    if eb == "entity" && ab == "entity" {
-        return match (et, at) {
-            (Some(x), Some(y)) => x == y,
-            _ => true,
-        };
-    }
-    if let (Some(e), Some(a)) = (array_element(expected), array_element(actual)) {
-        if e == "?" || a == "?" {
-            return false;
-        }
-        return param_accepts(e, a);
-    }
-    (expected == "array" && actual.starts_with("array<"))
-        || (actual == "array" && expected.starts_with("array<"))
-}
-
-/// Are two operand types comparable with `==`? Symmetric variant of
-/// [`param_accepts`] with numeric widening.
-fn types_compatible(a: &str, b: &str) -> bool {
-    if a == b || a == "null" || b == "null" || (is_numeric(a) && is_numeric(b)) {
-        return true;
-    }
-    // Two ENTITY operands are comparable whatever their entity types. Comparing
-    // differently-typed entities is well-typed: always false, its negation always true.
-    // Cedar agrees, and so do all three engines at run time (see
-    // `tests/entity_equality_verdicts.rs` and the compiler's differential).
-    //
-    // Not an error here, because an operand may be MULTI-TYPED and a comparison against
-    // one of its possible types is the discriminating idiom —
-    // `a == Ns::T1::"x" || a == Ns::T2::"y"` — where each disjunct is wrong only in
-    // isolation. The dialect has no `||` yet, but a condition or macro reused across
-    // actions via `action in [...]` reaches the same shape today.
-    //
-    // The right end state is a WARNING, matching Cedar's `policy is impossible`. Cedar
-    // cannot supply one here — the leaf is an opaque `context.<id>` boolean its
-    // typechecker never enters — so this is SILENT for now, deliberately: erroring would
-    // cement a restriction that a future temporal impossibility analysis should lift, and
-    // that analysis is the place for this diagnostic.
-    //
-    // Field patterns are NOT relaxed. `param_accepts` receives its expected type from a
-    // DECLARED field, which has exactly one entity type, so no multi-typed operand can
-    // arise there and rejecting restricts nothing legitimate.
-    let (ab, _) = split_entity(a);
-    let (bb, _) = split_entity(b);
-    if ab == "entity" && bb == "entity" {
-        return true;
-    }
-    if let (Some(ae), Some(be)) = (array_element(a), array_element(b)) {
-        if ae == "?" || be == "?" {
-            return false;
-        }
-        return types_compatible(ae, be);
-    }
-    (a == "array" && b.starts_with("array<")) || (b == "array" && a.starts_with("array<"))
-}
-
-/// User-facing rendering: strip the `entity:` tag prefix and show
-/// `array<?>` as "mixed-type array".
-fn display_type(ty: &str) -> String {
-    if ty == "array<?>" {
-        return "mixed-type array".to_string();
-    }
-    if let Some(inner) = array_element(ty) {
-        return format!("array<{}>", display_type(inner));
-    }
-    match ty.split_once(':') {
-        Some(("entity", tag)) => tag.to_string(),
-        _ => ty.to_string(),
+        RichType::Array(ArrayElem::Mixed)
     }
 }
 

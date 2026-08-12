@@ -209,6 +209,8 @@ when temporal {
 };
 ```
 
+A positive left operand is rarely what you actually want: it demands that `left` match at **every** timepoint since the anchor, with no exceptions — including timepoints that are simply a different event kind (a `response`, or an unrelated action) and so never match `left` at all. In a realistic trace this is easy to fail by accident and hard to satisfy on purpose. The robust idiom is almost always a *negated* left, `!P since Q` ("`P` has **not** happened since `Q`"), which only requires the absence of something at each intervening step rather than an exact match — see the "open session" idiom just below.
+
 **Negated left — the "open session" idiom.** There is no dedicated "hasn't happened since" operator; you write it with a negated left operand, `!left since …`. Because negation binds tighter than `since` (see [Precedence](#conjunction-negation-and-precedence)), `!A since within W B` negates only `A`. This expresses "no `A` has happened since `B`" — e.g. "the user has not been revoked since they were granted" (corpus `0156_without_since_access_control`; runnable as [`examples/access_not_revoked_since_grant/`](../examples/access_not_revoked_since_grant/)):
 
 ```text

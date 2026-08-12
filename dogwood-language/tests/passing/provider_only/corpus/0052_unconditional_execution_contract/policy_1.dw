@@ -1,3 +1,11 @@
+// RUNTIME contract, replayed WITHOUT validation. This policy intentionally
+// FAILS static validation: `context.input.document` is absent from `Ping`, which
+// the validator now rejects — see the expected-failure case
+// `2093_provider_arg_absent_from_scoped_action`. The replay harness does not run
+// the validator (it lowers and evaluates), so this case documents the runtime
+// behavior when a deployment skips validation: provider execution is
+// unconditional and an absent context field resolves to Null.
+//
 // Bare `action` scope: this rule (and its provider) covers EVERY action.
 // On Read events the provider sees the document; on Ping events the
 // document argument is absent -> Null -> the script returns its sentinel

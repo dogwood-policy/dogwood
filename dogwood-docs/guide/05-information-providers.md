@@ -258,7 +258,14 @@ directly. The argument kinds are:
   Dogwood resolves the path against the decision event: a `context` path is
   looked up on the event's input (leading `context` skipped); `principal` /
   `resource` resolve to the request scope entity, and a trailing `.id` / `.type`
-  projects that entity's id or type. A path that does not resolve is null.
+  projects that entity's id or type. A path that does not resolve is null **at
+  run time**. Validation (see [How invocations are validated against
+  declarations](10-provider-schema.md#how-invocations-are-validated-against-declarations))
+  rejects a field-path argument undeclared on — or typed incompatibly with — an
+  action the rule is *scoped to*; but because provider execution is unconditional
+  (see [The provider contract](#the-provider-contract)), the same provider still
+  runs on events for *other* actions, where the argument may be absent and arrive
+  as null — so scripts must tolerate null regardless.
 - **String literal** — `"…"`.
 - **Integer literal** — an optionally-signed integer (`i64`).
 - **Decimal literal** — `decimal("0.5")` (chiefly a method threshold, e.g.

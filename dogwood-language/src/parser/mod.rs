@@ -22,6 +22,8 @@ use cedar_ast::{ActionConstraint, EntityReference, PrincipalConstraint, Resource
 use cedar_policy::pst;
 use cedar_policy_core::ast as cedar_ast;
 use cedar_policy_core::parser::Loc;
+use cedar_policy_core::parser::unescape::to_unescaped_string;
+use rustc_literal_escaper::{EscapeError, unescape_str};
 
 use crate::ast::{
     Annotation, BinOp, Cond, CondKeyword, Effect, Expr, ExprKind, MacroBody, MacroDef, MacroParam,
@@ -1456,7 +1458,7 @@ fn index_key(pair: &Pair<'_>) -> Result<String, RawParseError> {
         .ok_or_else(|| err("empty index access", span))?;
     // Drill to a string literal; Cedar only allows a string key here.
     match string_literal_of(&expr) {
-        Some(s) => Ok(s),
+        Some(s) => s,
         None => Err(err(
             "index access requires a string-literal key, e.g. `record[\"field\"]`",
             span,
@@ -1464,15 +1466,17 @@ fn index_key(pair: &Pair<'_>) -> Result<String, RawParseError> {
     }
 }
 
-/// If `expr` is exactly a string literal, return its decoded value.
-fn string_literal_of(expr: &Pair<'_>) -> Option<String> {
+/// If `expr` is exactly a string literal, return its decoded value. The outer
+/// `Option` says whether it is one; the inner `Result` carries an escape error.
+fn string_literal_of(expr: &Pair<'_>) -> Option<Result<String, RawParseError>> {
     // expr → or → and → rel → add → mult → unary → member → primary →
     // literal → string. Walk the single-child chain; bail if it branches.
     let mut cur = expr.clone();
     loop {
         let rule = cur.as_rule();
         if rule == Rule::string {
-            return Some(decode_string(cur.as_str()));
+            let span = span_of(&cur);
+            return Some(decode_string(cur.as_str(), span));
         }
         let mut children = cur.clone().into_inner();
         let first = children.next()?;
@@ -1753,9 +1757,12 @@ fn build_literal(pair: &Pair<'_>) -> Result<cedar_ast::Literal, RawParseError> {
                 )),
             }
         }
-        Rule::string => Ok(cedar_ast::Literal::String(
-            decode_string(inner.as_str()).into(),
-        )),
+        Rule::string => {
+            let span = span_of(&inner);
+            Ok(cedar_ast::Literal::String(
+                decode_string(inner.as_str(), span)?.into(),
+            ))
+        }
         other => unreachable!("unexpected literal child: {other:?}"),
     }
 }
@@ -1768,7 +1775,10 @@ fn build_ref(pair: Pair<'_>) -> Result<cedar_ast::Literal, RawParseError> {
     for child in pair.into_inner() {
         match child.as_rule() {
             Rule::name => name = Some(child.as_str().to_string()),
-            Rule::string => eid = Some(decode_string(child.as_str())),
+            Rule::string => {
+                let eid_span = span_of(&child);
+                eid = Some(decode_string(child.as_str(), eid_span)?);
+            }
             Rule::ref_record => {
                 return Err(err(
                     "entity initializer syntax `Type::{ … }` is not supported",
@@ -1815,7 +1825,7 @@ fn build_record(pair: Pair<'_>, span: Span) -> Result<Expr, RawParseError> {
 /// A record key is a string literal or a bare identifier.
 fn record_key(expr: &Pair<'_>, span: Span) -> Result<String, RawParseError> {
     if let Some(s) = string_literal_of(expr) {
-        return Ok(s);
+        return s;
     }
     // Otherwise expect a bare identifier (a single-segment name).
     let text = expr.as_str().trim();
@@ -1912,7 +1922,8 @@ fn extract_attr_path(add: Pair<'_>, span: Span) -> Result<Vec<String>, RawParseE
                     attrs.push(name.as_str().trim().to_string());
                 } else if let Some(lit) = find_descendant(child.clone(), Rule::literal) {
                     if let Some(s) = find_descendant(lit, Rule::string) {
-                        attrs.push(decode_string(s.as_str()));
+                        let s_span = span_of(&s);
+                        attrs.push(decode_string(s.as_str(), s_span)?);
                     } else {
                         return Err(err("expected an attribute name", span));
                     }
@@ -2007,133 +2018,73 @@ fn extract_pattern(
     let raw = string.as_str();
     // Strip the surrounding quotes.
     let body = &raw[1..raw.len().saturating_sub(1)];
-    Ok(build_pattern(body))
+    build_pattern(body, span)
 }
 
-/// Convert a `like` pattern body (quotes already stripped, escapes
-/// intact) into Cedar pattern elements.
-fn build_pattern(body: &str) -> Vec<cedar_ast::PatternElem> {
+/// Convert a `like` pattern body (quotes already stripped, escapes intact) into
+/// Cedar pattern elements.
+///
+/// This mirrors Cedar's `cedar_policy_core::parser::unescape::to_pattern`,
+/// which is `pub(crate)` and so cannot be called directly. Rather than
+/// re-derive the escape grammar (the divergence that
+/// [`decode_string`]/`to_unescaped_string` fixed for plain string literals),
+/// we drive the *same* underlying escaper Cedar's `to_pattern` uses —
+/// [`rustc_literal_escaper::unescape_str`] — and apply the one pattern-specific
+/// rule on top: an unescaped `*` is a wildcard, and the escape `\*` (which the
+/// escaper reports as [`EscapeError::InvalidEscape`], since it is not a valid
+/// *string* escape) is a literal `*`. Every other escape follows the string
+/// grammar exactly, so a malformed escape (`\x`/`\u{…}` out of range, unknown
+/// escape, …) is a parse error here just as it is in Cedar.
+///
+/// Keep this byte-for-byte faithful to Cedar's `to_pattern`; the
+/// `parser::pattern_escape_differential` tests pin the agreement. When Cedar
+/// makes `to_pattern` public, this should call it directly.
+fn build_pattern(body: &str, span: Span) -> Result<Vec<cedar_ast::PatternElem>, RawParseError> {
     let mut out = Vec::new();
-    let mut chars = body.chars().peekable();
-    while let Some(c) = chars.next() {
-        match c {
-            '*' => out.push(cedar_ast::PatternElem::Wildcard),
-            '\\' => {
-                match chars.next() {
-                    Some('*') => out.push(cedar_ast::PatternElem::Char('*')),
-                    Some('\\') => out.push(cedar_ast::PatternElem::Char('\\')),
-                    Some('n') => out.push(cedar_ast::PatternElem::Char('\n')),
-                    Some('t') => out.push(cedar_ast::PatternElem::Char('\t')),
-                    Some('r') => out.push(cedar_ast::PatternElem::Char('\r')),
-                    Some('0') => out.push(cedar_ast::PatternElem::Char('\0')),
-                    Some('"') => out.push(cedar_ast::PatternElem::Char('"')),
-                    Some('\'') => out.push(cedar_ast::PatternElem::Char('\'')),
-                    Some('u') => {
-                        // `\u{HEX}` — unicode escape.
-                        if chars.peek() == Some(&'{') {
-                            chars.next();
-                            let mut hex = String::new();
-                            let mut saw_close = false;
-                            while let Some(&d) = chars.peek() {
-                                if d == '}' {
-                                    chars.next();
-                                    saw_close = true;
-                                    break;
-                                }
-                                hex.push(d);
-                                chars.next();
-                            }
-                            let decoded = if saw_close {
-                                u32::from_str_radix(&hex, 16).ok().and_then(char::from_u32)
-                            } else {
-                                None
-                            };
-                            match decoded {
-                                Some(c) => out.push(cedar_ast::PatternElem::Char(c)),
-                                None => {
-                                    // Malformed: pass through as literal chars.
-                                    out.push(cedar_ast::PatternElem::Char('\\'));
-                                    out.push(cedar_ast::PatternElem::Char('u'));
-                                    out.push(cedar_ast::PatternElem::Char('{'));
-                                    for ch in hex.chars() {
-                                        out.push(cedar_ast::PatternElem::Char(ch));
-                                    }
-                                    if saw_close {
-                                        out.push(cedar_ast::PatternElem::Char('}'));
-                                    }
-                                }
-                            }
-                        } else {
-                            out.push(cedar_ast::PatternElem::Char('\\'));
-                            out.push(cedar_ast::PatternElem::Char('u'));
-                        }
-                    }
-                    Some(other) => out.push(cedar_ast::PatternElem::Char(other)),
-                    None => out.push(cedar_ast::PatternElem::Char('\\')),
-                }
-            }
-            other => out.push(cedar_ast::PatternElem::Char(other)),
+    let mut escape_err: Option<String> = None;
+    let bytes = body.as_bytes();
+    unescape_str(body, |range, res| match res {
+        Ok(c) => out.push(if c == '*' {
+            cedar_ast::PatternElem::Wildcard
+        } else {
+            cedar_ast::PatternElem::Char(c)
+        }),
+        // `\*` is not a valid *string* escape (the escaper flags it as
+        // `InvalidEscape`), but it IS the pattern escape for a literal star.
+        // Match on the exact byte slice, as Cedar's `to_pattern` does.
+        Err(EscapeError::InvalidEscape) if bytes.get(range.clone()) == Some(br"\*".as_slice()) => {
+            out.push(cedar_ast::PatternElem::Char('*'));
         }
+        // The escaper also emits non-fatal warnings (unskipped whitespace,
+        // multiple skipped lines); only fatal errors are real parse errors.
+        Err(e) if e.is_fatal() => {
+            if escape_err.is_none() {
+                // Match `to_unescaped_string`'s message for the same input, so
+                // pattern and string escape diagnostics read identically.
+                escape_err = Some(format!(
+                    "the input `{}` is not a valid escape",
+                    &body[range]
+                ));
+            }
+        }
+        Err(_) => {}
+    });
+    match escape_err {
+        Some(msg) => Err(err(msg, span)),
+        None => Ok(out),
     }
-    out
 }
 
 /// Decode a string literal token (including surrounding quotes) into its
-/// value. Handles the standard Cedar escapes; the value (not the exact
-/// spelling) is what matters for lowering, since the `cedar_ast::Literal`
-/// re-encodes on `Display`.
-fn decode_string(raw: &str) -> String {
+/// value. Escapes are decoded by Cedar's [`to_unescaped_string`], so a
+/// malformed escape is a parse error here as it is in Cedar. Cedar reports one
+/// error per bad escape; we surface the first, with the literal's span.
+fn decode_string(raw: &str, span: Span) -> Result<String, RawParseError> {
     let body = &raw[1..raw.len().saturating_sub(1)];
-    let mut out = String::with_capacity(body.len());
-    let mut chars = body.chars().peekable();
-    while let Some(c) = chars.next() {
-        if c != '\\' {
-            out.push(c);
-            continue;
-        }
-        match chars.next() {
-            Some('n') => out.push('\n'),
-            Some('t') => out.push('\t'),
-            Some('r') => out.push('\r'),
-            Some('0') => out.push('\0'),
-            Some('\\') => out.push('\\'),
-            Some('"') => out.push('"'),
-            Some('\'') => out.push('\''),
-            Some('*') => out.push('*'),
-            Some('u') => {
-                // `\u{HEX}` — parse the braced hex; pass through if malformed.
-                if chars.peek() == Some(&'{') {
-                    chars.next();
-                    let mut hex = String::new();
-                    while let Some(&d) = chars.peek() {
-                        if d == '}' {
-                            chars.next();
-                            break;
-                        }
-                        hex.push(d);
-                        chars.next();
-                    }
-                    match u32::from_str_radix(&hex, 16).ok().and_then(char::from_u32) {
-                        Some(decoded) => out.push(decoded),
-                        None => {
-                            out.push_str("\\u{");
-                            out.push_str(&hex);
-                            out.push('}');
-                        }
-                    }
-                } else {
-                    out.push('\\');
-                    out.push('u');
-                }
-            }
-            Some(other) => {
-                out.push('\\');
-                out.push(other);
-            }
-            None => out.push('\\'),
-        }
+    match to_unescaped_string(body) {
+        Ok(s) => Ok(s.to_string()),
+        Err(errs) => Err(err(errs.head.to_string(), span)),
     }
-    out
 }
 
 #[cfg(test)]
@@ -2303,5 +2254,202 @@ mod macro_parse_smoke {
         // Right operand `5` — a literal whose span is just the digit.
         assert!(matches!(right.kind, ExprKind::Lit(_)), "rhs is a literal");
         assert_eq!(&src[right.span.start..right.span.end], "5");
+    }
+}
+
+#[cfg(test)]
+mod string_escape_differential {
+    //! String-literal escape handling must agree with Cedar's, since Dogwood
+    //! is an extension of Cedar. Each case parses the same policy text with
+    //! both parsers and compares.
+
+    use super::{cedar_ast, decode_string};
+
+    /// The value Cedar's parser gives `… == "<body>"`, or `None` if it rejects
+    /// the policy.
+    fn cedar(body: &str) -> Option<String> {
+        let src =
+            format!(r#"permit(principal, action, resource) when {{ context.p == "{body}" }};"#);
+        let policy = cedar_policy_core::parser::parse_policy(None, &src).ok()?;
+        policy.condition().subexpressions().find_map(|e| {
+            if let cedar_ast::ExprKind::Lit(cedar_ast::Literal::String(s)) = e.expr_kind() {
+                Some(s.to_string())
+            } else {
+                None
+            }
+        })
+    }
+
+    /// The value Dogwood's parser gives the same literal.
+    fn ours(body: &str) -> Option<String> {
+        let src =
+            format!(r#"permit(principal, action, resource) when {{ context.p == "{body}" }};"#);
+        let set = super::parse_policies(&src).ok()?;
+        let mut found = None;
+        set.policies[0].conditions[0]
+            .body
+            .for_each_node(&mut |e: &crate::ast::Expr| {
+                if let crate::ast::ExprKind::Lit(cedar_ast::Literal::String(s)) = &e.kind {
+                    found = Some(s.to_string());
+                }
+            });
+        found
+    }
+
+    #[test]
+    fn matches_cedar_on_the_common_escapes() {
+        for body in [
+            r"plain",
+            r"a\nb",
+            r"a\tb",
+            r"a\rb",
+            r#"a\"b"#,
+            r"a\\b",
+            r"a\'b",
+            r"\0",
+            r"\u{1e}",
+            r"\u{1F600}",
+        ] {
+            assert_eq!(ours(body), cedar(body), "disagreed on {body:?}");
+        }
+    }
+
+    #[test]
+    fn matches_cedar_on_hex_escapes() {
+        assert_eq!(cedar(r"\x41").as_deref(), Some("A"));
+        assert_eq!(ours(r"\x41"), cedar(r"\x41"));
+    }
+
+    #[test]
+    fn rejects_the_escapes_cedar_rejects() {
+        // `\q` is not an escape; `\*` is meaningful only in a `like` pattern.
+        for body in [r"\q", r"a\zb", r"a\*b"] {
+            assert_eq!(cedar(body), None, "Cedar should reject {body:?}");
+            assert_eq!(ours(body), None, "Dogwood should reject {body:?}");
+        }
+    }
+
+    #[test]
+    fn an_escape_error_reports_as_such() {
+        let src = r#"permit(principal, action, resource) when { context.p == "a\qb" };"#;
+        let errs = super::parse_policies(src).expect_err("`\\q` must be rejected");
+        let msg = format!("{errs:?}");
+        assert!(
+            !msg.contains("string-literal") && !msg.contains("attribute name"),
+            "escape error should not surface as an unrelated parse error: {msg}"
+        );
+    }
+
+    #[test]
+    fn decode_string_takes_the_quoted_token() {
+        let span = crate::error::Span::new(0, 0);
+        assert_eq!(decode_string(r#""a\nb""#, span).unwrap(), "a\nb");
+        assert!(decode_string(r#""a\qb""#, span).is_err());
+    }
+}
+
+#[cfg(test)]
+mod pattern_escape_differential {
+    //! `like`-pattern escape handling must agree with Cedar's, since Dogwood is
+    //! an extension of Cedar. Cedar's counterpart (`to_pattern`) is
+    //! `pub(crate)`, so — exactly as `string_escape_differential` does for
+    //! plain string literals — each case parses the same `like` policy with
+    //! both parsers and compares the resulting pattern (or the rejection).
+
+    use super::cedar_ast;
+
+    /// Render Cedar's pattern for `… like "<body>"` as a string, or `None` if
+    /// Cedar rejects the policy. `Pattern`'s `Display` round-trips the elems
+    /// (`*` for a wildcard, `\*` for a literal star), so it is a faithful,
+    /// order-preserving key for comparison.
+    fn cedar(body: &str) -> Option<String> {
+        let src =
+            format!(r#"permit(principal, action, resource) when {{ context.p like "{body}" }};"#);
+        let policy = cedar_policy_core::parser::parse_policy(None, &src).ok()?;
+        policy.condition().subexpressions().find_map(|e| {
+            if let cedar_ast::ExprKind::Like { pattern, .. } = e.expr_kind() {
+                Some(pattern.to_string())
+            } else {
+                None
+            }
+        })
+    }
+
+    /// Render Dogwood's pattern for the same policy, or `None` if we reject it.
+    fn ours(body: &str) -> Option<String> {
+        let src =
+            format!(r#"permit(principal, action, resource) when {{ context.p like "{body}" }};"#);
+        let set = super::parse_policies(&src).ok()?;
+        // `Like` lives at the top of the (single) condition body; render its
+        // elems through Cedar's `Pattern` so the key matches `cedar()`.
+        if let crate::ast::ExprKind::Like { pattern, .. } = &set.policies[0].conditions[0].body.kind
+        {
+            Some(cedar_ast::Pattern::from(pattern.clone()).to_string())
+        } else {
+            None
+        }
+    }
+
+    #[test]
+    fn matches_cedar_on_the_common_escapes_and_wildcards() {
+        for body in [
+            r"plain",
+            r"a*b",       // wildcard
+            r"a\*b",      // literal star — legal only in a pattern
+            r"\\*",       // literal backslash, then wildcard
+            r"a\\b",      // literal backslash
+            r"a\nb",
+            r"a\tb",
+            r"a\rb",
+            r#"a\"b"#,
+            r"\0",
+            r"\u{1e}",
+            r"\u{1F600}",
+        ] {
+            assert_eq!(ours(body), cedar(body), "disagreed on {body:?}");
+        }
+    }
+
+    #[test]
+    fn matches_cedar_on_hex_and_underscored_unicode() {
+        // The two silent-mis-decode facets: `\xHH` and `_`-separated `\u{…}`.
+        assert_eq!(cedar(r"\x41").as_deref(), Some("A"));
+        assert_eq!(ours(r"\x41"), cedar(r"\x41"));
+        assert_eq!(cedar(r"\u{4_1}").as_deref(), Some("A"));
+        assert_eq!(ours(r"\u{4_1}"), cedar(r"\u{4_1}"));
+    }
+
+    #[test]
+    fn rejects_the_escapes_cedar_rejects() {
+        // Unknown escape, out-of-range hex, empty/out-of-range/lone-surrogate
+        // unicode — all parse errors in Cedar, all previously accepted here.
+        for body in [
+            r"a\qb",
+            r"a\bb",
+            r"\xFF",
+            r"\x4",
+            r"\u{}",
+            r"\u{110000}",
+            r"\u{D800}",
+        ] {
+            assert_eq!(cedar(body), None, "Cedar should reject {body:?}");
+            assert_eq!(ours(body), None, "Dogwood should reject {body:?}");
+        }
+    }
+
+    #[test]
+    fn an_escape_error_reports_as_such() {
+        let src =
+            r#"permit(principal, action, resource) when { context.p like "a\qb" };"#;
+        let errs = super::parse_policies(src).expect_err("`\\q` must be rejected");
+        let msg = format!("{errs:?}");
+        assert!(
+            msg.contains("not a valid escape"),
+            "pattern escape error should report as an escape error: {msg}"
+        );
+        assert!(
+            !msg.contains("requires a string-literal pattern"),
+            "escape error must not surface as the unrelated non-string-pattern error: {msg}"
+        );
     }
 }

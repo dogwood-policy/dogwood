@@ -1,0 +1,14 @@
+namespace App {
+  type ReadInput = { document: String };
+  type PingInput = { seq: Long };
+  entity Gateway;
+  entity OAuthUser = { id: String };
+  action "Read" appliesTo {
+    principal: [OAuthUser], resource: [Gateway],
+    context: { input: ReadInput }
+  };
+  action "Ping" appliesTo {
+    principal: [OAuthUser], resource: [Gateway],
+    context: { input: PingInput }
+  };
+}

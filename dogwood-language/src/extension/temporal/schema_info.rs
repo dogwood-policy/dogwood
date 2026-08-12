@@ -88,7 +88,7 @@ impl ActionHandle<'_> {
     }
 
     /// The rich type of the named `input` field, or `None` if absent.
-    pub fn input_field_type(&self, name: &str) -> Option<String> {
+    pub fn input_field_type(&self, name: &str) -> Option<RichType> {
         input_attrs(self.action)?
             .get_attr(name)
             .map(|at| rich_type(&at.attr_type))
@@ -135,20 +135,20 @@ impl ActionHandle<'_> {
         &self,
         tys: impl Iterator<Item = &'t EntityType>,
         narrow: Option<&crate::api::ScopeConstraint>,
-    ) -> Option<String> {
+    ) -> Option<RichType> {
         let mut admitted = tys.filter(|ety| narrow.is_none_or(|n| self.admits(n, ety)));
         let first = admitted.next()?;
         if admitted.next().is_some() {
-            return Some("entity".to_string());
+            return Some(RichType::Entity(None));
         }
-        Some(format!("entity:{}", first.name().basename()))
+        Some(RichType::Entity(Some(first.name().basename().to_string())))
     }
 
     /// [`principal_type`](ActionHandle::principal_type), narrowed by the rule's scope.
     pub fn principal_type_narrowed(
         &self,
         narrow: Option<&crate::api::ScopeConstraint>,
-    ) -> Option<String> {
+    ) -> Option<RichType> {
         self.scope_entity_type(self.action.applies_to_principals(), narrow)
     }
 
@@ -156,7 +156,7 @@ impl ActionHandle<'_> {
     pub fn resource_type_narrowed(
         &self,
         narrow: Option<&crate::api::ScopeConstraint>,
-    ) -> Option<String> {
+    ) -> Option<RichType> {
         self.scope_entity_type(self.action.applies_to_resources(), narrow)
     }
 
@@ -221,7 +221,7 @@ impl ActionHandle<'_> {
         scope: &str,
         path: &[String],
         narrow: Option<&crate::api::ScopeConstraint>,
-    ) -> Option<String> {
+    ) -> Option<RichType> {
         match self.resolve_scope_path(scope, path, narrow) {
             ScopePath::Resolved(ty) => Some(ty),
             _ => None,
@@ -272,7 +272,7 @@ impl ActionHandle<'_> {
         // picture. Deciding on the first failure would be nondeterministic: the
         // applies-to spec is a hash set, so its iteration order is not stable across
         // schema builds, and the reported entity would vary run to run.
-        let mut resolved: Vec<(String, String)> = Vec::new();
+        let mut resolved: Vec<(String, RichType)> = Vec::new();
         let mut failed: Vec<(String, ScopePathFailure)> = Vec::new();
         for ety in etys {
             let entity = ety.to_string();
@@ -319,11 +319,18 @@ impl ActionHandle<'_> {
         // entity types' resolved types as rendered; a disagreement means the
         // comparison is a mismatch for at least one admissible request, which is
         // reported rather than silently resolved to one side.
-        let mut types: Vec<String> = resolved.iter().map(|(_, t)| t.clone()).collect();
+        let mut types: Vec<RichType> = resolved.iter().map(|(_, t)| t.clone()).collect();
         types.sort();
         types.dedup();
         if types.len() > 1 {
-            return ScopePath::Ambiguous { types };
+            // Render, then sort the STRINGS: the ambiguous diagnostic's type list
+            // must be lexicographic by rendered name (as the pre-enum, stringly
+            // typed projection produced), not the `RichType` enum's declaration
+            // order — otherwise pairs like {`boolean`, `int`} would print in a
+            // different order than before. Error path only; the list is tiny.
+            let mut rendered: Vec<String> = types.iter().map(RichType::render).collect();
+            rendered.sort();
+            return ScopePath::Ambiguous { types: rendered };
         }
         ScopePath::Resolved(types.remove(0))
     }
@@ -366,11 +373,11 @@ fn resolve_one(
     declared: &ValidatorEntityType,
     first: &str,
     rest: &[String],
-) -> Result<String, ScopePathFailure> {
+) -> Result<RichType, ScopePathFailure> {
     let Some(attr) = declared.attr(first) else {
         if matches!(first, "id" | "type") {
             return match rest.first() {
-                None => Ok("string".to_string()),
+                None => Ok(RichType::String),
                 // The projection is a string, so it has no fields.
                 Some(segment) => Err(ScopePathFailure::NonRecord(segment.clone())),
             };
@@ -398,7 +405,7 @@ fn resolve_one(
 /// declare the same attribute differently.
 pub enum ScopePath {
     /// The full path resolved on every permitted entity type, to this type.
-    Resolved(String),
+    Resolved(RichType),
     /// A segment is declared on NONE of the permitted entity types, listed in
     /// sorted order so the diagnostic does not depend on hash iteration order.
     Missing {
@@ -408,7 +415,8 @@ pub enum ScopePath {
     /// A segment tried to traverse into a non-record type.
     NonRecord { segment: String },
     /// The path resolved on every permitted entity type but to different types,
-    /// so there is no single type the condition can be checked against.
+    /// so there is no single type the condition can be checked against. The
+    /// types are the rendered rich-type names, for the diagnostic.
     Ambiguous { types: Vec<String> },
     /// Nothing to resolve against, and nothing to report: no attribute tail, an
     /// unrecognized root, or a scope pinning no entity type in the projection.
@@ -418,7 +426,7 @@ pub enum ScopePath {
 /// The outcome of resolving a `context.input` field path.
 pub enum PathResolution {
     /// The full path resolved; carries the leaf's rich type.
-    Resolved(String),
+    Resolved(RichType),
     /// The head (`input.<head>`) field is not declared on the action.
     HeadMissing,
     /// A nested segment is not a field of its (record) parent.
@@ -482,31 +490,160 @@ fn predicate_ref(action: &ValidatorActionId) -> String {
     }
 }
 
-/// Render a Cedar [`Type`] as the "rich" comparison string the temporal
-/// checks use.
-pub fn rich_type(ty: &Type) -> String {
+/// The element type of an array/set in [`RichType`]: a known element type, or
+/// one of two "unknown" states that behave differently in comparisons.
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub enum ArrayElem {
+    /// A bare array with no element-type information (e.g. an empty set literal,
+    /// or a schema `Set` with no declared element). Pairs with any array.
+    Unknown,
+    /// A heterogeneous / unclassifiable element (a mixed-type array literal).
+    /// Never matches a different array — the conservative direction.
+    Mixed,
+    /// A known element type.
+    Of(Box<RichType>),
+}
+
+/// The "rich" type vocabulary the temporal (and provider) checkers compare
+/// against — a small, coarse projection of Cedar's `Type` that the dialects own
+/// (insulating them from Cedar's internal type representation). Replaces the
+/// former stringly-typed projection; [`RichType::render`] reproduces those exact
+/// strings for diagnostics.
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub enum RichType {
+    /// Cedar `Long` (rendered `"int"`).
+    Long,
+    String,
+    Decimal,
+    Bool,
+    /// A timepoint index (a `tp` binder); distinct from `Long` so a timepoint is
+    /// not silently comparable to an integer.
+    Timepoint,
+    /// An array/set, with its element state.
+    Array(ArrayElem),
+    /// A record (rendered `"object"`).
+    Record,
+    /// An entity: `Some(name)` is a single known type (`"entity:Name"`), `None`
+    /// is an untagged entity — a multi-type scope root or Cedar's `AnyEntity`
+    /// (`"entity"`).
+    Entity(Option<String>),
+    Never,
+}
+
+impl std::fmt::Display for RichType {
+    /// The wire-identical rendering of the former rich-type strings — used in
+    /// diagnostics and as the stable projection identity.
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RichType::Long => f.write_str("int"),
+            RichType::String => f.write_str("string"),
+            RichType::Decimal => f.write_str("decimal"),
+            RichType::Bool => f.write_str("boolean"),
+            RichType::Timepoint => f.write_str("timepoint"),
+            RichType::Array(ArrayElem::Unknown) => f.write_str("array"),
+            RichType::Array(ArrayElem::Mixed) => f.write_str("array<?>"),
+            RichType::Array(ArrayElem::Of(inner)) => write!(f, "array<{inner}>"),
+            RichType::Record => f.write_str("object"),
+            RichType::Entity(None) => f.write_str("entity"),
+            RichType::Entity(Some(name)) => write!(f, "entity:{name}"),
+            RichType::Never => f.write_str("never"),
+        }
+    }
+}
+
+impl RichType {
+    /// The wire-identical rich-type string (an alias for the `Display` form).
+    pub fn render(&self) -> String {
+        self.to_string()
+    }
+
+    /// Whether this is a numeric type (only `Long`, matching the former
+    /// `is_numeric`; Dogwood arithmetic/ordering operates on `Long`).
+    pub fn is_numeric(&self) -> bool {
+        matches!(self, RichType::Long)
+    }
+
+    /// Whether an `actual` value is acceptable where `self` is the DECLARED
+    /// (expected) type — the former `param_accepts`. Equal types pass; two
+    /// entities pass iff both are tagged and equal (an untagged side passes);
+    /// arrays match element-wise with a bare array pairing any array and a
+    /// `Mixed` element never matching a different array. (The former `null`
+    /// escape hatch is dropped — no producer ever yielded it.)
+    pub fn accepts(&self, actual: &RichType) -> bool {
+        if self == actual {
+            return true;
+        }
+        match (self, actual) {
+            (RichType::Entity(x), RichType::Entity(y)) => match (x, y) {
+                (Some(a), Some(b)) => a == b,
+                _ => true,
+            },
+            (RichType::Array(ee), RichType::Array(aa)) => match (ee, aa) {
+                (ArrayElem::Unknown, _) | (_, ArrayElem::Unknown) => true,
+                (ArrayElem::Mixed, _) | (_, ArrayElem::Mixed) => false,
+                (ArrayElem::Of(e), ArrayElem::Of(a)) => e.accepts(a),
+            },
+            _ => false,
+        }
+    }
+
+    /// Whether two operands are comparable with `==` — the former
+    /// `types_compatible`. Symmetric variant of [`accepts`](Self::accepts) with
+    /// numeric widening (a no-op today, since only `Long` is numeric) and with
+    /// ANY two entities comparable regardless of tag.
+    pub fn compatible(&self, other: &RichType) -> bool {
+        if self == other || (self.is_numeric() && other.is_numeric()) {
+            return true;
+        }
+        match (self, other) {
+            (RichType::Entity(_), RichType::Entity(_)) => true,
+            (RichType::Array(x), RichType::Array(y)) => match (x, y) {
+                (ArrayElem::Unknown, _) | (_, ArrayElem::Unknown) => true,
+                (ArrayElem::Mixed, _) | (_, ArrayElem::Mixed) => false,
+                (ArrayElem::Of(a), ArrayElem::Of(b)) => a.compatible(b),
+            },
+            _ => false,
+        }
+    }
+
+    /// User-facing rendering for diagnostics — the former `display_type`:
+    /// `array<?>` reads as "mixed-type array", an entity shows just its tag, and
+    /// a known array element is rendered recursively (tags stripped).
+    pub fn display(&self) -> String {
+        match self {
+            RichType::Array(ArrayElem::Mixed) => "mixed-type array".to_string(),
+            RichType::Array(ArrayElem::Of(inner)) => format!("array<{}>", inner.display()),
+            RichType::Entity(Some(tag)) => tag.clone(),
+            // Scalars, `array` (Unknown), `entity` (untagged), `object`, `never`.
+            _ => self.render(),
+        }
+    }
+}
+
+/// Project a Cedar [`Type`] into the [`RichType`] comparison vocabulary.
+pub fn rich_type(ty: &Type) -> RichType {
     match ty {
-        Type::Long => "int".to_string(),
-        Type::String => "string".to_string(),
-        Type::Bool(_) => "boolean".to_string(),
+        Type::Long => RichType::Long,
+        Type::String => RichType::String,
+        Type::Bool(_) => RichType::Bool,
         // `decimal` is comparison-relevant; `datetime`/`ipaddr` (and any
         // other extension) collapse to `string`, matching the prior
         // hand-rolled projection's coarse mapping. (A finer extension-type
         // treatment would be a deliberate behavior change, not this dedup.)
         Type::ExtensionType { name } => match name.basename().as_ref() {
-            "decimal" => "decimal".to_string(),
-            _ => "string".to_string(),
+            "decimal" => RichType::Decimal,
+            _ => RichType::String,
         },
         Type::Set {
             element_type: Some(inner),
-        } => format!("array<{}>", rich_type(inner)),
-        Type::Set { element_type: None } => "array".to_string(),
-        Type::Record { .. } => "object".to_string(),
+        } => RichType::Array(ArrayElem::Of(Box::new(rich_type(inner)))),
+        Type::Set { element_type: None } => RichType::Array(ArrayElem::Unknown),
+        Type::Record { .. } => RichType::Record,
         Type::Entity(EntityKind::Entity(lub)) => match lub.get_single_entity() {
-            Some(et) => format!("entity:{}", et.name().basename()),
-            None => "entity".to_string(),
+            Some(et) => RichType::Entity(Some(et.name().basename().to_string())),
+            None => RichType::Entity(None),
         },
-        Type::Entity(EntityKind::AnyEntity) => "entity".to_string(),
-        Type::Never => "never".to_string(),
+        Type::Entity(EntityKind::AnyEntity) => RichType::Entity(None),
+        Type::Never => RichType::Never,
     }
 }

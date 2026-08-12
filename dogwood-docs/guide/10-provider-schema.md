@@ -177,11 +177,33 @@ invocation:
    must be given the declared argument count/types, and — when it declares an
    `inputType` — must be fed a compatible value by the preceding pipeline stage.
 
-Field-path arguments (`context.input.x`, `principal.id`, …) are **not**
-type-checked here — they are deferred to Cedar/temporal schema validation, since
-their type comes from the schema. Likewise, the output projection and comparison
-are not re-checked in this pass: they were lowered to native Cedar, so Cedar's own
-schema validator checks them against the synthesized `context.providers` type.
+5. Each **field-path** argument (`context.input.x`, `principal.id`,
+   `resource.owner`, including paths nested inside a set argument) is resolved
+   against the schema — the SAME resolution Cedar and the temporal dialect apply
+   to the same dereference — on **every action the rule's scope reaches**:
+   - **Existence**: a `context.<path>` undeclared on a scoped action, or a
+     `principal.<attr>` / `resource.<attr>` absent from an entity type the scope
+     admits, is an error. A present-but-**optional** context field resolves and
+     is accepted. An action the rule's `principal` / `resource` scope narrowing
+     (`is` / `==` / `in`) makes *infeasible* (no valid request environment) is
+     skipped, matching Cedar.
+   - **Type**: the resolved type must match the declared `paramType` by category
+     (scalar kind / set / record) and, for a `set`, by element type —
+     recursively, so a `Set<Set<String>>` argument is checked to its leaves. A
+     field of the wrong type on any scoped action is an error (an entity-typed
+     field, for instance, matches no scalar / set / record arg). A
+     `principal`/`resource` attribute whose resolved type *differs* across the
+     admitted entity types is rejected outright — there is no single type to
+     check. Record FIELDS are not compared (Cedar records are invariant, but
+     exact field matching needs structured record types, which the shared
+     resolver collapses to `object`) — a deliberate deferred boundary.
+
+This is a validation-time check; provider execution stays unconditional at
+runtime and still receives null for an absent argument (see [The provider
+contract](05-information-providers.md#the-provider-contract)). The output
+projection and comparison are not re-checked in this pass: they were lowered to
+native Cedar, so Cedar's own schema validator checks them against the synthesized
+`context.providers` type.
 
 ---
 

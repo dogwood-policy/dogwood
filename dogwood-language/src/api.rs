@@ -102,6 +102,7 @@ impl ActionScope {
 /// A temporal leaf hoisted out of a policy: a stream monitor evaluated
 /// against the event history and bound (as a bool) into `context.<id>`.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct TemporalField {
     pub id: ExtensionId,
     /// The action scope the leaf's rule pins, as written.
@@ -293,6 +294,7 @@ impl EventSignature {
 /// per request (by running its declared implementation) and bound (as
 /// its output value) under `context.providers.<id>`.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct ProviderField {
     pub id: ExtensionId,
     /// The action scope the provider's rule pins. Informational: the hoisted
@@ -307,6 +309,14 @@ pub struct ProviderField {
     /// alternative implementation may use this set for as-if optimizations
     /// (skipping evaluations whose result cannot affect the verdicts).
     pub target_actions: Vec<ActionRef>,
+    /// What the rule's `principal` scope admits on the entity-type axis
+    /// (`principal is T` / `== T::"x"` / `in G`, or unconstrained). Recorded so
+    /// validation can resolve a `principal.<attr>` argument against the entity
+    /// types the rule can actually receive (narrowed by this constraint).
+    /// Mirrors [`TemporalField::principal`].
+    pub principal: ScopeConstraint,
+    /// What the rule's `resource` scope admits. See [`principal`](Self::principal).
+    pub resource: ScopeConstraint,
     pub invocation: crate::extension::provider::ast::Invocation,
     /// The eager method chain applied to the invocation's output before the
     /// value is bound into `context.providers.<id>`, in order. Empty for a
@@ -805,6 +815,8 @@ pub(crate) fn lower(
                     .iter()
                     .map(|(ns, id)| action_ref(ns.clone(), id.clone()))
                     .collect(),
+                principal: f.principal.clone(),
+                resource: f.resource.clone(),
                 invocation: f.invocation,
                 methods: f.methods,
                 body_base: f.body_base,

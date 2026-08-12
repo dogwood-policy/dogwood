@@ -1,0 +1,12 @@
+// Relocated from the ex-`0052_unconditional_execution_contract` replay case.
+// A provider under a BARE `action` scope references `context.input.document`,
+// which `Ping` does not declare. Provider execution is still unconditional at
+// RUNTIME (the provider runs on Ping and receives Null -> its sentinel); that
+// runtime contract is replayed — validation-independently — by the
+// provider_only case `0052_unconditional_execution_contract`. But at VALIDATION
+// time the field-path argument is now resolved against every scoped action,
+// exactly as Cedar and the temporal dialect resolve the same dereference, so a
+// field absent from a scoped action (`Ping`) is rejected here.
+permit (principal, action, resource) when guardrails {
+  Strings::Matches(context.input.document, "^[A-Z]+$").matched == true
+};

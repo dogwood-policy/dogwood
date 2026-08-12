@@ -1,0 +1,19 @@
+// Regression case for the `\xHH` escape inside a `like` PATTERN. This is the
+// build_pattern analogue of 0018 (which covers a plain string literal).
+// build_pattern is NOT fixed by commit fc46e9db -- it reimplements Cedar's
+// pattern-escape handling and diverges from it the same way decode_string did.
+//
+// Cedar decodes `like "\x41"` to the one-character pattern `A`, matching only
+// the string "A". The current build_pattern does not recognize `\x` at all: it
+// takes the `\` branch, hits `Some('x') => Char('x')`, then appends `4` and `1`
+// as ordinary chars, producing the three-character pattern `x41` — matching
+// "x41" and never "A".
+//
+// Both events below flip: with a correct pattern, "A" matches (true) and "x41"
+// does not (false); on the buggy pattern the verdicts are exactly reversed.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when { context.input.document like "\x41" };
