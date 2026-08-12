@@ -1,8 +1,8 @@
 # Changelog
 
 All notable changes to the Dogwood policy language are documented here.
-This changelog is generated from [conventional commits](https://www.conventionalcommits.org/).
 
+## 2026-08-12
 
 ### Added
 
@@ -27,4 +27,3 @@ This changelog is generated from [conventional commits](https://www.conventional
 ### Testing
 
 - **parser**: Corpus cases for string-escape Cedar divergences
-
