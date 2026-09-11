@@ -1,0 +1,10 @@
+permit (
+    principal,
+    action in [Escaped::Action::"quote\x22group"],
+    resource
+)
+when temporal {
+    formerly within 1h Escaped::Action::"QuoteSignal"::request{
+        input.token: context.input.token
+    }
+};

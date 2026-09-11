@@ -275,6 +275,15 @@ impl<'a> ParsedPolicy<'a> {
         self.index
     }
 
+    /// This policy's source, re-rendered from its parsed, macro-expanded form:
+    /// valid `.dw` text in which every macro is inlined and no macro reference
+    /// remains. Formatting and comments are not preserved; the semantics are —
+    /// re-parsing and lowering the result yields the same policy this handle
+    /// describes.
+    pub fn expanded_source(&self) -> String {
+        crate::render::render_policy(self.policy)
+    }
+
     // ── temporal ──────────────────────────────────────────────────────
 
     /// The number of `temporal { … }` blocks in this policy — one per

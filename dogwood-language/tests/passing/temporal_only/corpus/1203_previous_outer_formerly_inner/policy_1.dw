@@ -1,0 +1,18 @@
+// `previous` as the OUTER operator with a `formerly` nested inside: the
+// decision's previous event is the Heartbeat at 4, and the inner window is
+// measured from IT - reaching Logins @0,1,2, count 3. A window measured
+// from the decision instead would contain no Login at all.
+
+permit ( principal, action == Drupe::Action::"Alert", resource )
+when temporal {
+  exists (n: Long). (
+    (count for (t: Timepoint).
+       where (previous within 1h (
+         Drupe::Action::"Heartbeat"::request{ input.server: context.input.server }
+         && formerly within 1h (
+              Drupe::Action::"Login"::request{ input.server: context.input.server } && tp(t)
+            )
+       ))
+    ) == n && n == 3
+  )
+};

@@ -1,0 +1,8 @@
+permit (
+    principal,
+    action in [Escaped::Action::"group\x5cid"],
+    resource
+)
+when guardrails {
+    Strings::Matches(context.input.missing).matched == true
+};

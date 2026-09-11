@@ -1,0 +1,20 @@
+// Both timepoints bound but NO data variable shared across the levels:
+// the pair space is delimited purely by the windows. The only pair is
+// (t1=4, t2=0); at the decision @3601 the direct window cannot reach
+// Confirm@0, so the count is 1 only through the anchor at 4. Isolates
+// joint timepoint binding from cross-level data joins.
+
+permit ( principal, action == Drupe::Action::"Transfer", resource )
+when temporal {
+  exists (n: Long). (
+    (count for (t1: Timepoint), (t2: Timepoint).
+       where (formerly within 1h (
+         Drupe::Action::"Transfer"::request{ input.user: context.input.user }
+         && tp(t1)
+         && formerly within 1h (
+              Drupe::Action::"Confirm"::request{ input.user: context.input.user } && tp(t2)
+            )
+       ))
+    ) == n && n == 1
+  )
+};

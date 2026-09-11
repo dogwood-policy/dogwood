@@ -1,0 +1,21 @@
+// Asymmetric windows: outer 2h, inner 30m. Each level uses ITS OWN
+// interval measured from ITS OWN anchor. The single pair sits exactly at
+// the inner 30m boundary from the outer anchor (Transfer@1900 with
+// Confirm@100). At the decision @5000 the outer window still reaches the
+// anchor, and the pair still counts - even though 4900s separate the
+// Confirm from the decision.
+
+permit ( principal, action == Drupe::Action::"Transfer", resource )
+when temporal {
+  exists (n: Long). (
+    (count for (t1: Timepoint), (t2: Timepoint).
+       where (formerly within 2h (
+         Drupe::Action::"Transfer"::request{ input.user: context.input.user }
+         && tp(t1)
+         && formerly within 30m (
+              Drupe::Action::"Confirm"::request{ input.user: context.input.user } && tp(t2)
+            )
+       ))
+    ) == n && n == 1
+  )
+};

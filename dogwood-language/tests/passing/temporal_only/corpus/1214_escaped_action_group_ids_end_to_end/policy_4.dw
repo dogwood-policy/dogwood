@@ -1,0 +1,10 @@
+permit (
+    principal,
+    action in [Escaped::Action::"\\u{e}"],
+    resource
+)
+when temporal {
+    formerly within 1h Escaped::Action::"LiteralSignal"::request{
+        input.token: context.input.token
+    }
+};

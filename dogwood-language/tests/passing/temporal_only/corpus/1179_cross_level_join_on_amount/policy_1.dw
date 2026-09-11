@@ -1,0 +1,22 @@
+// A data variable shared across nesting levels scopes the pair space:
+// pairs form only where Transfer.amount equals Confirm.amount. The sum
+// fingerprints join and enumeration together: (Transfer@4 amount 2 with
+// Confirm@0 amount 2) + (Transfer@3601 amount 4 with Confirm@2 amount 4)
+// = 6. Confirm@0 is reachable only through the anchor at 4 - a window
+// measured from the decision would not include it.
+
+permit ( principal, action == Drupe::Action::"Transfer", resource )
+when temporal {
+  exists (total: Long). (
+    (sum a for (a: Long), (t1: Timepoint), (t2: Timepoint).
+       where (formerly within 1h (
+         Drupe::Action::"Transfer"::request{ input.user: context.input.user, input.amount: a }
+         && tp(t1)
+         && formerly within 1h (
+              Drupe::Action::"Confirm"::request{ input.user: context.input.user, input.amount: a }
+              && tp(t2)
+            )
+       ))
+    ) == total && total == 6
+  )
+};

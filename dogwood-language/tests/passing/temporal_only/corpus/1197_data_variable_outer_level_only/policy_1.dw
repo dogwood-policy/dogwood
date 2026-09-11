@@ -1,0 +1,19 @@
+// A data variable bound at the OUTER level only (the inner event does not
+// mention it), both timepoints bound: the variable rides along with the
+// outer anchor without joining the levels. One (u, t1, t2) binding -
+// (72, 4, 0) - so the count is 1.
+
+permit ( principal, action == Drupe::Action::"Transfer", resource )
+when temporal {
+  exists (n: Long). (
+    (count for (u: Long), (t1: Timepoint), (t2: Timepoint).
+       where (formerly within 1h (
+         Drupe::Action::"Transfer"::request{ input.user: context.input.user, input.amount: u }
+         && tp(t1)
+         && formerly within 1h (
+              Drupe::Action::"Confirm"::request{ input.user: context.input.user } && tp(t2)
+            )
+       ))
+    ) == n && n == 1
+  )
+};

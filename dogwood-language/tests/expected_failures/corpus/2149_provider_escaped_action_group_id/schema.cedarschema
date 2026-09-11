@@ -1,0 +1,9 @@
+namespace Escaped {
+    entity User;
+    entity Doc;
+    action "group\\id";
+    action "Member" in [Action::"group\x5cid"] appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { present: String } }
+    };
+}

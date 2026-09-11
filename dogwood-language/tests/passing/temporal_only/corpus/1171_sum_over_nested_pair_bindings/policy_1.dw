@@ -1,0 +1,22 @@
+// A sum over (a, t1, t2) bindings from a nested `formerly`: the summed
+// variable a is bound by the INNER event, so the total counts each Confirm
+// amount once per outer anchor whose inner window reaches it. Amounts 1/2/4
+// make the total identify the enumerated multiset exactly: the anchor at 4
+// reaches Confirms {1,2,4} (sum 7); the anchor at 3601 reaches only {2,4}
+// (sum 6) - total 13.
+
+permit ( principal, action == Drupe::Action::"Transfer", resource )
+when temporal {
+  exists (total: Long). (
+    (sum a for (a: Long), (t1: Timepoint), (t2: Timepoint).
+       where (formerly within 1h (
+         Drupe::Action::"Transfer"::request{ input.user: context.input.user }
+         && tp(t1)
+         && formerly within 1h (
+              Drupe::Action::"Confirm"::request{ input.user: context.input.user, input.amount: a }
+              && tp(t2)
+            )
+       ))
+    ) == total && total == 13
+  )
+};

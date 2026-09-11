@@ -1,0 +1,24 @@
+// Three levels of `formerly` with timepoint binders at depths two (t2) and
+// three (t3): each middle-level Heartbeat anchor pairs with the Logins its
+// OWN window reaches, measured from that anchor. Heartbeat@4 reaches
+// Login@0; Heartbeat@8 reaches Logins @0 and @5 - pairs (4,0), (8,0),
+// (8,5) - 3 at the decision, even though Login@0 is far outside any window
+// measured from the decision itself.
+
+permit ( principal, action == Drupe::Action::"Alert", resource )
+when temporal {
+  exists (n: Long). (
+    (count for (t2: Timepoint), (t3: Timepoint).
+       where (formerly within 1h (
+         Drupe::Action::"Transfer"::request{ input.user: context.input.server }
+         && formerly within 1h (
+              Drupe::Action::"Heartbeat"::request{ input.server: context.input.server }
+              && tp(t2)
+              && formerly within 1h (
+                   Drupe::Action::"Login"::request{ input.server: context.input.server } && tp(t3)
+                 )
+            )
+       ))
+    ) == n && n == 3
+  )
+};

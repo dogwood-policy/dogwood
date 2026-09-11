@@ -536,7 +536,11 @@ fn scope_action(action: &cedar_ast::ActionConstraint) -> ScopedAction {
 /// the eid is `X`.
 fn uid_action(uid: &cedar_ast::EntityUID) -> (String, String) {
     let namespace = uid.entity_type().name().as_ref().namespace();
-    (namespace, uid.eid().escaped().to_string())
+    // Schema action keys contain the decoded entity id. `escaped()` is only
+    // for rendering Cedar source; using it here makes an action such as
+    // `Action::"\u{e}"` look up the five-character text `\u{e}` instead of the
+    // U+000E id declared by the schema.
+    (namespace, uid.eid().as_ref().to_string())
 }
 
 #[cfg(test)]
@@ -558,6 +562,52 @@ mod tests {
     use cedar_policy_core::ast as cedar_ast;
     use cedar_policy_core::expr_builder::ExprBuilder as _;
     use cedar_policy_core::parser::Loc;
+
+    #[test]
+    fn scoped_action_uses_the_decoded_entity_id_for_every_escape_class() {
+        let cases = [
+            (r#"Action::"plain""#, "plain"),
+            (r#"Action::"""#, ""),
+            (r#"Action::"a\"b""#, "a\"b"),
+            (r#"Action::"a\\b""#, "a\\b"),
+            (r#"Action::"hex\x22quote""#, "hex\"quote"),
+            (r#"Action::"hex\x5cslash""#, "hex\\slash"),
+            (r#"Action::"hex\x7fdelete""#, "hex\u{7f}delete"),
+            (r#"Action::"single\'quote""#, "single'quote"),
+            (r#"Action::"a\nb""#, "a\nb"),
+            (r#"Action::"a\rb""#, "a\rb"),
+            (r#"Action::"a\tb""#, "a\tb"),
+            (r#"Action::"a\0b""#, "a\0b"),
+            (r#"Action::"\u{e}""#, "\u{e}"),
+            (r#"Action::"\u{0_0_0_e}""#, "\u{e}"),
+            (r#"Action::"u\u{0_1_2_3}""#, "u\u{123}"),
+            (r#"Action::"u\u{0_0_2_2}q""#, "u\"q"),
+            (r#"Action::"\\u{e}""#, r"\u{e}"),
+            (r#"Action::"\\x22""#, r"\x22"),
+            (r#"Action::"symbols::{}[]""#, "symbols::{}[]"),
+            (r#"Action::"犬""#, "犬"),
+        ];
+
+        for (source, expected_id) in cases {
+            let uid: cedar_policy_core::ast::EntityUID =
+                source.parse().unwrap_or_else(|e| panic!("{source}: {e}"));
+            assert_eq!(
+                super::uid_action(&uid),
+                (String::new(), expected_id.to_string()),
+                "{source}"
+            );
+        }
+    }
+
+    #[test]
+    fn scoped_action_preserves_the_namespace_with_escaped_ids() {
+        let uid: cedar_policy_core::ast::EntityUID =
+            r#"Outer::Inner::Action::"a\"b""#.parse().expect("action uid");
+        assert_eq!(
+            super::uid_action(&uid),
+            ("Outer::Inner".to_string(), "a\"b".to_string())
+        );
+    }
 
     #[test]
     fn augmented_fragment_converts_to_public_schema_fragment_and_schema() {

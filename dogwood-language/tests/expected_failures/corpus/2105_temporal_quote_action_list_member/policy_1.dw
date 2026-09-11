@@ -1,0 +1,11 @@
+permit (
+    principal,
+    action in [Escaped::Action::"Normal", Escaped::Action::"a\"b"],
+    resource
+)
+when temporal {
+    formerly within 1h (
+        Escaped::Action::"Witness"::request{} &&
+        context.input.mode == 5
+    )
+};

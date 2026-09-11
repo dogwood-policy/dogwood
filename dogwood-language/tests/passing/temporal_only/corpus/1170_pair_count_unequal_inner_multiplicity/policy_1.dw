@@ -1,0 +1,22 @@
+// Nested timepoint binders: a count over (t1, t2) pairs, where t1 marks an
+// outer `formerly` anchor and t2 marks an inner `formerly` anchor. The inner
+// window is measured from EACH outer anchor t1, not from the decision, so
+// the per-anchor inner sets differ: anchors at 4 and 3600 each pair with
+// Confirms {0,1,2}, while the anchor at 3601 has aged Confirm@0 out of its
+// window, leaving {1,2}. The count enumerates every distinct pair:
+// 3 + 3 + 2 = 8 at the final decision.
+
+permit ( principal, action == Drupe::Action::"Transfer", resource )
+when temporal {
+  exists (n: Long). (
+    (count for (t1: Timepoint), (t2: Timepoint).
+       where (formerly within 1h (
+         Drupe::Action::"Transfer"::request{ input.user: context.input.user }
+         && tp(t1)
+         && formerly within 1h (
+              Drupe::Action::"Confirm"::request{ input.user: context.input.user } && tp(t2)
+            )
+       ))
+    ) == n && n == 8
+  )
+};

@@ -374,9 +374,10 @@ fn unquote(s: &str) -> String {
 /// Decode Cedar's canonical string escapes — the exact inverse of the
 /// [`str::escape_debug`] form that [`super::value::entity_uid_string`] and the
 /// quoted-value writers produce, and the form Cedar itself emits. Handles the
-/// simple escapes `\" \\ \' \n \t \r \0`, the Unicode escape `\u{HH..}`, and the
-/// legacy byte escape `\xHH`; an unrecognized `\<c>` is passed through verbatim
-/// (`\` then `c`) so malformed input degrades rather than dropping characters.
+/// simple escapes `\" \\ \' \n \t \r \0`, the Unicode escape `\u{HH..}` (with
+/// `_` digit separators, as Cedar's escaper allows), and the legacy byte escape
+/// `\xHH`; an unrecognized `\<c>` is passed through verbatim (`\` then `c`) so
+/// malformed input degrades rather than dropping characters.
 ///
 /// This MUST stay the exact inverse of `entity_uid_string`'s escaping: the event
 /// entity store is keyed by the escaped uid literal, and lookups reconstruct
@@ -398,7 +399,13 @@ pub(crate) fn unescape(s: &str) -> String {
             Some('t') => out.push('\t'),
             Some('r') => out.push('\r'),
             Some('0') => out.push('\0'),
-            // `\u{HH..}` — hex code point in braces.
+            // `\u{HH..}` — hex code point in braces. Underscores are digit
+            // separators (`\u{1_2_3_4}`), as in Cedar's `to_unescaped_string`
+            // (the Rust escaper); strip them before parsing so this decoder
+            // agrees with the policy-side decoders on the same escape. Cedar
+            // rejects a *leading* underscore (interior/trailing are fine), so a
+            // leading-underscore form is left verbatim rather than decoded —
+            // decode exactly the set Cedar accepts, else degrade (see below).
             Some('u') if chars.peek() == Some(&'{') => {
                 chars.next(); // consume `{`
                 let mut hex = String::new();
@@ -413,10 +420,15 @@ pub(crate) fn unescape(s: &str) -> String {
                 if closed {
                     chars.next(); // consume `}`
                 }
-                match (
-                    closed,
-                    u32::from_str_radix(&hex, 16).ok().and_then(char::from_u32),
-                ) {
+                let digits: String = hex.chars().filter(|c| *c != '_').collect();
+                let decoded = if hex.starts_with('_') {
+                    None // Cedar rejects a leading `_`; keep verbatim.
+                } else {
+                    u32::from_str_radix(&digits, 16)
+                        .ok()
+                        .and_then(char::from_u32)
+                };
+                match (closed, decoded) {
                     (true, Some(ch)) => out.push(ch),
                     // Malformed `\u{…}` — emit verbatim so nothing is silently lost.
                     _ => {
@@ -691,6 +703,25 @@ mod tests {
                 "round-trip failed for {id:?} (escaped body {body:?})"
             );
         }
+    }
+
+    /// A `\u{…}` escape with `_` digit separators decodes the same as Cedar's
+    /// escaper (and the same as the policy-side decoders), rather than being
+    /// kept verbatim — the trace-parser half of the string-escape alignment.
+    #[test]
+    fn unescape_decodes_unicode_escape_with_underscores() {
+        assert_eq!(unescape(r"\u{1_2_3_4}"), "\u{1234}");
+        assert_eq!(unescape(r"\u{1F_512}"), "\u{1F512}");
+        // No separators still works, and a genuinely malformed escape (no hex
+        // digits) still degrades to verbatim rather than erroring.
+        assert_eq!(unescape(r"\u{1234}"), "\u{1234}");
+        assert_eq!(unescape(r"\u{__}"), r"\u{__}");
+        // Accept exactly the set Cedar's escaper accepts: interior/trailing
+        // separators decode, but a *leading* underscore does not (Cedar rejects
+        // it), so it degrades to verbatim rather than decoding — no wider than
+        // the policy-side decoder.
+        assert_eq!(unescape(r"\u{12_34_}"), "\u{1234}");
+        assert_eq!(unescape(r"\u{_1234}"), r"\u{_1234}");
     }
 
     #[test]

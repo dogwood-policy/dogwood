@@ -1,0 +1,12 @@
+namespace Escaped {
+    entity User;
+    entity Doc;
+    action "Read\"quoted" appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { user: String } }
+    };
+    action "Login\\slash" appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { user: String } }
+    };
+}

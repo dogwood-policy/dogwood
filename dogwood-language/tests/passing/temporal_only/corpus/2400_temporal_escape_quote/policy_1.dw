@@ -1,0 +1,7 @@
+// Temporal string literal: escaped quote (\") must decode like Cedar.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal { context.input.document == "a\"b" };

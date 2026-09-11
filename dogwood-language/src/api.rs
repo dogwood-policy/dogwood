@@ -1718,4 +1718,106 @@ mod tests {
             );
         }
     }
+
+    /// Extended escaping test covering entity IDs with control characters that
+    /// can cause divergences between `entity_uid_string` and Cedar's
+    /// `EntityUid::Display`.
+    ///
+    /// The root cause: `entity_uid_string` uses Rust's `escape_debug()` which
+    /// may render control characters differently from Cedar's `EntityUid::Display`.
+    /// For example, `escape_debug` renders null as `\0` but Cedar may render it
+    /// as `\u{0}`. If they disagree, the string-keyed entity store lookup in
+    /// `build_entities` silently fails (the `supplied_uids.contains(...)` check
+    /// misses) and the entity is re-added bare (no attributes), causing `has` to
+    /// return false.
+    ///
+    /// This test catches such divergences before they reach production. If it
+    /// fails, `entity_uid_string` must be updated to match Cedar's rendering.
+    #[test]
+    fn entity_uid_string_matches_cedar_on_control_chars() {
+        use cedar_policy::{EntityId, EntityTypeName, EntityUid};
+        use std::str::FromStr;
+        let cases: &[(&str, &str)] = &[
+            // Regression case: null + bell:
+            ("a", "\0\u{7}"),
+            // Individual control characters:
+            ("a", "\0"),       // null — escape_debug renders as \0
+            ("a", "\u{7}"),   // bell — escape_debug renders as \u{7}
+            ("a", "\u{8}"),   // backspace — escape_debug renders as \u{8}
+            ("a", "\t"),      // tab — escape_debug renders as \t
+            ("a", "\n"),      // newline — escape_debug renders as \n
+            ("a", "\r"),      // carriage return — escape_debug renders as \r
+            ("a", "\u{1b}"),  // escape char
+            ("a", "\u{7f}"),  // DEL
+            // Multiple control chars combined:
+            ("a", "\0\0\u{4}"),
+            ("a", "\u{1}\u{2}\u{3}"),   // low controls
+            ("a", "\u{10}\u{1f}"),      // upper C0 range
+            // Mix of control + printable:
+            ("a", "hello\0world"),
+            ("a", "\nnewline\n"),
+            ("a", "tab\there"),
+            // Single printable chars:
+            ("a", "e"),
+            ("a", "R"),
+            // Whitespace that escape_debug may handle differently:
+            ("a", " "),                // plain space
+            ("a", "  leading"),
+            ("a", "trailing "),
+            // Unicode above BMP (escape_debug passes through, Cedar should too):
+            ("a", "emoji\u{1f600}"),
+            ("a", "\u{10000}"),        // first supplementary char
+        ];
+        for (ty, id) in cases {
+            let ours = crate::interpreter::value::entity_uid_string(ty, id);
+            let cedar = EntityUid::from_type_name_and_id(
+                EntityTypeName::from_str(ty).expect("type name"),
+                EntityId::new(*id),
+            )
+            .to_string();
+            assert_eq!(
+                ours, cedar,
+                "entity_uid_string diverged from Cedar's rendering for ty={ty:?} id={id:?}\n  \
+                 ours:  {ours:?}\n  cedar: {cedar:?}"
+            );
+        }
+    }
+
+    /// Verify the full round-trip: entity_uid_string → EntityUid::from_str →
+    /// EntityUid::to_string produces the same string back. This is the exact
+    /// path `build_entities` takes: store key is `entity_uid_string(ty, id)`,
+    /// then `build_entity` parses it with `from_str`, and `supplied_uids` is
+    /// compared against `request.principal().to_string()`.
+    #[test]
+    fn entity_uid_string_roundtrips_through_cedar_parser() {
+        use cedar_policy::EntityUid;
+        use std::str::FromStr;
+        let ids: &[&str] = &[
+            "\0\u{7}",    // null + bell regression case
+            "\0",
+            "\u{7}",
+            "normal",
+            "a\"b",
+            "a\\b",
+            "\t\n\r",
+            "\u{1b}[31m", // ANSI escape sequence
+            "",
+        ];
+        for id in ids {
+            let uid_str = crate::interpreter::value::entity_uid_string("a", id);
+            // Step 1: parse it back (as build_entity does)
+            let parsed = EntityUid::from_str(&uid_str)
+                .unwrap_or_else(|e| panic!(
+                    "EntityUid::from_str failed for id={id:?} (uid_str={uid_str:?}): {e}"
+                ));
+            // Step 2: render it (as request.principal().to_string() does)
+            let rendered = parsed.to_string();
+            assert_eq!(
+                uid_str, rendered,
+                "round-trip failed for id={id:?}\n  \
+                 entity_uid_string: {uid_str:?}\n  \
+                 from_str.to_string: {rendered:?}"
+            );
+        }
+    }
 }

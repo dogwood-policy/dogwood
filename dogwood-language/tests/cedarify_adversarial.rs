@@ -6,7 +6,7 @@
 //! unicode edge cases, and inputs that are syntactically valid but
 //! semantically degenerate.
 
-use dogwood_language::{LoweredPolicySet, PolicySchema, ServiceSchema};
+use dogwood_language::{LoweredPolicySet, PolicySchema, ServiceSchema, Validator};
 
 const MINIMAL_SCHEMA: &str = r#"
     namespace App {
@@ -221,6 +221,64 @@ fn lower_temporal(src: &str) -> Result<LoweredPolicySet, dogwood_language::Error
     LoweredPolicySet::from_str(src, &service, &schema)
 }
 
+const ESCAPED_ACTION_SCHEMA: &str = r#"
+    namespace Escaped {
+      entity User;
+      entity Doc;
+      action "\u{e}" appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { x: String } }
+      };
+      action "Read" appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { x: String } }
+      };
+      action "Login" appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { x: String } }
+      };
+    }
+"#;
+
+fn assert_escaped_action_scope_lowers_and_validates(scope: &str) {
+    let schema =
+        PolicySchema::from_cedarschema_str(ESCAPED_ACTION_SCHEMA).expect("schema should parse");
+    let service = ServiceSchema::builder()
+        .event_schema_str(EVENT_SCHEMA)
+        .build()
+        .expect("service schema should build");
+    let src = format!(
+        r#"permit(principal, {scope}, resource)
+             when temporal {{
+               formerly within 1h Escaped::Action::"Login"::request{{}}
+             }};"#
+    );
+
+    let lowered = LoweredPolicySet::from_str(&src, &service, &schema)
+        .unwrap_or_else(|error| panic!("escaped action scope should lower: {error:?}"));
+    let result = Validator::new().validate(&lowered);
+    let errors: Vec<_> = result
+        .validation_errors()
+        .map(|error| error.to_string())
+        .collect();
+    assert!(
+        errors.is_empty(),
+        "escaped action scope should validate cleanly: {errors:#?}"
+    );
+}
+
+#[test]
+fn temporal_namespaced_escaped_action_scope_lowers_and_validates() {
+    assert_escaped_action_scope_lowers_and_validates(r#"action == Escaped::Action::"\u{e}""#);
+}
+
+#[test]
+fn temporal_action_list_with_escaped_id_lowers_and_validates() {
+    assert_escaped_action_scope_lowers_and_validates(
+        r#"action in [Escaped::Action::"\u{e}", Escaped::Action::"Read"]"#,
+    );
+}
+
 #[test]
 fn temporal_deeply_nested_in_if_then_else() {
     // Mid-expression temporal inside an if/then/else.
@@ -426,4 +484,143 @@ fn policy_with_all_annotation_types() {
     "#;
     let result = lower(src);
     assert!(result.is_ok(), "annotated policy should lower: {result:?}");
+}
+
+/// Lower `@doc("<inner>") permit …` and return the decoded `doc` annotation
+/// value carried onto the Cedar policy, or the lowering error.
+fn annotation_doc_value(inner: &str) -> Result<Option<String>, dogwood_language::Error> {
+    let policy =
+        format!("@doc(\"{inner}\")\npermit(principal, action == App::Action::\"Read\", resource);");
+    let lowered = lower(&policy)?;
+    Ok(lowered
+        .as_cedar()
+        .policies()
+        .next()
+        .expect("one lowered policy")
+        .annotation("doc")
+        .map(str::to_string))
+}
+
+#[test]
+fn annotation_values_decode_escapes_like_cedar() {
+    // (annotation source between the quotes, expected decoded value). Every
+    // escape family Cedar decodes must decode identically in an annotation
+    // value — they all funnel through `decode_string` now, not `trim_matches`.
+    let cases: &[(&str, &str)] = &[
+        ("a\\\"b", "a\"b"),           // escaped quote
+        ("a\\\\b", "a\\b"),           // escaped backslash
+        ("a\\nb", "a\nb"),            // newline
+        ("a\\tb", "a\tb"),            // tab
+        ("a\\rb", "a\rb"),            // carriage return
+        ("o\\'brien", "o'brien"),     // escaped apostrophe
+        ("\\x41", "A"),               // hex byte escape (<= 0x7F)
+        ("\\u{1_2_3_4}", "\u{1234}"), // \u{…} with interior underscore separators
+        ("\\u{1F512}", "\u{1F512}"),  // astral codepoint
+        ("plain", "plain"),           // control: no escape
+        ("", ""),                     // empty value: `@doc("")` decodes to ""
+    ];
+    for (inner, expected) in cases {
+        assert_eq!(
+            annotation_doc_value(inner).unwrap_or_else(|e| panic!("`{inner}` should lower: {e:?}")),
+            Some(expected.to_string()),
+            "annotation `{inner}` must decode to {expected:?}"
+        );
+    }
+}
+
+#[test]
+fn annotation_invalid_escapes_are_rejected() {
+    // Escapes Cedar's `to_unescaped_string` rejects — an annotation value must
+    // reject them at parse too (not silently keep them verbatim), matching
+    // `decode_string` and the string-literal `expected_failures` cases.
+    for inner in [
+        "a\\zb",       // unknown escape
+        "\\*",         // `\*` is valid only in a `like` pattern, not a string
+        "\\u{_1234}",  // leading underscore in \u{…}
+        "\\xFF",       // \x above 0x7F
+        "\\u{}",       // empty \u{}
+        "\\u{110000}", // codepoint above U+10FFFF
+    ] {
+        assert!(
+            annotation_doc_value(inner).is_err(),
+            "annotation `{inner}` must be rejected at parse"
+        );
+    }
+}
+
+/// Cross-reference the annotation decode against Cedar's **own** string decoder
+/// (`to_unescaped_string`, the exact function `decode_string` funnels through)
+/// rather than hardcoded expectations: for every form, the annotation path must
+/// decode to *exactly* what Cedar decodes, and reject *exactly* where Cedar
+/// rejects. The expected value is Cedar's, so this can't enshrine a wrong guess
+/// about Cedar's behaviour — and it covers forms whose outcome is not obvious.
+#[test]
+fn annotation_decoding_matches_cedar_reference() {
+    use cedar_policy_core::parser::unescape::to_unescaped_string;
+
+    // Bodies (the text between the quotes) spanning valid and Cedar-invalid
+    // escapes, including edge forms (leading/trailing `_`, surrogate, out-of-
+    // range, `\x` boundary, `\0`).
+    let bodies = [
+        "",
+        "plain",
+        "a b",
+        "o'brien",
+        "café",
+        "a\\\"b",
+        "a\\\\b",
+        "a\\nb",
+        "a\\tb",
+        "a\\rb",
+        "a\\0b",
+        "o\\'brien",
+        "\\x41",
+        "\\x7f",
+        "\\u{1_2_3_4}",
+        "\\u{1F512}",
+        "\\u{12_34_}",
+        "\\u{41}",
+        // Cedar-invalid forms:
+        "a\\zb",
+        "\\*",
+        "\\u{_1234}",
+        "\\xFF",
+        "\\u{}",
+        "\\u{110000}",
+        "\\u{d800}",
+    ];
+    for body in bodies {
+        let cedar = to_unescaped_string(body).ok().map(|s| s.to_string());
+        let dogwood = annotation_doc_value(body);
+        match (&dogwood, &cedar) {
+            (Ok(Some(v)), Some(exp)) => assert_eq!(
+                v, exp,
+                "annotation `{body}`: Dogwood decoded {v:?} but Cedar decodes {exp:?}"
+            ),
+            (Err(_), None) => { /* both reject — agree with Cedar */ }
+            _ => {
+                panic!("annotation `{body}`: Dogwood = {dogwood:?} but Cedar reference = {cedar:?}")
+            }
+        }
+    }
+}
+
+#[test]
+fn multiple_annotations_on_one_policy_decode_independently() {
+    // Two escape-bearing annotations under different keys on the same policy:
+    // each value must decode through the same unescaper on its own, with no
+    // cross-contamination between keys and no last-writer-wins clobbering.
+    let src = r#"
+        @id("a\"b")
+        @note("c\td")
+        permit(principal, action == App::Action::"Read", resource);
+    "#;
+    let lowered = lower(src).expect("annotated policy should lower");
+    let policy = lowered
+        .as_cedar()
+        .policies()
+        .next()
+        .expect("one lowered policy");
+    assert_eq!(policy.annotation("id"), Some("a\"b"));
+    assert_eq!(policy.annotation("note"), Some("c\td"));
 }

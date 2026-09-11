@@ -1,0 +1,22 @@
+namespace Escaped {
+    entity User;
+    entity Doc;
+    entity Mode enum ["a\"b", "a\\b", "u\u{0_1_2_3}"];
+
+    action "AccessQuote" appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { mode: Mode } }
+    };
+    action "AccessBackslash" appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { mode: Mode } }
+    };
+    action "AccessUnicode" appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { mode: Mode } }
+    };
+    action "Check" appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { mode: Mode } }
+    };
+}

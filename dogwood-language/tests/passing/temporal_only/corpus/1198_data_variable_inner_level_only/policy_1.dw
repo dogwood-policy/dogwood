@@ -1,0 +1,19 @@
+// A data variable bound at the INNER level only: the variable is carried
+// out of the nested window alongside the inner timepoint. One (a, t1, t2)
+// binding - (72, 4, 0) - so the count is 1.
+
+permit ( principal, action == Drupe::Action::"Transfer", resource )
+when temporal {
+  exists (n: Long). (
+    (count for (a: Long), (t1: Timepoint), (t2: Timepoint).
+       where (formerly within 1h (
+         Drupe::Action::"Transfer"::request{ input.user: context.input.user }
+         && tp(t1)
+         && formerly within 1h (
+              Drupe::Action::"Confirm"::request{ input.user: context.input.user, input.amount: a }
+              && tp(t2)
+            )
+       ))
+    ) == n && n == 1
+  )
+};

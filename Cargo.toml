@@ -21,9 +21,7 @@ members = [
 ]
 
 [workspace.package]
-version = "1.0.0"
+version = "0.1.0"
 edition = "2024"
-# The registry each publishable crate is released to (inherited by members via
-# `publish.workspace = true`). Pins publishing to the internal registry rather
-# than crates.io; see the `Config` file for the corresponding build setup.
-publish = ["brazil"]
+# Registry for crates that inherit publish.workspace = true.
+publish = ["crates-io"]

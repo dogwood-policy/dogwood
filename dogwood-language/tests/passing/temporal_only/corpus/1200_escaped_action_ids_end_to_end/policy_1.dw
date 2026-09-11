@@ -1,0 +1,10 @@
+permit (
+    principal,
+    action == Escaped::Action::"Read\"quoted",
+    resource
+)
+when temporal {
+    formerly within 1h Escaped::Action::"Login\\slash"::request{
+        input.user: context.input.user
+    }
+};

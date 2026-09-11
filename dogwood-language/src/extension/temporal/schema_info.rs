@@ -11,7 +11,7 @@
 //! comparison strings the checks use (`"int"`, `"string"`, `"entity:User"`,
 //! `"array<int>"`, …) straight from Cedar's [`Type`].
 
-use cedar_policy_core::ast::{EntityType, EntityUID};
+use cedar_policy_core::ast::{Eid, EntityType, EntityUID};
 use cedar_policy_core::validator::types::{Attributes, EntityKind, Type};
 use cedar_policy_core::validator::{
     ValidatorActionId, ValidatorEntityType, ValidatorEntityTypeKind, ValidatorSchema,
@@ -44,7 +44,8 @@ impl SchemaInfo {
             Some(ns) if !ns.is_empty() => format!("{ns}::Action"),
             _ => "Action".to_string(),
         };
-        let uid: EntityUID = format!("{type_name}::\"{id}\"").parse().ok()?;
+        let entity_type: EntityType = type_name.parse().ok()?;
+        let uid = EntityUID::from_components(entity_type, Eid::new(id), None);
         self.schema.get_action_id(&uid).map(|action| ActionHandle {
             action,
             schema: &self.schema,
@@ -446,7 +447,7 @@ impl EntityTypeHandle<'_> {
     pub fn enum_eids(&self) -> Option<Vec<String>> {
         match &self.ety.kind {
             ValidatorEntityTypeKind::Enum(eids) => {
-                Some(eids.iter().map(|e| e.escaped().to_string()).collect())
+                Some(eids.iter().map(|e| e.as_ref().to_string()).collect())
             }
             ValidatorEntityTypeKind::Standard(_) => None,
         }
@@ -645,5 +646,292 @@ pub fn rich_type(ty: &Type) -> RichType {
         },
         Type::Entity(EntityKind::AnyEntity) => RichType::Entity(None),
         Type::Never => RichType::Never,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::BTreeSet;
+
+    use super::{RichType, SchemaInfo};
+
+    struct ActionIdCase {
+        label: &'static str,
+        source: &'static str,
+        decoded: &'static str,
+    }
+
+    const ACTION_IDS: &[ActionIdCase] = &[
+        ActionIdCase {
+            label: "plain",
+            source: "plain",
+            decoded: "plain",
+        },
+        ActionIdCase {
+            label: "empty",
+            source: "",
+            decoded: "",
+        },
+        ActionIdCase {
+            label: "quote",
+            source: r#"a\"b"#,
+            decoded: "a\"b",
+        },
+        ActionIdCase {
+            label: "backslash",
+            source: r#"a\\b"#,
+            decoded: "a\\b",
+        },
+        ActionIdCase {
+            label: "hex_quote",
+            source: r#"hex\x22quote"#,
+            decoded: "hex\"quote",
+        },
+        ActionIdCase {
+            label: "hex_backslash",
+            source: r#"hex\x5cslash"#,
+            decoded: "hex\\slash",
+        },
+        ActionIdCase {
+            label: "hex_delete",
+            source: r#"hex\x7fdelete"#,
+            decoded: "hex\u{7f}delete",
+        },
+        ActionIdCase {
+            label: "escaped_single_quote",
+            source: r#"single\'quote"#,
+            decoded: "single'quote",
+        },
+        ActionIdCase {
+            label: "newline",
+            source: r#"a\nb"#,
+            decoded: "a\nb",
+        },
+        ActionIdCase {
+            label: "carriage_return",
+            source: r#"a\rb"#,
+            decoded: "a\rb",
+        },
+        ActionIdCase {
+            label: "tab",
+            source: r#"a\tb"#,
+            decoded: "a\tb",
+        },
+        ActionIdCase {
+            label: "nul",
+            source: r#"a\0b"#,
+            decoded: "a\0b",
+        },
+        ActionIdCase {
+            label: "unicode_escape",
+            source: r#"\u{e}"#,
+            decoded: "\u{e}",
+        },
+        ActionIdCase {
+            label: "underscored_unicode",
+            source: r#"u\u{0_1_2_3}"#,
+            decoded: "u\u{123}",
+        },
+        ActionIdCase {
+            label: "underscored_unicode_quote",
+            source: r#"u\u{0_0_2_2}q"#,
+            decoded: "u\"q",
+        },
+        ActionIdCase {
+            label: "literal_escape_text",
+            source: r#"\\u{e}"#,
+            decoded: r"\u{e}",
+        },
+        ActionIdCase {
+            label: "literal_hex_escape_text",
+            source: r#"\\x22"#,
+            decoded: r"\x22",
+        },
+        ActionIdCase {
+            label: "punctuation",
+            source: "symbols::{}[]",
+            decoded: "symbols::{}[]",
+        },
+        ActionIdCase {
+            label: "printable_unicode",
+            source: "犬",
+            decoded: "犬",
+        },
+    ];
+
+    fn schema_info(namespaced: bool) -> SchemaInfo {
+        fn actions(principal: &str, resource: &str) -> String {
+            ACTION_IDS
+                .iter()
+                .enumerate()
+                .map(|(index, case)| {
+                    format!(
+                        r#"action "{}" appliesTo {{
+                            principal: [{principal}],
+                            resource: [{resource}],
+                            context: {{ input: {{ marker_{index}: String }} }}
+                        }};"#,
+                        case.source
+                    )
+                })
+                .collect::<Vec<_>>()
+                .join("\n")
+        }
+
+        let schema_source = if namespaced {
+            format!(
+                r#"
+                namespace Escaped {{
+                    entity User;
+                    entity Doc;
+                    {}
+                }}
+            "#,
+                actions("User", "Doc")
+            )
+        } else {
+            format!(
+                r#"
+                entity RootUser;
+                entity RootDoc;
+                {}
+            "#,
+                actions("RootUser", "RootDoc")
+            )
+        };
+        let schema = cedar_policy::Schema::from_cedarschema_str(&schema_source)
+            .unwrap_or_else(|e| {
+                panic!("lookup fixture schema should parse: {e:?}\n{schema_source}")
+            })
+            .0;
+        SchemaInfo::from_validator_schema(schema.as_ref())
+    }
+
+    #[test]
+    fn action_resolves_decoded_ids_for_every_escape_class_and_namespace_shape() {
+        for (info, namespaces) in [
+            (schema_info(false), vec![None, Some("")]),
+            (schema_info(true), vec![Some("Escaped")]),
+        ] {
+            for namespace in namespaces {
+                for (index, case) in ACTION_IDS.iter().enumerate() {
+                    let handle = info.action(namespace, case.decoded).unwrap_or_else(|| {
+                        panic!("{} should resolve in {namespace:?}", case.label)
+                    });
+                    assert_eq!(
+                        handle.input_field_type(&format!("marker_{index}")),
+                        Some(RichType::String),
+                        "{} resolved the wrong action in {namespace:?}",
+                        case.label
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn escaped_text_and_the_character_it_spells_are_distinct_action_ids() {
+        let info = schema_info(true);
+
+        let control = info
+            .action(Some("Escaped"), "\u{e}")
+            .expect("U+000E action");
+        let literal = info
+            .action(Some("Escaped"), r"\u{e}")
+            .expect("literal escape-text action");
+
+        let control_index = ACTION_IDS
+            .iter()
+            .position(|case| case.label == "unicode_escape")
+            .unwrap();
+        let literal_index = ACTION_IDS
+            .iter()
+            .position(|case| case.label == "literal_escape_text")
+            .unwrap();
+        assert_eq!(
+            control.input_field_type(&format!("marker_{control_index}")),
+            Some(RichType::String)
+        );
+        assert_eq!(
+            literal.input_field_type(&format!("marker_{literal_index}")),
+            Some(RichType::String)
+        );
+    }
+
+    #[test]
+    fn action_returns_none_only_for_an_undeclared_id() {
+        let info = schema_info(true);
+        assert!(info.action(Some("Escaped"), "not-declared").is_none());
+    }
+
+    #[test]
+    fn enum_eids_are_decoded_for_semantic_comparison_in_every_namespace_shape() {
+        let cases = [
+            ("plain", "plain"),
+            (r#"quote\x22id"#, "quote\"id"),
+            (r#"slash\x5cid"#, "slash\\id"),
+            (r#"line\nbreak"#, "line\nbreak"),
+            (r#"carriage\rreturn"#, "carriage\rreturn"),
+            (r#"tab\tid"#, "tab\tid"),
+            (r#"nul\0id"#, "nul\0id"),
+            (r#"control\u{e}"#, "control\u{e}"),
+            (r#"unicode\u{0_1_2_3}"#, "unicode\u{123}"),
+            (r#"unicode\u{0_0_2_2}quote"#, "unicode\"quote"),
+            (r#"literal\\u{e}"#, r"literal\u{e}"),
+            (r#"literal\\x22"#, r"literal\x22"),
+            (r#"single\'quote"#, "single'quote"),
+            ("犬", "犬"),
+        ];
+        let members = cases
+            .iter()
+            .map(|(source, _)| format!(r#""{source}""#))
+            .collect::<Vec<_>>()
+            .join(", ");
+        let expected: BTreeSet<_> = cases
+            .iter()
+            .map(|(_, decoded)| decoded.to_string())
+            .collect();
+
+        for (namespace, schema_source) in [
+            (
+                None,
+                format!(
+                    r#"
+                    entity Mode enum [{members}];
+                    entity User;
+                    "#
+                ),
+            ),
+            (
+                Some("Outer::Inner"),
+                format!(
+                    r#"
+                    namespace Outer::Inner {{
+                        entity Mode enum [{members}];
+                        entity User;
+                    }}
+                    "#
+                ),
+            ),
+        ] {
+            let schema = cedar_policy::Schema::from_cedarschema_str(&schema_source)
+                .unwrap_or_else(|error| panic!("{error:?}\n{schema_source}"))
+                .0;
+            let info = SchemaInfo::from_validator_schema(schema.as_ref());
+            let actual: BTreeSet<_> = info
+                .entity_type(namespace, "Mode")
+                .expect("enum entity type")
+                .enum_eids()
+                .expect("enum IDs")
+                .into_iter()
+                .collect();
+            assert_eq!(actual, expected, "namespace {namespace:?}");
+            assert!(
+                info.entity_type(namespace, "User")
+                    .expect("standard entity type")
+                    .enum_eids()
+                    .is_none()
+            );
+        }
     }
 }

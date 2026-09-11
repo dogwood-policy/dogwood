@@ -1,0 +1,7 @@
+permit (principal, action == Escaped::Action::"a\\b", resource)
+when temporal {
+    formerly within 1h (
+        Escaped::Action::"Witness"::request{} &&
+        context.input.only_normal == "x"
+    )
+};

@@ -1,0 +1,7 @@
+// Temporal string literal: \\u with underscore separators decodes to U+1234.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal { context.input.document == "\u{1_2_3_4}" };

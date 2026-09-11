@@ -377,6 +377,720 @@ fn augmented_schema_feeds_forward_into_a_later_lowering() {
     );
 }
 
+fn escaped_feed_forward_schema(action_source: &str) -> String {
+    format!(
+        r#"
+        namespace Escaped {{
+          entity User;
+          entity Doc;
+          entity Mode enum ["read", "write"];
+          action "Gate" appliesTo {{
+            principal: [User], resource: [Doc],
+            context: {{ input: {{ mode: Mode }} }}
+          }};
+          action "{action_source}" appliesTo {{
+            principal: [User], resource: [Doc],
+            context: {{ input: {{ mode: Mode }} }}
+          }};
+        }}
+        "#
+    )
+}
+
+fn escaped_temporal_policy(action_source: &str, operator: &str, cedar_guard: &str) -> String {
+    format!(
+        r#"
+        permit (principal, action == Escaped::Action::"{action_source}", resource)
+        when temporal {{
+            {operator} within 1h Escaped::Action::"{action_source}"::request{{}}
+        }}
+        {cedar_guard};
+        "#
+    )
+}
+
+fn cedar_validation_errors(schema: &cedar_policy::Schema, policy_source: &str) -> Vec<String> {
+    let policies: cedar_policy::PolicySet = policy_source
+        .parse()
+        .unwrap_or_else(|error| panic!("Cedar probe should parse: {error:?}\n{policy_source}"));
+    cedar_policy::Validator::new(schema.clone())
+        .validate(&policies, cedar_policy::ValidationMode::Strict)
+        .validation_errors()
+        .map(|error| error.to_string())
+        .collect()
+}
+
+#[test]
+fn escaped_action_identity_and_fields_survive_feed_forward() {
+    let cases = [
+        ("quote", r#"a\"b"#),
+        ("backslash", r#"a\\b"#),
+        ("hex quote", r#"hex\x22quote"#),
+        ("hex backslash", r#"hex\x5cslash"#),
+        ("escaped single quote", r#"single\'quote"#),
+        ("unicode control", r#"\u{e}"#),
+        ("underscored unicode", r#"u\u{0_1_2_3}"#),
+        ("underscored unicode control", r#"\u{0_0_0_e}"#),
+        ("literal escape text", r#"\\u{e}"#),
+        ("literal hex escape text", r#"\\x22"#),
+    ];
+    let svc = service();
+
+    for (label, action_source) in cases {
+        let initial =
+            PolicySchema::from_cedarschema_str(&escaped_feed_forward_schema(action_source))
+                .unwrap_or_else(|error| panic!("{label}: initial schema: {error:?}"));
+
+        let a = ParsedPolicySet::parse(
+            &escaped_temporal_policy(action_source, "formerly", ""),
+            &svc,
+        )
+        .unwrap_or_else(|error| panic!("{label}: policy A parses: {error:?}"))
+        .lower_with_distincter(&initial, "a")
+        .unwrap_or_else(|error| panic!("{label}: policy A lowers: {error:?}"));
+        let a_field = a
+            .temporal_fields()
+            .next()
+            .expect("policy A hoists a field")
+            .id
+            .clone();
+
+        let json = a
+            .cedar_schema_json()
+            .unwrap_or_else(|error| panic!("{label}: schema A JSON serializes: {error:?}"));
+        let fragment = cedar_policy::SchemaFragment::from_json_str(&json)
+            .unwrap_or_else(|error| panic!("{label}: schema A JSON re-ingests: {error:?}"));
+        let cedar_schema = cedar_policy::Schema::from_schema_fragments([fragment])
+            .unwrap_or_else(|error| panic!("{label}: schema A JSON compiles: {error:?}"));
+
+        let escaped_probe = format!(
+            r#"
+            permit (principal, action == Escaped::Action::"{action_source}", resource)
+            when {{ context.{a_field} }};
+            "#
+        );
+        assert!(
+            cedar_validation_errors(&cedar_schema, &escaped_probe).is_empty(),
+            "{label}: Cedar should find the JSON-exported field on the escaped action"
+        );
+        let unrelated_probe = format!(
+            r#"
+            permit (principal, action == Escaped::Action::"Gate", resource)
+            when {{ context.{a_field} }};
+            "#
+        );
+        let unrelated_errors = cedar_validation_errors(&cedar_schema, &unrelated_probe);
+        assert!(
+            unrelated_errors
+                .iter()
+                .any(|error| error.contains(&a_field) && error.contains("not found")),
+            "{label}: JSON export attached the escaped action's field to Gate: \
+             {unrelated_errors:#?}"
+        );
+
+        let after_a = a
+            .cedar_schema_str()
+            .unwrap_or_else(|error| panic!("{label}: schema A serializes: {error:?}"));
+        let carried = PolicySchema::from_cedarschema_str(&after_a)
+            .unwrap_or_else(|error| panic!("{label}: schema A re-ingests: {error:?}"));
+
+        let guard = format!("when {{ context.{a_field} == true }}");
+        let b = ParsedPolicySet::parse(
+            &escaped_temporal_policy(action_source, "previous", &guard),
+            &svc,
+        )
+        .unwrap_or_else(|error| panic!("{label}: policy B parses: {error:?}"))
+        .lower_with_distincter(&carried, "b")
+        .unwrap_or_else(|error| panic!("{label}: policy B lowers: {error:?}"));
+        assert!(
+            Validator::new().validate(&b).validation_passed(),
+            "{label}: policy B validates against the carried field"
+        );
+        let b_field = b
+            .temporal_fields()
+            .next()
+            .expect("policy B hoists a field")
+            .id
+            .clone();
+
+        let after_b = b
+            .cedar_schema_str()
+            .unwrap_or_else(|error| panic!("{label}: schema B serializes: {error:?}"));
+        let final_schema = PolicySchema::from_cedarschema_str(&after_b)
+            .unwrap_or_else(|error| panic!("{label}: schema B re-ingests: {error:?}"));
+        let probe = format!(
+            r#"
+            permit (principal, action == Escaped::Action::"{action_source}", resource)
+            when {{ context.{a_field} && context.{b_field} }};
+            "#
+        );
+        let probed = LoweredPolicySet::from_str(&probe, &svc, &final_schema)
+            .unwrap_or_else(|error| panic!("{label}: accumulated-field probe lowers: {error:?}"));
+        assert!(
+            Validator::new().validate(&probed).validation_passed(),
+            "{label}: both carried fields remain attached to the exact escaped action"
+        );
+    }
+}
+
+#[test]
+fn schema_aware_validation_still_runs_after_escaped_action_feed_forward() {
+    let cases = [
+        ("quote", r#"a\"b"#),
+        ("backslash", r#"a\\b"#),
+        ("hex quote", r#"hex\x22quote"#),
+        ("hex backslash", r#"hex\x5cslash"#),
+        ("unicode control", r#"\u{e}"#),
+        ("underscored unicode", r#"u\u{0_1_2_3}"#),
+        ("underscored unicode control", r#"\u{0_0_0_e}"#),
+        ("literal escape text", r#"\\u{e}"#),
+        ("literal hex escape text", r#"\\x22"#),
+    ];
+    let svc = service();
+
+    for (label, action_source) in cases {
+        let initial =
+            PolicySchema::from_cedarschema_str(&escaped_feed_forward_schema(action_source))
+                .unwrap_or_else(|error| panic!("{label}: initial schema: {error:?}"));
+        let a = ParsedPolicySet::parse(
+            &escaped_temporal_policy(action_source, "formerly", ""),
+            &svc,
+        )
+        .unwrap_or_else(|error| panic!("{label}: policy A parses: {error:?}"))
+        .lower_with_distincter(&initial, "a")
+        .unwrap_or_else(|error| panic!("{label}: policy A lowers: {error:?}"));
+        let carried_text = a
+            .cedar_schema_str()
+            .unwrap_or_else(|error| panic!("{label}: schema A serializes: {error:?}"));
+        let cedar_schema = cedar_policy::Schema::from_cedarschema_str(&carried_text)
+            .unwrap_or_else(|error| panic!("{label}: Cedar schema A re-ingests: {error:?}"))
+            .0;
+        let carried = PolicySchema::from_cedarschema_str(&carried_text)
+            .unwrap_or_else(|error| panic!("{label}: schema A re-ingests: {error:?}"));
+
+        let cedar_witness = format!(
+            r#"
+            permit (principal, action == Escaped::Action::"{action_source}", resource)
+            when {{ context.input.mode == 5 }};
+            "#
+        );
+        let cedar_errors = cedar_validation_errors(&cedar_schema, &cedar_witness);
+        assert!(
+            cedar_errors
+                .iter()
+                .any(|error| error.contains("not compatible")),
+            "{label}: Cedar should still find and type-check the escaped action after \
+             feed-forward: {cedar_errors:#?}"
+        );
+
+        let invalid_b = format!(
+            r#"
+            permit (principal, action == Escaped::Action::"Gate", resource)
+            when temporal {{
+                formerly within 1h Escaped::Action::"{action_source}"::request{{
+                    input.mode: 5
+                }}
+            }};
+            "#
+        );
+        let lowered = ParsedPolicySet::parse(&invalid_b, &svc)
+            .unwrap_or_else(|error| panic!("{label}: policy B parses: {error:?}"))
+            .lower_with_distincter(&carried, "b")
+            .unwrap_or_else(|error| panic!("{label}: policy B lowers: {error:?}"));
+        let errors: Vec<_> = Validator::new()
+            .validate(&lowered)
+            .validation_errors()
+            .map(|error| error.to_string())
+            .collect();
+        assert!(
+            errors.len() == 1 && errors[0].contains("expects `Mode` but got `int`"),
+            "{label}: schema-aware validation was skipped after feed-forward: {errors:#?}"
+        );
+    }
+}
+
+fn escaped_group_feed_forward_schema(group_source: &str) -> String {
+    format!(
+        r#"
+        namespace Escaped {{
+          entity User;
+          entity Doc;
+          action "{group_source}";
+          action "Member" in [Action::"{group_source}"] appliesTo {{
+            principal: [User], resource: [Doc],
+            context: {{ input: {{ value: String }} }}
+          }};
+          action "Other" appliesTo {{
+            principal: [User], resource: [Doc],
+            context: {{ input: {{ value: String }} }}
+          }};
+        }}
+        "#
+    )
+}
+
+fn escaped_group_temporal_policy(group_source: &str, operator: &str, cedar_guard: &str) -> String {
+    format!(
+        r#"
+        permit (
+            principal,
+            action in [Escaped::Action::"{group_source}"],
+            resource
+        )
+        when temporal {{
+            {operator} within 1h Escaped::Action::"Member"::request{{}}
+        }}
+        {cedar_guard};
+        "#
+    )
+}
+
+#[test]
+fn escaped_action_groups_survive_text_and_json_feed_forward() {
+    let cases = [
+        ("empty", ""),
+        ("quote", r#"a\"b"#),
+        ("backslash", r#"a\\b"#),
+        ("hex quote", r#"hex\x22quote"#),
+        ("hex backslash", r#"hex\x5cslash"#),
+        ("hex delete", r#"hex\x7fdelete"#),
+        ("escaped single quote", r#"single\'quote"#),
+        ("newline", r#"a\nb"#),
+        ("carriage return", r#"a\rb"#),
+        ("tab", r#"a\tb"#),
+        ("nul", r#"a\0b"#),
+        ("unicode control", r#"\u{e}"#),
+        ("underscored unicode", r#"u\u{0_1_2_3}"#),
+        ("underscored unicode control", r#"\u{0_0_0_e}"#),
+        ("underscored unicode quote", r#"u\u{0_0_2_2}q"#),
+        ("literal escape text", r#"\\u{e}"#),
+        ("literal hex escape text", r#"\\x22"#),
+        ("printable unicode", "犬"),
+    ];
+    let svc = service();
+
+    for (label, group_source) in cases {
+        let initial =
+            PolicySchema::from_cedarschema_str(&escaped_group_feed_forward_schema(group_source))
+                .unwrap_or_else(|error| panic!("{label}: initial schema: {error:?}"));
+        let a = ParsedPolicySet::parse(
+            &escaped_group_temporal_policy(group_source, "formerly", ""),
+            &svc,
+        )
+        .unwrap_or_else(|error| panic!("{label}: policy A parses: {error:?}"))
+        .lower_with_distincter(&initial, "group_a")
+        .unwrap_or_else(|error| panic!("{label}: policy A lowers: {error:?}"));
+        assert!(
+            Validator::new().validate(&a).validation_passed(),
+            "{label}: policy A should validate"
+        );
+        let a_field = a
+            .temporal_fields()
+            .next()
+            .expect("policy A hoists one field")
+            .id
+            .clone();
+
+        let json = a
+            .cedar_schema_json()
+            .unwrap_or_else(|error| panic!("{label}: JSON export: {error:?}"));
+        let fragment = cedar_policy::SchemaFragment::from_json_str(&json)
+            .unwrap_or_else(|error| panic!("{label}: JSON fragment: {error:?}"));
+        let cedar_schema = cedar_policy::Schema::from_schema_fragments([fragment])
+            .unwrap_or_else(|error| panic!("{label}: JSON schema compiles: {error:?}"));
+        let group_probe = format!(
+            r#"
+            permit (
+                principal,
+                action in [Escaped::Action::"{group_source}"],
+                resource
+            )
+            when {{ context.{a_field} }};
+            "#
+        );
+        assert!(
+            cedar_validation_errors(&cedar_schema, &group_probe).is_empty(),
+            "{label}: Cedar lost the escaped group or member field after JSON export"
+        );
+        let member_probe = format!(
+            r#"
+            permit (principal, action == Escaped::Action::"Member", resource)
+            when {{ context.{a_field} }};
+            "#
+        );
+        assert!(
+            cedar_validation_errors(&cedar_schema, &member_probe).is_empty(),
+            "{label}: JSON export did not attach the field to the group member"
+        );
+        let other_probe = format!(
+            r#"
+            permit (principal, action == Escaped::Action::"Other", resource)
+            when {{ context.{a_field} }};
+            "#
+        );
+        let other_errors = cedar_validation_errors(&cedar_schema, &other_probe);
+        assert!(
+            other_errors
+                .iter()
+                .any(|error| error.contains(&a_field) && error.contains("not found")),
+            "{label}: group field leaked onto an unrelated action: {other_errors:#?}"
+        );
+
+        let text = a
+            .cedar_schema_str()
+            .unwrap_or_else(|error| panic!("{label}: text export: {error:?}"));
+        let carried = PolicySchema::from_cedarschema_str(&text)
+            .unwrap_or_else(|error| panic!("{label}: text re-ingests: {error:?}"));
+        let guard = format!("when {{ context.{a_field} }}");
+        let b = ParsedPolicySet::parse(
+            &escaped_group_temporal_policy(group_source, "previous", &guard),
+            &svc,
+        )
+        .unwrap_or_else(|error| panic!("{label}: policy B parses: {error:?}"))
+        .lower_with_distincter(&carried, "group_b")
+        .unwrap_or_else(|error| panic!("{label}: policy B lowers: {error:?}"));
+        assert!(
+            Validator::new().validate(&b).validation_passed(),
+            "{label}: policy B should validate after text feed-forward"
+        );
+        let b_field = b
+            .temporal_fields()
+            .next()
+            .expect("policy B hoists one field")
+            .id
+            .clone();
+
+        let final_json = b
+            .cedar_schema_json()
+            .unwrap_or_else(|error| panic!("{label}: final JSON export: {error:?}"));
+        let final_fragment = cedar_policy::SchemaFragment::from_json_str(&final_json)
+            .unwrap_or_else(|error| panic!("{label}: final JSON fragment: {error:?}"));
+        let final_schema = cedar_policy::Schema::from_schema_fragments([final_fragment])
+            .unwrap_or_else(|error| panic!("{label}: final JSON compiles: {error:?}"));
+        let accumulated_probe = format!(
+            r#"
+            permit (principal, action == Escaped::Action::"Member", resource)
+            when {{ context.{a_field} && context.{b_field} }};
+            "#
+        );
+        assert!(
+            cedar_validation_errors(&final_schema, &accumulated_probe).is_empty(),
+            "{label}: feed-forward lost accumulated member fields"
+        );
+    }
+}
+
+#[test]
+fn escaped_action_group_identity_stays_distinct_after_feed_forward() {
+    let schema = r#"
+        namespace Escaped {
+          entity User;
+          entity Doc;
+          action "\u{e}";
+          action "\\u{e}";
+          action "ControlMember" in [Action::"\u{0_0_0_e}"] appliesTo {
+            principal: [User], resource: [Doc], context: { input: { value: String } }
+          };
+          action "LiteralMember" in [Action::"\\u{e}"] appliesTo {
+            principal: [User], resource: [Doc], context: { input: { value: String } }
+          };
+        }
+    "#;
+    let svc = service();
+    let initial = PolicySchema::from_cedarschema_str(schema).expect("initial schema");
+    let policies = [
+        ("control", r#"\u{0_0_0_e}"#, "ControlMember"),
+        ("literal", r#"\\u{e}"#, "LiteralMember"),
+    ];
+    let mut carried = initial;
+    let mut fields = Vec::new();
+    let mut exported_texts = Vec::new();
+
+    for (index, (label, group_source, member)) in policies.into_iter().enumerate() {
+        let source = format!(
+            r#"
+            permit (
+                principal,
+                action in [Escaped::Action::"{group_source}"],
+                resource
+            )
+            when temporal {{
+                formerly within 1h Escaped::Action::"{member}"::request{{}}
+            }};
+            "#
+        );
+        let lowered = ParsedPolicySet::parse(&source, &svc)
+            .unwrap_or_else(|error| panic!("{label}: policy parses: {error:?}"))
+            .lower_with_distincter(&carried, &format!("identity_{index}"))
+            .unwrap_or_else(|error| panic!("{label}: policy lowers: {error:?}"));
+        assert!(
+            Validator::new().validate(&lowered).validation_passed(),
+            "{label}: policy validates"
+        );
+        fields.push((
+            member,
+            lowered
+                .temporal_fields()
+                .next()
+                .expect("one temporal field")
+                .id
+                .clone(),
+        ));
+        let text = lowered
+            .cedar_schema_str()
+            .unwrap_or_else(|error| panic!("{label}: text export: {error:?}"));
+        carried = PolicySchema::from_cedarschema_str(&text)
+            .unwrap_or_else(|error| panic!("{label}: text re-ingests: {error:?}"));
+        exported_texts.push(text);
+    }
+
+    let final_schema =
+        cedar_policy::Schema::from_cedarschema_str(exported_texts.last().expect("two exports"))
+            .expect("Cedar re-ingests final schema")
+            .0;
+    for (index, (member, own_field)) in fields.iter().enumerate() {
+        let other_field = &fields[1 - index].1;
+        let own_probe = format!(
+            r#"
+            permit (principal, action == Escaped::Action::"{member}", resource)
+            when {{ context.{own_field} }};
+            "#
+        );
+        assert!(
+            cedar_validation_errors(&final_schema, &own_probe).is_empty(),
+            "{member}: own group field is missing"
+        );
+        let other_probe = format!(
+            r#"
+            permit (principal, action == Escaped::Action::"{member}", resource)
+            when {{ context.{other_field} }};
+            "#
+        );
+        assert!(
+            !cedar_validation_errors(&final_schema, &other_probe).is_empty(),
+            "{member}: field from the distinct escaped group leaked across identities"
+        );
+    }
+}
+
+fn escaped_enum_feed_forward_schema_with_members(enum_members: &str) -> String {
+    format!(
+        r#"
+        namespace Escaped {{
+          entity User;
+          entity Doc;
+          entity Mode enum [{enum_members}];
+          action "Gate" appliesTo {{
+            principal: [User], resource: [Doc],
+            context: {{ input: {{ mode: Mode }} }}
+          }};
+          action "Check" appliesTo {{
+            principal: [User], resource: [Doc],
+            context: {{ input: {{ mode: Mode }} }}
+          }};
+        }}
+        "#
+    )
+}
+
+fn escaped_enum_feed_forward_schema(enum_source: &str) -> String {
+    escaped_enum_feed_forward_schema_with_members(&format!(r#""{enum_source}""#))
+}
+
+fn escaped_enum_temporal_policy(enum_source: &str) -> String {
+    format!(
+        r#"
+        permit (principal, action == Escaped::Action::"Check", resource)
+        when temporal {{
+            formerly within 1h Escaped::Action::"Check"::request{{
+                input.mode: Escaped::Mode::"{enum_source}"
+            }}
+        }};
+        "#
+    )
+}
+
+#[test]
+fn escaped_enum_ids_survive_text_and_json_feed_forward() {
+    let cases = [
+        ("quote", r#"a\"b"#, r#"a\x22b"#),
+        ("backslash", r#"a\\b"#, r#"a\x5cb"#),
+        ("unicode control", r#"\u{e}"#, r#"\u{0_0_0_e}"#),
+        ("underscored unicode quote", r#"u\u{0_0_2_2}q"#, r#"u\"q"#),
+        ("literal escape text", r#"\\u{e}"#, r#"\\u{e}"#),
+    ];
+    let svc = service();
+
+    for (label, declaration, reference) in cases {
+        let initial =
+            PolicySchema::from_cedarschema_str(&escaped_enum_feed_forward_schema(declaration))
+                .unwrap_or_else(|error| panic!("{label}: initial schema: {error:?}"));
+        let a = ParsedPolicySet::parse(&escaped_enum_temporal_policy(reference), &svc)
+            .unwrap_or_else(|error| panic!("{label}: policy A parses: {error:?}"))
+            .lower_with_distincter(&initial, "enum_a")
+            .unwrap_or_else(|error| panic!("{label}: policy A lowers: {error:?}"));
+        let a_errors: Vec<_> = Validator::new()
+            .validate(&a)
+            .validation_errors()
+            .map(|error| error.to_string())
+            .collect();
+        assert!(
+            a_errors.is_empty(),
+            "{label}: policy A rejected the escaped enum ID: {a_errors:#?}"
+        );
+        let a_field = a
+            .temporal_fields()
+            .next()
+            .expect("policy A hoists one field")
+            .id
+            .clone();
+
+        let json = a
+            .cedar_schema_json()
+            .unwrap_or_else(|error| panic!("{label}: JSON export: {error:?}"));
+        let fragment = cedar_policy::SchemaFragment::from_json_str(&json)
+            .unwrap_or_else(|error| panic!("{label}: JSON fragment: {error:?}"));
+        let cedar_schema = cedar_policy::Schema::from_schema_fragments([fragment])
+            .unwrap_or_else(|error| panic!("{label}: JSON schema compiles: {error:?}"));
+        let escaped_probe = format!(
+            r#"
+            permit (principal, action == Escaped::Action::"Check", resource)
+            when {{
+                context.input.mode == Escaped::Mode::"{reference}" &&
+                context.{a_field}
+            }};
+            "#
+        );
+        assert!(
+            cedar_validation_errors(&cedar_schema, &escaped_probe).is_empty(),
+            "{label}: Cedar rejected JSON-exported enum identity or hoisted field"
+        );
+        let unrelated_probe = format!(
+            r#"
+            permit (principal, action == Escaped::Action::"Gate", resource)
+            when {{ context.{a_field} }};
+            "#
+        );
+        assert!(
+            !cedar_validation_errors(&cedar_schema, &unrelated_probe).is_empty(),
+            "{label}: enum policy's hoisted field leaked onto Gate"
+        );
+
+        let text = a
+            .cedar_schema_str()
+            .unwrap_or_else(|error| panic!("{label}: text export: {error:?}"));
+        let carried = PolicySchema::from_cedarschema_str(&text)
+            .unwrap_or_else(|error| panic!("{label}: text re-ingests: {error:?}"));
+        let b = ParsedPolicySet::parse(&escaped_enum_temporal_policy(reference), &svc)
+            .unwrap_or_else(|error| panic!("{label}: policy B parses: {error:?}"))
+            .lower_with_distincter(&carried, "enum_b")
+            .unwrap_or_else(|error| panic!("{label}: policy B lowers: {error:?}"));
+        let b_errors: Vec<_> = Validator::new()
+            .validate(&b)
+            .validation_errors()
+            .map(|error| error.to_string())
+            .collect();
+        assert!(
+            b_errors.is_empty(),
+            "{label}: policy B rejected fed-forward enum identity: {b_errors:#?}"
+        );
+        let b_field = b
+            .temporal_fields()
+            .next()
+            .expect("policy B hoists one field")
+            .id
+            .clone();
+
+        let final_json = b
+            .cedar_schema_json()
+            .unwrap_or_else(|error| panic!("{label}: final JSON export: {error:?}"));
+        let final_fragment = cedar_policy::SchemaFragment::from_json_str(&final_json)
+            .unwrap_or_else(|error| panic!("{label}: final JSON fragment: {error:?}"));
+        let final_schema = cedar_policy::Schema::from_schema_fragments([final_fragment])
+            .unwrap_or_else(|error| panic!("{label}: final JSON compiles: {error:?}"));
+        let accumulated_probe = format!(
+            r#"
+            permit (principal, action == Escaped::Action::"Check", resource)
+            when {{
+                context.input.mode == Escaped::Mode::"{reference}" &&
+                context.{a_field} && context.{b_field}
+            }};
+            "#
+        );
+        assert!(
+            cedar_validation_errors(&final_schema, &accumulated_probe).is_empty(),
+            "{label}: final Cedar schema lost enum identity or accumulated fields"
+        );
+    }
+}
+
+#[test]
+fn invalid_enum_id_collisions_stay_rejected_after_feed_forward() {
+    let svc = service();
+    let initial = PolicySchema::from_cedarschema_str(
+        &escaped_enum_feed_forward_schema_with_members(r#""a\"b", "\u{e}", "\\u{e}""#),
+    )
+    .expect("initial schema");
+    let seed_policy = r#"
+        permit (principal, action == Escaped::Action::"Check", resource)
+        when temporal {
+            formerly within 1h Escaped::Action::"Check"::request{}
+        };
+    "#;
+    let a = ParsedPolicySet::parse(seed_policy, &svc)
+        .expect("seed policy parses")
+        .lower_with_distincter(&initial, "enum_collision_a")
+        .expect("seed policy lowers");
+    assert!(
+        Validator::new().validate(&a).validation_passed(),
+        "the seed policy should validate before feed-forward"
+    );
+
+    let json = a.cedar_schema_json().expect("JSON export");
+    let fragment =
+        cedar_policy::SchemaFragment::from_json_str(&json).expect("JSON fragment re-ingests");
+    let cedar_schema =
+        cedar_policy::Schema::from_schema_fragments([fragment]).expect("JSON schema compiles");
+    let text = a.cedar_schema_str().expect("text export");
+    let carried = PolicySchema::from_cedarschema_str(&text).expect("text schema re-ingests");
+
+    let invalid_references = [
+        ("quote escaped rendering", r#"a\\\"b"#),
+        ("literal escape text escaped again", r#"\\\\u{e}"#),
+    ];
+    for (index, (label, invalid_reference)) in invalid_references.into_iter().enumerate() {
+        let cedar_probe = format!(
+            r#"
+            permit (principal, action == Escaped::Action::"Check", resource)
+            when {{ context.input.mode == Escaped::Mode::"{invalid_reference}" }};
+            "#
+        );
+        let cedar_errors = cedar_validation_errors(&cedar_schema, &cedar_probe);
+        assert!(
+            !cedar_errors.is_empty(),
+            "{label}: Cedar accepted an invalid collision after JSON feed-forward"
+        );
+
+        let lowered =
+            ParsedPolicySet::parse(&escaped_enum_temporal_policy(invalid_reference), &svc)
+                .unwrap_or_else(|error| panic!("{label}: invalid policy parses: {error:?}"))
+                .lower_with_distincter(&carried, &format!("enum_collision_b_{index}"))
+                .unwrap_or_else(|error| panic!("{label}: invalid policy lowers: {error:?}"));
+        let dogwood_errors: Vec<_> = Validator::new()
+            .validate(&lowered)
+            .validation_errors()
+            .map(|error| error.to_string())
+            .collect();
+        assert!(
+            dogwood_errors
+                .iter()
+                .any(|error| error.contains("is not one of its permitted ids")),
+            "{label}: Dogwood accepted an invalid collision after text feed-forward: \
+             {dogwood_errors:#?}"
+        );
+    }
+}
+
 /// A schema shaped like the real MCP → Cedar generator output: a broker-style
 /// tool namespace (deliberately generic, to prove the behavior is not
 /// tied to any particular name) with an entity hierarchy, an action group, and — the

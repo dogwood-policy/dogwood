@@ -1,0 +1,10 @@
+permit (
+    principal,
+    action == Escaped::Action::"AccessBackslash",
+    resource
+)
+when temporal {
+    formerly within 1h Escaped::Action::"Check"::request{
+        input.mode: Escaped::Mode::"a\x5cb"
+    }
+};

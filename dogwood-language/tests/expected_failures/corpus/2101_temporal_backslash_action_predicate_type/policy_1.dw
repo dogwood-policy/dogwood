@@ -1,0 +1,4 @@
+permit (principal, action == Escaped::Action::"Gate", resource)
+when temporal {
+    formerly within 1h Escaped::Action::"a\\b"::request{ input.mode: 5 }
+};

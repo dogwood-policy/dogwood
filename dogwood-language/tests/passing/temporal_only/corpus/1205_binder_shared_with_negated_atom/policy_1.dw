@@ -1,0 +1,19 @@
+// A data variable bound in a nested `formerly` and ALSO constrained by a
+// negated sibling atom: the negation excludes nothing here (no event has
+// user "nobody"), so all three distinct amounts survive - count 3. The
+// negated conjunct must filter the bindings without collapsing them.
+
+permit ( principal, action == Drupe::Action::"Transfer", resource )
+when temporal {
+  exists (n: Long). (
+    (count for (a: Long).
+       where (formerly within 2h (
+         Drupe::Action::"Transfer"::request{ input.user: context.input.user }
+         && formerly within 1h (
+              Drupe::Action::"Confirm"::request{ input.user: context.input.user, input.amount: a }
+            )
+         && !(Drupe::Action::"Confirm"::request{ input.user: "nobody", input.amount: a })
+       ))
+    ) == n && n == 3
+  )
+};

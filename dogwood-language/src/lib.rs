@@ -37,6 +37,7 @@ pub(crate) mod extension;
 pub(crate) mod interpreter;
 pub(crate) mod macros;
 pub(crate) mod parser;
+pub(crate) mod render;
 pub(crate) mod schema;
 pub(crate) mod validate;
 

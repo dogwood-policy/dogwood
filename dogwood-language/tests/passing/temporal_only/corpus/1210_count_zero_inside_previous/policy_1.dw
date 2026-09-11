@@ -1,0 +1,18 @@
+// An aggregate as a `previous` body: the count is evaluated at the
+// decision's immediately preceding event (@4), with the window measured
+// from THAT timepoint. No Login precedes @4, so the count is 0 and the
+// decision allows - a window measured from the decision would see nothing
+// different here, but the reference point is the previous event.
+
+permit ( principal, action == Drupe::Action::"Alert", resource )
+when temporal {
+  previous within 2h (
+    exists (n: Long). (
+      (count for (t: Timepoint).
+         where (formerly within 1h (
+           Drupe::Action::"Login"::request{ input.server: context.input.server } && tp(t)
+         ))
+      ) == n && n == 0
+    )
+  )
+};
