@@ -1,0 +1,20 @@
+// An aggregate nested INSIDE a `formerly`: the count is re-evaluated at
+// each candidate anchor, with its own window measured from that anchor.
+// Login@0 is inside the 1h window of the Transfer anchor at 4, so the
+// condition (count == 1) holds AT that anchor - even though at the
+// decision @3601 the Login is long outside any window measured from the
+// decision itself.
+
+permit ( principal, action == Drupe::Action::"Alert", resource )
+when temporal {
+  formerly within 1h (
+    Drupe::Action::"Transfer"::request{ input.user: context.input.server }
+    && exists (n: Long). (
+         (count for (t: Timepoint).
+            where (formerly within 1h (
+              Drupe::Action::"Login"::request{ input.server: context.input.server } && tp(t)
+            ))
+         ) == n && n == 1
+       )
+  )
+};

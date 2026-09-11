@@ -35,14 +35,14 @@ use std::sync::OnceLock;
 use escargot::CargoBuild;
 
 /// Build the `dogwood` binary once for the whole test run and cache its path.
-/// escargot resolves the binary from the `amzn-dogwood-cli` package regardless
+/// escargot resolves the binary from the `dogwood-cli` package regardless
 /// of profile or target-dir, which `CARGO_BIN_EXE_*` cannot do across crates.
 fn dogwood_bin() -> &'static Path {
     static BIN: OnceLock<PathBuf> = OnceLock::new();
     BIN.get_or_init(|| {
         let run = CargoBuild::new()
             .bin("dogwood")
-            .package("amzn-dogwood-cli")
+            .package("dogwood-cli")
             .run()
             .expect("build the `dogwood` binary");
         run.path().to_path_buf()

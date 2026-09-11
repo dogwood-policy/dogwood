@@ -1,0 +1,55 @@
+namespace Escaped {
+    entity User;
+    entity Doc;
+
+    action "quote\"group";
+    action "backslash\\group";
+    action "\u{e}";
+    action "\\u{e}";
+    action "unicode\u{123}group";
+
+    action "QuoteSignal" in [Action::"quote\x22group"] appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { token: String } }
+    };
+    action "QuoteProbe" in [Action::"quote\"group"] appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { token: String } }
+    };
+
+    action "BackslashSignal" in [Action::"backslash\x5cgroup"] appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { token: String } }
+    };
+    action "BackslashProbe" in [Action::"backslash\\group"] appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { token: String } }
+    };
+
+    action "ControlSignal" in [Action::"\u{0_0_0_e}"] appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { token: String } }
+    };
+    action "ControlProbe" in [Action::"\u{e}"] appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { token: String } }
+    };
+
+    action "LiteralSignal" in [Action::"\\u{e}"] appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { token: String } }
+    };
+    action "LiteralProbe" in [Action::"\\u{e}"] appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { token: String } }
+    };
+
+    action "UnicodeSignal" in [Action::"unicode\u{0_1_2_3}group"] appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { token: String } }
+    };
+    action "UnicodeProbe" in [Action::"unicode\u{123}group"] appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { token: String } }
+    };
+}

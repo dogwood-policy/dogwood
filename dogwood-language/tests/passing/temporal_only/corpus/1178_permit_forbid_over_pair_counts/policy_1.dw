@@ -1,0 +1,35 @@
+// A permit and a forbid over the same nested pair count, with different
+// thresholds. At the decision @3600 the pair count is 6: the forbid (m == 6)
+// fires and wins. At @3601 Confirm@0 has aged out of the anchor-at-3601
+// window while all three earlier anchors still pair fully - count 8: the
+// permit (n == 8) fires and the forbid does not. Exercises the interplay of
+// effects whose conditions read the same nested enumeration.
+
+permit ( principal, action == Drupe::Action::"Transfer", resource )
+when temporal {
+  exists (n: Long). (
+    (count for (t1: Timepoint), (t2: Timepoint).
+       where (formerly within 1h (
+         Drupe::Action::"Transfer"::request{ input.user: context.input.user }
+         && tp(t1)
+         && formerly within 1h (
+              Drupe::Action::"Confirm"::request{ input.user: context.input.user } && tp(t2)
+            )
+       ))
+    ) == n && n == 8
+  )
+};
+forbid ( principal, action == Drupe::Action::"Transfer", resource )
+when temporal {
+  exists (m: Long). (
+    (count for (t1: Timepoint), (t2: Timepoint).
+       where (formerly within 1h (
+         Drupe::Action::"Transfer"::request{ input.user: context.input.user }
+         && tp(t1)
+         && formerly within 1h (
+              Drupe::Action::"Confirm"::request{ input.user: context.input.user } && tp(t2)
+            )
+       ))
+    ) == m && m == 6
+  )
+};

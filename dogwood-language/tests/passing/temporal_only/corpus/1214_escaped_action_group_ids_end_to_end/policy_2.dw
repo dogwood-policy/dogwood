@@ -1,0 +1,10 @@
+permit (
+    principal,
+    action in [Escaped::Action::"backslash\x5cgroup"],
+    resource
+)
+when temporal {
+    formerly within 1h Escaped::Action::"BackslashSignal"::request{
+        input.token: context.input.token
+    }
+};

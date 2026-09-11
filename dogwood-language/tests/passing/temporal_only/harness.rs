@@ -14,7 +14,9 @@
 
 use std::path::{Path, PathBuf};
 
-use dogwood_language::{LoweredPolicySet, PolicySchema, ServiceSchema, replay_log};
+use dogwood_language::{
+    Authorizer, Decision, LoweredPolicySet, PolicySchema, ServiceSchema, parse_trace, replay_log,
+};
 
 fn norm(s: &str) -> Vec<String> {
     s.lines()
@@ -49,6 +51,27 @@ fn read_sorted(dir: &Path, prefix: &str, ext: &str) -> Vec<PathBuf> {
         .collect();
     v.sort();
     v
+}
+
+/// Replay through native pin partitioning. The ordinary corpus path uses
+/// relativized leaves over one global trace; exercising both paths ensures a
+/// pin's executable routing key agrees with the equality used by its injected
+/// predicate.
+fn replay_partitioned(policies: LoweredPolicySet, log: &str) -> Result<String, String> {
+    let events = parse_trace(log).map_err(|e| format!("{e:?}"))?;
+    let mut authorizer = Authorizer::builder(policies)
+        .partition_temporal()
+        .build()
+        .map_err(|e| format!("{e:?}"))?;
+    let mut lines = Vec::new();
+    for (i, event) in events.iter().enumerate() {
+        let ts = event.timestamp();
+        if let Some(response) = authorizer.is_authorized(event) {
+            let allowed = response.decision() == Decision::Allow;
+            lines.push(format!("@{ts} (time point {i}): {allowed}"));
+        }
+    }
+    Ok(lines.join("\n"))
 }
 
 /// Per-case result: whether every trace in the case matched, and the failure
@@ -111,7 +134,21 @@ fn run_temporal_case(dir: &Path, shared_schema: &str, event_schema: &str) -> Cas
                 .map_err(|e| format!("{e:?}"))?;
             let policies = LoweredPolicySet::from_str(&policy_src, &service, &policy_schema)
                 .map_err(|e| format!("{e:?}"))?;
-            replay_log(policies, &trace).map_err(|e| format!("{e:?}"))
+            let has_partition_keys = !policies.partition_keys().is_empty();
+            let got = replay_log(policies, &trace).map_err(|e| format!("{e:?}"))?;
+            if has_partition_keys {
+                let partitioned = LoweredPolicySet::from_str(&policy_src, &service, &policy_schema)
+                    .map_err(|e| format!("{e:?}"))?;
+                let partitioned_got = replay_partitioned(partitioned, &trace)?;
+                if norm(&partitioned_got) != norm(&got) {
+                    return Err(format!(
+                        "global(relativized) and native-partitioned verdicts differ\n  global: {:?}\n  partitioned: {:?}",
+                        norm(&got),
+                        norm(&partitioned_got)
+                    ));
+                }
+            }
+            Ok(got)
         }));
         match replayed {
             Ok(Ok(got)) if norm(&got) == norm(&expected) => {}

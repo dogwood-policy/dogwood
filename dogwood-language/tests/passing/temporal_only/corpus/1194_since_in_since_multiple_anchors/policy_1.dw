@@ -1,0 +1,19 @@
+// The since-in-since composition with multiple inner anchors: the outer
+// guarded Read anchor at 4 pairs with all four Writes, the decision's own
+// anchor with the three still in its window - 7 pairs. Both guard
+// intervals hold (no Login anywhere in the trace).
+
+permit ( principal, action == Drupe::Action::"Read", resource )
+when temporal {
+  exists (n: Long). (
+    (count for (d: String), (t1: Timepoint), (t2: Timepoint).
+       where (!Drupe::Action::"Login"::request{ input.user: context.input.user }
+                since within 2h
+              (Drupe::Action::"Read"::request{ input.user: context.input.user, input.document: d }
+                 && tp(t1)
+                 && (!Drupe::Action::"Login"::request{ input.user: context.input.user }
+                       since within 1h
+                     (Drupe::Action::"Write"::request{ input.user: context.input.user, input.document: d } && tp(t2)))))
+    ) == n && n == 7
+  )
+};

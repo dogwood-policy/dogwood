@@ -1,0 +1,18 @@
+namespace Escaped {
+    entity User;
+    entity Doc;
+    entity Mode enum ["read", "write"];
+    action "Group";
+    action "Witness" appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { mode: Long } }
+    };
+    action "Normal" in [Action::"Group"] appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { mode: Long } }
+    };
+    action "a\"b" in [Action::"Group"] appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { mode: Mode } }
+    };
+}

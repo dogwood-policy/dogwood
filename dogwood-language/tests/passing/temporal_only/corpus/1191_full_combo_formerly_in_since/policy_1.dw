@@ -1,0 +1,20 @@
+// A `formerly` nested inside a `since`: the guarded outer anchor at t1
+// carries an inner backward window measured from t1. The pair
+// (doc1, t1=4, t2=0) is reachable only through the anchor at 4; the
+// decision-time window alone cannot see Write@0. Count 1.
+
+permit ( principal, action == Drupe::Action::"Read", resource )
+when temporal {
+  exists (n: Long). (
+    (count for (d: String), (t1: Timepoint), (t2: Timepoint).
+       where (!Drupe::Action::"Login"::request{ input.user: context.input.user }
+                since within 2h
+              (Drupe::Action::"Read"::request{ input.user: context.input.user, input.document: d }
+                 && tp(t1)
+                 && formerly within 1h (
+                      Drupe::Action::"Write"::request{ input.user: context.input.user, input.document: d }
+                      && tp(t2)
+                    ))))
+    == n && n == 1
+  )
+};

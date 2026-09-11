@@ -1,0 +1,23 @@
+// `previous` at the innermost level of a three-level chain: the "previous
+// event" is resolved relative to the enclosing Heartbeat anchor, not the
+// decision. Each Heartbeat anchor contributes exactly the Login immediately
+// preceding IT: Heartbeat@1 sees Login@0, Heartbeat@6 sees Login@5 - t in
+// {0, 5}, count 2. Resolved at the decision instead, the immediately
+// preceding event is a Transfer, not a Login.
+
+permit ( principal, action == Drupe::Action::"Alert", resource )
+when temporal {
+  exists (n: Long). (
+    (count for (t: Timepoint).
+       where (formerly within 1h (
+         Drupe::Action::"Transfer"::request{ input.user: context.input.server }
+         && formerly within 1h (
+              Drupe::Action::"Heartbeat"::request{ input.server: context.input.server }
+              && previous within 1h (
+                   Drupe::Action::"Login"::request{ input.server: context.input.server } && tp(t)
+                 )
+            )
+       ))
+    ) == n && n == 2
+  )
+};

@@ -1,0 +1,21 @@
+// `previous` nested inside a `formerly`, with a shared data variable:
+// each outer Transfer anchor pairs with at most ONE inner event - the one
+// immediately preceding it. Pairs (4,3) and (6,5) - count 2 at the final
+// decision. `previous` contributes per-anchor singletons where `formerly`
+// would contribute sets.
+
+permit ( principal, action == Drupe::Action::"Transfer", resource )
+when temporal {
+  exists (n: Long). (
+    (count for (a: Long), (t1: Timepoint), (t2: Timepoint).
+       where (formerly within 1h (
+         Drupe::Action::"Transfer"::request{ input.user: context.input.user, input.amount: a }
+         && tp(t1)
+         && previous within 1h (
+              Drupe::Action::"Confirm"::request{ input.user: context.input.user, input.amount: a }
+              && tp(t2)
+            )
+       ))
+    ) == n && n == 2
+  )
+};

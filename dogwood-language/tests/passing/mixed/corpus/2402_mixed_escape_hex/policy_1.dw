@@ -1,0 +1,8 @@
+// Cedar + temporal clause on the same hex escape must agree.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when { context.input.document == "\x41" }
+when temporal { context.input.document == "\x41" };

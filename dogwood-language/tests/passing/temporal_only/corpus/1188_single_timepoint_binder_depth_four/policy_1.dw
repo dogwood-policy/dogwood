@@ -1,0 +1,26 @@
+// A single timepoint binder four `formerly` levels deep, under a count.
+// Each level's window is measured from the level above's anchor:
+// Transfer(amount 7)@0 <- Login@4 <- Heartbeat@8 <- Transfer@12, decision
+// @3601. Every hop is within 1h of ITS anchor, while the innermost event
+// is far outside any window measured from the decision; no other event
+// matches the innermost amount - count 1 only via the full chain.
+
+permit ( principal, action == Drupe::Action::"Alert", resource )
+when temporal {
+  exists (n: Long). (
+    (count for (t: Timepoint).
+       where (formerly within 1h (
+         Drupe::Action::"Transfer"::request{ input.user: context.input.server }
+         && formerly within 1h (
+              Drupe::Action::"Heartbeat"::request{ input.server: context.input.server }
+              && formerly within 1h (
+                   Drupe::Action::"Login"::request{ input.server: context.input.server }
+                   && formerly within 1h (
+                        Drupe::Action::"Transfer"::request{ input.user: context.input.server, input.amount: 7 } && tp(t)
+                      )
+                 )
+            )
+       ))
+    ) == n && n == 1
+  )
+};

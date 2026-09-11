@@ -1,0 +1,16 @@
+namespace Example {
+    entity User;
+    entity Resource;
+    type CheckInput = { actor: User };
+
+    action "Check" appliesTo {
+        principal: [User],
+        resource: [Resource],
+        context: { input: CheckInput }
+    };
+    action "Access" appliesTo {
+        principal: [User],
+        resource: [Resource],
+        context: { input: CheckInput }
+    };
+}

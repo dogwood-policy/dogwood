@@ -656,6 +656,7 @@ fn check_arg_type(
     if let Some(got) = term_type(arg, env, rule_sig, narrow)
         && !expected.accepts(&got)
     {
+        let action = cedar_policy_core::ast::Eid::new(action).escaped();
         errs.push(LeafError {
             message: format!(
                 "argument `{param}` of `{action}` expects `{}` but got `{}`",
@@ -1300,6 +1301,7 @@ fn check_entity_types(c: &Condition, info: &SchemaInfo, errs: &mut Vec<LeafError
                         if let Some(eids) = entry.enum_eids()
                             && !eids.iter().any(|e| e == id)
                         {
+                            let id = cedar_policy_core::ast::Eid::new(id.as_str()).escaped();
                             errs.push(LeafError {
                                 message: format!(
                                     "`{ty}` is an enum entity type; `\"{id}\"` is not one of its \
@@ -1518,7 +1520,10 @@ fn enum_choices(eids: &[String]) -> String {
         "(none)".to_string()
     } else {
         eids.iter()
-            .map(|e| format!("\"{e}\""))
+            .map(|e| {
+                let eid = cedar_policy_core::ast::Eid::new(e.as_str()).escaped();
+                format!("\"{eid}\"")
+            })
             .collect::<Vec<_>>()
             .join(", ")
     }

@@ -1,5 +1,5 @@
 [package]
-name = "amzn-dogwood-language"
+name = "dogwood-language"
 version = "1.0.0"
 edition = "2024"
 publish.workspace = true
@@ -7,7 +7,7 @@ description = "The Dogwood surface language: parser, validator, interpreter, and
 exclude = ["/build", "/Config", "/build-tools/"]
 
 # In-source crate identifier `dogwood_language` (the published crate is
-# `amzn-dogwood-language`). The whole frontend lives in this one crate as
+# `dogwood-language`). The whole frontend lives in this one crate as
 # crate-private modules, so consumers can only reach the curated public
 # surface in `lib.rs`.
 [lib]
@@ -187,6 +187,14 @@ path = "tests/boundary_validator_catches.rs"
 [[test]]
 name = "cedarify_adversarial"
 path = "tests/cedarify_adversarial.rs"
+
+[[test]]
+name = "action_id_escaping"
+path = "tests/action_id_escaping.rs"
+
+[[test]]
+name = "enum_id_escaping"
+path = "tests/enum_id_escaping.rs"
 
 [[test]]
 name = "error_message_differential"

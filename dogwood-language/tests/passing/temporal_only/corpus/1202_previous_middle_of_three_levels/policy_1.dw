@@ -1,0 +1,22 @@
+// A three-level chain with `previous` as the MIDDLE operator: the
+// Transfer anchor at 5 resolves its previous event (the Heartbeat at 4),
+// and the innermost `formerly` window is then measured from THAT
+// timepoint, reaching Logins @0,1,2 - count 3. The one-step hop composes
+// with window nesting on both sides.
+
+permit ( principal, action == Drupe::Action::"Alert", resource )
+when temporal {
+  exists (n: Long). (
+    (count for (t: Timepoint).
+       where (formerly within 1h (
+         Drupe::Action::"Transfer"::request{ input.user: context.input.server }
+         && previous within 1h (
+              Drupe::Action::"Heartbeat"::request{ input.server: context.input.server }
+              && formerly within 1h (
+                   Drupe::Action::"Login"::request{ input.server: context.input.server } && tp(t)
+                 )
+            )
+       ))
+    ) == n && n == 3
+  )
+};

@@ -1,0 +1,18 @@
+// Empty and non-empty anchors in one trace: the anchor @4 has count 0
+// (no Transfer before it); the anchor @3500 (the Transfer itself) and the
+// decision have count 1. `count == 0` is satisfiable only through the
+// early, empty-window anchor - both anchor kinds must be represented
+// per-anchor, not blurred together.
+
+permit ( principal, action == Drupe::Action::"Alert", resource )
+when temporal {
+  formerly within 2h (
+    exists (n: Long). (
+      (count for (t: Timepoint).
+         where (formerly within 1h (
+           Drupe::Action::"Transfer"::request{ input.user: context.input.server } && tp(t)
+         ))
+      ) == n && n == 0
+    )
+  )
+};

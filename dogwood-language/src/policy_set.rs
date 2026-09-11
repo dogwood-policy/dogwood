@@ -275,6 +275,15 @@ impl<'a> ParsedPolicy<'a> {
         self.index
     }
 
+    /// This policy's source, re-rendered from its parsed, macro-expanded form:
+    /// valid `.dw` text in which every macro is inlined and no macro reference
+    /// remains. Formatting and comments are not preserved; the semantics are —
+    /// re-parsing and lowering the result yields the same policy this handle
+    /// describes.
+    pub fn expanded_source(&self) -> String {
+        crate::render::render_policy(self.policy)
+    }
+
     // ── temporal ──────────────────────────────────────────────────────
 
     /// The number of `temporal { … }` blocks in this policy — one per
@@ -558,6 +567,17 @@ impl LoweredPolicySet {
     /// nothing to partition on).
     pub fn partition_keys(&self) -> &[crate::engine::PartitionKey] {
         &self.lowered.partition_keys
+    }
+
+    /// Build the temporal leaf map for this lowered policy set.
+    ///
+    /// This is equivalent to calling [`DecisionLeafMap::build`](crate::DecisionLeafMap::build)
+    /// with this set's temporal fields and Cedar schema.
+    pub fn leaf_map(&self) -> crate::leaf_map::DecisionLeafMap {
+        crate::leaf_map::DecisionLeafMap::build(
+            &self.lowered.temporal_rewritten,
+            &self.lowered.augmented_schema,
+        )
     }
 
     /// The information-provider leaves hoisted out of the policies: one per

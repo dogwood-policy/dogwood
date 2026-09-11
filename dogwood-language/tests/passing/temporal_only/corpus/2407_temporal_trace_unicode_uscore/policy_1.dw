@@ -1,0 +1,7 @@
+// Trace parser: event field \\u with underscores must decode to match.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal { context.input.document == "\u{1234}" };

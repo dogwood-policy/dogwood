@@ -1,0 +1,7 @@
+// Temporal string literal: hex escape \\x41 decodes to A.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal { context.input.document == "\x41" };

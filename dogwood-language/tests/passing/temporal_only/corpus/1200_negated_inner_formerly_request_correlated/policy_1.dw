@@ -1,0 +1,13 @@
+// The same negated inner `formerly`, but correlated on a request field
+// rather than a literal: the negation's correlation value comes from the
+// DECISION request while its window is measured from the outer anchor.
+// The anchor at 4 qualifies (no matching Heartbeat before it); the
+// Heartbeat at 3599 must not disqualify it.
+
+permit ( principal, action == Drupe::Action::"Alert", resource )
+when temporal {
+  formerly within 2h (
+    Drupe::Action::"Transfer"::request{ input.user: context.input.server }
+    && !(formerly within 1h Drupe::Action::"Heartbeat"::request{ input.server: context.input.server })
+  )
+};

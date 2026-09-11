@@ -1,0 +1,12 @@
+namespace Escaped {
+    entity User;
+    entity Doc;
+    action "Witness" appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { only_normal: String } }
+    };
+    action "a\\b" appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { present: String } }
+    };
+}

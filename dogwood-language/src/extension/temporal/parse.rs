@@ -8,6 +8,8 @@
 use pest::Parser;
 use pest_derive::Parser;
 
+use cedar_policy_core::parser::unescape::to_unescaped_string;
+
 use super::ast::{
     AggExpr, AggExprKind, BinderSlot, Call, CallArg, CmpOp, Condition, ConditionKind, Interval,
     NamedArg, Predicate, Term, TimeUnit, Type, TypedBinder, WithinSpec,
@@ -34,6 +36,7 @@ pub fn parse_condition(body: &str) -> Result<Condition, String> {
         .into_inner()
         .find(|p| p.as_rule() == Rule::condition)
         .expect("condition_entry contains a condition");
+    validate_string_escapes(&cond)?;
     Ok(build_condition(cond))
 }
 
@@ -51,6 +54,7 @@ pub fn parse_macro_body(body: &str) -> Result<crate::ast::MacroBody, String> {
         .into_inner()
         .find(|p| matches!(p.as_rule(), Rule::agg_expr | Rule::condition))
         .expect("temporal_macro_body_entry contains an agg_expr or condition");
+    validate_string_escapes(&inner)?;
     match inner.as_rule() {
         Rule::agg_expr => Ok(crate::ast::MacroBody::TemporalAgg(build_agg_expr(inner))),
         Rule::condition => Ok(crate::ast::MacroBody::TemporalCondition(build_condition(
@@ -704,8 +708,39 @@ fn build_term(pair: Pair<'_>) -> Term {
     }
 }
 
+/// Decode a quoted string token (`"…"`) into its value, applying Cedar's own
+/// string-escape rules via `to_unescaped_string` — the same decoder the
+/// Cedar-clause path (`decode_string`) uses. This is what makes a string
+/// literal (or entity id / action name / decimal payload) mean the *same* value
+/// in a temporal clause as in a Cedar clause; without it an escape like `\"` or
+/// `\n` was kept verbatim and silently failed to match a decoded event value.
+///
+/// Invalid escapes are rejected up front by [`validate_string_escapes`] at the
+/// parse entry points, so a token that reaches here always decodes; the
+/// verbatim fallback is a defensive last resort only.
 fn unquote(s: &str) -> String {
-    s.trim_matches('"').to_string()
+    let body = &s[1..s.len().saturating_sub(1)];
+    to_unescaped_string(body)
+        .map(|decoded| decoded.to_string())
+        .unwrap_or_else(|_| body.to_string())
+}
+
+/// Reject any string token in `pair`'s subtree whose escapes Cedar would not
+/// accept, matching the Cedar-clause path (`decode_string`). Runs at the parse
+/// entry points, before the (infallible) builders decode via [`unquote`], so an
+/// invalid escape is a parse error rather than a silently mis-decoded value.
+fn validate_string_escapes(pair: &Pair<'_>) -> Result<(), String> {
+    if pair.as_rule() == Rule::string {
+        let raw = pair.as_str();
+        let body = &raw[1..raw.len().saturating_sub(1)];
+        if let Err(errs) = to_unescaped_string(body) {
+            return Err(format!("invalid string escape in {raw}: {}", errs.head));
+        }
+    }
+    for child in pair.clone().into_inner() {
+        validate_string_escapes(&child)?;
+    }
+    Ok(())
 }
 
 // ─── Removed-syntax detection ───────────────────────────────────────

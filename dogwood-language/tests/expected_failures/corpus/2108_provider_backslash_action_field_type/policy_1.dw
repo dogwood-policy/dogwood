@@ -1,0 +1,4 @@
+permit (principal, action == Escaped::Action::"a\\b", resource)
+when guardrails {
+    Strings::Matches(context.input.mode).matched == true
+};

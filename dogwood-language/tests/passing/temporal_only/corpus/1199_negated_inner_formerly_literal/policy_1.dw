@@ -1,0 +1,13 @@
+// A NEGATED inner `formerly` with a literal correlation: the outer anchor
+// at 4 qualifies because no Heartbeat precedes it within ITS window - the
+// negation is evaluated at the anchor, not at the decision. The Heartbeat
+// at 3599 sits inside every window measured from the decision, so
+// decision-relative evaluation would wrongly reject the anchor.
+
+permit ( principal, action == Drupe::Action::"Alert", resource )
+when temporal {
+  formerly within 2h (
+    Drupe::Action::"Transfer"::request{ input.user: context.input.server }
+    && !(formerly within 1h Drupe::Action::"Heartbeat"::request{ input.server: "s1" })
+  )
+};

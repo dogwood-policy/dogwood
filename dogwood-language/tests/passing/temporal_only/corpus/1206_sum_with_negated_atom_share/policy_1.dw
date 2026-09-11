@@ -1,0 +1,19 @@
+// The sum variant of the negated-atom share: amounts 1/2/3 all survive
+// the (vacuous) negated constraint, and the sum fingerprints the surviving
+// binding set exactly - total 6. A lost or duplicated binding would give a
+// different total.
+
+permit ( principal, action == Drupe::Action::"Transfer", resource )
+when temporal {
+  exists (total: Long). (
+    (sum a for (a: Long).
+       where (formerly within 2h (
+         Drupe::Action::"Transfer"::request{ input.user: context.input.user }
+         && formerly within 1h (
+              Drupe::Action::"Confirm"::request{ input.user: context.input.user, input.amount: a }
+            )
+         && !(Drupe::Action::"Confirm"::request{ input.user: "nobody", input.amount: a })
+       ))
+    ) == total && total == 6
+  )
+};

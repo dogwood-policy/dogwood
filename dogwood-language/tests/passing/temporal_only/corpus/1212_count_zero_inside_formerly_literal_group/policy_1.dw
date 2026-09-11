@@ -1,0 +1,17 @@
+// The literal-correlated variant of the empty-window aggregate anchor:
+// the counted events are matched on a literal server value, with no
+// request field inside the temporal operator at all. The anchor @4 has
+// count 0 and the decision allows through it.
+
+permit ( principal, action == Drupe::Action::"Alert", resource )
+when temporal {
+  formerly within 2h (
+    exists (n: Long). (
+      (count for (t: Timepoint).
+         where (formerly within 1h (
+           Drupe::Action::"Login"::request{ input.server: "s1" } && tp(t)
+         ))
+      ) == n && n == 0
+    )
+  )
+};

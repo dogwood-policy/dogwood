@@ -1,0 +1,20 @@
+// A sum threshold as a `formerly` anchor's whole body: the sum over an
+// anchor's EMPTY window is 0, which satisfies `total < 50` vacuously - the
+// threshold does not need a zero literal for the empty-window case to
+// matter. The anchor at @4 has no Transfer before it; the decision @3601
+// allows through it while Transfer@3500 (amount 100) makes every
+// decision-relative window fail the threshold.
+
+permit ( principal, action == Drupe::Action::"Alert", resource )
+when temporal {
+  formerly within 2h (
+    exists (total: Long). (
+      (sum a for (a: Long), (t: Timepoint).
+         where (formerly within 1h (
+           Drupe::Action::"Transfer"::request{ input.user: context.input.server, input.amount: a }
+           && tp(t)
+         ))
+      ) == total && total < 50
+    )
+  )
+};

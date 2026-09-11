@@ -1,0 +1,21 @@
+// TWO sibling nested windows under one outer anchor, a timepoint binder in
+// each: the bindings form a cross product per anchor, not a zipped list.
+// The single Transfer anchor reaches Heartbeats {0,1} and Logins {2,3} -
+// 2 x 2 = 4 (t2, t3) pairs at the decision.
+
+permit ( principal, action == Drupe::Action::"Alert", resource )
+when temporal {
+  exists (n: Long). (
+    (count for (t2: Timepoint), (t3: Timepoint).
+       where (formerly within 2h (
+         Drupe::Action::"Transfer"::request{ input.user: context.input.server }
+         && formerly within 1h (
+              Drupe::Action::"Heartbeat"::request{ input.server: context.input.server } && tp(t2)
+            )
+         && formerly within 1h (
+              Drupe::Action::"Login"::request{ input.server: context.input.server } && tp(t3)
+            )
+       ))
+    ) == n && n == 4
+  )
+};
