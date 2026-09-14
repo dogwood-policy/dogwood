@@ -2,16 +2,26 @@
 
 All notable changes to the Dogwood policy language are documented here.
 
-## 2026-08-26
-
-### Added
-
-- **engine**: `DecisionLeafMap` — which temporal leaves a decision can read, so
-  any `TemporalEngine` can slice its per-decision work
-  (`LoweredPolicySet::leaf_map`, `DecisionLeafMap::build`,
-  `InMemoryTemporalEngine::slice_leaves`). Any miss means compute every leaf, and
-  the answer may only shrink across versions, so a backend needs no change when
-  the slicing gets finer; it is keyed by the request's action today
+## 2026-09-11
+  
+  ### Added
+  
+  - **engine**: Optional decision-leaf slicing — precomputes which temporal leaves each action can read, with conservative fallback
+  - **language**: Render expanded policies back to valid `.dw` with macros inlined
+  - **api/event**: Lossless request-context and `Event` → `EventBuilder` conversion, separating durable temporal fields from request-only Cedar context
+  
+  ### Changed
+  
+  - **engine**: Name the leaf map's contract, keyed on Cedar's `EntityUid` (breaking)
+  
+  ### Fixed
+  
+  - **partition**: Equivalent decimals (`1.5`, `1.50`) now share one temporal partition
+  - **parser/lowering/validation**: Decode Cedar escapes (`\u{…}`, string literals, annotations, enum/action ids) matching Cedar's behavior
+  
+  ### Testing
+  
+  - Nested temporal operators, escaped identifiers, leaf-map slicing differentials, decimal pins, and replay round trips
 
 ## 2026-08-12
 
