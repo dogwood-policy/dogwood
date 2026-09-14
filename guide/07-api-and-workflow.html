@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-0ce79282.js";
+            window.path_to_searchindex_js = "../searchindex-fe654853.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-982af72f.js"></script>
@@ -660,6 +660,30 @@ impl Temporal {
 }
 <span class="boring">}</span></code></pre>
 <p>A custom engine reads <code>TemporalField::condition</code> to decide what to evaluate; the in-memory engine interprets it directly. <code>Temporal</code> is re-exported so a custom engine can name the type, and its inner <code>condition</code> AST is public via <code>dogwood_language::temporal_ast</code> to walk.</p>
+<h4 id="slicing-a-decisions-temporal-work"><a class="header" href="#slicing-a-decisions-temporal-work">Slicing a decision’s temporal work</a></h4>
+<p><code>DecisionLeafMap</code> answers one question — <strong>which temporal leaves can this decision read?</strong> — <strong>once per policy set</strong> rather than once per decision. A leaf outside the answer is read by no applicable rule, so its condition is never evaluated and reporting it <code>false</code> cannot change the decision:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct DecisionLeafMap { /* … */ }
+
+impl DecisionLeafMap {
+    pub fn build(leaves: &amp;[TemporalField], schema: &amp;cedar_policy::Schema) -&gt; Self;
+    pub fn needed_for(&amp;self, event: &amp;Event) -&gt; Option&lt;Arc&lt;BTreeSet&lt;ExtensionId&gt;&gt;&gt;; // None =&gt; compute every leaf
+    pub fn entry_count(&amp;self) -&gt; usize;                         // precomputed entries; a diagnostic, implementation-level
+    pub fn unresolved(&amp;self) -&gt; &amp;[(ExtensionId, &amp;'static str)]; // leaves computed unconditionally, with the reason
+}
+
+impl LoweredPolicySet {
+    pub fn leaf_map(&amp;self) -&gt; DecisionLeafMap; // the same map, for a caller holding the lowered set
+}
+<span class="boring">}</span></code></pre>
+<p><code>build</code>’s arguments are exactly <code>prepare</code>’s, so a backend builds the map there — which is also its rebuild point when the policy set changes — and probes it in <code>evaluate</code> with the decision event. Three rules are the whole contract:</p>
+<ul>
+<li><strong><code>None</code>, and any miss, means “compute every leaf.”</strong> There is no “needs nothing” answer to confuse a miss with: a decision that can read no leaf has an entry that is present and <em>empty</em>. A leaf the map could not place is folded into every entry and reported by <code>unresolved()</code>.</li>
+<li><strong>Bind a boolean for every installed leaf regardless</strong> — the skipped ones <code>false</code>. An absent leaf leaves <code>context.&lt;id&gt;</code> missing, which Cedar reports as an evaluation error rather than as <code>false</code>.</li>
+<li><strong>The answer may only shrink across versions.</strong> Slicing may get finer — fewer leaves returned for the same event — but never coarser. Both calls are shaped for that: <code>build</code> takes a whole policy set, <code>needed_for</code> takes a whole <code>Event</code>, and a miss is always safe, so a consuming backend needs no code change when the slicing narrows. Do not infer the slicing’s extent from anything but <code>needed_for</code>’s answer.</li>
+</ul>
+<p>Implementation note, not part of the contract: the map is currently keyed by the <strong>request’s action</strong> alone — a policy whose <code>action</code> scope does not match the request is not applicable, and which leaves that excludes depends only on the action, known before any event arrives. It therefore ignores <code>principal</code> / <code>resource</code> scope constraints (every rule is treated as applying to every principal and resource), which can only add leaves to an answer, never remove one; a bare <code>action</code> scope, a scope that resolves to no concrete action, an undeclared request action, and an action group arriving as one all fall back to computing everything. Cedar’s own entity manifest slices by (principal type, action, resource type), and this map may follow — which is why <code>entry_count()</code> is a diagnostic and not a promise.</p>
 <p>The practical recipe for swapping either backend:</p>
 <ul>
 <li><strong>Swap the decision backend</strong> (any Cedar-based store): implement <code>PolicyEngine</code> and pass it to <code>Authorizer::builder(policies).policy_engine(...)</code>. <code>PolicySet::as_cedar()</code> / <code>cedar_schema()</code> give you the Cedar policies and schema to load into the store.</li>
