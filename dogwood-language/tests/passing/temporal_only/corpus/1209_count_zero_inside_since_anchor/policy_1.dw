@@ -1,0 +1,17 @@
+// An aggregate as a `since` ANCHOR's whole body: the anchor timepoint is
+// one where the count over ITS window is zero, and the guard (no Sync)
+// must then hold through the decision. The @4 anchor qualifies; the Login
+// at @3500 changes later anchors' counts but not the earlier anchor's.
+
+permit ( principal, action == Drupe::Action::"Alert", resource )
+when temporal {
+  !Drupe::Action::"Sync"::request{ input.user: "never" }
+    since within 2h
+  (  exists (n: Long). (
+      (count for (t: Timepoint).
+         where (formerly within 1h (
+           Drupe::Action::"Login"::request{ input.server: context.input.server } && tp(t)
+         ))
+      ) == n && n == 0
+    ))
+};

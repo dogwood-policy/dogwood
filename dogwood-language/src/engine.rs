@@ -21,14 +21,15 @@
 //! use [`Authorizer::builder`](crate::Authorizer::builder) to substitute
 //! either or both.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use cedar_policy::{Authorizer as CedarAuthorizer, Entities, PolicySet, Request, Schema};
 
 use crate::api::Error;
 use crate::authorize::Decision;
 use crate::interpreter::eval;
-use crate::interpreter::value::{Event, Trace, Value};
+use crate::interpreter::value::{Event, Trace, Value, cedar_decimal_value};
+use crate::leaf_map::DecisionLeafMap;
 
 /// The hoisted temporal leaf a [`TemporalEngine`] prepares and evaluates: a
 /// generated `id` (the `context.<id>` slot its boolean is bound into), the
@@ -283,10 +284,30 @@ pub trait TemporalEngine: Send {
 ///     evaluated within the current event's partition. Because the partition
 ///     physically contains only its own key's events, a plain leaf computes the
 ///     same verdict the relativization rewrite computes over the global trace.
+///
+/// [`slice_leaves`](Self::slice_leaves) optionally avoids interpreting leaves
+/// that the current decision cannot read.
 #[derive(Debug)]
 pub struct InMemoryTemporalEngine {
     leaves: Vec<TemporalField>,
     mode: Mode,
+    slicing: bool,
+    leaf_map: Option<DecisionLeafMap>,
+    computed: BTreeSet<ExtensionId>,
+}
+
+enum Plan<'a> {
+    All,
+    Only(&'a BTreeSet<ExtensionId>),
+}
+
+impl Plan<'_> {
+    fn includes(&self, id: &str) -> bool {
+        match self {
+            Plan::All => true,
+            Plan::Only(needed) => needed.contains(id),
+        }
+    }
 }
 
 /// The history representation: one global trace, or a trace per partition key.
@@ -309,6 +330,9 @@ impl Default for InMemoryTemporalEngine {
         InMemoryTemporalEngine {
             leaves: Vec::new(),
             mode: Mode::Global(Trace::default()),
+            slicing: false,
+            leaf_map: None,
+            computed: BTreeSet::new(),
         }
     }
 }
@@ -316,6 +340,47 @@ impl Default for InMemoryTemporalEngine {
 impl InMemoryTemporalEngine {
     pub fn new() -> Self {
         InMemoryTemporalEngine::default()
+    }
+
+    /// Compute only leaves the decision can read, binding the rest to `false`.
+    ///
+    /// This is opt-in because direct callers of
+    /// [`evaluate`](TemporalEngine::evaluate) may expect every leaf's raw value,
+    /// independently of a decision.
+    ///
+    /// ```no_run
+    /// # use dogwood_language::{Authorizer, InMemoryTemporalEngine, LoweredPolicySet};
+    /// # fn f(policies: LoweredPolicySet) -> Result<(), Box<dyn std::error::Error>> {
+    /// let authorizer = Authorizer::builder(policies)
+    ///     .temporal_engine(InMemoryTemporalEngine::new().slice_leaves())
+    ///     .build()?;
+    /// # Ok(()) }
+    /// ```
+    ///
+    /// Slicing applies in both global and partitioned modes. See
+    /// [`crate::leaf_map`] for the selection contract and fallbacks.
+    pub fn slice_leaves(mut self) -> Self {
+        self.slicing = true;
+        self
+    }
+
+    /// Return the leaf ids interpreted by the last `evaluate`.
+    ///
+    /// Empty before the first evaluation.
+    pub fn computed_leaves(&self) -> &BTreeSet<ExtensionId> {
+        &self.computed
+    }
+
+    /// Return the installed leaf map, or `None` when slicing is disabled or the
+    /// engine has not been prepared.
+    pub fn leaf_map(&self) -> Option<&DecisionLeafMap> {
+        self.leaf_map.as_ref()
+    }
+
+    /// Replace the map for negative-control testing.
+    #[doc(hidden)]
+    pub fn install_leaf_map(&mut self, map: DecisionLeafMap) {
+        self.leaf_map = Some(map);
     }
 
     /// Encode one event's partition-key tuple to a stable string. Two events map
@@ -335,7 +400,7 @@ impl InMemoryTemporalEngine {
     fn partition_value_of(event: &Event, keys: &[PartitionKey]) -> String {
         keys.iter()
             .map(|k| match event.field_path(&k.field_path) {
-                Some(v) => encode_partition_value(v),
+                Some(v) => partition_value_key(v),
                 None => "<none>".to_string(),
             })
             .collect::<Vec<_>>()
@@ -347,14 +412,18 @@ impl InMemoryTemporalEngine {
 /// `encode == encode` **iff** the values are equal under [`Value::dom_eq`] — the
 /// same equality μ's predicate matcher uses. Two properties make it sound:
 ///
-/// * **dom-canonical**: decimals are canonicalized (trailing fractional zeros
-///   trimmed) exactly as `dom_eq` does, so `1.5` and `1.50` share a partition.
+/// * **dom-canonical**: accepted decimals are rendered canonically from Cedar's
+///   fixed-point numeric value, while rejected spellings retain exact text under
+///   a separate tag. Thus every pair agrees with `dom_eq`, including leading
+///   zeroes and signed zero.
 /// * **injective / self-delimiting**: every component is length-prefixed
 ///   (`<tag><byte-len>:<bytes>`), so an arbitrary string, entity id, or nested
 ///   value — which may contain any character including the multi-key separator —
 ///   can never be confused with a different decomposition. The leading tag keeps
 ///   variants disjoint (an entity uid never aliases a same-looking string).
-fn encode_partition_value(value: &Value) -> String {
+#[doc(hidden)]
+#[inline]
+pub fn partition_value_key(value: &Value) -> String {
     // Length-prefix a rendered body so concatenations are unambiguous even when
     // the body contains the multi-key separator or nested delimiters.
     fn framed(tag: char, body: &str) -> String {
@@ -369,48 +438,56 @@ fn encode_partition_value(value: &Value) -> String {
         Value::String(s) => framed('s', s),
         Value::Entity { ty, id } => framed('e', &format!("{ty}::\"{id}\"")),
         Value::Array(items) => {
-            let body: String = items.iter().map(encode_partition_value).collect();
+            let body: String = items.iter().map(partition_value_key).collect();
             framed('a', &body)
         }
         Value::Object(members) => {
             // BTreeMap iterates in key order, so equal objects render identically.
             let body: String = members
                 .iter()
-                .map(|(k, v)| format!("{}:{}{}", k.len(), k, encode_partition_value(v)))
+                .map(|(k, v)| format!("{}:{}{}", k.len(), k, partition_value_key(v)))
                 .collect();
             framed('o', &body)
         }
     }
 }
 
-/// Canonicalize a decimal string the way [`Value::dom_eq`] does — trim trailing
-/// fractional zeros (and a bare trailing dot) — so partition keys agree with
-/// μ's decimal equality. Kept here (the interpreter's `canon_decimal` is
-/// module-private) and covered by a unit test that pins it to `dom_eq`.
+/// Canonicalize accepted decimals to Cedar's fixed-point value. Rejected
+/// spellings retain their exact text under a separate tag, matching `dom_eq`:
+/// Cedar-equivalent spellings share a key, while rejected text only equals
+/// itself and cannot collide with an accepted value.
 fn canon_decimal_for_partition(s: &str) -> String {
-    match s.split_once('.') {
-        Some((int, frac)) => {
-            let frac = frac.trim_end_matches('0');
-            if frac.is_empty() {
-                int.to_string()
+    match cedar_decimal_value(s) {
+        Some(value) => {
+            let value = i128::from(value);
+            let sign = if value < 0 { "-" } else { "" };
+            let magnitude = value.abs();
+            let whole = magnitude / 10_000;
+            let fraction = magnitude % 10_000;
+            if fraction == 0 {
+                format!("{sign}{whole}")
             } else {
-                format!("{int}.{frac}")
+                let fraction = format!("{fraction:04}");
+                format!("{sign}{whole}.{}", fraction.trim_end_matches('0'))
             }
         }
-        None => s.to_string(),
+        None => format!("x{s}"),
     }
 }
 
 impl TemporalEngine for InMemoryTemporalEngine {
-    // Interprets the leaves directly, so it needs neither the schema nor the
-    // event signatures: its equality is this crate's own.
     fn prepare(
         &mut self,
         leaves: &[TemporalField],
-        _schema: &Schema,
+        schema: &Schema,
         _events: &[crate::EventSignature],
     ) -> Result<(), Error> {
         self.leaves = leaves.to_vec();
+        // A map is valid only for the leaves and schema from this prepare call.
+        self.leaf_map = self
+            .slicing
+            .then(|| DecisionLeafMap::build(&self.leaves, schema));
+        self.computed.clear();
         Ok(())
     }
 
@@ -440,15 +517,33 @@ impl TemporalEngine for InMemoryTemporalEngine {
             }
         };
         let i = trace.len().checked_sub(1).ok_or("no event observed")?;
+        // Missing map answers conservatively select every leaf.
+        let needed = self
+            .leaf_map
+            .as_ref()
+            .and_then(|map| map.needed_for(&trace.points[i]));
+        let plan = match &needed {
+            Some(ids) => Plan::Only(ids),
+            None => Plan::All,
+        };
         let env = eval::request_env(trace, i);
-        Ok(self
+        let mut computed = BTreeSet::new();
+        let bindings: TemporalBindings = self
             .leaves
             .iter()
             .map(|f| {
+                // Cedar requires a binding even for leaves this decision cannot read.
+                if !plan.includes(&f.id) {
+                    return (f.id.clone(), false);
+                }
+                computed.insert(f.id.clone());
                 let holds = eval::eval_condition(trace, i, &env, &f.condition.condition);
                 (f.id.clone(), holds)
             })
-            .collect())
+            .collect();
+        // `trace`/`env` borrow `self` immutably; both are dead by here.
+        self.computed = computed;
+        Ok(bindings)
     }
 
     fn supports_partitioning(&self) -> bool {
@@ -525,7 +620,7 @@ pub trait ProviderResolver: Send {
 
 #[cfg(test)]
 mod partition_encoding_tests {
-    use super::{Value, encode_partition_value};
+    use super::{Value, partition_value_key};
     use std::collections::BTreeMap;
 
     /// Partition-key encoding must agree with `Value::dom_eq`: two values encode
@@ -534,19 +629,69 @@ mod partition_encoding_tests {
     /// must share a partition (structural `==` would split them).
     #[test]
     fn encoding_agrees_with_dom_eq_on_decimals() {
-        let a = Value::Decimal("1.5".into());
-        let b = Value::Decimal("1.50".into());
-        assert!(a.dom_eq(&b), "precondition: dom_eq treats 1.5 == 1.50");
-        assert_eq!(
-            encode_partition_value(&a),
-            encode_partition_value(&b),
-            "dom-equal decimals must land in the same partition"
-        );
+        for (a, b) in [
+            ("1.5", "1.50"),
+            ("2.5", "02.5"),
+            ("-2.5", "-02.5000"),
+            ("-0.0", "0.0"),
+            ("922337203685477.5807", "922337203685477.5807"),
+            ("-922337203685477.5808", "-922337203685477.5808"),
+        ] {
+            let a = Value::Decimal(a.into());
+            let b = Value::Decimal(b.into());
+            assert!(a.dom_eq(&b), "precondition: `{a:?}` and `{b:?}`");
+            assert_eq!(
+                partition_value_key(&a),
+                partition_value_key(&b),
+                "dom-equal decimals must land in the same partition"
+            );
+        }
+
         // A genuinely different decimal must NOT collide.
         assert_ne!(
-            encode_partition_value(&a),
-            encode_partition_value(&Value::Decimal("1.6".into()))
+            partition_value_key(&Value::Decimal("1.5".into())),
+            partition_value_key(&Value::Decimal("1.6".into()))
         );
+
+        assert_eq!(
+            partition_value_key(&Value::Decimal("1.50".into())),
+            "d3:1.5",
+            "the established key for ordinary decimal spellings remains stable"
+        );
+    }
+
+    #[test]
+    fn rejected_decimal_spellings_use_exact_text_keys() {
+        let invalid = Value::Decimal("1".into());
+        assert!(invalid.dom_eq(&invalid));
+        assert_eq!(
+            partition_value_key(&invalid),
+            partition_value_key(&Value::Decimal("1".into()))
+        );
+        assert_ne!(
+            partition_value_key(&invalid),
+            partition_value_key(&Value::Decimal("01".into())),
+            "distinct rejected spellings are not dom-equal"
+        );
+        assert_ne!(
+            partition_value_key(&invalid),
+            partition_value_key(&Value::Decimal("1.0".into())),
+            "a rejected spelling cannot collide with an accepted decimal"
+        );
+    }
+
+    #[test]
+    fn nested_decimal_keys_follow_recursive_dom_eq() {
+        let a = Value::Array(vec![
+            Value::Decimal("02.5".into()),
+            Value::Decimal("-0.0".into()),
+        ]);
+        let b = Value::Array(vec![
+            Value::Decimal("2.5000".into()),
+            Value::Decimal("0.0000".into()),
+        ]);
+        assert!(a.dom_eq(&b));
+        assert_eq!(partition_value_key(&a), partition_value_key(&b));
     }
 
     /// A tag keeps variants disjoint: an entity uid and a string with the same
@@ -558,7 +703,7 @@ mod partition_encoding_tests {
             ty: "Drupe::OAuthUser".into(),
             id: "a".into(),
         };
-        assert_ne!(encode_partition_value(&s), encode_partition_value(&e));
+        assert_ne!(partition_value_key(&s), partition_value_key(&e));
     }
 
     /// Length-prefixing makes the encoding injective even when a value contains
@@ -568,15 +713,15 @@ mod partition_encoding_tests {
     fn separator_in_value_cannot_forge_a_collision() {
         let a = Value::String("x\u{1f}y".into());
         let b = Value::String("x".into());
-        assert_ne!(encode_partition_value(&a), encode_partition_value(&b));
+        assert_ne!(partition_value_key(&a), partition_value_key(&b));
         // Distinct objects with confusable member layouts stay distinct.
         let mut m1 = BTreeMap::new();
         m1.insert("a".to_string(), Value::String("bc".into()));
         let mut m2 = BTreeMap::new();
         m2.insert("ab".to_string(), Value::String("c".into()));
         assert_ne!(
-            encode_partition_value(&Value::Object(m1)),
-            encode_partition_value(&Value::Object(m2))
+            partition_value_key(&Value::Object(m1)),
+            partition_value_key(&Value::Object(m2))
         );
     }
 }

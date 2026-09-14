@@ -361,9 +361,10 @@ fn derive_fields(
                 // group and a named field may never share a top-level name,
                 // regardless of declaration order.
                 if fields.contains_key(group) {
+                    let action_id_display = cedar_policy_core::ast::Eid::new(action_id).escaped();
                     return Err(format!(
                         "the `{group}` field group produced by `...{}(A)` (on \
-                         `{action_id}::{kind}`) collides with another field named `{group}`; a \
+                         `{action_id_display}::{kind}`) collides with another field named `{group}`; a \
                          spread group and a named field may not share a name",
                         selector.as_str()
                     ));
@@ -430,16 +431,17 @@ fn derive_fields(
                 // otherwise it is a duplicate field. Either way names are
                 // unique at a level.
                 if fields.contains_key(name) {
+                    let action_id_display = cedar_policy_core::ast::Eid::new(action_id).escaped();
                     if spread_names.contains(name) {
                         return Err(format!(
-                            "event-schema field `{name}` (injected on `{action_id}::{kind}`) \
+                            "event-schema field `{name}` (injected on `{action_id_display}::{kind}`) \
                              collides with the `{name}` field group produced by a spread; a named \
                              field may not shadow a spread group"
                         ));
                     }
                     return Err(format!(
                         "event-schema field `{name}` is defined more than once on \
-                         `{action_id}::{kind}`; field names must be unique at each level"
+                         `{action_id_display}::{kind}`; field names must be unique at each level"
                     ));
                 }
                 fields.insert(name.clone(), node);
@@ -975,6 +977,85 @@ mod tests {
     fn derive_rr(action_schema: &str) -> DerivedEventSchema {
         let dsl = parse_event_schema(RR_SCHEMA).expect("dsl parses");
         derive(&dsl, action_schema).expect("derive succeeds")
+    }
+
+    const DIAGNOSTIC_ACTION_IDS: &[&str] = &[
+        "plain",
+        "",
+        r#"a\x22b"#,
+        r#"a\x5cb"#,
+        r#"a\nb"#,
+        r#"\u{0_0_0_e}"#,
+        r#"u\u{0_1_2_3}"#,
+        r#"\\u{e}"#,
+        "犬",
+    ];
+
+    fn derive_error_for_action(event_schema: &str, action_source: &str) -> String {
+        let action_schema = ACTION_SCHEMA.replacen(
+            r#"action "Login""#,
+            &format!(r#"action "{action_source}""#),
+            1,
+        );
+        let dsl = parse_event_schema(event_schema).expect("event schema parses");
+        derive(&dsl, &action_schema).expect_err("event-schema collision should be rejected")
+    }
+
+    fn cedar_escaped_action_id(action_source: &str) -> String {
+        let uid: cedar_policy_core::ast::EntityUID = format!(r#"Drupe::Action::"{action_source}""#)
+            .parse()
+            .expect("Cedar action UID parses");
+        uid.eid().escaped().to_string()
+    }
+
+    #[test]
+    fn spread_collision_diagnostics_escape_action_ids_like_cedar() {
+        let event_schema = r#"event <A>::r { input: String, ...inputs(A) }"#;
+        for action_source in DIAGNOSTIC_ACTION_IDS {
+            let action = cedar_escaped_action_id(action_source);
+            assert_eq!(
+                derive_error_for_action(event_schema, action_source),
+                format!(
+                    "the `input` field group produced by `...inputs(A)` (on `{action}::r`) \
+                     collides with another field named `input`; a spread group and a named field \
+                     may not share a name"
+                ),
+                "action source {action_source:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn spread_shadow_diagnostics_escape_action_ids_like_cedar() {
+        let event_schema = r#"event <A>::r { ...inputs(A), input: String }"#;
+        for action_source in DIAGNOSTIC_ACTION_IDS {
+            let action = cedar_escaped_action_id(action_source);
+            assert_eq!(
+                derive_error_for_action(event_schema, action_source),
+                format!(
+                    "event-schema field `input` (injected on `{action}::r`) collides with the \
+                     `input` field group produced by a spread; a named field may not shadow a \
+                     spread group"
+                ),
+                "action source {action_source:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn duplicate_field_diagnostics_escape_action_ids_like_cedar() {
+        let event_schema = r#"event <A>::r { dup: String, dup: Long }"#;
+        for action_source in DIAGNOSTIC_ACTION_IDS {
+            let action = cedar_escaped_action_id(action_source);
+            assert_eq!(
+                derive_error_for_action(event_schema, action_source),
+                format!(
+                    "event-schema field `dup` is defined more than once on `{action}::r`; field \
+                     names must be unique at each level"
+                ),
+                "action source {action_source:?}"
+            );
+        }
     }
 
     fn path(parts: &[&str]) -> Vec<String> {

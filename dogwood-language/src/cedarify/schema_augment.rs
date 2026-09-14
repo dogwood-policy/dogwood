@@ -17,6 +17,12 @@ use smol_str::SmolStr;
 use super::{ContextField, ProviderField, ScopedAction};
 use std::collections::BTreeMap;
 
+fn escaped_action_id(action_id: &str) -> String {
+    cedar_policy_core::ast::Eid::new(action_id)
+        .escaped()
+        .to_string()
+}
+
 /// Add a required `Bool` field to each listed action's context record,
 /// mutating `fragment` in place.
 pub fn add_bool_context_fields(
@@ -124,7 +130,8 @@ fn inline_context_references(fragment: &mut Fragment<RawName>) -> Result<(), Str
                 steps += 1;
                 if steps > bound {
                     return Err(format!(
-                        "action `{action_id}` context reference is cyclic and cannot be resolved"
+                        "action `{}` context reference is cyclic and cannot be resolved",
+                        escaped_action_id(action_id)
                     ));
                 }
                 match defs.get(&name) {
@@ -146,7 +153,7 @@ fn inline_context_references(fragment: &mut Fragment<RawName>) -> Result<(), Str
             // builtin-alias names to their explicit `__cedar::` spelling, so
             // the clone cannot be re-interpreted in the target namespace.
             let normalized = normalize_resolved_type(as_json, &defs_json)
-                .map_err(|m| format!("action `{action_id}`: {m}"))?;
+                .map_err(|m| format!("action `{}`: {m}", escaped_action_id(action_id)))?;
             let raw: Type<RawName> = serde_json::from_value(normalized)
                 .map_err(|e| format!("convert resolved context type: {e}"))?;
             replacements.push((ns_key.clone(), action_id.clone(), raw));
@@ -319,7 +326,12 @@ fn add_bool_to_named_action(
     let action = ns
         .actions
         .get_mut(&SmolStr::from(action_id))
-        .ok_or_else(|| format!("action `{action_id}` not found in schema"))?;
+        .ok_or_else(|| {
+            format!(
+                "action `{}` not found in schema",
+                escaped_action_id(action_id)
+            )
+        })?;
     add_bool_to_action(action, field_name, action_id)
 }
 
@@ -344,7 +356,7 @@ fn add_bool_to_action(
     let applies_to = action
         .applies_to
         .as_mut()
-        .ok_or_else(|| format!("action `{action_id}` has no appliesTo"))?;
+        .ok_or_else(|| format!("action `{}` has no appliesTo", escaped_action_id(action_id)))?;
 
     match &mut applies_to.context.0 {
         Type::Type { ty, .. } => match ty {
@@ -362,11 +374,15 @@ fn add_bool_to_action(
                 );
                 Ok(())
             }
-            _ => Err(format!("action `{action_id}` context is not a record type")),
+            _ => Err(format!(
+                "action `{}` context is not a record type",
+                escaped_action_id(action_id)
+            )),
         },
         _ => Err(format!(
-            "action `{action_id}` context does not resolve to a record type \
-             (an action's context must be a record)"
+            "action `{}` context does not resolve to a record type \
+             (an action's context must be a record)",
+            escaped_action_id(action_id)
         )),
     }
 }
@@ -462,11 +478,13 @@ pub fn add_provider_context_fields(
         let action = ns
             .actions
             .get_mut(&SmolStr::from(action_id.as_str()))
-            .ok_or_else(|| format!("action `{action_id}` not found"))?;
-        let applies_to = action
-            .applies_to
-            .as_mut()
-            .ok_or_else(|| format!("action `{action_id}` has no appliesTo"))?;
+            .ok_or_else(|| format!("action `{}` not found", escaped_action_id(&action_id)))?;
+        let applies_to = action.applies_to.as_mut().ok_or_else(|| {
+            format!(
+                "action `{}` has no appliesTo",
+                escaped_action_id(&action_id)
+            )
+        })?;
 
         insert_provider_record(&mut applies_to.context.0, new_attrs.clone(), &action_id)?;
     }
@@ -505,9 +523,10 @@ fn insert_provider_record(
                     // record — a schema we did not produce. Refuse rather
                     // than silently clobber it.
                     Some(_) => Err(format!(
-                        "action `{action_id}` already has a `providers` attribute that \
+                        "action `{}` already has a `providers` attribute that \
                          is not an inline record; cannot merge hoisted provider fields \
-                         into it"
+                         into it",
+                        escaped_action_id(action_id)
                     )),
                     // First provider pass for this action: install the record.
                     None => {
@@ -529,11 +548,15 @@ fn insert_provider_record(
                     }
                 }
             }
-            _ => Err(format!("action `{action_id}` context is not a record")),
+            _ => Err(format!(
+                "action `{}` context is not a record",
+                escaped_action_id(action_id)
+            )),
         },
         _ => Err(format!(
-            "action `{action_id}` context does not resolve to a record type \
-             (an action's context must be a record)"
+            "action `{}` context does not resolve to a record type \
+             (an action's context must be a record)",
+            escaped_action_id(action_id)
         )),
     }
 }
@@ -713,6 +736,205 @@ mod tests {
         )
         .expect("schema parses")
         .0
+    }
+
+    const DIAGNOSTIC_ACTION_IDS: &[&str] = &[
+        "plain",
+        "",
+        r#"a\x22b"#,
+        r#"a\x5cb"#,
+        r#"a\nb"#,
+        r#"\u{0_0_0_e}"#,
+        r#"u\u{0_1_2_3}"#,
+        r#"\\u{e}"#,
+        "犬",
+    ];
+
+    fn cedar_action_id(action_source: &str) -> (String, String) {
+        let uid: cedar_policy_core::ast::EntityUID = format!(r#"Drupe::Action::"{action_source}""#)
+            .parse()
+            .expect("Cedar action UID parses");
+        (
+            uid.eid().as_ref().to_string(),
+            uid.eid().escaped().to_string(),
+        )
+    }
+
+    fn action_schema(action_source: &str, context: &str) -> String {
+        format!(
+            r#"
+            namespace Drupe {{
+                entity User;
+                entity Doc;
+                action "{action_source}" appliesTo {{
+                    principal: [User],
+                    resource: [Doc],
+                    context: {context}
+                }};
+            }}
+            "#
+        )
+    }
+
+    fn take_action(
+        action_source: &str,
+        context: &str,
+    ) -> cedar_policy_core::validator::json_schema::ActionType<RawName> {
+        let (decoded, _) = cedar_action_id(action_source);
+        let mut fragment = parse(&action_schema(action_source, context));
+        fragment
+            .0
+            .get_mut(&ns_key("Drupe").unwrap())
+            .expect("Drupe namespace")
+            .actions
+            .remove(&SmolStr::from(decoded))
+            .expect("action")
+    }
+
+    #[test]
+    fn context_inlining_diagnostics_escape_action_ids_like_cedar() {
+        for action_source in DIAGNOSTIC_ACTION_IDS {
+            let (_, escaped) = cedar_action_id(action_source);
+            let root_cycle = format!(
+                r#"
+                namespace Drupe {{
+                    type A = B;
+                    type B = A;
+                    entity User;
+                    entity Doc;
+                    action "{action_source}" appliesTo {{
+                        principal: [User], resource: [Doc], context: A
+                    }};
+                }}
+                "#
+            );
+            let mut fragment = parse(&root_cycle);
+            assert_eq!(
+                inline_context_references(&mut fragment).expect_err("root cycle"),
+                format!("action `{escaped}` context reference is cyclic and cannot be resolved"),
+                "root cycle for {action_source:?}"
+            );
+
+            let nested_cycle = format!(
+                r#"
+                namespace Drupe {{
+                    type A = {{ nested: B }};
+                    type B = C;
+                    type C = B;
+                    entity User;
+                    entity Doc;
+                    action "{action_source}" appliesTo {{
+                        principal: [User], resource: [Doc], context: A
+                    }};
+                }}
+                "#
+            );
+            let mut fragment = parse(&nested_cycle);
+            assert_eq!(
+                inline_context_references(&mut fragment).expect_err("nested cycle"),
+                format!(
+                    "action `{escaped}`: context type reference chain is cyclic and cannot be \
+                     resolved"
+                ),
+                "nested cycle for {action_source:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn temporal_augmentation_diagnostics_escape_action_ids_like_cedar() {
+        for action_source in DIAGNOSTIC_ACTION_IDS {
+            let (decoded, escaped) = cedar_action_id(action_source);
+
+            let mut fragment = parse(BASE_SCHEMA);
+            let field = bool_field(
+                "policy_0__temporal_0",
+                ScopedAction::Concrete(("Drupe".to_string(), decoded.clone())),
+            );
+            assert_eq!(
+                add_bool_context_fields(&mut fragment, &[field]).expect_err("unknown action"),
+                format!("action `{escaped}` not found in schema"),
+                "unknown action {action_source:?}"
+            );
+
+            let mut action = take_action(action_source, "{ input: { value: String } }");
+            action.applies_to = None;
+            assert_eq!(
+                add_bool_to_action(&mut action, "temporal", &decoded)
+                    .expect_err("missing appliesTo"),
+                format!("action `{escaped}` has no appliesTo"),
+                "missing appliesTo {action_source:?}"
+            );
+
+            let mut action = take_action(action_source, "{ input: { value: String } }");
+            action.applies_to.as_mut().unwrap().context.0 = Type::Type {
+                ty: TypeVariant::String,
+                loc: None,
+            };
+            assert_eq!(
+                add_bool_to_action(&mut action, "temporal", &decoded).expect_err("scalar context"),
+                format!("action `{escaped}` context is not a record type"),
+                "scalar context {action_source:?}"
+            );
+
+            let mut action = take_action(action_source, "Ctx");
+            assert_eq!(
+                add_bool_to_action(&mut action, "temporal", &decoded)
+                    .expect_err("unresolved context"),
+                format!(
+                    "action `{escaped}` context does not resolve to a record type \
+                     (an action's context must be a record)"
+                ),
+                "unresolved context {action_source:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn provider_record_diagnostics_escape_action_ids_like_cedar() {
+        for action_source in DIAGNOSTIC_ACTION_IDS {
+            let (decoded, escaped) = cedar_action_id(action_source);
+
+            let mut action = take_action(
+                action_source,
+                "{ input: { value: String }, providers: Bool }",
+            );
+            let context = &mut action.applies_to.as_mut().unwrap().context.0;
+            assert_eq!(
+                insert_provider_record(context, BTreeMap::new(), &decoded)
+                    .expect_err("providers is not a record"),
+                format!(
+                    "action `{escaped}` already has a `providers` attribute that is not an inline \
+                     record; cannot merge hoisted provider fields into it"
+                ),
+                "non-record providers {action_source:?}"
+            );
+
+            let mut action = take_action(action_source, "{ input: { value: String } }");
+            action.applies_to.as_mut().unwrap().context.0 = Type::Type {
+                ty: TypeVariant::String,
+                loc: None,
+            };
+            let context = &mut action.applies_to.as_mut().unwrap().context.0;
+            assert_eq!(
+                insert_provider_record(context, BTreeMap::new(), &decoded)
+                    .expect_err("scalar context"),
+                format!("action `{escaped}` context is not a record"),
+                "scalar provider context {action_source:?}"
+            );
+
+            let mut action = take_action(action_source, "Ctx");
+            let context = &mut action.applies_to.as_mut().unwrap().context.0;
+            assert_eq!(
+                insert_provider_record(context, BTreeMap::new(), &decoded)
+                    .expect_err("unresolved context"),
+                format!(
+                    "action `{escaped}` context does not resolve to a record type \
+                     (an action's context must be a record)"
+                ),
+                "unresolved provider context {action_source:?}"
+            );
+        }
     }
 
     /// Feeding an already-augmented schema back through
@@ -930,6 +1152,74 @@ mod tests {
             "child Write missing from targets: {targets:?}"
         );
         assert_eq!(targets.len(), 3, "expected 3 targets, got {targets:?}");
+    }
+
+    #[test]
+    fn escaped_group_ids_expand_from_decoded_scope_identity() {
+        let cases = [
+            ("quote", r#"a\"b"#, r#"a\x22b"#),
+            ("backslash", r#"a\\b"#, r#"a\x5cb"#),
+            ("unicode control", r#"\u{e}"#, r#"\u{0_0_0_e}"#),
+            ("underscored unicode", r#"u\u{0_1_2_3}"#, r#"u\u{123}"#),
+            ("literal escape text", r#"\\u{e}"#, r#"\\u{e}"#),
+        ];
+
+        for (label, declaration, reference) in cases {
+            let schema = format!(
+                r#"
+                namespace App {{
+                  entity User;
+                  entity Doc;
+                  action "{declaration}";
+                  action "Member" in [Action::"{declaration}"] appliesTo {{
+                    principal: [User], resource: [Doc],
+                    context: {{ input: {{ x: String }} }}
+                  }};
+                }}
+                "#
+            );
+            let fragment = parse(&schema);
+            let uid: cedar_policy_core::ast::EntityUID = format!(r#"App::Action::"{reference}""#)
+                .parse()
+                .unwrap_or_else(|error| panic!("{label}: {error}"));
+            let action =
+                ScopedAction::List(vec![("App".to_string(), uid.eid().as_ref().to_string())]);
+            assert_eq!(
+                scope_target_actions(&action, &fragment).unwrap(),
+                vec![("App".to_string(), "Member".to_string())],
+                "{label}"
+            );
+        }
+    }
+
+    #[test]
+    fn escaped_group_ids_do_not_conflate_control_and_literal_escape_text() {
+        let schema = r#"
+            namespace App {
+              entity User;
+              entity Doc;
+              action "\u{e}";
+              action "\\u{e}";
+              action "ControlMember" in [Action::"\u{0_0_0_e}"] appliesTo {
+                principal: [User], resource: [Doc], context: {}
+              };
+              action "LiteralMember" in [Action::"\\u{e}"] appliesTo {
+                principal: [User], resource: [Doc], context: {}
+              };
+            }
+        "#;
+        let fragment = parse(schema);
+        let control = ScopedAction::List(vec![("App".to_string(), "\u{e}".to_string())]);
+        let literal = ScopedAction::List(vec![("App".to_string(), r"\u{e}".to_string())]);
+
+        assert_eq!(
+            scope_target_actions(&control, &fragment).unwrap(),
+            vec![("App".to_string(), "ControlMember".to_string())]
+        );
+        assert_eq!(
+            scope_target_actions(&literal, &fragment).unwrap(),
+            vec![("App".to_string(), "LiteralMember".to_string())]
+        );
     }
 
     // ─── Error paths ─────────────────────────────────────────────────

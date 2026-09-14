@@ -1,0 +1,10 @@
+permit (
+    principal,
+    action == Example::Action::"Access",
+    resource
+)
+when temporal {
+    formerly within 1h Example::Action::"Check"::request{
+        input.actor: Example::User::"\x5c\x22"
+    }
+};

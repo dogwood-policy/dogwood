@@ -1,0 +1,22 @@
+// A single timepoint binder three `formerly` levels deep, under a count
+// with several innermost matches: Logins @0,1,2 are all within 1h of the
+// Heartbeat anchor at 4 (chained via the Transfer at 8), so the count is 3
+// - the innermost window is measured from the MIDDLE level's anchor, which
+// is itself measured from the outer anchor.
+
+permit ( principal, action == Drupe::Action::"Alert", resource )
+when temporal {
+  exists (n: Long). (
+    (count for (t: Timepoint).
+       where (formerly within 1h (
+         Drupe::Action::"Transfer"::request{ input.user: context.input.server }
+         && formerly within 1h (
+              Drupe::Action::"Heartbeat"::request{ input.server: context.input.server }
+              && formerly within 1h (
+                   Drupe::Action::"Login"::request{ input.server: context.input.server } && tp(t)
+                 )
+            )
+       ))
+    ) == n && n == 3
+  )
+};

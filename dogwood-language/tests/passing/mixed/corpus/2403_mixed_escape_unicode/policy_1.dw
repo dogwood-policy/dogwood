@@ -1,0 +1,8 @@
+// Cedar + temporal clause + trace field: \\u underscores decode across all three.
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when { context.input.document == "\u{1_2_3_4}" }
+when temporal { context.input.document == "\u{1_2_3_4}" };

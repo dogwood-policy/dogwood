@@ -1,0 +1,14 @@
+// Permit a Read when the immediately preceding event in this (decimal, tenant)
+// partition was a Login. The traces prove that native partitioning uses Cedar's
+// decimal equality for the decimal component while retaining tenant isolation.
+
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    previous within 1h Drupe::Action::"Login"::request{
+        input.user: context.input.user
+    }
+};

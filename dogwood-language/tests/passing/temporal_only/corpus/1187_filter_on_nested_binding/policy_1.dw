@@ -1,0 +1,19 @@
+// A data variable bound inside a nested `formerly` and consumed by a
+// comparison OUTSIDE the temporal operators - no aggregate anywhere. Both
+// Confirms bind a for the same anchor; the existential needs SOME binding
+// with a > 100, so Confirm@1 (amount 200) satisfies it even though the
+// other candidate (amount 50) does not. Every per-anchor binding must
+// remain individually visible to the filter.
+
+permit ( principal, action == Drupe::Action::"Transfer", resource )
+when temporal {
+  exists (a: Long). (
+    formerly within 2h (
+      Drupe::Action::"Transfer"::request{ input.user: context.input.user }
+      && formerly within 1h (
+           Drupe::Action::"Confirm"::request{ input.user: context.input.user, input.amount: a }
+         )
+    )
+    && a > 100
+  )
+};

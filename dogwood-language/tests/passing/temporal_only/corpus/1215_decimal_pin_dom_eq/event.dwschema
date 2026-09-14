@@ -1,0 +1,23 @@
+// Universal symmetric pins on a decimal context field and a string tenant.
+// Scope is deliberately left unpinned. Equivalent decimal spellings must route
+// history and decisions to the same native partition only when the tenant also
+// agrees.
+
+decision event <A>::request {
+    ...inputs(A),
+    callerPrincipal: principalType(A),
+    callerResource:  resourceType(A),
+    requestId:       String,
+    pin partition_decimal: decimal = context.partition_decimal,
+    pin tenant_id: String = context.tenant_id,
+}
+
+event <A>::response {
+    ...inputs(A),
+    ...outputs(A),
+    callerPrincipal: principalType(A),
+    callerResource:  resourceType(A),
+    requestId:       String,
+    pin partition_decimal: decimal = context.partition_decimal,
+    pin tenant_id: String = context.tenant_id,
+}

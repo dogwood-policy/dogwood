@@ -367,16 +367,26 @@ fn parse_value_depth(s: &str, depth: usize) -> Result<Value, String> {
 }
 
 fn unquote(s: &str) -> String {
-    let s = s.trim().trim_matches('"');
+    let s = s.trim();
+    let s = s
+        .strip_prefix('"')
+        .and_then(|s| s.strip_suffix('"'))
+        .unwrap_or(s);
     unescape(s)
 }
 
 /// Decode Cedar's canonical string escapes — the exact inverse of the
 /// [`str::escape_debug`] form that [`super::value::entity_uid_string`] and the
 /// quoted-value writers produce, and the form Cedar itself emits. Handles the
-/// simple escapes `\" \\ \' \n \t \r \0`, the Unicode escape `\u{HH..}`, and the
-/// legacy byte escape `\xHH`; an unrecognized `\<c>` is passed through verbatim
-/// (`\` then `c`) so malformed input degrades rather than dropping characters.
+/// simple escapes `\" \\ \' \n \t \r \0`, the Unicode escape `\u{HH..}` (with
+/// `_` digit separators, as Cedar's escaper allows), and the legacy byte escape
+/// `\xHH`; an unrecognized `\<c>` is passed through verbatim (`\` then `c`) so
+/// malformed input degrades rather than dropping characters.
+///
+/// This is intentionally a small permissive decoder rather than a direct call
+/// into Cedar's strict string-literal parser. Trace logs are runtime/debug input,
+/// not policy source: for replay it is more useful to preserve malformed or
+/// non-canonical bytes as trace values than to reject the whole log line.
 ///
 /// This MUST stay the exact inverse of `entity_uid_string`'s escaping: the event
 /// entity store is keyed by the escaped uid literal, and lookups reconstruct
@@ -398,7 +408,13 @@ pub(crate) fn unescape(s: &str) -> String {
             Some('t') => out.push('\t'),
             Some('r') => out.push('\r'),
             Some('0') => out.push('\0'),
-            // `\u{HH..}` — hex code point in braces.
+            // `\u{HH..}` — hex code point in braces. Underscores are digit
+            // separators (`\u{1_2_3_4}`), as in Cedar's `to_unescaped_string`
+            // (the Rust escaper); strip them before parsing so this decoder
+            // agrees with the policy-side decoders on the same escape. Cedar
+            // rejects a *leading* underscore (interior/trailing are fine), so a
+            // leading-underscore form is left verbatim rather than decoded —
+            // decode exactly the set Cedar accepts, else degrade (see below).
             Some('u') if chars.peek() == Some(&'{') => {
                 chars.next(); // consume `{`
                 let mut hex = String::new();
@@ -413,10 +429,15 @@ pub(crate) fn unescape(s: &str) -> String {
                 if closed {
                     chars.next(); // consume `}`
                 }
-                match (
-                    closed,
-                    u32::from_str_radix(&hex, 16).ok().and_then(char::from_u32),
-                ) {
+                let digits: String = hex.chars().filter(|c| *c != '_').collect();
+                let decoded = if hex.starts_with('_') {
+                    None // Cedar rejects a leading `_`; keep verbatim.
+                } else {
+                    u32::from_str_radix(&digits, 16)
+                        .ok()
+                        .and_then(char::from_u32)
+                };
+                match (closed, decoded) {
                     (true, Some(ch)) => out.push(ch),
                     // Malformed `\u{…}` — emit verbatim so nothing is silently lost.
                     _ => {
@@ -693,6 +714,25 @@ mod tests {
         }
     }
 
+    /// A `\u{…}` escape with `_` digit separators decodes the same as Cedar's
+    /// escaper (and the same as the policy-side decoders), rather than being
+    /// kept verbatim — the trace-parser half of the string-escape alignment.
+    #[test]
+    fn unescape_decodes_unicode_escape_with_underscores() {
+        assert_eq!(unescape(r"\u{1_2_3_4}"), "\u{1234}");
+        assert_eq!(unescape(r"\u{1F_512}"), "\u{1F512}");
+        // No separators still works, and a genuinely malformed escape (no hex
+        // digits) still degrades to verbatim rather than erroring.
+        assert_eq!(unescape(r"\u{1234}"), "\u{1234}");
+        assert_eq!(unescape(r"\u{__}"), r"\u{__}");
+        // Accept exactly the set Cedar's escaper accepts: interior/trailing
+        // separators decode, but a *leading* underscore does not (Cedar rejects
+        // it), so it degrades to verbatim rather than decoding — no wider than
+        // the policy-side decoder.
+        assert_eq!(unescape(r"\u{12_34_}"), "\u{1234}");
+        assert_eq!(unescape(r"\u{_1234}"), r"\u{_1234}");
+    }
+
     #[test]
     fn parse_entity_id_with_escaped_quote() {
         let log = r#"@0 scope(principal: Drupe::OAuthUser::"a\"b", resource: Drupe::Gateway::"gw1") Drupe::Action::"Transfer"::request(input: { user: "alice", amount: 10 }, callerPrincipal: Drupe::OAuthUser::"a\"b", callerResource: Drupe::Gateway::"gw1", requestId: "u1")"#;
@@ -732,6 +772,111 @@ mod tests {
                 );
             }
             other => panic!("expected object, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn parse_string_field_ending_with_escaped_quote() {
+        let log = r#"@0 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") Drupe::Action::"Transfer"::request(input: { note: "a\"" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u1")"#;
+        let trace = parse_trace(log).expect("should parse");
+        let e = &trace.points[0];
+        let input = e.event.logged.get("input").expect("input field");
+        match input {
+            Value::Object(map) => {
+                assert_eq!(
+                    map.get("note"),
+                    Some(&Value::String("a\"".to_string()))
+                );
+            }
+            other => panic!("expected object, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn parse_entity_id_ending_with_escaped_quote() {
+        let log = r#"@0 scope(principal: T::User::"a\"", resource: T::Gateway::"gw1") T::Action::"Transfer"::request(input: { actor: T::User::"a\"" }, callerPrincipal: T::User::"a\"", callerResource: T::Gateway::"gw1", requestId: "u1")"#;
+        let trace = parse_trace(log).expect("should parse");
+        let e = &trace.points[0];
+        match &e.scope.principal {
+            Some(Value::Entity { ty, id }) => {
+                assert_eq!(ty, "T::User");
+                assert_eq!(id, "a\"");
+            }
+            other => panic!("expected principal entity, got {other:?}"),
+        }
+        match e.event.logged.get("callerPrincipal") {
+            Some(Value::Entity { ty, id }) => {
+                assert_eq!(ty, "T::User");
+                assert_eq!(id, "a\"");
+            }
+            other => panic!("expected callerPrincipal entity, got {other:?}"),
+        }
+        match e.event.logged.get("input") {
+            Some(Value::Object(map)) => {
+                assert_eq!(
+                    map.get("actor"),
+                    Some(&Value::Entity {
+                        ty: "T::User".to_string(),
+                        id: "a\"".to_string()
+                    })
+                );
+            }
+            other => panic!("expected input object, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn parse_entity_id_backslash_quote_from_hex_and_direct_escaped_spelling() {
+        for (label, spelling) in [
+            ("hex", r#"T::User::"\x5c\x22""#),
+            ("direct", r#"T::User::"\\\"""#),
+        ] {
+            let log = format!(
+                r#"@0 scope(principal: T::User::"caller", resource: T::Gateway::"gw1") T::Action::"Transfer"::request(input: {{ actor: {spelling} }}, callerPrincipal: T::User::"caller", callerResource: T::Gateway::"gw1", requestId: "u1")"#
+            );
+            let trace = parse_trace(&log).unwrap_or_else(|e| panic!("{label}: {e}"));
+            let e = &trace.points[0];
+            match e.event.logged.get("input") {
+                Some(Value::Object(map)) => {
+                    assert_eq!(
+                        map.get("actor"),
+                        Some(&Value::Entity {
+                            ty: "T::User".to_string(),
+                            id: "\\\"".to_string()
+                        }),
+                        "{label} spelling must decode to backslash + quote"
+                    );
+                }
+                other => panic!("{label}: expected input object, got {other:?}"),
+            }
+        }
+    }
+
+    #[test]
+    fn parse_entity_id_with_existing_quote_and_backslash_cases() {
+        for (spelling, expected) in [
+            (r#"T::User::"a\"b""#, "a\"b"),
+            (r#"T::User::"a\\b""#, "a\\b"),
+            (r#"T::User::"\\\\""#, "\\\\"),
+        ] {
+            let log = format!(
+                r#"@0 scope(principal: T::User::"caller", resource: T::Gateway::"gw1") T::Action::"Transfer"::request(input: {{ actor: {spelling} }}, callerPrincipal: T::User::"caller", callerResource: T::Gateway::"gw1", requestId: "u1")"#
+            );
+            let trace = parse_trace(&log).expect("should parse");
+            let e = &trace.points[0];
+            match e.event.logged.get("input") {
+                Some(Value::Object(map)) => {
+                    assert_eq!(
+                        map.get("actor"),
+                        Some(&Value::Entity {
+                            ty: "T::User".to_string(),
+                            id: expected.to_string()
+                        }),
+                        "{spelling} should preserve existing escape behavior"
+                    );
+                }
+                other => panic!("expected input object, got {other:?}"),
+            }
         }
     }
 

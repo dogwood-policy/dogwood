@@ -1,0 +1,19 @@
+// An aggregate as a `formerly` anchor's WHOLE body - no event conjunct
+// beside it. The count is evaluated at each candidate anchor with its own
+// window: at the anchor @4 no Login precedes within 1h, so `count == 0`
+// holds there (a count over an empty window is 0), and the decision @3601
+// allows through that anchor even though a Login (@3500) sits inside every
+// window measured from the decision itself.
+
+permit ( principal, action == Drupe::Action::"Alert", resource )
+when temporal {
+  formerly within 2h (
+    exists (n: Long). (
+      (count for (t: Timepoint).
+         where (formerly within 1h (
+           Drupe::Action::"Login"::request{ input.server: context.input.server } && tp(t)
+         ))
+      ) == n && n == 0
+    )
+  )
+};

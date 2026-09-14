@@ -1,0 +1,8 @@
+namespace Escaped {
+    entity User;
+    entity Doc;
+    action "a\"b" appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { present: String } }
+    };
+}

@@ -1,0 +1,20 @@
+// An outer `since` guard composed with an inner `formerly`: the guard
+// (no Login) is evaluated from the outer anchor t1 up to the decision, so
+// Login@3550 disqualifies the early Read anchor from then on - while the
+// surviving anchors' inner windows still reach Write@0 only when measured
+// from t1. Exactly one pair survives at each allowing decision.
+
+permit ( principal, action == Drupe::Action::"Read", resource )
+when temporal {
+  exists (n: Long). (
+    (count for (t1: Timepoint), (t2: Timepoint).
+       where (!Drupe::Action::"Login"::request{ input.user: context.input.user }
+                since within 2h
+              (Drupe::Action::"Read"::request{ input.user: context.input.user }
+                 && tp(t1)
+                 && formerly within 1h (
+                      Drupe::Action::"Write"::request{ input.user: context.input.user } && tp(t2)
+                    ))))
+    == n && n == 1
+  )
+};

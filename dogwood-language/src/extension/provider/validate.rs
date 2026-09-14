@@ -484,9 +484,10 @@ fn check_one_field_path(
 
 /// Render an action reference as its predicate form for a diagnostic.
 fn action_display(action: &ActionRef) -> String {
+    let id = cedar_policy_core::ast::Eid::new(action.id.as_str()).escaped();
     match &action.namespace {
-        Some(ns) => format!("{ns}::Action::\"{}\"", action.id),
-        None => format!("Action::\"{}\"", action.id),
+        Some(ns) => format!("{ns}::Action::\"{id}\""),
+        None => format!("Action::\"{id}\""),
     }
 }
 

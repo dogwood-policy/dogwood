@@ -1,0 +1,13 @@
+namespace Escaped {
+    entity User;
+    entity Doc;
+    entity Mode enum ["read", "write"];
+    action "Gate" appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { mode: Mode } }
+    };
+    action "u\u{0_1_2_3}" appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { mode: Mode } }
+    };
+}

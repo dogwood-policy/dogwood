@@ -1,0 +1,22 @@
+// One timepoint binder shared by TWO sibling nested windows under the
+// same outer anchor: t must satisfy BOTH inner constraints, so the
+// sibling windows intersect on the binder instead of forming a cross
+// product. All four Confirms carry amount 7 and match both sides - the
+// count is 4, each binding individually preserved.
+
+permit ( principal, action == Drupe::Action::"Transfer", resource )
+when temporal {
+  exists (n: Long). (
+    (count for (t: Timepoint).
+       where (formerly within 2h (
+         Drupe::Action::"Transfer"::request{ input.user: context.input.user }
+         && formerly within 1h (
+              Drupe::Action::"Confirm"::request{ input.user: context.input.user } && tp(t)
+            )
+         && formerly within 1h (
+              Drupe::Action::"Confirm"::request{ input.amount: 7 } && tp(t)
+            )
+       ))
+    ) == n && n == 4
+  )
+};

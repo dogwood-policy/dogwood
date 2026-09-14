@@ -1317,6 +1317,33 @@ fn membership_event(parents: &[&str]) -> Event {
 }
 
 #[test]
+fn entity_uids_enumerate_scope_auxiliary_and_parent_only_records() {
+    let event = Event::builder("Svc::Action::Read", "request")
+        .principal_for("Svc::User", "alice")
+        .entity_for(
+            "Svc::User",
+            "alice",
+            [("dept", Value::String("eng".to_string()))],
+        )
+        .entity_for(
+            "Svc::Group",
+            "disconnected",
+            [("label", Value::String("auxiliary".to_string()))],
+        )
+        .parents_for("Svc::Group", "parent-only", [("Svc::Group", "root")])
+        .build();
+
+    assert_eq!(
+        event.entity_uids().collect::<Vec<_>>(),
+        vec![
+            "Svc::Group::\"disconnected\"",
+            "Svc::Group::\"parent-only\"",
+            "Svc::User::\"alice\"",
+        ]
+    );
+}
+
+#[test]
 fn principal_in_group_allows_when_member() {
     // `alice in [admins]` → the `principal in Group::"admins"` scope matches.
     let (decision, errs) = decide_group(

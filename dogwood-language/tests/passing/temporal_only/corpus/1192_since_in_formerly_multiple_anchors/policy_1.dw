@@ -1,0 +1,20 @@
+// The since-in-formerly composition with MULTIPLE inner anchors: the
+// outer Read anchor at 4 pairs with all four Writes (its inner window
+// reaches 0..3), and the decision's own anchor at 3601 pairs with the
+// three Writes still inside its window - 4 + 3 = 7 pairs at the final
+// decision.
+
+permit ( principal, action == Drupe::Action::"Read", resource )
+when temporal {
+  exists (n: Long). (
+    (count for (d: String), (t1: Timepoint), (t2: Timepoint).
+       where (formerly within 2h (
+         Drupe::Action::"Read"::request{ input.user: context.input.user, input.document: d }
+         && tp(t1)
+         && (!Drupe::Action::"Login"::request{ input.user: context.input.user }
+               since within 1h
+             (Drupe::Action::"Write"::request{ input.user: context.input.user, input.document: d } && tp(t2)))
+       ))
+    ) == n && n == 7
+  )
+};

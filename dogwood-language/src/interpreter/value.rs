@@ -79,7 +79,7 @@ impl Value {
 /// comparison would be absurd. The reproduction is not trusted on inspection:
 /// `tests/decimal_equality_matches_cedar.rs` asks Cedar's own constructor for its
 /// verdict on each case and requires this to agree.
-fn cedar_decimal_value(s: &str) -> Option<i64> {
+pub(crate) fn cedar_decimal_value(s: &str) -> Option<i64> {
     const NUM_DIGITS: u32 = 4;
 
     // A point is required, with digits on both sides.
@@ -434,6 +434,22 @@ impl Event {
         self.ts
     }
 
+    /// Convert this complete event back into an [`EventBuilder`] without
+    /// changing any of its contents.
+    ///
+    /// This is the forwarding/replay counterpart of [`EventBuilder::build`].
+    /// It preserves the timestamp, request scope, logged temporal fields,
+    /// request-only context, and complete entity store. A downstream owner of
+    /// timestamp assignment can then apply [`EventBuilder::timestamp`] before
+    /// rebuilding the event.
+    pub fn into_builder(self) -> EventBuilder {
+        EventBuilder {
+            ts: self.ts,
+            scope: self.scope,
+            event: self.event,
+        }
+    }
+
     /// The request principal entity uid (e.g. `Drupe::OAuthUser::"alice"`),
     /// if this event wraps a request. `None` for a history-only event with no
     /// scope. A custom [`TemporalEngine`](crate::TemporalEngine) or
@@ -581,6 +597,19 @@ impl Event {
             .unwrap_or(&[])
     }
 
+    /// Every entity uid for which the caller supplied an entity record, in
+    /// canonical key order.
+    ///
+    /// This enumerates the complete decision-time entity store, not only the
+    /// scope principal/resource. A persistence or forwarding implementation
+    /// combines each uid with [`entity_attributes`](Event::entity_attributes)
+    /// and [`entity_parents`](Event::entity_parents) to reproduce the event
+    /// without dropping auxiliary entities referenced by membership edges or
+    /// policy literals.
+    pub fn entity_uids(&self) -> impl Iterator<Item = &str> {
+        self.event.entities.keys().map(String::as_str)
+    }
+
     /// Resolve an entity **attribute path** off a scope entity — the temporal
     /// analog of a Cedar `principal.<attr>` / `resource.<attr>` read. `root`
     /// must be `"principal"` or `"resource"`; `attrs` is the attribute tail
@@ -718,6 +747,22 @@ impl EventBuilder {
             .logged
             .insert("callerResource".to_string(), value.clone());
         self.scope.resource = Some(value);
+        self
+    }
+
+    /// Set one complete top-level field of the **logged temporal record**.
+    ///
+    /// Use this for schema fields that are not grouped records, such as the
+    /// request/response convention's top-level `requestId` and `sessionId`.
+    /// For a member inside a grouped record (`input.user`, `output.result`),
+    /// use [`field`](EventBuilder::field) instead.
+    ///
+    /// This is also the lossless decoding counterpart of
+    /// [`Event::logged_leaves`]: a persistence adapter can reconstruct a
+    /// top-level scalar, array, entity, or complete object without inventing a
+    /// group/member split.
+    pub fn logged_field(mut self, name: &str, value: Value) -> Self {
+        self.event.logged.insert(name.to_string(), value);
         self
     }
 
@@ -872,6 +917,23 @@ impl EventBuilder {
                 id: pid.to_string(),
             });
         }
+        self
+    }
+
+    /// Set one complete top-level field of the Cedar request context.
+    ///
+    /// Use this for context fields that are not grouped records, such as a
+    /// boolean flag, and when an explicit empty object must remain distinct
+    /// from a missing field. For a member inside a grouped record
+    /// (`input.user`), use [`request_context`](EventBuilder::request_context)
+    /// instead.
+    ///
+    /// This is the lossless decoding counterpart of
+    /// [`Event::request_context_groups`]: a persistence adapter can reconstruct
+    /// a top-level scalar, array, entity, or complete object without inventing
+    /// a group/member split.
+    pub fn request_context_field(mut self, name: &str, value: Value) -> Self {
+        self.event.request_context.insert(name.to_string(), value);
         self
     }
 

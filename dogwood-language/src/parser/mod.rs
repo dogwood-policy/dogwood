@@ -582,7 +582,7 @@ fn build_policy(pair: Pair<'_>, dw_src: &std::sync::Arc<str>) -> Result<Policy, 
 
     for child in pair.into_inner() {
         match child.as_rule() {
-            Rule::annotation => annotations.push(build_annotation(child)),
+            Rule::annotation => annotations.push(build_annotation(child)?),
             Rule::effect => {
                 let text = child.as_str();
                 effect = Some(match text {
@@ -613,22 +613,25 @@ fn build_policy(pair: Pair<'_>, dw_src: &std::sync::Arc<str>) -> Result<Policy, 
     })
 }
 
-fn build_annotation(pair: Pair<'_>) -> Annotation {
+fn build_annotation(pair: Pair<'_>) -> Result<Annotation, RawParseError> {
     let mut key = String::new();
     let mut value = None;
     for child in pair.into_inner() {
         match child.as_rule() {
             Rule::any_ident => key = child.as_str().to_string(),
             Rule::string => {
-                // Strip the surrounding double quotes; leave inner
-                // escapes verbatim (semantic decode is not needed here).
-                let raw = child.as_str();
-                value = Some(raw.trim_matches('"').to_string());
+                // Decode the value with Cedar's escaper — the same `decode_string`
+                // every other string literal uses — so an annotation means the
+                // same thing in Dogwood as in Cedar (`@a("x\"y")` is `x"y`, not
+                // the verbatim `x\"y`; an invalid escape is a parse error). This
+                // was `trim_matches('"')` with no decode, which diverged from
+                // Cedar and mis-stored any escape-bearing value.
+                value = Some(decode_string(child.as_str(), span_of(&child))?);
             }
             _ => {}
         }
     }
-    Annotation { key, value }
+    Ok(Annotation { key, value })
 }
 
 // =========================================================================

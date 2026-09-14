@@ -1,0 +1,20 @@
+// An aggregate nested inside a `formerly` with MULTIPLE candidate anchors
+// carrying different counts: at the anchor @4 the count is 3 (Logins
+// @0,1,2); at the anchor @3600 it is 2 (Login@0 has aged out of that
+// anchor's window). Requiring count == 3 is satisfiable only through the
+// early anchor - the per-anchor evaluation must not blur the anchors
+// together.
+
+permit ( principal, action == Drupe::Action::"Alert", resource )
+when temporal {
+  formerly within 2h (
+    Drupe::Action::"Transfer"::request{ input.user: context.input.server }
+    && exists (n: Long). (
+         (count for (t: Timepoint).
+            where (formerly within 1h (
+              Drupe::Action::"Login"::request{ input.server: context.input.server } && tp(t)
+            ))
+         ) == n && n == 3
+       )
+  )
+};

@@ -1,0 +1,14 @@
+namespace Escaped {
+    entity User;
+    entity Doc;
+    entity Mode enum ["a\"b"];
+
+    action "Access" appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { mode: Mode } }
+    };
+    action "Check" appliesTo {
+        principal: [User], resource: [Doc],
+        context: { input: { mode: Mode } }
+    };
+}

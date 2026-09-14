@@ -524,6 +524,33 @@ impl Temporal {
 
 A custom engine reads `TemporalField::condition` to decide what to evaluate; the in-memory engine interprets it directly. `Temporal` is re-exported so a custom engine can name the type, and its inner `condition` AST is public via `dogwood_language::temporal_ast` to walk.
 
+#### Slicing a decision's temporal work
+
+`DecisionLeafMap` answers one question — **which temporal leaves can this decision read?** — **once per policy set** rather than once per decision. A leaf outside the answer is read by no applicable rule, so its condition is never evaluated and reporting it `false` cannot change the decision:
+
+```rust
+pub struct DecisionLeafMap { /* … */ }
+
+impl DecisionLeafMap {
+    pub fn build(leaves: &[TemporalField], schema: &cedar_policy::Schema) -> Self;
+    pub fn needed_for(&self, event: &Event) -> Option<Arc<BTreeSet<ExtensionId>>>; // None => compute every leaf
+    pub fn entry_count(&self) -> usize;                         // precomputed entries; a diagnostic, implementation-level
+    pub fn unresolved(&self) -> &[(ExtensionId, &'static str)]; // leaves computed unconditionally, with the reason
+}
+
+impl LoweredPolicySet {
+    pub fn leaf_map(&self) -> DecisionLeafMap; // the same map, for a caller holding the lowered set
+}
+```
+
+`build`'s arguments are exactly `prepare`'s, so a backend builds the map there — which is also its rebuild point when the policy set changes — and probes it in `evaluate` with the decision event. Three rules are the whole contract:
+
+- **`None`, and any miss, means "compute every leaf."** There is no "needs nothing" answer to confuse a miss with: a decision that can read no leaf has an entry that is present and *empty*. A leaf the map could not place is folded into every entry and reported by `unresolved()`.
+- **Bind a boolean for every installed leaf regardless** — the skipped ones `false`. An absent leaf leaves `context.<id>` missing, which Cedar reports as an evaluation error rather than as `false`.
+- **The answer may only shrink across versions.** Slicing may get finer — fewer leaves returned for the same event — but never coarser. Both calls are shaped for that: `build` takes a whole policy set, `needed_for` takes a whole `Event`, and a miss is always safe, so a consuming backend needs no code change when the slicing narrows. Do not infer the slicing's extent from anything but `needed_for`'s answer.
+
+Implementation note, not part of the contract: the map is currently keyed by the **request's action** alone — a policy whose `action` scope does not match the request is not applicable, and which leaves that excludes depends only on the action, known before any event arrives. It therefore ignores `principal` / `resource` scope constraints (every rule is treated as applying to every principal and resource), which can only add leaves to an answer, never remove one; a bare `action` scope, a scope that resolves to no concrete action, an undeclared request action, and an action group arriving as one all fall back to computing everything. Cedar's own entity manifest slices by (principal type, action, resource type), and this map may follow — which is why `entry_count()` is a diagnostic and not a promise.
+
 The practical recipe for swapping either backend:
 
 - **Swap the decision backend** (any Cedar-based store): implement `PolicyEngine` and pass it to `Authorizer::builder(policies).policy_engine(...)`. `PolicySet::as_cedar()` / `cedar_schema()` give you the Cedar policies and schema to load into the store.

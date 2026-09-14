@@ -1,0 +1,20 @@
+// A `since` nested inside a `formerly`, with a shared data variable and a
+// timepoint binder at each level. The pair (doc1, t1=4, t2=0) exists only
+// because the inner since's window is measured from the outer anchor at 4:
+// at the decision @3601 the Write@0 anchor is out of reach of any window
+// measured from the decision itself. Count 1 at every decision.
+
+permit ( principal, action == Drupe::Action::"Read", resource )
+when temporal {
+  exists (n: Long). (
+    (count for (d: String), (t1: Timepoint), (t2: Timepoint).
+       where (formerly within 2h (
+         Drupe::Action::"Read"::request{ input.user: context.input.user, input.document: d }
+         && tp(t1)
+         && (!Drupe::Action::"Login"::request{ input.user: context.input.user }
+               since within 1h
+             (Drupe::Action::"Write"::request{ input.user: context.input.user, input.document: d } && tp(t2)))
+       ))
+    ) == n && n == 1
+  )
+};

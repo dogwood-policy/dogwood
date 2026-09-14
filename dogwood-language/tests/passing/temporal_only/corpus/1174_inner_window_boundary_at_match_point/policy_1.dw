@@ -1,0 +1,20 @@
+// Inner window boundary is inclusive and measured from the match point:
+// the pair (t1=3600, t2=0) sits exactly at t1 - t2 = 1h, so it counts.
+// The count is 1 at both Transfer decisions - including the one at 3601,
+// where Confirm@0 is already outside any window measured from the decision
+// itself.
+
+permit ( principal, action == Drupe::Action::"Transfer", resource )
+when temporal {
+  exists (n: Long). (
+    (count for (t1: Timepoint), (t2: Timepoint).
+       where (formerly within 1h (
+         Drupe::Action::"Transfer"::request{ input.user: context.input.user }
+         && tp(t1)
+         && formerly within 1h (
+              Drupe::Action::"Confirm"::request{ input.user: context.input.user } && tp(t2)
+            )
+       ))
+    ) == n && n == 1
+  )
+};

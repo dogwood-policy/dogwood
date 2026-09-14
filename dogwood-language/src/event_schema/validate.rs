@@ -72,10 +72,11 @@ fn validate_predicate(
 
     let Some(event) = schema.get(&p.namespace, &p.action, &p.kind) else {
         let head = qualified_head(&p.namespace, &p.action, &p.kind);
+        let action = cedar_policy_core::ast::Eid::new(p.action.as_str()).escaped();
         return Err(format!(
             "predicate `{head}` does not name a declared event \
              (no event kind `{}` derived for action `{}`)",
-            p.kind, p.action
+            p.kind, action
         ));
     };
     for arg in &p.args {
@@ -111,6 +112,7 @@ fn validate_predicate(
 /// Render a predicate head for error messages, e.g.
 /// `Drupe::Action::"Login"::request`.
 fn qualified_head(namespace: &[String], action: &str, kind: &str) -> String {
+    let action = cedar_policy_core::ast::Eid::new(action).escaped();
     if namespace.is_empty() {
         format!("\"{action}\"::{kind}")
     } else {
@@ -163,6 +165,76 @@ mod tests {
     fn check(body: &str) -> Result<(), String> {
         let cond = parse_condition(body).expect("parses");
         validate_condition(&cond, &derived())
+    }
+
+    fn check_action(action_source: &str, kind: &str, args: &str) -> Result<(), String> {
+        let action_schema = ACTION_SCHEMA.replacen(
+            r#"action "Login""#,
+            &format!(r#"action "{action_source}""#),
+            1,
+        );
+        let dsl = parse_event_schema(RR_SCHEMA).unwrap();
+        let derived = derive(&dsl, &action_schema).unwrap();
+        let cond = parse_condition(&format!(
+            r#"Drupe::Action::"{action_source}"::{kind}{{{args}}}"#
+        ))
+        .expect("predicate parses");
+        validate_condition(&cond, &derived)
+    }
+
+    fn cedar_event_head(action_source: &str, kind: &str) -> (String, String) {
+        let uid: cedar_policy_core::ast::EntityUID = format!(r#"Drupe::Action::"{action_source}""#)
+            .parse()
+            .expect("Cedar action UID parses");
+        (format!("{uid}::{kind}"), uid.eid().escaped().to_string())
+    }
+
+    #[test]
+    fn escaped_action_diagnostic_heads_match_cedar_uid_display() {
+        for action_source in [
+            r#"a\"b"#,
+            r#"a\\b"#,
+            r#"\u{e}"#,
+            r#"u\u{0_1_2_3}"#,
+            r#"\\u{e}"#,
+        ] {
+            let (head, _) = cedar_event_head(action_source, "request");
+            let error = check_action(action_source, "request", "input.missing: x")
+                .expect_err("missing field should be rejected");
+            assert_eq!(
+                error,
+                format!(
+                    "predicate `{head}` mentions field `input.missing`, which is not declared on \
+                     that event (declared fields: callerPrincipal, callerResource, input.server, \
+                     input.user, requestId)"
+                ),
+                "action source {action_source:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn every_event_schema_error_path_uses_cedar_action_escaping() {
+        let action_source = r#"a\"b"#;
+        let (request_head, _) = cedar_event_head(action_source, "request");
+        assert_eq!(
+            check_action(action_source, "request", "input: x")
+                .expect_err("field group should be rejected"),
+            format!(
+                "predicate `{request_head}` mentions `input`, which is a field group, not a field; \
+                 address a field inside it (e.g. `input.<field>`)"
+            )
+        );
+
+        let (missing_head, escaped_id) = cedar_event_head(action_source, "missing");
+        assert_eq!(
+            check_action(action_source, "missing", "")
+                .expect_err("missing event kind should be rejected"),
+            format!(
+                "predicate `{missing_head}` does not name a declared event \
+                 (no event kind `missing` derived for action `{escaped_id}`)"
+            )
+        );
     }
 
     #[test]

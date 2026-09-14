@@ -231,6 +231,20 @@ itself is stateless between the engines. A failure from either backend
 (a compile error at build time, an unreachable database at decision time)
 fails the affected decision closed.
 
+Any backend can also **slice** its per-decision work with [`DecisionLeafMap`],
+which answers one question: *which temporal leaves can this decision read?* A
+leaf outside that answer is read by no applicable rule, so reporting it `false`
+cannot change the decision — and the question is answered once per policy set
+rather than once per decision. Build the map in `prepare` from the same `leaves`
+and `schema` ([`DecisionLeafMap::build`]), probe it in `evaluate` with the
+decision's event ([`needed_for`](DecisionLeafMap::needed_for)), and bind every
+installed leaf — the skipped ones `false`.
+
+Two properties make it safe to consume: **any miss means compute every leaf**
+(there is no "needs nothing" answer), and **the answer may only shrink across
+versions** — the slicing may get finer, never coarser, so a backend needs no
+change when it does. Today the map is keyed by the request's action.
+
 The two seams are independent — replace one, the other, or both.
 
 ## Writing policies over history and computed values

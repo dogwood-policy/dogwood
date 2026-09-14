@@ -1,0 +1,21 @@
+// A `since` nested inside a `formerly`: the guard (no Login) must hold on
+// the interval from the inner anchor t2 up to the OUTER match point t1 -
+// not up to the decision. Login@100 breaks the guard for outer anchors at
+// or after 100 (killing the early Write anchors there) but NOT for the
+// anchor at 4, which still pairs with Writes {0,1,2}. Pairs: t1=4:{0,1,2},
+// t1=3600:{200}, t1=3601:{200} - 5 at the final decision.
+
+permit ( principal, action == Drupe::Action::"Read", resource )
+when temporal {
+  exists (n: Long). (
+    (count for (t1: Timepoint), (t2: Timepoint).
+       where (formerly within 2h (
+         Drupe::Action::"Read"::request{ input.user: context.input.user }
+         && tp(t1)
+         && (!Drupe::Action::"Login"::request{ input.user: context.input.user }
+               since within 1h
+             (Drupe::Action::"Write"::request{ input.user: context.input.user } && tp(t2)))
+       ))
+    ) == n && n == 5
+  )
+};

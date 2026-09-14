@@ -1,0 +1,20 @@
+// Outer anchors whose inner window is EMPTY contribute zero pairs without
+// corrupting the total, and the outer window boundary is inclusive: at the
+// decision @3604 the anchor at 4 sits exactly at the 1h boundary and still
+// contributes its single pair (4, 0). The anchors at 3603 and 3604 have no
+// Confirm in reach - the count stays 1 at every decision.
+
+permit ( principal, action == Drupe::Action::"Transfer", resource )
+when temporal {
+  exists (n: Long). (
+    (count for (t1: Timepoint), (t2: Timepoint).
+       where (formerly within 1h (
+         Drupe::Action::"Transfer"::request{ input.user: context.input.user }
+         && tp(t1)
+         && formerly within 1h (
+              Drupe::Action::"Confirm"::request{ input.user: context.input.user } && tp(t2)
+            )
+       ))
+    ) == n && n == 1
+  )
+};

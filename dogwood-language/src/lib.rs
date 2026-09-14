@@ -8,6 +8,7 @@
 // home; reach their contents through the crate-root re-exports.
 pub mod authorize;
 pub mod engine;
+pub mod leaf_map;
 pub mod policy_schema;
 pub mod policy_set;
 pub mod policy_view;
@@ -37,6 +38,7 @@ pub(crate) mod extension;
 pub(crate) mod interpreter;
 pub(crate) mod macros;
 pub(crate) mod parser;
+pub(crate) mod render;
 pub(crate) mod schema;
 pub(crate) mod validate;
 
@@ -122,7 +124,12 @@ pub use crate::engine::{
     ActionRef, ActionScope, AuthorizationDecision, AuthorizationRequest, CedarPolicyEngine,
     ExtensionId, InMemoryTemporalEngine, PartitionKey, PolicyEngine, ProviderRequest,
     ProviderResolver, Temporal, TemporalBindings, TemporalEngine, TemporalField,
+    partition_value_key,
 };
+
+/// Precomputed temporal leaves needed by a decision. See
+/// [`crate::leaf_map`] for the backend contract and conservative fallbacks.
+pub use crate::leaf_map::DecisionLeafMap;
 
 /// The parsed temporal condition AST — the tree hanging off every
 /// [`TemporalField::condition`](crate::TemporalField). Re-exported **primarily
