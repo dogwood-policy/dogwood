@@ -5,7 +5,11 @@ edition = "2024"
 publish.workspace = true
 description = "The Dogwood surface language: parser, validator, interpreter, and the per-request authorizer. The single published front door; implementation modules are crate-private."
 license = "Apache-2.0"
-exclude = ["/build", "/Config", "/build-tools/"]
+repository = "https://github.com/dogwood-policy/dogwood"
+homepage = "https://dogwood-policy.github.io/dogwood/"
+documentation = "https://dogwood-policy.github.io/dogwood/"
+readme = "README.md"
+exclude = ["/tools/"]
 
 # In-source crate identifier `dogwood_language` (the published crate is
 # `dogwood-language`). The whole frontend lives in this one crate as
