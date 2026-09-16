@@ -9,7 +9,12 @@ repository = "https://github.com/dogwood-policy/dogwood"
 homepage = "https://dogwood-policy.github.io/dogwood/"
 documentation = "https://dogwood-policy.github.io/dogwood/"
 readme = "README.md"
-exclude = ["/tools/"]
+exclude = [
+    "/tools/",
+    # The Cedar fuzz suite is an internal regression input, not part of the
+    # reusable corpus feature, and exceeds crates.io's 30,000-file limit.
+    "/tests/passing/cedar_only/corpus_fuzz/",
+]
 
 # In-source crate identifier `dogwood_language` (the published crate is
 # `dogwood-language`). The whole frontend lives in this one crate as
