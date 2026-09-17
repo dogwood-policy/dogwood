@@ -843,7 +843,17 @@ fn expand_temporal_condition(
             expand_temporal_condition(left, registry)?;
             expand_temporal_condition(right, registry)
         }
-        ConditionKind::Predicate(_) | ConditionKind::Tp { .. } => Ok(()),
+        // A predicate's arg values may carry a stray macro sigil
+        // (`P{f: ?x}` / `P{f: $t}`) if a macro leaked one; reject here,
+        // like in the exists case.
+        ConditionKind::Predicate(p) => {
+            for arg in &p.args {
+                check_concrete_term(&arg.value, c.span)?;
+            }
+            Ok(())
+        }
+        // `tp(?x)` / `tp($t)` — the timepoint binder may be a stray sigil.
+        ConditionKind::Tp { var } => check_concrete_slot(var, c.span),
         // A comparison operand may be an aggregate that is itself a macro
         // call (`(sum_formerly(…)) == n`) or wraps a macro body; expand
         // each operand.
@@ -851,7 +861,10 @@ fn expand_temporal_condition(
             expand_temporal_operand(left, registry)?;
             expand_temporal_operand(right, registry)
         }
-        ConditionKind::Exists { body, .. } => expand_temporal_condition(body, registry),
+        ConditionKind::Exists { var, body } => {
+            check_concrete_slot(&var.slot, c.span)?;
+            expand_temporal_condition(body, registry)
+        }
         ConditionKind::Call(call) => {
             // Recursively expand args first.
             let call = std::mem::replace(
@@ -986,6 +999,37 @@ fn check_concrete_slot(s: &BinderSlot, span: Span) -> Result<(), RawMacroError> 
             ),
             span,
         )),
+    }
+}
+
+/// Reject a stray macro sigil (`?p` / `$t`) in a predicate-argument term
+/// position outside a macro body, exactly as [`check_concrete_slot`] does
+/// for binder positions and [`check_concrete_within`] for `within`
+/// positions. Recurses into arrays so a sigil nested inside `[?x]` is
+/// caught too. Any other term carries no macro reference.
+fn check_concrete_term(t: &Term, span: Span) -> Result<(), RawMacroError> {
+    match t {
+        Term::ParamRef(p) => Err(err(
+            format!(
+                "stray macro parameter reference `?{p}` in a predicate-argument position \
+                 outside a macro body"
+            ),
+            span,
+        )),
+        Term::BinderRef(b) => Err(err(
+            format!(
+                "stray macro binder reference `${b}` in a predicate-argument position \
+                 outside a macro body"
+            ),
+            span,
+        )),
+        Term::Array(items) => {
+            for it in items {
+                check_concrete_term(it, span)?;
+            }
+            Ok(())
+        }
+        _ => Ok(()),
     }
 }
 
@@ -2229,6 +2273,185 @@ mod tests {
             e.message.contains("stray macro binder reference `$t`"),
             "expected `$`-spelled stray-binder message, got: {e}"
         );
+    }
+
+    // ─── tests for stray sigils in predicate-argument, tp, and exists binder positions 
+
+    #[test]
+    fn temporal_with_tp_param_ref_rejected() {
+        // A temporal condition `tp(?t)` should be rejected by expansion. We
+        // assert only that expansion fails (via `must_fail`, which panics on
+        // unexpected success), not the specific error message text.
+        let e = must_fail(
+            r#"
+                permit (
+                    principal,
+                    action == Drupe::Action::"Login",
+                    resource
+                )
+                when temporal {
+                    tp(?t)
+                };
+            "#,
+        );
+        assert!(!e.message.is_empty(), "rejection must carry a diagnostic");
+    }
+
+    #[test]
+    fn stray_param_ref_in_predicate_arg_rejected() {
+        // Stray macro parameter reference `?x` in a predicate argument must be rejected by expansion.
+        let e = must_fail(
+            r#"
+                permit (principal, action, resource)
+                when temporal {
+                    formerly within 1h Drupe::Action::"Login"::request{ user: ?x }
+                };
+            "#,
+        );
+        assert!(
+            e.message.contains("stray macro parameter reference `?x`")
+                && e.message.contains("predicate-argument position"),
+            "expected predicate-argument stray-param message, got: {e}"
+        );
+    }
+
+    #[test]
+    fn stray_binder_ref_in_predicate_arg_rejected() {
+        // Stray macro binder reference `$t` in a predicate argument value position 
+        // must be rejected by expansion.
+        let e = must_fail(
+            r#"
+                permit (principal, action, resource)
+                when temporal {
+                    formerly within 1h Drupe::Action::"Login"::request{ user: $t }
+                };
+            "#,
+        );
+        assert!(
+            e.message.contains("stray macro binder reference `$t`")
+                && e.message.contains("predicate-argument position"),
+            "expected predicate-argument stray-binder message, got: {e}"
+        );
+    }
+
+    #[test]
+    fn stray_param_ref_nested_in_array_predicate_arg_rejected() {
+        // The `check_concrete_term` recursion into `Term::Array`: a sigil
+        // nested inside an array literal `[ ?x ]` in a predicate-argument
+        // position must still be caught, not just a top-level sigil.
+        let e = must_fail(
+            r#"
+                permit (principal, action, resource)
+                when temporal {
+                    formerly within 1h Drupe::Action::"Login"::request{ roles: [ ?x ] }
+                };
+            "#,
+        );
+        assert!(
+            e.message.contains("stray macro parameter reference `?x`")
+                && e.message.contains("predicate-argument position"),
+            "expected array-nested predicate-argument stray-param message, got: {e}"
+        );
+    }
+
+    #[test]
+    fn stray_param_ref_in_tp_binder_rejected() {
+        // Stray macro parameter reference in a timepoint binder `tp(?t)` must be rejected by expansion.
+        let e = must_fail(
+            r#"
+                permit (principal, action, resource)
+                when temporal {
+                    formerly within 1h (Drupe::Action::"Login"::request{} && tp(?t))
+                };
+            "#,
+        );
+        assert!(
+            e.message.contains("stray macro parameter reference `?t`")
+                && e.message.contains("binder position"),
+            "expected tp-binder stray-param message, got: {e}"
+        );
+    }
+
+    #[test]
+    fn stray_binder_ref_in_tp_binder_rejected() {
+        // Stray macro binder reference `tp($t)` must be rejected by expansion.
+        let e = must_fail(
+            r#"
+                permit (principal, action, resource)
+                when temporal {
+                    formerly within 1h (Drupe::Action::"Login"::request{} && tp($t))
+                };
+            "#,
+        );
+        assert!(
+            e.message.contains("stray macro binder reference `$t`")
+                && e.message.contains("binder position"),
+            "expected tp-binder stray-binder message, got: {e}"
+        );
+    }
+
+    #[test]
+    fn concrete_predicate_and_tp_still_expand() {
+        // The predicate-argument and `tp(…)` binder
+        // positions with fully concrete terms (no sigils) must continue to
+        // expand cleanly.
+        let ps = must_expand(
+            r#"
+                permit (principal, action, resource)
+                when temporal {
+                    exists (t: Timepoint). (Drupe::Action::"Login"::request{ user: principal } && tp(t))
+                };
+            "#,
+        );
+        let cond = temporal_cond(&ps);
+        assert!(no_macro_residue_in_condition(cond), "no macro residue");
+    }
+
+    #[test]
+    fn stray_param_ref_in_exists_binder_rejected() {
+        // An exists binder slot with a stray macro parameter reference 
+        // must be rejected by expansion.
+        let e = must_fail(
+            r#"
+                permit (principal, action, resource)
+                when temporal {
+                    exists (?x: Timepoint). tp(?x)
+                };
+            "#,
+        );
+        assert!(!e.message.is_empty(), "rejection must carry a diagnostic");
+    }
+
+    #[test]
+    fn stray_binder_ref_in_exists_binder_rejected() {
+        // An exists binder slot with a stray macro binder
+        // reference should be rejected by expansion.
+        let e = must_fail(
+            r#"
+                permit (principal, action, resource)
+                when temporal {
+                    exists ($t: Timepoint). tp($t)
+                };
+            "#,
+        );
+        assert!(!e.message.is_empty(), "rejection must carry a diagnostic");
+    }
+
+    #[test]
+    fn concrete_exists_binder_still_expands() {
+        // a concrete (named) binder slot must continue to expand cleanly.
+        // This proves the new `check_concrete_slot(&var.slot, …)` guard fires on
+        // the stray sigil specifically.
+        let ps = must_expand(
+            r#"
+                permit (principal, action, resource)
+                when temporal {
+                    exists (t: Timepoint). (Drupe::Action::"Login"::request{ user: principal } && tp(t))
+                };
+            "#,
+        );
+        let cond = temporal_cond(&ps);
+        assert!(no_macro_residue_in_condition(cond), "no macro residue");
     }
 
     // ─── Helpers ────────────────────────────────────────────────────

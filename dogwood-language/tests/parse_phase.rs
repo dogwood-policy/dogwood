@@ -18,12 +18,23 @@ use dogwood_language::{Error, ParsedPolicySet, PolicySchema, ServiceSchema, Vali
 const SCHEMA: &str = r#"
 namespace Drupe {
   type ReadInput = { user: String };
+  type TransferInput = {
+    amount: Long,
+    user: String
+  };
   entity Gateway;
   entity OAuthUser = { id: String } tags String;
   action "Read" appliesTo {
     principal: [OAuthUser],
     resource: [Gateway],
     context: { input: ReadInput }
+  };
+  action "Transfer" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: TransferInput
+    }
   };
 }
 "#;
@@ -79,6 +90,660 @@ fn unknown_macro_call_fails_fast_at_parse() {
         Err(e) => panic!("expected a macro-resolution error, got: {e}"),
         Ok(_) => panic!("an unknown macro call must be rejected at parse"),
     }
+}
+
+#[test]
+fn valid_temporal_exists_expression_parses_lowers_validates() {
+    let src = r#"permit( principal, action, resource )
+                when temporal { exists (p: Long). (p == 5) };"#;
+    let policy_schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("action schema");
+    let parsed = ParsedPolicySet::parse(src, &service()).expect("valid source parses");
+    let lowered = parsed.lower(&policy_schema).expect("parsed set lowers");
+    assert!(Validator::new().validate(&lowered).validation_passed());
+}
+
+#[test]
+fn stray_macro_sigil_binder_in_temporal_exists_binder_fails_gracefully_no_panic() {
+    // A stray macro-sigil binder in the binder of a temporal exists expression should not cause a panic
+    // and should be gracefully rejected with an error at some phase, 
+    // either during parsing, lowering, or validation.
+    let src = r#"permit( principal, action, resource )
+                when temporal { exists (?p: Long). (p == 5) };"#;
+    let policy_schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("action schema");
+
+    let rejected = match ParsedPolicySet::parse(src, &service()) {
+        // Rejected at parse.
+        Err(_) => true,
+        Ok(parsed) => { 
+            match parsed.lower(&policy_schema) {
+                // Rejected at lowering.
+                Err(_) => true,
+                // Otherwise, rejected at validation.
+                Ok(lowered) => !Validator::new().validate(&lowered).validation_passed(),
+            }
+        }
+    };
+    assert!(
+        rejected,
+        "a macro-sigil binder outside a macro body must be rejected \
+         gracefully during parsing, lowering, or validation"
+    );
+}
+
+#[test]
+fn stray_macro_sigil_binder_in_temporal_exists_no_free_variables_fails_gracefully_no_panic() {
+    // A stray macro-sigil binder in the binder of a temporal exists expression should not cause a panic
+    // and should be gracefully rejected with an error at some phase, 
+    // either during parsing, lowering, or validation.
+    let src = r#"permit( principal, action, resource )
+                when temporal { exists (?p: Long). (1 == 1) };"#;
+    let policy_schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("action schema");
+
+    let rejected = match ParsedPolicySet::parse(src, &service()) {
+        // Rejected at parse.
+        Err(_) => true,
+        Ok(parsed) => { 
+            match parsed.lower(&policy_schema) {
+                // Rejected at lowering.
+                Err(_) => true,
+                // Otherwise, rejected at validation.
+                Ok(lowered) => !Validator::new().validate(&lowered).validation_passed(),
+            }
+        }
+    };
+    assert!(
+        rejected,
+        "a macro-sigil binder outside a macro body must be rejected \
+         gracefully during parsing, lowering, or validation"
+    );
+}
+
+#[test]
+fn stray_macro_sigil_binder_in_temporal_exists_body_fails_gracefully_no_panic() {
+    // A stray macro-sigil binder in the body of a temporal exists expression should not cause a panic
+    // and should be gracefully rejected with an error at some phase, 
+    // either during parsing, lowering, or validation.
+    let src = r#"permit( principal, action, resource )
+                when temporal { exists (p: Long). (?p == 5) };"#;
+    let policy_schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("action schema");
+
+    let rejected = match ParsedPolicySet::parse(src, &service()) {
+        // Rejected at parse.
+        Err(_) => true,
+        Ok(parsed) => { 
+            match parsed.lower(&policy_schema) {
+                // Rejected at lowering.
+                Err(_) => true,
+                // Otherwise, rejected at validation.
+                Ok(lowered) => !Validator::new().validate(&lowered).validation_passed(),
+            }
+        }
+    };
+    assert!(
+        rejected,
+        "a macro-sigil binder outside a macro body must be rejected \
+         gracefully during parsing, lowering, or validation"
+    );
+}
+
+#[test]
+fn stray_macro_sigil_binder_in_temporal_exists_binder_and_body_fails_gracefully_no_panic() {
+    // A stray macro-sigil binder in the binder and body of a temporal exists expression should not cause a panic
+    // and should be gracefully rejected with an error at some phase, 
+    // either during parsing, lowering, or validation.
+    let src = r#"permit( principal, action, resource )
+                when temporal { exists (?p: Long). (?p == 5) };"#;
+    let policy_schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("action schema");
+
+    let rejected = match ParsedPolicySet::parse(src, &service()) {
+        // Rejected at parse.
+        Err(_) => true,
+        Ok(parsed) => { 
+            match parsed.lower(&policy_schema) {
+                // Rejected at lowering.
+                Err(_) => true,
+                // Otherwise, rejected at validation.
+                Ok(lowered) => !Validator::new().validate(&lowered).validation_passed(),
+            }
+        }
+    };
+    assert!(
+        rejected,
+        "a macro-sigil binder outside a macro body must be rejected \
+         gracefully during parsing, lowering, or validation"
+    );
+}
+
+#[test]
+fn valid_temporal_count_expression_parses_lowers_validates() {
+    let src = r#"permit( principal, action, resource )
+                when temporal { 
+                    count for (t: Timepoint), (id: String). where (
+                        Drupe::Action::"Read"::request{ input.user: id } && id == "alice" && tp(t)
+                    ) >= 2
+                };"#;
+    let policy_schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("action schema");
+    let parsed = ParsedPolicySet::parse(src, &service()).expect("valid source parses");
+    let lowered = parsed.lower(&policy_schema).expect("parsed set lowers");
+    assert!(Validator::new().validate(&lowered).validation_passed());
+}
+
+#[test]
+fn stray_macro_sigil_binder_in_timepoint_in_temporal_count_expression_binder_fails_gracefully_no_panic() {
+    // A stray macro-sigil binder in the timepoint bound variable binder of a temporal count expression should not cause a panic
+    // and should be gracefully rejected with an error at some phase, 
+    // either during parsing, lowering, or validation.
+    let src = r#"permit( principal, action, resource )
+                when temporal { 
+                    count for (?t: Timepoint), (id: String). where (
+                        Drupe::Action::"Read"::request{ input.user: id } && id == "alice" && tp(t)
+                    ) >= 2
+                };"#;
+    let policy_schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("action schema");
+
+    let rejected = match ParsedPolicySet::parse(src, &service()) {
+        // Rejected at parse.
+        Err(_) => true,
+        Ok(parsed) => { 
+            match parsed.lower(&policy_schema) {
+                // Rejected at lowering.
+                Err(_) => true,
+                // Otherwise, rejected at validation.
+                Ok(lowered) => !Validator::new().validate(&lowered).validation_passed(),
+            }
+        }
+    };
+    assert!(
+        rejected,
+        "a macro-sigil binder outside a macro body must be rejected \
+         gracefully during parsing, lowering, or validation"
+    );
+}
+
+#[test]
+fn stray_macro_sigil_binder_in_timepoint_in_temporal_count_expression_body_fails_gracefully_no_panic() {
+    // A stray macro-sigil binder in the timepoint bound variable in the body of a temporal count expression should not cause a panic
+    // and should be gracefully rejected with an error at some phase, 
+    // either during parsing, lowering, or validation.
+    let src = r#"permit( principal, action, resource )
+                when temporal { 
+                    count for (t: Timepoint), (id: String). where (
+                        Drupe::Action::"Read"::request{ input.user: id } && id == "alice" && tp(?t)
+                    ) >= 2
+                };"#;
+    let policy_schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("action schema");
+
+    let rejected = match ParsedPolicySet::parse(src, &service()) {
+        // Rejected at parse.
+        Err(_) => true,
+        Ok(parsed) => { 
+            match parsed.lower(&policy_schema) {
+                // Rejected at lowering.
+                Err(_) => true,
+                // Otherwise, rejected at validation.
+                Ok(lowered) => !Validator::new().validate(&lowered).validation_passed(),
+            }
+        }
+    };
+    assert!(
+        rejected,
+        "a macro-sigil binder outside a macro body must be rejected \
+         gracefully during parsing, lowering, or validation"
+    );
+}
+
+#[test]
+fn stray_macro_sigil_binder_in_timepoint_in_temporal_count_expression_binder_and_body_fails_gracefully_no_panic() {
+    // A stray macro-sigil binder in the timepoint bound variable binder and body of a temporal count expression should not cause a panic
+    // and should be gracefully rejected with an error at some phase, 
+    // either during parsing, lowering, or validation.
+    let src = r#"permit( principal, action, resource )
+                when temporal { 
+                    count for (?t: Timepoint), (id: String). where (
+                        Drupe::Action::"Read"::request{ input.user: id } && id == "alice" && tp(?t)
+                    ) >= 2
+                };"#;
+    let policy_schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("action schema");
+
+    let rejected = match ParsedPolicySet::parse(src, &service()) {
+        // Rejected at parse.
+        Err(_) => true,
+        Ok(parsed) => { 
+            match parsed.lower(&policy_schema) {
+                // Rejected at lowering.
+                Err(_) => true,
+                // Otherwise, rejected at validation.
+                Ok(lowered) => !Validator::new().validate(&lowered).validation_passed(),
+            }
+        }
+    };
+    assert!(
+        rejected,
+        "a macro-sigil binder outside a macro body must be rejected \
+         gracefully during parsing, lowering, or validation"
+    );
+}
+
+#[test]
+fn stray_macro_sigil_binder_in_bound_var_in_temporal_count_expression_binder_fails_gracefully_no_panic() {
+    // A stray macro-sigil binder in the (non-timepoint) bound variable binder of a temporal count expression should not cause a panic
+    // and should be gracefully rejected with an error at some phase, 
+    // either during parsing, lowering, or validation.
+    let src = r#"permit( principal, action, resource )
+                when temporal { 
+                    count for (t: Timepoint), (?id: String). where (
+                        Drupe::Action::"Read"::request{ input.user: id } && id == "alice" && tp(t)
+                    ) >= 2
+                };"#;
+    let policy_schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("action schema");
+
+    let rejected = match ParsedPolicySet::parse(src, &service()) {
+        // Rejected at parse.
+        Err(_) => true,
+        Ok(parsed) => { 
+            match parsed.lower(&policy_schema) {
+                // Rejected at lowering.
+                Err(_) => true,
+                // Otherwise, rejected at validation.
+                Ok(lowered) => !Validator::new().validate(&lowered).validation_passed(),
+            }
+        }
+    };
+    assert!(
+        rejected,
+        "a macro-sigil binder outside a macro body must be rejected \
+         gracefully during parsing, lowering, or validation"
+    );
+}
+
+#[test]
+fn stray_macro_sigil_binder_in_bound_var_in_temporal_count_expression_body_fails_gracefully_no_panic() {
+    // A stray macro-sigil binder in the (non-timepoint) bound variable in the body of a temporal count expression should not cause a panic
+    // and should be gracefully rejected with an error at some phase, 
+    // either during parsing, lowering, or validation.
+    let src = r#"permit( principal, action, resource )
+                when temporal { 
+                    count for (t: Timepoint), (id: String). where (
+                        Drupe::Action::"Read"::request{ input.user: id } && ?id == "alice" && tp(t)
+                    ) >= 2
+                };"#;
+    let policy_schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("action schema");
+
+    let rejected = match ParsedPolicySet::parse(src, &service()) {
+        // Rejected at parse.
+        Err(_) => true,
+        Ok(parsed) => { 
+            match parsed.lower(&policy_schema) {
+                // Rejected at lowering.
+                Err(_) => true,
+                // Otherwise, rejected at validation.
+                Ok(lowered) => !Validator::new().validate(&lowered).validation_passed(),
+            }
+        }
+    };
+    assert!(
+        rejected,
+        "a macro-sigil binder outside a macro body must be rejected \
+         gracefully during parsing, lowering, or validation"
+    );
+}
+
+#[test]
+fn stray_macro_sigil_binder_in_all_bound_var_occurrences_in_temporal_count_expression_fails_gracefully_no_panic() {
+    // A stray macro-sigil binder in all occurrences (binder, projection field variable, and body) of a (non-timepoint) bound variable in a temporal count expression 
+    // should not cause a panic and should be gracefully rejected with an error at some phase, 
+    // either during parsing, lowering, or validation.
+    let src = r#"permit( principal, action, resource )
+                when temporal { 
+                    count for (t: Timepoint), (?id: String). where (
+                        Drupe::Action::"Read"::request{ input.user: ?id } && ?id == "alice" && tp(t)
+                    ) >= 2
+                };"#;
+    let policy_schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("action schema");
+
+    let rejected = match ParsedPolicySet::parse(src, &service()) {
+        // Rejected at parse.
+        Err(_) => true,
+        Ok(parsed) => { 
+            match parsed.lower(&policy_schema) {
+                // Rejected at lowering.
+                Err(_) => true,
+                // Otherwise, rejected at validation.
+                Ok(lowered) => !Validator::new().validate(&lowered).validation_passed(),
+            }
+        }
+    };
+    assert!(
+        rejected,
+        "a macro-sigil binder outside a macro body must be rejected \
+         gracefully during parsing, lowering, or validation"
+    );
+}
+
+#[test]
+fn stray_macro_sigil_binder_in_temporal_count_expression_field_name_fails_gracefully_no_panic() {
+    // A stray macro-sigil binder in a projection field name in a temporal count expression should not cause a panic
+    // and should be gracefully rejected with an error at some phase, 
+    // either during parsing, lowering, or validation.
+    let src = r#"permit( principal, action, resource )
+                when temporal { 
+                    count for (t: Timepoint), (id: String). where (
+                        Drupe::Action::"Read"::request{ input.?user: id } && id == "alice" && tp(t)
+                    ) >= 2
+                };"#;
+    let policy_schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("action schema");
+
+    let rejected = match ParsedPolicySet::parse(src, &service()) {
+        // Rejected at parse.
+        Err(_) => true,
+        Ok(parsed) => { 
+            match parsed.lower(&policy_schema) {
+                // Rejected at lowering.
+                Err(_) => true,
+                // Otherwise, rejected at validation.
+                Ok(lowered) => !Validator::new().validate(&lowered).validation_passed(),
+            }
+        }
+    };
+    assert!(
+        rejected,
+        "a macro-sigil binder outside a macro body must be rejected \
+         gracefully during parsing, lowering, or validation"
+    );
+}
+
+
+#[test]
+fn valid_temporal_sum_expression_parses_lowers_validates() {
+    let src = r#"permit( principal == Drupe::OAuthUser::"alice", action == Drupe::Action::"Transfer", resource )
+                when temporal { 
+                    (sum a for (a: Long), (id: String), (t: Timepoint). where (
+                        formerly within 1d Drupe::Action::"Transfer"::request{ input.user: id, input.amount: a } && id == "alice" && a > 0 && tp(t)
+                    )) <= 1000
+                };"#;
+    let policy_schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("action schema");
+    let parsed = ParsedPolicySet::parse(src, &service()).expect("valid source parses");
+    let lowered = parsed.lower(&policy_schema).expect("parsed set lowers");
+    assert!(Validator::new().validate(&lowered).validation_passed());
+}
+
+#[test]
+fn stray_macro_sigil_binder_in_timepoint_in_temporal_sum_expression_binder_fails_gracefully_no_panic() {
+    // A stray macro-sigil binder in the timepoint bound variable binder of a temporal sum expression should not cause a panic
+    // and should be gracefully rejected with an error at some phase, 
+    // either during parsing, lowering, or validation.
+    let src = r#"permit( principal == Drupe::OAuthUser::"alice", action == Drupe::Action::"Transfer", resource )
+                when temporal { 
+                    (sum a for (a: Long), (id: String), (?t: Timepoint). where (
+                        formerly within 1d Drupe::Action::"Transfer"::request{ input.user: id, input.amount: a } && id == "alice" && a > 0 && tp(t)
+                    )) <= 1000
+                };"#;
+    let policy_schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("action schema");
+    let rejected = match ParsedPolicySet::parse(src, &service()) {
+        // Rejected at parse.
+        Err(_) => true,
+        Ok(parsed) => { 
+            match parsed.lower(&policy_schema) {
+                // Rejected at lowering.
+                Err(_) => true,
+                // Otherwise, rejected at validation.
+                Ok(lowered) => !Validator::new().validate(&lowered).validation_passed(),
+            }
+        }
+    };
+    assert!(
+        rejected,
+        "a macro-sigil binder outside a macro body must be rejected \
+         gracefully during parsing, lowering, or validation"
+    );
+}
+
+#[test]
+fn stray_macro_sigil_binder_in_timepoint_in_temporal_sum_expression_body_fails_gracefully_no_panic() {
+    // A stray macro-sigil binder in the timepoint bound variable in the body of a temporal sum expression should not cause a panic
+    // and should be gracefully rejected with an error at some phase, 
+    // either during parsing, lowering, or validation.
+    let src = r#"permit( principal == Drupe::OAuthUser::"alice", action == Drupe::Action::"Transfer", resource )
+                when temporal { 
+                    (sum a for (a: Long), (id: String), (t: Timepoint). where (
+                        formerly within 1d Drupe::Action::"Transfer"::request{ input.user: id, input.amount: a } && id == "alice" && a > 0 && tp(?t)
+                    )) <= 1000
+                };"#;
+    let policy_schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("action schema");
+    let rejected = match ParsedPolicySet::parse(src, &service()) {
+        // Rejected at parse.
+        Err(_) => true,
+        Ok(parsed) => { 
+            match parsed.lower(&policy_schema) {
+                // Rejected at lowering.
+                Err(_) => true,
+                // Otherwise, rejected at validation.
+                Ok(lowered) => !Validator::new().validate(&lowered).validation_passed(),
+            }
+        }
+    };
+    assert!(
+        rejected,
+        "a macro-sigil binder outside a macro body must be rejected \
+         gracefully during parsing, lowering, or validation"
+    );
+}
+
+#[test]
+fn stray_macro_sigil_binder_in_temporal_sum_expression_aggregand_fails_gracefully_no_panic() {
+    // A stray macro-sigil binder in the aggregand of a temporal sum expression should not cause a panic
+    // and should be gracefully rejected with an error at some phase, 
+    // either during parsing, lowering, or validation.
+    let src = r#"permit( principal == Drupe::OAuthUser::"alice", action == Drupe::Action::"Transfer", resource )
+                when temporal { 
+                    (sum ?a for (a: Long), (id: String), (t: Timepoint). where (
+                        formerly within 1d Drupe::Action::"Transfer"::request{ input.user: id, input.amount: a } && id == "alice" && a > 0 && tp(t)
+                    )) <= 1000
+                };"#;
+    let policy_schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("action schema");
+    let rejected = match ParsedPolicySet::parse(src, &service()) {
+        // Rejected at parse.
+        Err(_) => true,
+        Ok(parsed) => { 
+            match parsed.lower(&policy_schema) {
+                // Rejected at lowering.
+                Err(_) => true,
+                // Otherwise, rejected at validation.
+                Ok(lowered) => !Validator::new().validate(&lowered).validation_passed(),
+            }
+        }
+    };
+    assert!(
+        rejected,
+        "a macro-sigil binder outside a macro body must be rejected \
+         gracefully during parsing, lowering, or validation"
+    );
+}
+
+#[test]
+fn stray_macro_sigil_binder_in_bound_var_in_temporal_sum_expression_binder_fails_gracefully_no_panic() {
+    // A stray macro-sigil binder in the (non-timepoint) bound variable binder of a temporal sum expression should not cause a panic
+    // and should be gracefully rejected with an error at some phase, 
+    // either during parsing, lowering, or validation.
+    let src = r#"permit( principal == Drupe::OAuthUser::"alice", action == Drupe::Action::"Transfer", resource )
+                when temporal { 
+                    (sum a for (a: Long), (?id: String), (t: Timepoint). where (
+                        formerly within 1d Drupe::Action::"Transfer"::request{ input.user: id, input.amount: a } && id == "alice" && a > 0 && tp(t)
+                    )) <= 1000
+                };"#;
+    let policy_schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("action schema");
+    let rejected = match ParsedPolicySet::parse(src, &service()) {
+        // Rejected at parse.
+        Err(_) => true,
+        Ok(parsed) => { 
+            match parsed.lower(&policy_schema) {
+                // Rejected at lowering.
+                Err(_) => true,
+                // Otherwise, rejected at validation.
+                Ok(lowered) => !Validator::new().validate(&lowered).validation_passed(),
+            }
+        }
+    };
+    assert!(
+        rejected,
+        "a macro-sigil binder outside a macro body must be rejected \
+         gracefully during parsing, lowering, or validation"
+    );
+}
+
+#[test]
+fn stray_macro_sigil_binder_in_aggregand_in_temporal_sum_expression_body_fails_gracefully_no_panic() {
+    // A stray macro-sigil binder in the aggregand variable in the body of a temporal sum expression should not cause a panic
+    // and should be gracefully rejected with an error at some phase, 
+    // either during parsing, lowering, or validation.
+    let src = r#"permit( principal == Drupe::OAuthUser::"alice", action == Drupe::Action::"Transfer", resource )
+                when temporal { 
+                    (sum a for (a: Long), (id: String), (t: Timepoint). where (
+                        formerly within 1d Drupe::Action::"Transfer"::request{ input.user: id, input.amount: a } && id == "alice" && ?a > 0 && tp(t)
+                    )) <= 1000
+                };"#;
+    let policy_schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("action schema");
+    let rejected = match ParsedPolicySet::parse(src, &service()) {
+        // Rejected at parse.
+        Err(_) => true,
+        Ok(parsed) => { 
+            match parsed.lower(&policy_schema) {
+                // Rejected at lowering.
+                Err(_) => true,
+                // Otherwise, rejected at validation.
+                Ok(lowered) => !Validator::new().validate(&lowered).validation_passed(),
+            }
+        }
+    };
+    assert!(
+        rejected,
+        "a macro-sigil binder outside a macro body must be rejected \
+         gracefully during parsing, lowering, or validation"
+    );
+}
+
+#[test]
+fn stray_macro_sigil_binder_in_bound_var_in_temporal_sum_expression_body_fails_gracefully_no_panic() {
+    // A stray macro-sigil binder in the (non-timepoint) bound variable in the body of a temporal sum expression should not cause a panic
+    // and should be gracefully rejected with an error at some phase, 
+    // either during parsing, lowering, or validation.
+    let src = r#"permit( principal == Drupe::OAuthUser::"alice", action == Drupe::Action::"Transfer", resource )
+                when temporal { 
+                    (sum a for (a: Long), (id: String), (t: Timepoint). where (
+                        formerly within 1d Drupe::Action::"Transfer"::request{ input.user: id, input.amount: a } && ?id == "alice" && a > 0 && tp(t)
+                    )) <= 1000
+                };"#;
+    let policy_schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("action schema");
+    let rejected = match ParsedPolicySet::parse(src, &service()) {
+        // Rejected at parse.
+        Err(_) => true,
+        Ok(parsed) => { 
+            match parsed.lower(&policy_schema) {
+                // Rejected at lowering.
+                Err(_) => true,
+                // Otherwise, rejected at validation.
+                Ok(lowered) => !Validator::new().validate(&lowered).validation_passed(),
+            }
+        }
+    };
+    assert!(
+        rejected,
+        "a macro-sigil binder outside a macro body must be rejected \
+         gracefully during parsing, lowering, or validation"
+    );
+}
+
+#[test]
+fn stray_macro_sigil_binder_in_all_aggregand_occurrences_in_temporal_sum_expression_fails_gracefully_no_panic() {
+    // A stray macro-sigil binder in all occurrences (aggregand, binder, projection field variable, and body) of the aggregand variable 
+    // in a temporal sum expression should not cause a panic and should be gracefully rejected with an error at some phase, 
+    // either during parsing, lowering, or validation.
+    let src = r#"permit( principal == Drupe::OAuthUser::"alice", action == Drupe::Action::"Transfer", resource )
+                when temporal { 
+                    (sum ?a for (?a: Long), (id: String), (t: Timepoint). where (
+                        formerly within 1d Drupe::Action::"Transfer"::request{ input.user: id, input.amount: ?a } && id == "alice" && ?a > 0 && tp(t)
+                    )) <= 1000
+                };"#;
+    let policy_schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("action schema");
+    let rejected = match ParsedPolicySet::parse(src, &service()) {
+        // Rejected at parse.
+        Err(_) => true,
+        Ok(parsed) => { 
+            match parsed.lower(&policy_schema) {
+                // Rejected at lowering.
+                Err(_) => true,
+                // Otherwise, rejected at validation.
+                Ok(lowered) => !Validator::new().validate(&lowered).validation_passed(),
+            }
+        }
+    };
+    assert!(
+        rejected,
+        "a macro-sigil binder outside a macro body must be rejected \
+         gracefully during parsing, lowering, or validation"
+    );
+}
+
+#[test]
+fn stray_macro_sigil_binder_in_all_bound_var_occurrences_in_temporal_sum_expression_fails_gracefully_no_panic() {
+    // A stray macro-sigil binder in all occurrences (binder, projection field variable, and body) of a bound variable in a temporal sum expression 
+    // should not cause a panic and should be gracefully rejected with an error at some phase, 
+    // either during parsing, lowering, or validation.
+    let src = r#"permit( principal == Drupe::OAuthUser::"alice", action == Drupe::Action::"Transfer", resource )
+                when temporal { 
+                    (sum a for (a: Long), (?id: String), (t: Timepoint). where (
+                        formerly within 1d Drupe::Action::"Transfer"::request{ input.user: ?id, input.amount: a } && ?id == "alice" && a > 0 && tp(t)
+                    )) <= 1000
+                };"#;
+    let policy_schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("action schema");
+    let rejected = match ParsedPolicySet::parse(src, &service()) {
+        // Rejected at parse.
+        Err(_) => true,
+        Ok(parsed) => { 
+            match parsed.lower(&policy_schema) {
+                // Rejected at lowering.
+                Err(_) => true,
+                // Otherwise, rejected at validation.
+                Ok(lowered) => !Validator::new().validate(&lowered).validation_passed(),
+            }
+        }
+    };
+    assert!(
+        rejected,
+        "a macro-sigil binder outside a macro body must be rejected \
+         gracefully during parsing, lowering, or validation"
+    );
+}
+
+#[test]
+fn stray_macro_sigil_binder_in_temporal_sum_expression_field_name_fails_gracefully_no_panic() {
+    // A stray macro-sigil binder in a projection field name in a temporal sum expression should not cause a panic
+    // and should be gracefully rejected with an error at some phase, 
+    // either during parsing, lowering, or validation.
+    let src = r#"permit( principal == Drupe::OAuthUser::"alice", action == Drupe::Action::"Transfer", resource )
+                when temporal { 
+                    (sum a for (a: Long), (id: String), (t: Timepoint). where (
+                        formerly within 1d Drupe::Action::"Transfer"::request{ input.?user: id, input.amount: a } && id == "alice" && a > 0 && tp(t)
+                    )) <= 1000
+                };"#;
+    let policy_schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("action schema");
+    let rejected = match ParsedPolicySet::parse(src, &service()) {
+        // Rejected at parse.
+        Err(_) => true,
+        Ok(parsed) => { 
+            match parsed.lower(&policy_schema) {
+                // Rejected at lowering.
+                Err(_) => true,
+                // Otherwise, rejected at validation.
+                Ok(lowered) => !Validator::new().validate(&lowered).validation_passed(),
+            }
+        }
+    };
+    assert!(
+        rejected,
+        "a macro-sigil binder outside a macro body must be rejected \
+         gracefully during parsing, lowering, or validation"
+    );
 }
 
 #[test]

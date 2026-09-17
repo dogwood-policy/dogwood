@@ -73,11 +73,15 @@ pub fn check_condition(cond: &Condition, bound: &BTreeSet<String>) -> Result<(),
         // `exists (x: T). φ` — reject a reserved binder name, check `x` is
         // range-restricted by a positive atom in φ (§7 basic safety), then
         // recurse with `x` in scope so a nested aggregation sees it as bound.
+        // Like in `check_aggregation`, checking macro sigils in the binder position is
+        // deferred to the macro expansion pass.
         ConditionKind::Exists { var, body } => {
             reject_reserved_binder(&var.slot)?;
             check_exists_safe(var, body)?;
             let mut inner = bound.clone();
-            inner.insert(var.name().to_string());
+            if let BinderSlot::Name(n) = &var.slot {
+                inner.insert(n.clone());
+            }
             check_condition(body, &inner)
         }
         // A comparison operand may be a *top-level* aggregate (its `for`
