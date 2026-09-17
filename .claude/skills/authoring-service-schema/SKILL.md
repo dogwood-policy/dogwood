@@ -224,7 +224,7 @@ is out of scope here — if you need one, see
 
 **Every service-schema artifact you write MUST be validated before you present
 it.** An unvalidated `.dwschema` or `providers.json` is a guess. Validate with
-the **`dogwood` CLI** (build it with `cargo build -p amzn-dogwood-cli`; if it is
+the **`dogwood` CLI** (build it with `cargo build -p dogwood-cli`; if it is
 not on your `PATH`, invoke the binary from the Cargo target directory). Exit codes are
 uniform across all commands: **`0`** = valid, **`1`** = usage/IO error (missing
 file, bad flag — fix the invocation), **`2`** = the artifact was rejected (read
