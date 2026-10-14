@@ -1,0 +1,74 @@
+namespace Drupe {
+  type AlertInput = {
+    kind: AlertKind,
+    level: AlertLevel,
+    user: String
+  };
+
+  @dogwood_provider_context("1.1")
+  type DogwoodProviders = {
+    policy_1_p_0: {
+      HATE: {
+        confidence: Drupe::BedrockGuardrails_Confidence,
+        confidenceScore: decimal
+      },
+      INSULTS: {
+        confidence: Drupe::BedrockGuardrails_Confidence,
+        confidenceScore: decimal
+      },
+      MISCONDUCT: {
+        confidence: Drupe::BedrockGuardrails_Confidence,
+        confidenceScore: decimal
+      },
+      SEXUAL: {
+        confidence: Drupe::BedrockGuardrails_Confidence,
+        confidenceScore: decimal
+      },
+      VIOLENCE: {
+        confidence: Drupe::BedrockGuardrails_Confidence,
+        confidenceScore: decimal
+      }
+    },
+    policy_2_p_0: decimal,
+    policy_3_p_0: {
+      threatSeverity: Drupe::GuardDuty_Severity
+    }
+  };
+
+  type ReadInput = {
+    document: String
+  };
+
+  entity AlertKind enum ["spam", "abuse"];
+
+  entity AlertLevel enum ["low", "high"];
+
+  @dogwood_provider_enum("BedrockGuardrails::Confidence")
+  entity BedrockGuardrails_Confidence enum ["NONE", "LOW", "MEDIUM", "HIGH"];
+
+  entity Gateway;
+
+  @dogwood_provider_enum("GuardDuty::Severity")
+  entity GuardDuty_Severity enum ["LOW", "MEDIUM", "HIGH", "CRITICAL"];
+
+  entity OAuthUser = {
+    id: String
+  } tags String;
+
+  action "Alert" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: AlertInput
+    }
+  };
+
+  action "Read" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: ReadInput,
+      providers: DogwoodProviders
+    }
+  };
+}

@@ -1,0 +1,5 @@
+// The provider enum's declared name is also declared by the action schema.
+permit (principal, action == Drupe::Action::"Read", resource)
+when {
+    MyGuardrails::ContentFilter(context.input.document) has result
+};

@@ -1,0 +1,6 @@
+@id("permit_all")
+PERMIT any principal to perform any action on any resource
+
+@id("forbid_severe")
+FORBID any principal to perform any action on any resource
+  when: the severity field of Vendor::ThreatScan(the request's document) is in [Vendor::Severity::"HIGH", Vendor::Severity::"CRITICAL"]

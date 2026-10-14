@@ -1,0 +1,32 @@
+// Shared APP schema for the enum-entity provider cases. It deliberately
+// declares NO provider enum types: those are declared in each case's
+// providers.json `entityTypes` and injected by Dogwood into the augmented
+// schema. `AlertLevel` / `AlertKind` are APP-owned enums (as an MCP
+// generator would emit) used only as provider ARGUMENTS.
+namespace Drupe {
+  type ReadInput = { document: String };
+  type AlertInput = { level: AlertLevel, kind: AlertKind, user: String };
+
+  entity AlertLevel enum ["low", "high"];
+  entity AlertKind enum ["spam", "abuse"];
+
+  entity Gateway;
+  entity OAuthUser = { id: String } tags String;
+
+  action "Read" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: { input: ReadInput }
+  };
+
+  action "Alert" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: { input: AlertInput }
+  };
+}
+
+// A gateway named after a vendor: the app schema now declares `GuardDuty`.
+namespace GuardDuty {
+  entity Finding;
+}

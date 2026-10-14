@@ -1,0 +1,17 @@
+// A three-term chain: two sums over different actions plus a context field,
+// compared against a second context field (flight and hotel spend plus the
+// price being authorized stays under the trip budget).
+permit (
+    principal,
+    action == Trip::Action::"Authorize",
+    resource
+)
+when temporal {
+    (sum p for (p: Long), (t: Timepoint). where (
+        formerly within 24h (Trip::Action::"BookFlight"::response{ input.trip: context.input.trip, input.price: p } && tp(t))
+    ))
+    + (sum p for (p: Long), (t: Timepoint). where (
+        formerly within 24h (Trip::Action::"BookHotel"::response{ input.trip: context.input.trip, input.price: p } && tp(t))
+    ))
+    + context.input.price < context.input.budget
+};

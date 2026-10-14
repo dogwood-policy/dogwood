@@ -1,0 +1,6 @@
+Only past events from this request's principal count.
+
+@id("sell_after_approval")
+PERMIT any principal to perform SellShares on any resource
+  when:
+    an ApproveSale response with this request's stock occurred within the last 1 hour

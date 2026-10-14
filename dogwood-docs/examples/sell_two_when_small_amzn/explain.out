@@ -1,0 +1,4 @@
+@id("sell_small_amzn")
+PERMIT any principal to perform SellShares on any resource
+  when: the request's shares < 100
+  when: the request's stock == "AMZN"

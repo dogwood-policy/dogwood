@@ -1,0 +1,35 @@
+{
+  "entityTypes": {
+    "MyGuardrails::Score": {
+      "enum": [
+        "LOW",
+        "HIGH"
+      ]
+    }
+  },
+  "availableProviders": {
+    "MyGuardrails::Escalate": {
+      "argumentTypes": [
+        {
+          "paramType": "entity",
+          "entityType": "MyGuardrails::Score"
+        }
+      ],
+      "outputType": {
+        "paramType": "record",
+        "fields": {
+          "escalate": {
+            "paramType": "bool"
+          }
+        },
+        "required": [
+          "escalate"
+        ]
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "escalate.rhai"
+      }
+    }
+  }
+}

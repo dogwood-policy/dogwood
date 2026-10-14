@@ -1,0 +1,28 @@
+{
+  "entityTypes": {},
+  "availableProviders": {
+    "MyGuardrails::Escalate": {
+      "argumentTypes": [
+        {
+          "paramType": "entity",
+          "entityType": "Drupe::Gateway"
+        }
+      ],
+      "outputType": {
+        "paramType": "record",
+        "fields": {
+          "escalate": {
+            "paramType": "bool"
+          }
+        },
+        "required": [
+          "escalate"
+        ]
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "escalate.rhai"
+      }
+    }
+  }
+}

@@ -55,6 +55,12 @@ struct SchemaArgs {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Pretty-print a .dw policy set to stdout.
+    Format {
+        /// The .dw policy file (`-` for stdin).
+        #[arg(value_name = "POLICIES")]
+        policies: PathBuf,
+    },
     /// Parse a .dw policy set; report syntax and macro errors only.
     CheckParse {
         /// The .dw policy file (`-` for stdin).
@@ -100,6 +106,20 @@ enum Command {
         /// The .log event trace.
         #[arg(long, value_name = "FILE")]
         trace: PathBuf,
+        #[command(flatten)]
+        schema: SchemaArgs,
+        #[arg(long, value_enum, default_value_t = Format::Human)]
+        format: Format,
+    },
+    /// Explain a .dw policy set in deterministic semi-English, rule by rule.
+    Explain {
+        /// The .dw policy file (`-` for stdin).
+        #[arg(value_name = "POLICIES")]
+        policies: PathBuf,
+        /// The Cedar action schema (.cedarschema). Optional: with it, the
+        /// single declared namespace is dropped from names.
+        #[arg(long, value_name = "FILE")]
+        policy_schema: Option<PathBuf>,
         #[command(flatten)]
         schema: SchemaArgs,
         #[arg(long, value_enum, default_value_t = Format::Human)]
@@ -189,6 +209,15 @@ enum RunError {
 fn run() -> Result<ExitCode, RunError> {
     let cli = Cli::parse();
     match cli.command {
+        Command::Format { policies } => {
+            let src = read(&policies)?;
+            let formatted = dogwood_formatter::format_policies(&src);
+            print!("{formatted}");
+            if !formatted.is_empty() && !formatted.ends_with('\n') {
+                println!();
+            }
+            Ok(ExitCode::SUCCESS)
+        }
         Command::CheckParse {
             policies,
             schema,
@@ -249,6 +278,23 @@ fn run() -> Result<ExitCode, RunError> {
             let report = ops::replay_trace(&src, &owned.inputs(), &action_schema, &log)
                 .map_err(op_err(format))?;
             render::replay(&report, format);
+            Ok(ExitCode::SUCCESS)
+        }
+        Command::Explain {
+            policies,
+            policy_schema,
+            schema,
+            format,
+        } => {
+            let src = read(&policies)?;
+            let action_schema = match &policy_schema {
+                Some(p) => Some(read(p)?),
+                None => None,
+            };
+            let owned = OwnedSchema::load(&schema)?;
+            let report = ops::explain_policies(&src, &owned.inputs(), action_schema.as_deref())
+                .map_err(op_err(format))?;
+            render::explain(&report, format);
             Ok(ExitCode::SUCCESS)
         }
         Command::Schema { what } => run_schema(what),

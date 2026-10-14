@@ -1,0 +1,7 @@
+// An undeclared value (`CRITICAL`), wrong case, padding, empty string and full-UID text are all non-members → DENY. The script must return the BARE id.
+permit (principal, action == Drupe::Action::"Read", resource);
+
+forbid (principal, action == Drupe::Action::"Read", resource)
+when {
+    MyGuardrails::ContentFilter(context.input.document).result == MyGuardrails::Score::"HIGH"
+};

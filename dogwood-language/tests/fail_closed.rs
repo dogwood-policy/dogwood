@@ -180,3 +180,266 @@ fn resolver_error_currently_denies_with_diagnostics() {
         "the resolver's error text should be recorded in diagnostics, got: {errors:?}"
     );
 }
+
+// ─── Enum-typed provider values ──────────────────────────────────────
+//
+// A provider value at an `entity` slot must be one of its enum's ids. Unlike
+// a provider that errors, a value outside the enum is not UB: Dogwood rejects
+// it, and the request is denied. Otherwise `"CRITICAL"` would become an entity
+// that matches nothing, and the `forbid` below would silently not fire.
+
+const ENUM_PROVIDERS: &str = r#"
+{
+  "entityTypes": { "Guard::Score": { "enum": ["LOW", "HIGH"] } },
+  "availableProviders": {
+    "Guard::Filter": {
+      "argumentTypes": [ { "paramType": "string" } ],
+      "outputType": {
+        "paramType": "record",
+        "fields": { "result": { "paramType": "entity", "entityType": "Guard::Score" } },
+        "required": ["result"]
+      },
+      "implementation": {
+        "kind": "rhai",
+        "script": "fn evaluate(doc) { if type_of(doc) == \"()\" { return #{ result: \"HIGH\" }; } if doc == \"boom\" { #{ result: \"CRITICAL\" } } else { #{ result: \"LOW\" } } }"
+      }
+    }
+  }
+}
+"#;
+
+// Allow everything except a HIGH result.
+const ENUM_POLICY: &str = r#"
+permit (principal, action == Drupe::Action::"Read", resource);
+forbid (principal, action == Drupe::Action::"Read", resource)
+when { Guard::Filter(context.input.document).result == Guard::Score::"HIGH" };
+"#;
+
+fn enum_authorizer(resolver: Option<FixedResult>) -> Authorizer {
+    let decls = ProviderDeclarations::from_json(ENUM_PROVIDERS).expect("providers parse");
+    let service = ServiceSchema::builder()
+        .providers(decls)
+        .build()
+        .expect("schema builds");
+    let policy_schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("schema builds");
+    let policies =
+        LoweredPolicySet::from_str(ENUM_POLICY, &service, &policy_schema).expect("lowers");
+    match resolver {
+        None => Authorizer::new(policies),
+        Some(r) => Authorizer::builder(policies)
+            .provider_resolver(r)
+            .build()
+            .expect("authorizer builds"),
+    }
+}
+
+fn decide(authorizer: &mut Authorizer, document: &str) -> (Decision, Vec<String>) {
+    let event = dogwood_language::Event::builder("Drupe::Action::Read", "request")
+        .principal("Drupe::OAuthUser::\"alice\"")
+        .resource("Drupe::Gateway::\"gw1\"")
+        .request_context("input", "document", Value::String(document.to_string()))
+        .build();
+    let response = authorizer
+        .is_authorized(&event)
+        .expect("request is a decision point");
+    let errors = response
+        .diagnostics()
+        .errors()
+        .map(str::to_string)
+        .collect();
+    (response.decision(), errors)
+}
+
+/// A resolver returning a fixed `result` value.
+struct FixedResult(Value);
+impl dogwood_language::ProviderResolver for FixedResult {
+    fn resolve(
+        &self,
+        _request: dogwood_language::ProviderRequest<'_>,
+    ) -> Option<Result<Value, String>> {
+        Some(Ok(Value::Object(
+            [("result".to_string(), self.0.clone())]
+                .into_iter()
+                .collect(),
+        )))
+    }
+}
+
+#[test]
+fn rhai_value_outside_its_enum_denies_with_the_reason() {
+    let mut authorizer = enum_authorizer(None);
+    assert_eq!(decide(&mut authorizer, "hello").0, Decision::Allow);
+
+    let (decision, errors) = decide(&mut authorizer, "boom");
+    assert_eq!(decision, Decision::Deny, "a non-member must not fail open");
+    assert!(
+        errors.iter().any(|e| e.contains(
+            "provider `Guard::Filter`.result: `CRITICAL` is not a member of `Guard::Score`"
+        )),
+        "got: {errors:?}"
+    );
+}
+
+#[test]
+fn resolver_enum_ids_are_converted_and_enforced() {
+    // An external resolver (e.g. an adapter for a vendor API) returns the
+    // contract's ids as plain strings; Dogwood converts them like Rhai output.
+    let mut low = enum_authorizer(Some(FixedResult(Value::String("LOW".into()))));
+    assert_eq!(decide(&mut low, "anything").0, Decision::Allow);
+    let mut high = enum_authorizer(Some(FixedResult(Value::String("HIGH".into()))));
+    assert_eq!(decide(&mut high, "anything").0, Decision::Deny);
+}
+
+#[test]
+fn resolver_value_outside_its_enum_denies() {
+    // A vendor value the adapter did not translate.
+    let mut authorizer = enum_authorizer(Some(FixedResult(Value::String("severe".into()))));
+    let (decision, errors) = decide(&mut authorizer, "anything");
+    assert_eq!(decision, Decision::Deny);
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("`severe` is not a member of `Guard::Score`")),
+        "got: {errors:?}"
+    );
+}
+
+#[test]
+fn resolver_entity_of_another_type_denies() {
+    let mut authorizer = enum_authorizer(Some(FixedResult(Value::Entity {
+        ty: "Other::Level".into(),
+        id: "LOW".into(),
+    })));
+    let (decision, errors) = decide(&mut authorizer, "anything");
+    assert_eq!(decision, Decision::Deny);
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("expected a `Guard::Score`, got a `Other::Level`")),
+        "got: {errors:?}"
+    );
+}
+
+// A resolver supplies the base and Rhai runs the methods on it. The method
+// must see an enum the resolver returned as an entity as its bare id, as it
+// would a Rhai base. As uid text, `isHigh` would always be false and the
+// `forbid` would silently not fire.
+
+const METHOD_PROVIDERS: &str = r#"
+{
+  "entityTypes": { "Guard::Score": { "enum": ["LOW", "HIGH"] } },
+  "availableProviders": {
+    "Guard::Filter": {
+      "argumentTypes": [ { "paramType": "string" } ],
+      "outputType": {
+        "paramType": "record",
+        "fields": { "result": { "paramType": "entity", "entityType": "Guard::Score" } },
+        "required": ["result"]
+      },
+      "availableMethods": {
+        "isHigh": { "argumentTypes": [], "outputType": { "paramType": "bool" } },
+        "escalated": {
+          "argumentTypes": [],
+          "outputType": { "paramType": "entity", "entityType": "Guard::Score" }
+        },
+        "isHighScore": { "argumentTypes": [], "outputType": { "paramType": "bool" } }
+      },
+      "implementation": {
+        "kind": "rhai",
+        "script": "fn evaluate(doc) { #{ result: \"HIGH\" } } fn isHigh(input) { if type_of(input) == \"()\" { return true; } input.result == \"HIGH\" } fn escalated(input) { \"CRITICAL\" } fn isHighScore(score) { score == \"HIGH\" }"
+      }
+    }
+  }
+}
+"#;
+
+const METHOD_POLICY: &str = r#"
+permit (principal, action == Drupe::Action::"Read", resource);
+forbid (principal, action == Drupe::Action::"Read", resource)
+when { Guard::Filter(context.input.document).isHigh() };
+"#;
+
+fn method_authorizer(result: Value) -> Authorizer {
+    method_authorizer_with(METHOD_POLICY, result)
+}
+
+fn method_authorizer_with(policy: &str, result: Value) -> Authorizer {
+    let decls = ProviderDeclarations::from_json(METHOD_PROVIDERS).expect("providers parse");
+    let service = ServiceSchema::builder()
+        .providers(decls)
+        .build()
+        .expect("schema builds");
+    let policy_schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("schema builds");
+    let policies = LoweredPolicySet::from_str(policy, &service, &policy_schema).expect("lowers");
+    Authorizer::builder(policies)
+        .provider_resolver(FixedResult(result))
+        .build()
+        .expect("authorizer builds")
+}
+
+#[test]
+fn a_method_sees_a_resolver_entity_as_its_id() {
+    // The resolver may name the entity by its declared or its exported type.
+    for ty in ["Guard::Score", "Drupe::Guard_Score"] {
+        let entity = |id: &str| Value::Entity {
+            ty: ty.into(),
+            id: id.into(),
+        };
+        let (decision, errors) = decide(&mut method_authorizer(entity("HIGH")), "anything");
+        assert_eq!(decision, Decision::Deny, "{ty}: the forbid must fire");
+        assert!(errors.is_empty(), "{ty}: got {errors:?}");
+        let (decision, _) = decide(&mut method_authorizer(entity("LOW")), "anything");
+        assert_eq!(decision, Decision::Allow, "{ty}");
+    }
+}
+
+// Each stage's value is checked against its enum before the next method
+// runs, not only the last stage's. As the method's input, `CRITICAL` would
+// make `isHigh` false, and the `forbid` would silently not fire.
+
+#[test]
+fn a_base_value_outside_its_enum_denies_before_a_method_runs() {
+    let mut authorizer = method_authorizer(Value::String("CRITICAL".into()));
+    let (decision, errors) = decide(&mut authorizer, "anything");
+    assert_eq!(decision, Decision::Deny, "a non-member must not fail open");
+    assert!(
+        errors.iter().any(|e| e.contains(
+            "provider `Guard::Filter`.result: `CRITICAL` is not a member of `Guard::Score`"
+        )),
+        "got: {errors:?}"
+    );
+}
+
+#[test]
+fn a_base_entity_of_another_type_denies_before_a_method_runs() {
+    let mut authorizer = method_authorizer(Value::Entity {
+        ty: "Other::Level".into(),
+        id: "LOW".into(),
+    });
+    let (decision, errors) = decide(&mut authorizer, "anything");
+    assert_eq!(decision, Decision::Deny);
+    assert!(
+        errors.iter().any(|e| e.contains(
+            "provider `Guard::Filter`.result: expected a `Guard::Score`, got a `Other::Level`"
+        )),
+        "got: {errors:?}"
+    );
+}
+
+#[test]
+fn a_method_output_outside_its_enum_denies_before_the_next_method() {
+    let policy = r#"
+permit (principal, action == Drupe::Action::"Read", resource);
+forbid (principal, action == Drupe::Action::"Read", resource)
+when { Guard::Filter(context.input.document).escalated().isHighScore() };
+"#;
+    let mut authorizer = method_authorizer_with(policy, Value::String("LOW".into()));
+    let (decision, errors) = decide(&mut authorizer, "anything");
+    assert_eq!(decision, Decision::Deny, "a non-member must not fail open");
+    assert!(
+        errors.iter().any(|e| e.contains(
+            "provider `Guard::Filter`.escalated(): `CRITICAL` is not a member of `Guard::Score`"
+        )),
+        "got: {errors:?}"
+    );
+}

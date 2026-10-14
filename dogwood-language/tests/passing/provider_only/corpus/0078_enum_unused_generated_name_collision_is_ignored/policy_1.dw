@@ -1,0 +1,7 @@
+permit (principal, action == Drupe::Action::"Read", resource);
+
+forbid (principal, action == Drupe::Action::"Read", resource)
+when {
+    BedrockGuardrails::ContentFilter([context.input.document], ["VIOLENCE"]).VIOLENCE.confidence
+        == BedrockGuardrails::Confidence::"HIGH"
+};

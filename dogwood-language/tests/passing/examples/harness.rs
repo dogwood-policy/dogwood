@@ -14,7 +14,8 @@
 //! verifies they parse, lower, and validate without error.
 //!
 //! Verdict output matches the `dogwood replay` CLI format:
-//!   `@<ts> (time point <N>): ALLOW  [rules: 0, 1]`  or  `@<ts> (time point <N>): DENY`
+//!   `@<ts> (time point <N>): ALLOW  [rules: 0, 1]`  or  `@<ts> (time point <N>): DENY`,
+//!   each followed by an `    error: …` line per diagnostic error.
 
 use std::path::{Path, PathBuf};
 
@@ -37,6 +38,13 @@ fn example_dirs(root: &Path) -> Vec<PathBuf> {
         .filter_map(|e| e.ok())
         .map(|e| e.path())
         .filter(|p| p.is_dir())
+        // EXPERIMENTAL-ARITHMETIC: a bundle with this marker file uses
+        // arithmetic in temporal operands, which a default build rejects —
+        // skip it unless the feature is on.
+        .filter(|p| {
+            cfg!(feature = "experimental-arithmetic")
+                || !p.join("requires-experimental-arithmetic").exists()
+        })
         .collect();
     v.sort();
     v
@@ -67,6 +75,11 @@ fn replay_cli_format(policies: LoweredPolicySet, log: &str) -> Result<String, St
                 line.push_str(&format!("  [rules: {}]", rules_str.join(", ")));
             }
             lines.push(line);
+            // Like `dogwood replay`: each diagnostic error (e.g. a provider
+            // value outside its enum, which denies) on its own line.
+            for e in response.diagnostics().errors() {
+                lines.push(format!("    error: {e}"));
+            }
             index += 1;
         }
     }

@@ -1,0 +1,1 @@
+Cedar's validator doesn't narrow through `!(context has note) || context.note…`, so it can't prove the optional access safe. The case checks at runtime that optionality survives inlining.

@@ -1,0 +1,20 @@
+// Two bound event variables subtracted: refinance only when some in-window
+// valuation minus some in-window balance is at least 100000.
+permit (
+    principal,
+    action == Loans::Action::"Refinance",
+    resource
+)
+when temporal {
+    exists (v: Long). exists (b: Long). (
+        formerly within 24h Loans::Action::"Valuation"::response{
+            input.loan: context.input.loan,
+            output.value: v
+        }
+        && formerly within 24h Loans::Action::"BalanceUpdate"::response{
+            input.loan: context.input.loan,
+            output.balance: b
+        }
+        && v - b >= 100000
+    )
+};

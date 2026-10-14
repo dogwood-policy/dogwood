@@ -1,0 +1,23 @@
+[package]
+name = "dogwood-formatter"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+description = "A source-preserving pretty-printer for Dogwood policy files."
+license = "Apache-2.0"
+repository = "https://github.com/dogwood-policy/dogwood"
+homepage = "https://dogwood-policy.github.io/dogwood/"
+documentation = "https://dogwood-policy.github.io/dogwood/"
+readme = "README.md"
+exclude = ["/build", "/Config", "/build-tools/"]
+
+[lib]
+name = "dogwood_formatter"
+
+[dependencies]
+dogwood-syntax = { path = "../dogwood-syntax", version = "1.1.0" }
+
+[dev-dependencies]
+# Test semantic preservation through the public Dogwood parser without making
+# the source-preserving formatter depend on the semantic frontend at runtime.
+dogwood-language = { path = "../dogwood-language" }

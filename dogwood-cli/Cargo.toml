@@ -1,11 +1,14 @@
 [package]
 name = "dogwood-cli"
-version = "1.0.0"
+version.workspace = true
 edition = "2024"
-# A binary crate: it produces the `dogwood` executable, not a library artifact
-# other packages consume, so it is not published.
-publish = false
+publish.workspace = true
 description = "The `dogwood` command-line tool: check, validate, lower, and replay Dogwood policies locally. A thin shell over the `dogwood-language` frontend."
+license = "Apache-2.0"
+repository = "https://github.com/dogwood-policy/dogwood"
+homepage = "https://dogwood-policy.github.io/dogwood/"
+documentation = "https://dogwood-policy.github.io/dogwood/"
+readme = "README.md"
 exclude = ["/build", "/Config", "/build-tools/"]
 
 # Rename the executable to `dogwood` (a single default bin at src/main.rs
@@ -15,12 +18,22 @@ name = "dogwood"
 path = "src/main.rs"
 
 [dependencies]
-# The Dogwood frontend — an intra-workspace path dependency to the sibling
-# member. (The CLI itself is not published, so no version requirement is needed.)
-dogwood-language = { path = "../dogwood-language" }
+# The Dogwood frontend — path for intra-workspace builds, version so the
+# published crate depends on the released sibling. Bump the version with the
+# workspace version each release line.
+dogwood-language = { path = "../dogwood-language", version = "1.1.0" }
+# The authored-source formatter is deliberately separate from the semantic
+# frontend: it preserves macros, comments, strings, and original token spelling.
+dogwood-formatter = { path = "../dogwood-formatter", version = "1.1.0" }
 clap = { version = "4", features = ["derive"] }
 serde = "1"
 serde_json = "1"
 # `fancy` pulls in the graphical report handler so `PublicError`'s miette
 # diagnostics render with underlined source snippets in the terminal.
 miette = { version = "7", features = ["fancy"] }
+
+[features]
+# EXPERIMENTAL-ARITHMETIC: forward the language crate's off-by-default
+# arithmetic feature, so a `dogwood` built with it accepts (and warns on)
+# policies using arithmetic in temporal comparison operands.
+experimental-arithmetic = ["dogwood-language/experimental-arithmetic"]

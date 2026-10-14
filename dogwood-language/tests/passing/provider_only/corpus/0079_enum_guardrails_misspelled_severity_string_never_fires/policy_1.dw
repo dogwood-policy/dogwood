@@ -1,0 +1,8 @@
+// "HIHG" is a typo for "HIGH". `threatSeverity` is a String, so the
+// comparison type-checks and is simply never true: the forbid never fires.
+permit (principal, action == Drupe::Action::"Read", resource);
+
+forbid (principal, action == Drupe::Action::"Read", resource)
+when {
+    GuardDuty::ThreatDetector([context.input.document]).threatSeverity == "HIHG"
+};

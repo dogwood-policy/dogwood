@@ -1,0 +1,13 @@
+// The same enum basename in each vendor namespace.
+permit (principal, action == Drupe::Action::"Read", resource);
+
+forbid (principal, action == Drupe::Action::"Read", resource)
+when {
+    BedrockGuardrails::ContentFilter([context.input.document], ["VIOLENCE"]).VIOLENCE.confidence
+        == BedrockGuardrails::Severity::"HIGH"
+};
+
+forbid (principal, action == Drupe::Action::"Read", resource)
+when {
+    GuardDuty::ThreatDetector([context.input.document]).threatSeverity == GuardDuty::Severity::"HIGH"
+};

@@ -110,14 +110,21 @@ pub fn check_condition(cond: &Condition, bound: &BTreeSet<String>) -> Result<(),
     }
 }
 
-/// Check a comparison operand: a *top-level* aggregate operand has its
-/// `for` domain checked; any other term must contain no aggregate (an
-/// aggregate is legal only as the immediate operand of a comparison,
-/// enforced here). A macro sigil term is opaque (expansion
-/// re-checks the substituted form).
+/// Check a comparison operand: an aggregate operand — bare, or a leaf of
+/// a compound arithmetic operand — has its `for` domain checked; any
+/// other term must contain no aggregate (an aggregate is legal only in
+/// comparison-operand position, enforced here). A macro sigil term is
+/// opaque (expansion re-checks the substituted form).
 fn check_operand(operand: &Term, bound: &BTreeSet<String>) -> Result<(), String> {
     match operand {
         Term::Agg(agg) => check_agg_expr(agg, bound),
+        // A compound arithmetic operand: each leaf is still in
+        // comparison-operand position, so an aggregate leaf is legal (and
+        // gets its `for`-domain check); anything nested deeper is not.
+        Term::Arith { left, right, .. } => {
+            check_operand(left, bound)?;
+            check_operand(right, bound)
+        }
         other => reject_nested_agg(other),
     }
 }
@@ -139,6 +146,12 @@ fn reject_nested_agg(term: &Term) -> Result<(), String> {
             }
             Ok(())
         }
+        // Arithmetic is comparison-operand-only, exactly like an aggregate.
+        Term::Arith { .. } => Err(
+            "arithmetic (`+`/`-`/`*`) may appear only as the immediate operand of a \
+             comparison, not as a predicate-argument value or nested in another term"
+                .to_string(),
+        ),
         _ => Ok(()),
     }
 }
@@ -414,21 +427,23 @@ fn descend_nested_chains(c: &Condition, rho: &BTreeSet<String>) -> Result<(), St
         // its restriction (alpha-equivalence: renaming the binder must not
         // change acceptance). A binder is never a seed.
         ConditionKind::Comparison { left, right, .. } => {
+            let mut aggs = Vec::new();
             for t in [left, right] {
-                if let Term::Agg(agg) = t {
-                    match &agg.kind {
-                        AggExprKind::Sum { for_vars, body, .. }
-                        | AggExprKind::Count { for_vars, body } => {
-                            let mut seed = rho.clone();
-                            for v in for_vars {
-                                if let BinderSlot::Name(name) = &v.slot {
-                                    seed.remove(name);
-                                }
+                t.for_each_operand_agg(&mut |agg| aggs.push(agg));
+            }
+            for agg in aggs {
+                match &agg.kind {
+                    AggExprKind::Sum { for_vars, body, .. }
+                    | AggExprKind::Count { for_vars, body } => {
+                        let mut seed = rho.clone();
+                        for v in for_vars {
+                            if let BinderSlot::Name(name) = &v.slot {
+                                seed.remove(name);
                             }
-                            check_chain(body, &seed)?;
                         }
-                        AggExprKind::Call(_) => {}
+                        check_chain(body, &seed)?;
                     }
+                    AggExprKind::Call(_) => {}
                 }
             }
             Ok(())
@@ -553,12 +568,31 @@ fn eq_restricted_var(left: &Term, right: &Term) -> Option<String> {
         _ => None,
     };
     // A bare var restricts nothing on its own; a wildcard resolves to no
-    // value; anything else is a ground/computed value.
-    let is_restrictor = |t: &Term| !matches!(t, Term::Var(_) | Term::Wildcard);
+    // value; anything else is a ground/computed value. A compound
+    // arithmetic side is a computed value UNLESS it contains a wildcard —
+    // a wildcard atom makes the whole expression unresolvable, so treating
+    // it as a restrictor would validate a permanently-false guard.
+    let is_restrictor = |t: &Term| match t {
+        Term::Var(_) | Term::Wildcard => false,
+        Term::Arith { .. } => !term_contains_wildcard(t),
+        _ => true,
+    };
     match (bare_var(left), bare_var(right)) {
         (Some(n), None) if is_restrictor(right) => Some(n),
         (None, Some(n)) if is_restrictor(left) => Some(n),
         _ => None,
+    }
+}
+
+/// Does the term contain a wildcard (`*` / `_`) anywhere?
+fn term_contains_wildcard(t: &Term) -> bool {
+    match t {
+        Term::Wildcard => true,
+        Term::Arith { left, right, .. } => {
+            term_contains_wildcard(left) || term_contains_wildcard(right)
+        }
+        Term::Array(items) => items.iter().any(term_contains_wildcard),
+        _ => false,
     }
 }
 
@@ -599,6 +633,7 @@ fn term_has_sigil(term: &Term) -> bool {
     match term {
         Term::ParamRef(_) | Term::BinderRef(_) => true,
         Term::Array(items) => items.iter().any(term_has_sigil),
+        Term::Arith { left, right, .. } => term_has_sigil(left) || term_has_sigil(right),
         Term::Agg(agg) => match &agg.kind {
             AggExprKind::Call(_) => true,
             AggExprKind::Sum { body, .. } | AggExprKind::Count { body, .. } => body_has_sigil(body),
@@ -825,6 +860,10 @@ fn collect_term_var(term: &Term, out: &mut BTreeSet<String>) {
                 collect_term_var(t, out);
             }
         }
+        Term::Arith { left, right, .. } => {
+            collect_term_var(left, out);
+            collect_term_var(right, out);
+        }
         // An aggregate term binds its `for` variables over its own `where`
         // body; what it exposes upward are the body's free variables MINUS
         // the `for` list — the standard binder rule. (Exposing the `for`
@@ -892,6 +931,64 @@ pub fn check_leaf_closed(cond: &Condition) -> Result<(), String> {
     Ok(())
 }
 
+/// EXPERIMENTAL-ARITHMETIC gate: arithmetic in comparison operands parses,
+/// passes every static rule above, and evaluates — but it ships behind the
+/// off-by-default `experimental-arithmetic` Cargo feature until it is a
+/// stable part of the language. With the feature off, any condition carrying
+/// a compound operand is rejected as the last parse-time and post-expansion
+/// pass. This function (with its pipeline calls and pinned test) may be
+/// deleted when the feature is released; grep EXPERIMENTAL-ARITHMETIC.
+pub fn reject_arithmetic_unless_enabled(cond: &Condition) -> Result<(), String> {
+    if cfg!(feature = "experimental-arithmetic") {
+        return Ok(());
+    }
+    if condition_has_arith(cond) {
+        Err("arithmetic in comparison operands is not yet supported".to_string())
+    } else {
+        Ok(())
+    }
+}
+
+/// Only comparison operands (through compound nesting and aggregate
+/// bodies) need walking: an `Arith` anywhere else is a placement error
+/// `check_condition` has already rejected by the time the gate runs.
+/// `pub(crate)` because, with the feature on, validation reuses this walk
+/// to anchor the experimental warning.
+pub(crate) fn condition_has_arith(cond: &Condition) -> bool {
+    match &cond.kind {
+        ConditionKind::And { left, right }
+        | ConditionKind::Or { left, right }
+        | ConditionKind::Since { left, right, .. } => {
+            condition_has_arith(left) || condition_has_arith(right)
+        }
+        ConditionKind::Not { inner }
+        | ConditionKind::Formerly { body: inner, .. }
+        | ConditionKind::Previous { body: inner, .. }
+        | ConditionKind::Exists { body: inner, .. }
+        | ConditionKind::Refine { base: inner, .. } => condition_has_arith(inner),
+        ConditionKind::Comparison { left, right, .. } => {
+            term_has_arith(left) || term_has_arith(right)
+        }
+        ConditionKind::Predicate(_)
+        | ConditionKind::Tp { .. }
+        | ConditionKind::Call(_)
+        | ConditionKind::SigilRef { .. } => false,
+    }
+}
+
+fn term_has_arith(t: &Term) -> bool {
+    match t {
+        Term::Arith { .. } => true,
+        Term::Agg(agg) => match &agg.kind {
+            AggExprKind::Sum { body, .. } | AggExprKind::Count { body, .. } => {
+                condition_has_arith(body)
+            }
+            AggExprKind::Call(_) => false,
+        },
+        _ => false,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     //! §7 basic range-restriction safety for `exists`. Each case parses a
@@ -905,6 +1002,106 @@ mod tests {
         let cond = parse_condition(body).unwrap_or_else(|e| panic!("parse `{body}` failed: {e}"));
         check_condition(&cond, &BTreeSet::new())?;
         check_demands(&cond)
+    }
+
+    // ─── Compound (arithmetic) operand rules ─────────────────────────
+
+    #[test]
+    fn aggregate_difference_operand_is_accepted() {
+        check(
+            r#"(count for (t: Timepoint). where (Drupe::Action::"Open"::request{} && tp(t)))
+               - (count for (t: Timepoint). where (Drupe::Action::"Close"::response{} && tp(t))) <= 10"#,
+        )
+        .expect("a compound of two aggregates is a well-formed operand");
+    }
+
+    /// EXPERIMENTAL-ARITHMETIC: pinned gate behaviour. This test may be
+    /// deleted with `reject_arithmetic_unless_enabled` when the feature is
+    /// released. The
+    /// static rules accept the compound operand either way — the gate is the
+    /// only rejection, and only in a default (feature-off) build.
+    #[test]
+    fn arithmetic_gate_follows_the_feature() {
+        let src = r#"(count for (t: Timepoint). where (Drupe::Action::"Open"::request{} && tp(t)))
+               - (count for (t: Timepoint). where (Drupe::Action::"Close"::response{} && tp(t))) <= 10"#;
+        check(src).expect("the static rules accept the compound operand");
+        let cond = parse_condition(src).unwrap();
+        let gated = reject_arithmetic_unless_enabled(&cond);
+        if cfg!(feature = "experimental-arithmetic") {
+            gated.expect("the gate admits arithmetic with the feature on");
+        } else {
+            let err = gated.expect_err("the gate rejects arithmetic by default");
+            assert!(err.contains("not yet supported"), "unexpected error: {err}");
+        }
+    }
+
+    #[test]
+    fn compound_equality_binds_the_bare_variable_side() {
+        // `n1 + n2 == m` binds `m` once `n1`/`n2` are restricted by
+        // preceding conjuncts; `m` then supports a following filter.
+        check(
+            r#"exists (n1: Long). (Drupe::Action::"A"::request{ input.amount: n1 }
+               && exists (n2: Long). (Drupe::Action::"B"::request{ input.amount: n2 }
+               && exists (m: Long). (n1 + n2 == m && m > 5)))"#,
+        )
+        .expect("compound-vs-bare-variable `==` binds the bare side");
+    }
+
+    #[test]
+    fn no_algebraic_solving_through_a_compound() {
+        // `m + 1 == 5` restricts nothing: the variable sits *inside* the
+        // compound, and only a bare-variable side binds.
+        let err = check(r#"exists (m: Long). (m + 1 == 5)"#)
+            .expect_err("a variable inside a compound is never bound by `==`");
+        assert!(err.contains("not range-restricted"), "unexpected: {err}");
+    }
+
+    #[test]
+    fn compound_filter_demands_its_variables() {
+        // A compound in a non-binding comparison is a pure filter: its
+        // variables must be restricted by PRECEDING conjuncts.
+        let err = check(
+            r#"exists (a: Long). (a + 1 > 2 && Drupe::Action::"A"::request{ input.amount: a })"#,
+        )
+        .expect_err("filter before its restrictor must be rejected");
+        assert!(err.contains("preceding"), "unexpected: {err}");
+        check(r#"exists (a: Long). (Drupe::Action::"A"::request{ input.amount: a } && a + 1 > 2)"#)
+            .expect("restrictor first, compound filter second");
+    }
+
+    #[test]
+    fn wildcard_compound_is_not_a_restrictor() {
+        // `m == * * 2` must not count as a restrictor of `m`: the wildcard
+        // makes the compound unresolvable, so accepting it would validate
+        // a permanently-false guard.
+        let err = check(r#"exists (m: Long). (m == * * 2)"#)
+            .expect_err("a wildcard-bearing compound restricts nothing");
+        assert!(err.contains("not range-restricted"), "unexpected: {err}");
+    }
+
+    #[test]
+    fn aggregate_leaves_of_a_compound_get_for_domain_checks() {
+        // An aggregate inside a compound operand still has its `for`
+        // domain checked: `x` groups over nothing here.
+        let err = check(
+            r#"(count for (x: String). where (!(formerly within 1h Drupe::Action::"A"::request{ input.user: x })))
+               + 1 <= 5"#,
+        )
+        .expect_err("for-var restricted only under negation, inside a compound");
+        assert!(err.contains("range-restricted"), "unexpected: {err}");
+    }
+
+    #[test]
+    fn arithmetic_in_predicate_arg_is_rejected_as_placement_error() {
+        // The permanent placement rule. A bare `1 + 2` in arg position is
+        // already a parse error (arg values are `term`s); the parenthesized
+        // form is how an `Arith` reaches a nested term position.
+        let err = check(r#"Drupe::Action::"Pay"::request{ input.amount: (1 + 2) }"#)
+            .expect_err("arithmetic must be rejected in predicate-arg position");
+        assert!(
+            err.contains("immediate operand of a comparison"),
+            "unexpected error: {err}"
+        );
     }
 
     #[test]

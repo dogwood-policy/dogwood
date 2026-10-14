@@ -1,0 +1,5 @@
+// A method whose inputType is a different enum than the previous stage's output is rejected.
+permit (principal, action == Drupe::Action::"Read", resource)
+when {
+    MyGuardrails::Grade(context.input.document).describe() == "x"
+};

@@ -37,6 +37,112 @@ use crate::authorize::DogwoodRuleRef;
 use crate::policy_schema::PolicySchema;
 use crate::service_schema::ServiceSchema;
 
+/// A validated distincter: a string that parses as a Cedar identifier
+/// (`[_A-Za-z][_A-Za-z0-9]*`).
+///
+/// Construct one with [`str::parse`] or [`TryFrom`]; a malformed string is
+/// [`Error::InvalidDistincter`].
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Distincter(String);
+
+impl Distincter {
+    /// The distincter as given.
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl std::str::FromStr for Distincter {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Error> {
+        match s.parse::<cedar_policy_core::ast::AnyId>() {
+            Ok(_) => Ok(Distincter(s.to_string())),
+            Err(_) => Err(Error::InvalidDistincter(s.to_string())),
+        }
+    }
+}
+
+impl TryFrom<&str> for Distincter {
+    type Error = Error;
+
+    fn try_from(s: &str) -> Result<Self, Error> {
+        s.parse()
+    }
+}
+
+impl TryFrom<String> for Distincter {
+    type Error = Error;
+
+    fn try_from(s: String) -> Result<Self, Error> {
+        s.parse()
+    }
+}
+
+impl AsRef<str> for Distincter {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl std::fmt::Display for Distincter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
+/// **Phase 2** for several parsed sets, each under its own distincter, into
+/// one [`LoweredPolicySet`].
+///
+/// Each entry is `(parsed set, Distincter)`. Every entry is lowered
+/// independently against `policy_schema` and keeps the ids that call mints:
+/// `lower_many(&[(&p, d)], s)` is `p.lower_with_distincter(s, d.as_str())`.
+/// The result holds every entry's policies, leaves, and rules in input order
+/// ([`DogwoodRuleRef::rule_index`] is a position in the merged set),
+/// `policy_schema` augmented once with every entry's hoisted fields, and the
+/// event schema derived from `policy_schema`. Each entry's validation findings
+/// render against its own text.
+///
+/// Every entry must have been parsed with a clone of one [`ServiceSchema`];
+/// this is checked by identity, not structure.
+///
+/// Returns, before lowering anything, [`Error::DuplicateDistincter`] for a
+/// repeated distincter, [`Error::NoPolicies`] for an empty `policies`, and
+/// [`Error::MismatchedServiceSchema`] for the first entry parsed with a
+/// different `ServiceSchema`.
+///
+/// [`LoweredPolicySet::from_many_str`] is the one-call form over policy text.
+pub fn lower_many(
+    policies: &[(&ParsedPolicySet, Distincter)],
+    policy_schema: &PolicySchema,
+) -> Result<LoweredPolicySet, Error> {
+    let mut seen = std::collections::BTreeSet::new();
+    for (_, distincter) in policies {
+        if !seen.insert(distincter) {
+            return Err(Error::DuplicateDistincter(distincter.to_string()));
+        }
+    }
+    let Some((first, _)) = policies.first() else {
+        return Err(Error::NoPolicies);
+    };
+    let service_schema = first.parsed.service_schema();
+    if let Some(i) = policies
+        .iter()
+        .position(|(p, _)| !p.parsed.service_schema().same_instance(service_schema))
+    {
+        return Err(Error::MismatchedServiceSchema(i));
+    }
+
+    let base = api::Base::derive(service_schema, policy_schema)?;
+    let entries = policies
+        .iter()
+        .map(|(p, distincter)| api::lower_entry(&p.parsed, &base, Some(distincter)))
+        .collect::<Result<Vec<_>, Error>>()?;
+    Ok(LoweredPolicySet {
+        lowered: api::merge(base, entries)?,
+    })
+}
+
 /// A parsed, macro-expanded set of Dogwood policies — the first lowering
 /// phase, before the action schema is applied.
 ///
@@ -88,7 +194,6 @@ impl ParsedPolicySet {
     /// the schema are *not* returned here — run
     /// [`Validator::validate`](crate::Validator::validate) for those.
     pub fn lower(&self, policy_schema: &PolicySchema) -> Result<LoweredPolicySet, Error> {
-        self.reject_temporal_arrays()?;
         Ok(LoweredPolicySet {
             lowered: api::lower(&self.parsed, policy_schema, None)?,
         })
@@ -96,7 +201,8 @@ impl ParsedPolicySet {
 
     /// Like [`lower`](ParsedPolicySet::lower), but namespaces this call's
     /// synthesized policy ids and hoisted `context.<id>` field names under
-    /// `distincter` (ids become `<distincter>_<index>`).
+    /// `distincter`: rule `k` gets the id `<distincter>_<k>`, and its `j`-th
+    /// temporal leaf the field `<distincter>_<k>__temporal_<j>`.
     ///
     /// Supply a **distinct** `distincter` per call when the results will be
     /// combined — e.g. lowering rules as they arrive and accreting them into a
@@ -116,14 +222,16 @@ impl ParsedPolicySet {
     /// that later supplies the distincter `"policy"` — a caller mixing the two
     /// forms must pick distincters that also avoid `"policy"` if the results
     /// will be combined.
+    ///
+    /// A single-entry [`lower_many`] is the same call taking a [`Distincter`].
     pub fn lower_with_distincter(
         &self,
         policy_schema: &PolicySchema,
         distincter: &str,
     ) -> Result<LoweredPolicySet, Error> {
-        self.reject_temporal_arrays()?;
+        let distincter: Distincter = distincter.parse()?;
         Ok(LoweredPolicySet {
-            lowered: api::lower(&self.parsed, policy_schema, Some(distincter))?,
+            lowered: api::lower(&self.parsed, policy_schema, Some(&distincter))?,
         })
     }
 
@@ -162,6 +270,20 @@ impl ParsedPolicySet {
             })
     }
 
+    /// Informalize the whole set into semi-English: an optional preamble for
+    /// the event schema's pins, then one [`Phrase`](crate::Phrase)
+    /// tree per rule. With `policy_schema`, a single declared namespace is
+    /// dropped from names; a schema that does not compile is treated as
+    /// absent. See the `informalize` module for the translation contract.
+    pub fn informalize(&self, policy_schema: Option<&PolicySchema>) -> crate::Informalization {
+        let facts = schema_facts(policy_schema);
+        crate::informalize::informalize_set(
+            self.parsed.policies(),
+            self.parsed.service_schema().event_schema(),
+            &facts,
+        )
+    }
+
     // ─── pre-lowering rejection gates ────────────────────────────────
 
     /// Reject the policy set if any temporal predicate argument contains an
@@ -173,7 +295,9 @@ impl ParsedPolicySet {
     /// produce confusing errors. This check rejects them early with a clear
     /// message.
     ///
-    /// Returns `Ok(())` if no temporal blocks contain array terms.
+    /// Returns `Ok(())` if no temporal blocks contain array terms. Lowering
+    /// runs this check itself; call it directly only to get the error before
+    /// the action schema is available.
     ///
     /// # Example
     ///
@@ -183,67 +307,7 @@ impl ParsedPolicySet {
     /// let lowered = parsed.lower(&policy_schema)?;
     /// ```
     pub fn reject_temporal_arrays(&self) -> Result<(), Error> {
-        use crate::extension::temporal::ast::{AggExprKind, Condition, ConditionKind, Term};
-
-        /// Check whether a term is or contains an array constant.
-        fn term_has_array(term: &Term) -> bool {
-            match term {
-                Term::Array(_) => true,
-                Term::Agg(agg) => match &agg.kind {
-                    AggExprKind::Sum { body, .. } | AggExprKind::Count { body, .. } => {
-                        condition_has_array(body)
-                    }
-                    AggExprKind::Call(_) => false,
-                },
-                _ => false,
-            }
-        }
-
-        /// Walk a temporal condition tree, returning `true` if any predicate
-        /// argument or comparison operand is a `Term::Array`.
-        fn condition_has_array(cond: &Condition) -> bool {
-            match &cond.kind {
-                ConditionKind::And { left, right }
-                | ConditionKind::Or { left, right }
-                | ConditionKind::Since { left, right, .. } => {
-                    condition_has_array(left) || condition_has_array(right)
-                }
-                ConditionKind::Not { inner }
-                | ConditionKind::Formerly { body: inner, .. }
-                | ConditionKind::Previous { body: inner, .. }
-                | ConditionKind::Exists { body: inner, .. } => condition_has_array(inner),
-                ConditionKind::Predicate(pred) => {
-                    pred.args.iter().any(|arg| term_has_array(&arg.value))
-                }
-                ConditionKind::Comparison { left, right, .. } => {
-                    term_has_array(left) || term_has_array(right)
-                }
-                ConditionKind::Tp { .. }
-                | ConditionKind::Call(_)
-                | ConditionKind::SigilRef { .. } => false,
-                ConditionKind::Refine { base, fields, .. } => {
-                    condition_has_array(base) || fields.iter().any(|arg| term_has_array(&arg.value))
-                }
-            }
-        }
-
-        for (_policy_idx, policy) in self.parsed.policies().iter().enumerate() {
-            for (block_idx, temporal_block) in policy.temporal_conditions().into_iter().enumerate()
-            {
-                if condition_has_array(temporal_block) {
-                    // Point the error at the temporal block's span.
-                    let span = policy.temporal_block_spans().into_iter().nth(block_idx);
-                    let message = format!(
-                        "temporal predicate arguments cannot contain array constants \
-                         (e.g. `field: [\"a\", \"b\"]`); use scalar values or \
-                         `context` field references instead"
-                    );
-                    let raw = crate::error::RawCedarifyError { message, span };
-                    return Err(crate::api::cedarify_error(raw, self.parsed.dw_src()));
-                }
-            }
-        }
-        Ok(())
+        api::reject_temporal_arrays(&self.parsed)
     }
 }
 
@@ -282,6 +346,21 @@ impl<'a> ParsedPolicy<'a> {
     /// describes.
     pub fn expanded_source(&self) -> String {
         crate::render::render_policy(self.policy)
+    }
+
+    /// This policy as semi-English: an [`Informalization`](crate::Informalization)
+    /// holding this one rule, plus the event schema's pin preamble when the
+    /// policy has a temporal clause (pins change what its look-back clauses
+    /// match, so they are never left out). It reads exactly as the rule does
+    /// in [`ParsedPolicySet::informalize`], which describes `policy_schema`.
+    pub fn informalize(&self, policy_schema: Option<&PolicySchema>) -> crate::Informalization {
+        let facts = schema_facts(policy_schema);
+        crate::informalize::informalize_single(
+            self.policy,
+            self.index,
+            self.service.event_schema(),
+            &facts,
+        )
     }
 
     // ── temporal ──────────────────────────────────────────────────────
@@ -432,7 +511,8 @@ impl LoweredPolicySet {
     /// fused form of [`ParsedPolicySet::parse`] followed by
     /// [`ParsedPolicySet::lower`] — reach for the two-phase API directly when
     /// the action schema arrives later than the source, or to lower one parsed
-    /// set against several action schemas.
+    /// set against several action schemas. For several policies, each under a
+    /// [`Distincter`], use [`LoweredPolicySet::from_many_str`].
     ///
     /// Because the extra schema arguments cannot fit the `std::str::FromStr`
     /// trait, this is an inherent method named `from_str` (call it as
@@ -448,6 +528,34 @@ impl LoweredPolicySet {
         policy_schema: &PolicySchema,
     ) -> Result<LoweredPolicySet, Error> {
         ParsedPolicySet::parse(source, service_schema)?.lower(policy_schema)
+    }
+
+    /// The fused form of [`ParsedPolicySet::parse`] on each entry then
+    /// [`lower_many`]. Each entry is `(policy text, Distincter)`; the arguments
+    /// are in [`from_str`](LoweredPolicySet::from_str) order. See
+    /// [`lower_many`] for how ids are minted and entries merged.
+    ///
+    /// An empty `policies` lowers empty source: no policies over
+    /// `policy_schema`. Returns the first parse error in entry order. Never
+    /// returns [`Error::MismatchedServiceSchema`] or [`Error::NoPolicies`].
+    pub fn from_many_str(
+        policies: &[(&str, Distincter)],
+        service_schema: &ServiceSchema,
+        policy_schema: &PolicySchema,
+    ) -> Result<LoweredPolicySet, Error> {
+        if policies.is_empty() {
+            return ParsedPolicySet::parse("", service_schema)?.lower(policy_schema);
+        }
+        let parsed = policies
+            .iter()
+            .map(|(text, _)| ParsedPolicySet::parse(text, service_schema))
+            .collect::<Result<Vec<_>, Error>>()?;
+        let entries: Vec<_> = parsed
+            .iter()
+            .zip(policies)
+            .map(|(p, (_, distincter))| (p, distincter.clone()))
+            .collect();
+        lower_many(&entries, policy_schema)
     }
 
     /// Borrow the lowered Cedar policies — a real `cedar_policy::PolicySet`.
@@ -615,7 +723,7 @@ impl LoweredPolicySet {
     }
 
     /// The Dogwood rules in this set, each as a [`DogwoodRuleRef`] pairing the
-    /// rule's 0-based source index with the synthesized Cedar policy id it was
+    /// rule's 0-based index in this set with the synthesized Cedar policy id it was
     /// lowered to (the id the policy store / Cedar stores it under, and names it by in a
     /// decision). Use [`rule_ref`](LoweredPolicySet::rule_ref) to map a Cedar
     /// policy id from a decision back to its rule.
@@ -675,5 +783,313 @@ impl LoweredPolicySet {
     /// Consume into the lowered artifacts (for [`Authorizer`](crate::Authorizer)).
     pub(crate) fn into_lowered(self) -> Lowered {
         self.lowered
+    }
+}
+
+/// The schema facts the informalizer reads off an optional action schema.
+fn schema_facts(policy_schema: Option<&PolicySchema>) -> crate::informalize::SchemaFacts {
+    match policy_schema {
+        Some(s) => crate::informalize::SchemaFacts::from_cedarschema_str(s.action_schema_src()),
+        None => crate::informalize::SchemaFacts::none(),
+    }
+}
+
+#[cfg(test)]
+mod lower_many_tests {
+    use cedar_policy::PolicySet as CedarPolicySet;
+
+    use super::*;
+    use crate::api::ActionScope;
+    use crate::cedarify::{self, ContextField, ScopedAction};
+    use crate::error::SourceLoc;
+
+    const DRUPE_SCHEMA: &str = r#"
+namespace Drupe {
+  type ReadInput = { user: String, amount: Long };
+  entity Gateway;
+  entity OAuthUser = { id: String };
+  action "Login" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: { input: ReadInput }
+  };
+  action "Read" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: { input: ReadInput }
+  };
+}
+"#;
+
+    const DRUPE_PARTS: [(&str, &str); 3] = [
+        (
+            r#"
+permit ( principal, action == Drupe::Action::"Read", resource )
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};
+"#,
+            "alpha",
+        ),
+        (
+            r#"
+forbid ( principal, action == Drupe::Action::"Read", resource )
+when temporal {
+    count for (a: Long). where (
+        formerly within 10m Drupe::Action::"Read"::request{ input.amount: a }
+    ) > 3
+};
+
+permit ( principal, action == Drupe::Action::"Read", resource )
+when { context.input.amount < 100 }
+when temporal {
+    previous within 1d Drupe::Action::"Login"::request{}
+}
+unless temporal {
+    formerly within 5m Drupe::Action::"Read"::request{ input.user: "mallory" }
+};
+"#,
+            "beta",
+        ),
+        (
+            r#"
+permit ( principal, action == Drupe::Action::"Login", resource )
+when { context.input.user == "alice" };
+
+permit ( principal, action == Drupe::Action::"Login", resource )
+when temporal {
+    exists (u: String). (
+        formerly within 2h Drupe::Action::"Login"::request{ input.user: u }
+    )
+};
+"#,
+            "gamma",
+        ),
+    ];
+
+    /// A context given as a named reference type.
+    const BROKER_SCHEMA: &str = r#"
+namespace Brokerage {
+  type QuoteInput  = { symbol: String, qty: Long };
+  type QuoteOutput = { price: decimal, filled: Bool };
+  type SystemContext = { now: datetime };
+  type QuoteCtx = { input: QuoteInput, output?: QuoteOutput, system: SystemContext };
+
+  entity Gateway;
+  entity Desk;
+  entity Trader in [Desk] = { id: String } tags String;
+
+  action "Trade";
+  action "GetQuote" in [Action::"Trade"] appliesTo {
+    principal: [Trader],
+    resource: [Gateway],
+    context: QuoteCtx
+  };
+}
+"#;
+
+    const BROKER_PARTS: [(&str, &str); 2] = [
+        (
+            r#"
+permit ( principal, action == Brokerage::Action::"GetQuote", resource )
+when temporal {
+    formerly within 1h Brokerage::Action::"GetQuote"::request{ input.symbol: context.input.symbol }
+};
+"#,
+            "sym",
+        ),
+        (
+            r#"
+forbid ( principal, action == Brokerage::Action::"GetQuote", resource )
+when temporal {
+    count for (q: Long). where (
+        formerly within 10m Brokerage::Action::"GetQuote"::request{ input.qty: q }
+    ) > 3
+};
+"#,
+            "qty",
+        ),
+    ];
+
+    fn lower_part(text: &str, schema: &PolicySchema, distincter: &str) -> Lowered {
+        ParsedPolicySet::parse(text, &ServiceSchema::defaults())
+            .expect("parses")
+            .lower_with_distincter(schema, distincter)
+            .expect("lowers")
+            .lowered
+    }
+
+    /// Each Cedar policy as `(id, text)`, sorted: `PolicySet::policies()` has no
+    /// documented iteration order, so Cedar policies are compared as a set while
+    /// Dogwood's own vectors are compared in order.
+    fn sorted_policies<'a>(
+        sets: impl IntoIterator<Item = &'a CedarPolicySet>,
+    ) -> Vec<(String, String)> {
+        let mut out: Vec<_> = sets
+            .into_iter()
+            .flat_map(|s| s.policies().map(|p| (p.id().to_string(), p.to_string())))
+            .collect();
+        out.sort();
+        out
+    }
+
+    fn context_field(leaf: &TemporalField) -> ContextField {
+        let action =
+            |a: &crate::api::ActionRef| (a.namespace.clone().unwrap_or_default(), a.id.clone());
+        ContextField {
+            action: match &leaf.action {
+                ActionScope::Concrete(a) => ScopedAction::Concrete(action(a)),
+                ActionScope::List(v) => ScopedAction::List(v.iter().map(action).collect()),
+                ActionScope::Unconstrained => ScopedAction::Unconstrained,
+            },
+            field_name: leaf.id.clone(),
+            temporal: leaf.condition.clone(),
+            target_actions: leaf.target_actions.iter().map(action).collect(),
+            principal: leaf.principal.clone(),
+            resource: leaf.resource.clone(),
+        }
+    }
+
+    fn assert_lower_many_is_the_standalone_union(schema_src: &str, parts: &[(&str, &str)]) {
+        let base = PolicySchema::from_cedarschema_str(schema_src).expect("schema");
+        let service = ServiceSchema::defaults();
+        let parsed: Vec<ParsedPolicySet> = parts
+            .iter()
+            .map(|(text, _)| ParsedPolicySet::parse(text, &service).expect("parses"))
+            .collect();
+        let entries: Vec<(&ParsedPolicySet, Distincter)> = parsed
+            .iter()
+            .zip(parts)
+            .map(|(p, (_, d))| (p, d.parse().expect("distincter")))
+            .collect();
+        let merged = lower_many(&entries, &base).expect("lower_many").lowered;
+        let alone: Vec<Lowered> = parts
+            .iter()
+            .map(|(text, d)| lower_part(text, &base, d))
+            .collect();
+        let hoisted: Vec<ContextField> = alone
+            .iter()
+            .flat_map(|l| {
+                assert!(l.providers.is_empty(), "fixtures hoist no provider fields");
+                l.temporal.iter().map(context_field)
+            })
+            .collect();
+        let expected_schema = cedarify::augment_schema(
+            cedarify::parse_base_schema(schema_src).expect("parses"),
+            None,
+            &Default::default(),
+            &hoisted,
+            &[],
+        )
+        .expect("augments")
+        .to_cedarschema()
+        .expect("serializes");
+        let offsets: Vec<usize> = alone
+            .iter()
+            .scan(0, |n, l| {
+                let at = *n;
+                *n += l.rule_ids.len();
+                Some(at)
+            })
+            .collect();
+        let concat = |f: fn(&Lowered) -> Vec<usize>| -> Vec<usize> {
+            alone
+                .iter()
+                .zip(&offsets)
+                .flat_map(|(l, o)| f(l).into_iter().map(move |k| k + o))
+                .collect()
+        };
+
+        let Lowered {
+            policies,
+            // `Schema` has no `PartialEq`; its fragment is checked below.
+            augmented_schema: _,
+            augmented_schema_fragment,
+            temporal,
+            temporal_rewritten,
+            partition_keys,
+            providers,
+            rule_ids,
+            rule_locs,
+            rule_sources,
+            temporal_rules,
+            provider_rules,
+            event_schema,
+            decision_kinds,
+            // The fixtures call no providers.
+            enum_names: _,
+        } = merged;
+
+        assert_eq!(
+            sorted_policies([&policies]),
+            sorted_policies(alone.iter().map(|l| &l.policies))
+        );
+        assert_eq!(
+            augmented_schema_fragment
+                .to_cedarschema()
+                .expect("serializes"),
+            expected_schema
+        );
+        assert_eq!(
+            temporal,
+            alone
+                .iter()
+                .flat_map(|l| l.temporal.clone())
+                .collect::<Vec<_>>()
+        );
+        assert_eq!(
+            temporal_rewritten,
+            alone
+                .iter()
+                .flat_map(|l| l.temporal_rewritten.clone())
+                .collect::<Vec<_>>()
+        );
+        assert_eq!(
+            providers,
+            alone
+                .iter()
+                .flat_map(|l| l.providers.clone())
+                .collect::<Vec<_>>()
+        );
+        assert_eq!(
+            rule_ids,
+            alone
+                .iter()
+                .flat_map(|l| l.rule_ids.clone())
+                .collect::<Vec<_>>()
+        );
+        let loc = |l: &SourceLoc| (l.span(), l.source().to_string());
+        assert_eq!(
+            rule_locs.iter().map(loc).collect::<Vec<_>>(),
+            alone
+                .iter()
+                .flat_map(|l| l.rule_locs.iter().map(loc))
+                .collect::<Vec<_>>()
+        );
+        assert_eq!(
+            rule_sources,
+            alone
+                .iter()
+                .enumerate()
+                .flat_map(|(i, l)| l.rule_sources.iter().map(move |&s| s + i))
+                .collect::<Vec<_>>()
+        );
+        assert_eq!(temporal_rules, concat(|l| l.temporal_rules.clone()));
+        assert_eq!(provider_rules, concat(|l| l.provider_rules.clone()));
+        for part in &alone {
+            assert_eq!(partition_keys, part.partition_keys);
+            assert_eq!(event_schema, part.event_schema);
+            assert_eq!(decision_kinds, part.decision_kinds);
+        }
+    }
+
+    #[test]
+    fn lower_many_is_the_standalone_union_over_an_inline_context() {
+        assert_lower_many_is_the_standalone_union(DRUPE_SCHEMA, &DRUPE_PARTS);
+    }
+
+    #[test]
+    fn lower_many_is_the_standalone_union_over_a_reference_context() {
+        assert_lower_many_is_the_standalone_union(BROKER_SCHEMA, &BROKER_PARTS);
     }
 }

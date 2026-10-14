@@ -1,0 +1,5 @@
+// outputType is the enum itself (no wrapping record).
+permit (principal, action == Drupe::Action::"Read", resource)
+when {
+    MyGuardrails::Grade(context.input.document) == MyGuardrails::Score::"LOW"
+};

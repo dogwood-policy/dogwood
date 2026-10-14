@@ -1,0 +1,25 @@
+Only past events from this request's principal count.
+
+@id("permit_sell_open_session_rate_limited")
+PERMIT any OAuthUser to perform SellShares on any resource
+  when:
+    a Login response with this request's user and output result = true occurred within the last 8 hours
+    and no Logout request for that user has occurred since then
+  when:
+    an ApproveSale response with this request's user and stock and output approved = true occurred within the last 1 hour
+  when:
+    the number of SellShares requests with this request's user within the last 1 hour <= 3
+
+@id("forbid_insider_notes")
+FORBID any principal to perform SellShares on any resource
+  when: the flagged field of Text::Scan(the request's notes) is true
+
+@id("forbid_sell_amzn")
+FORBID any principal to perform SellShares on any resource
+  when: the request's stock == "AMZN"
+
+@id("permit_admin_approve")
+PERMIT any IamEntity to perform ApproveSale on any resource
+  when:
+    a Login response with this request's user occurred within the last 1 hour
+    and no SellShares request with this request's user and stock has occurred since then

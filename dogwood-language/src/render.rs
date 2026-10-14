@@ -20,12 +20,13 @@
 //!   (`ParamRef`, temporal `SigilRef`/`Refine`/`Call`, a `?w`/`?p`/`$t` slot,
 //!   the lowering-only temporal `Or`) `panic!` with a clear message rather than
 //!   emit partial or invalid text.
+//! - Temporal gensym binders are renamed injectively; see [`BinderRenames`].
 //!
 //! Value leaves (literals, vars, slots, entity types, `like` patterns) delegate
 //! to the `cedar_policy_core` `Display` impls, which use Cedar's own escaping —
 //! the same grammar Dogwood's parser accepts.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use cedar_policy_core::ast as cedar_ast;
 
@@ -348,27 +349,32 @@ fn member(name: &str) -> String {
 
 fn render_extension(ext: &Extension) -> String {
     match ext {
-        Extension::Temporal(t) => format!("temporal {{ {} }}", render_condition(&t.condition)),
+        Extension::Temporal(t) => {
+            let ren = binder_renames(&t.condition);
+            format!("temporal {{ {} }}", render_condition(&t.condition, &ren))
+        }
     }
 }
 
-fn render_condition(c: &tast::Condition) -> String {
+fn render_condition(c: &tast::Condition, ren: &BinderRenames) -> String {
     use tast::ConditionKind as K;
     match &c.kind {
-        K::And { left, right } => format!("{} && {}", cond_group(left), cond_group(right)),
-        K::Not { inner } => format!("!{}", cond_group(inner)),
+        K::And { left, right } => {
+            format!("{} && {}", cond_group(left, ren), cond_group(right, ren))
+        }
+        K::Not { inner } => format!("!{}", cond_group(inner, ren)),
         K::Formerly { within, body } => {
             format!(
                 "formerly within {} {}",
                 render_within(within),
-                cond_group(body)
+                cond_group(body, ren)
             )
         }
         K::Previous { within, body } => {
             format!(
                 "previous within {} {}",
                 render_within(within),
-                cond_group(body)
+                cond_group(body, ren)
             )
         }
         K::Since {
@@ -377,28 +383,28 @@ fn render_condition(c: &tast::Condition) -> String {
             right,
         } => format!(
             "{} since within {} {}",
-            cond_group(left),
+            cond_group(left, ren),
             render_within(within),
-            cond_group(right),
+            cond_group(right, ren),
         ),
-        K::Predicate(p) => render_predicate(p),
+        K::Predicate(p) => render_predicate(p, ren),
         K::Comparison { op, left, right } => {
             format!(
                 "{} {} {}",
-                render_term(left),
+                render_term(left, ren),
                 cmp_symbol(*op),
-                render_term(right)
+                render_term(right, ren)
             )
         }
         K::Exists { var, body } => {
             format!(
                 "exists ({}: {}). {}",
-                binder_name(&var.slot),
+                binder_name(&var.slot, ren),
                 var.ty.render(),
-                cond_group(body),
+                cond_group(body, ren),
             )
         }
-        K::Tp { var } => format!("tp({})", binder_name(var)),
+        K::Tp { var } => format!("tp({})", binder_name(var, ren)),
 
         // Lowering-only or pre-expansion nodes — never in a parsed, expanded tree.
         K::Or { .. } => panic!("render: temporal `Or` is lowering-only and cannot be rendered"),
@@ -415,8 +421,8 @@ fn render_condition(c: &tast::Condition) -> String {
 /// A temporal sub-condition in operand position, always parenthesized so no
 /// operator-precedence ambiguity can arise. Parens re-parse away, so this is a
 /// stable fixed point.
-fn cond_group(c: &tast::Condition) -> String {
-    format!("({})", render_condition(c))
+fn cond_group(c: &tast::Condition, ren: &BinderRenames) -> String {
+    format!("({})", render_condition(c, ren))
 }
 
 fn render_within(w: &tast::WithinSpec) -> String {
@@ -428,7 +434,7 @@ fn render_within(w: &tast::WithinSpec) -> String {
     }
 }
 
-fn render_predicate(p: &tast::Predicate) -> String {
+fn render_predicate(p: &tast::Predicate, ren: &BinderRenames) -> String {
     let head = format!(
         "{}::{}::{}",
         p.namespace.join("::"),
@@ -441,12 +447,12 @@ fn render_predicate(p: &tast::Predicate) -> String {
     let args: Vec<String> = p
         .args
         .iter()
-        .map(|a| format!("{}: {}", a.name, render_term(&a.value)))
+        .map(|a| format!("{}: {}", a.name, render_term(&a.value, ren)))
         .collect();
     format!("{head}{{ {} }}", args.join(", "))
 }
 
-fn render_term(t: &tast::Term) -> String {
+fn render_term(t: &tast::Term, ren: &BinderRenames) -> String {
     use tast::Term as T;
     match t {
         T::Entity { ty, id } => format!("{ty}::{}", quote(id)),
@@ -456,19 +462,35 @@ fn render_term(t: &tast::Term) -> String {
         T::Bool(b) => b.to_string(),
         T::ContextField(path) => format!("context.{}", path.join(".")),
         T::ScopeField(path) => path.join("."),
-        T::Var(v) => sanitize_binder(v),
+        T::Var(v) => ren.apply(v),
         T::Wildcard => "*".to_string(),
         T::Array(items) => {
-            let items: Vec<String> = items.iter().map(render_term).collect();
+            let items: Vec<String> = items.iter().map(|i| render_term(i, ren)).collect();
             format!("[{}]", items.join(", "))
         }
-        T::Agg(agg) => render_agg(agg),
+        T::Agg(agg) => render_agg(agg, ren),
+        T::Arith { op, left, right } => format!(
+            "{} {} {}",
+            render_arith_operand(left, ren),
+            op.token(),
+            render_arith_operand(right, ren)
+        ),
         T::ParamRef(p) => panic!("render: unexpanded macro parameter `?{p}` in term position"),
         T::BinderRef(b) => panic!("render: unexpanded macro binder `${b}` in term position"),
     }
 }
 
-fn render_agg(agg: &tast::AggExpr) -> String {
+/// Render one operand of an arithmetic expression. A nested `Arith` is
+/// parenthesized so precedence survives the round trip; an aggregate so
+/// its greedy `where` body cannot swallow a following operator.
+fn render_arith_operand(t: &tast::Term, ren: &BinderRenames) -> String {
+    match t {
+        tast::Term::Arith { .. } | tast::Term::Agg(_) => format!("({})", render_term(t, ren)),
+        _ => render_term(t, ren),
+    }
+}
+
+fn render_agg(agg: &tast::AggExpr, ren: &BinderRenames) -> String {
     use tast::AggExprKind as A;
     match &agg.kind {
         A::Sum {
@@ -477,32 +499,32 @@ fn render_agg(agg: &tast::AggExpr) -> String {
             body,
         } => format!(
             "sum {} for {}. where {}",
-            binder_name(bound_var),
-            render_for_vars(for_vars),
-            cond_group(body),
+            binder_name(bound_var, ren),
+            render_for_vars(for_vars, ren),
+            cond_group(body, ren),
         ),
         A::Count { for_vars, body } => {
             format!(
                 "count for {}. where {}",
-                render_for_vars(for_vars),
-                cond_group(body)
+                render_for_vars(for_vars, ren),
+                cond_group(body, ren)
             )
         }
         A::Call(_) => panic!("render: unexpanded aggregation macro call cannot be rendered"),
     }
 }
 
-fn render_for_vars(for_vars: &[tast::TypedBinder]) -> String {
+fn render_for_vars(for_vars: &[tast::TypedBinder], ren: &BinderRenames) -> String {
     for_vars
         .iter()
-        .map(|b| format!("({}: {})", binder_name(&b.slot), b.ty.render()))
+        .map(|b| format!("({}: {})", binder_name(&b.slot, ren), b.ty.render()))
         .collect::<Vec<_>>()
         .join(", ")
 }
 
-fn binder_name(slot: &tast::BinderSlot) -> String {
+fn binder_name(slot: &tast::BinderSlot, ren: &BinderRenames) -> String {
     match slot {
-        tast::BinderSlot::Name(s) => sanitize_binder(s),
+        tast::BinderSlot::Name(s) => ren.apply(s),
         tast::BinderSlot::ParamRef(p) => {
             panic!("render: unexpanded macro parameter `?{p}` in binder position")
         }
@@ -534,7 +556,7 @@ fn cmp_symbol(op: tast::CmpOp) -> &'static str {
 /// lets every other character — notably `'` — through, so re-parsing yields
 /// exactly the input. Deliberately **not** `Literal`'s own `Display`, which uses
 /// `str::escape_debug` and over-escapes `'` as `\'`.
-fn quote(s: &str) -> String {
+pub(crate) fn quote(s: &str) -> String {
     let mut out = String::with_capacity(s.len() + 2);
     out.push('"');
     for c in s.chars() {
@@ -553,19 +575,163 @@ fn quote(s: &str) -> String {
     out
 }
 
-/// Rename a post-expansion binder to a surface-legal identifier.
+// ─── temporal binder renaming ─────────────────────────────────────────────
+
+/// Surface names for a temporal condition's gensym binders (`t$372`).
 ///
-/// Macro expansion mints fresh binder names as `<base>$<call-span>` (e.g.
-/// `t$372`); `$` is not a legal identifier character in surface syntax. Mapping
-/// it to `_` is a deterministic alpha-rename — every occurrence of the same
-/// binder (its declaration and all its uses) renders to the same name, so the
-/// binding structure is preserved. Names without a `$` (ordinary user binders)
-/// pass through unchanged. This is injective *among* gensyms (each carries a
-/// distinct call-span), and could in principle alias a user binder literally
-/// named `<base>_<span>` in the same scope — no more likely than the call-span
-/// collision the gensym scheme itself already rules out.
-fn sanitize_binder(name: &str) -> String {
-    name.replace('$', "_")
+/// Spelling `$` as `_` is not injective: a user binder named `t_372` in the
+/// same condition would collapse onto the gensym. So every non-gensym name is
+/// reserved, and each gensym takes the first free name among `t_372`,
+/// `t_372_1`, `t_372_2`, ….
+#[derive(Debug, Clone, Default)]
+pub(crate) struct BinderRenames {
+    /// Gensym name → surface name; every other name maps to itself.
+    map: BTreeMap<String, String>,
+}
+
+impl BinderRenames {
+    /// The surface spelling of `name`.
+    pub(crate) fn apply(&self, name: &str) -> String {
+        match self.map.get(name) {
+            Some(renamed) => renamed.clone(),
+            None => name.to_string(),
+        }
+    }
+}
+
+/// Compute the [`BinderRenames`] for one temporal condition.
+pub(crate) fn binder_renames(c: &tast::Condition) -> BinderRenames {
+    let mut names = BTreeSet::new();
+    collect_condition_names(c, &mut names);
+
+    let (gensyms, mut taken): (Vec<&String>, BTreeSet<String>) = {
+        let mut gensyms = Vec::new();
+        let mut reserved = BTreeSet::new();
+        for n in &names {
+            if n.contains('$') {
+                gensyms.push(n);
+            } else {
+                reserved.insert(n.clone());
+            }
+        }
+        (gensyms, reserved)
+    };
+
+    let mut map = BTreeMap::new();
+    // `names` is a BTreeSet, so `gensyms` is in sorted order: deterministic.
+    for g in gensyms {
+        let natural = g.replace('$', "_");
+        let mut candidate = natural.clone();
+        let mut nth = 1u32;
+        while taken.contains(&candidate) {
+            candidate = format!("{natural}_{nth}");
+            nth += 1;
+        }
+        taken.insert(candidate.clone());
+        map.insert(g.clone(), candidate);
+    }
+    BinderRenames { map }
+}
+
+/// Collect every binder name a condition declares or uses.
+fn collect_condition_names(c: &tast::Condition, out: &mut BTreeSet<String>) {
+    use tast::ConditionKind as K;
+    match &c.kind {
+        K::And { left, right } | K::Or { left, right } => {
+            collect_condition_names(left, out);
+            collect_condition_names(right, out);
+        }
+        K::Not { inner } => collect_condition_names(inner, out),
+        K::Formerly { body, .. } | K::Previous { body, .. } => collect_condition_names(body, out),
+        K::Since { left, right, .. } => {
+            collect_condition_names(left, out);
+            collect_condition_names(right, out);
+        }
+        K::Predicate(p) => {
+            for a in &p.args {
+                collect_term_names(&a.value, out);
+            }
+        }
+        K::Comparison { left, right, .. } => {
+            collect_term_names(left, out);
+            collect_term_names(right, out);
+        }
+        K::Exists { var, body } => {
+            collect_slot_name(&var.slot, out);
+            collect_condition_names(body, out);
+        }
+        K::Tp { var } => collect_slot_name(var, out),
+        K::Refine { base, fields, .. } => {
+            collect_condition_names(base, out);
+            for f in fields {
+                collect_term_names(&f.value, out);
+            }
+        }
+        // No surface syntax; rendering rejects these before any name matters.
+        K::Call(_) | K::SigilRef { .. } => {}
+    }
+}
+
+/// Collect the binder names a term mentions.
+fn collect_term_names(t: &tast::Term, out: &mut BTreeSet<String>) {
+    use tast::Term as T;
+    match t {
+        T::Var(v) => {
+            out.insert(v.clone());
+        }
+        T::Array(items) => {
+            for i in items {
+                collect_term_names(i, out);
+            }
+        }
+        T::Agg(agg) => collect_agg_names(agg, out),
+        T::Arith { left, right, .. } => {
+            collect_term_names(left, out);
+            collect_term_names(right, out);
+        }
+        T::Entity { .. }
+        | T::Integer(_)
+        | T::Decimal(_)
+        | T::String(_)
+        | T::Bool(_)
+        | T::ContextField(_)
+        | T::ScopeField(_)
+        | T::Wildcard
+        | T::ParamRef(_)
+        | T::BinderRef(_) => {}
+    }
+}
+
+/// Collect the binder names an aggregation declares and mentions.
+fn collect_agg_names(agg: &tast::AggExpr, out: &mut BTreeSet<String>) {
+    use tast::AggExprKind as A;
+    match &agg.kind {
+        A::Sum {
+            bound_var,
+            for_vars,
+            body,
+        } => {
+            collect_slot_name(bound_var, out);
+            for b in for_vars {
+                collect_slot_name(&b.slot, out);
+            }
+            collect_condition_names(body, out);
+        }
+        A::Count { for_vars, body } => {
+            for b in for_vars {
+                collect_slot_name(&b.slot, out);
+            }
+            collect_condition_names(body, out);
+        }
+        A::Call(_) => {}
+    }
+}
+
+/// Collect a binder slot's name; a still-sigil slot has none.
+fn collect_slot_name(slot: &tast::BinderSlot, out: &mut BTreeSet<String>) {
+    if let tast::BinderSlot::Name(s) = slot {
+        out.insert(s.clone());
+    }
 }
 
 /// Whether `name` is a bare identifier (so it needs no quoting as a member).

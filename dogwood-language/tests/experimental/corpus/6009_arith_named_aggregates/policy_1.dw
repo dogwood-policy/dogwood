@@ -1,0 +1,19 @@
+// Named aggregates in arithmetic: bind a count and a sum, then require the
+// average transfer to be at least 10, cross-multiplied (`s - n * 10 >= 0`).
+// The middle decision point also exercises a negative intermediate value.
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (n: Long). exists (s: Long). (
+        (count for (t: Timepoint). where (
+            formerly within 1h (Drupe::Action::"Transfer"::request{ input.amount: _ } && tp(t))
+        )) == n
+        && (sum a for (a: Long), (t: Timepoint). where (
+            formerly within 1h (Drupe::Action::"Transfer"::request{ input.amount: a } && tp(t))
+        )) == s
+        && s - n * 10 >= 0
+    )
+};

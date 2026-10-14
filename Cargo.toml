@@ -1,13 +1,17 @@
 [workspace]
 resolver = "2"
-# The Dogwood frontend is a single crate: `dogwood-language` holds both
-# the public surface and the (crate-private) implementation. A split
-# impl/api pair cannot enforce encapsulation across a crate boundary — a
-# published api forces its impl dependency to be published too, and the
-# impl's `pub` items are then reachable directly. One crate with
-# crate-private modules gives compiler-enforced encapsulation.
+# The semantic Dogwood frontend is a single crate: `dogwood-language` holds
+# both the public surface and the (crate-private) implementation. The separate
+# `dogwood-syntax` crate contains only source syntax shared with formatting.
 members = [
+    # Shared policy grammar and lossless concrete syntax. Semantic parsing and
+    # source formatting both depend on this layer so their syntax cannot drift.
+    "dogwood-syntax",
     "dogwood-language",
+    # Source-preserving pretty-printer for `.dw` policy files. Kept separate
+    # from the language crate because formatting works on the authored token
+    # stream (including macros/comments), not the macro-expanded semantic AST.
+    "dogwood-formatter",
     # `dogwood-cli` is the `dogwood` binary — a thin shell that drives the
     # frontend's curated public surface directly (schema/policy in, verdicts and
     # diagnostics out). Its serializable report/error types live in the crate
@@ -21,7 +25,7 @@ members = [
 ]
 
 [workspace.package]
-version = "1.0.0"
+version = "1.1.0"
 edition = "2024"
 # Registry for crates that inherit publish.workspace = true.
 publish = ["crates-io"]

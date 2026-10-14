@@ -1,0 +1,6 @@
+Only past events from this request's principal count.
+
+@id("write_after_recent_read")
+PERMIT any principal to perform Write on any resource
+  when:
+    a Read response with this request's user and document occurred within the last 1 hour

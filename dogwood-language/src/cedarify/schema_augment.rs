@@ -8,14 +8,21 @@
 //! there is no serialize/re-parse round-trip between passes.
 
 use cedar_policy_core::FromNormalizedStr;
-use cedar_policy_core::ast::Name;
+use cedar_policy_core::ast::{Annotation, AnyId, Name};
+use cedar_policy_core::est::Annotations;
 use cedar_policy_core::validator::RawName;
 pub(crate) use cedar_policy_core::validator::json_schema::Fragment;
-use cedar_policy_core::validator::json_schema::{RecordType, Type, TypeOfAttribute, TypeVariant};
+use cedar_policy_core::validator::json_schema::{
+    CommonType, CommonTypeId, RecordType, Type, TypeOfAttribute, TypeVariant,
+};
 use smol_str::SmolStr;
 
 use super::{ContextField, ProviderField, ScopedAction};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
+
+const SHARED_PROVIDER_TYPE_BASENAME: &str = "DogwoodProviders";
+const SHARED_PROVIDER_TYPE_ANNOTATION: &str = "dogwood_provider_context";
+const SHARED_PROVIDER_TYPE_VERSION: &str = "1.1";
 
 fn escaped_action_id(action_id: &str) -> String {
     cedar_policy_core::ast::Eid::new(action_id)
@@ -66,15 +73,40 @@ pub fn add_bool_context_fields(
 /// across namespaces cannot re-interpret any name.
 ///
 /// Idempotent: an already-inline context is left untouched, so running this
-/// at the start of both grafting passes (and across repeated lowerings of a
-/// fed-forward augmented schema) is safe.
+/// across repeated lowerings of a fed-forward augmented schema is safe. The
+/// temporal pass uses this all-action form; the provider pass uses the
+/// targeted wrapper below so unrelated actions retain their common-type
+/// references.
 fn inline_context_references(fragment: &mut Fragment<RawName>) -> Result<(), String> {
+    inline_selected_context_references(fragment, None)
+}
+
+/// The provider pass already carries its exact concrete target actions, so it
+/// can avoid expanding common context types used only by unrelated actions.
+fn inline_context_references_for_actions(
+    fragment: &mut Fragment<RawName>,
+    targets: &BTreeSet<(String, String)>,
+) -> Result<(), String> {
+    inline_selected_context_references(fragment, Some(targets))
+}
+
+fn inline_selected_context_references(
+    fragment: &mut Fragment<RawName>,
+    targets: Option<&BTreeSet<(String, String)>>,
+) -> Result<(), String> {
+    let selected = |namespace: &Option<Name>, action_id: &str| {
+        targets.is_none_or(|targets| {
+            targets.contains(&(namespace_string(namespace), action_id.to_string()))
+        })
+    };
+
     // Fast path: nothing to do unless some action context is a reference.
-    let any_reference = fragment.0.values().any(|ns| {
-        ns.actions.values().any(|a| {
-            a.applies_to
-                .as_ref()
-                .is_some_and(|ap| context_reference_name(&ap.context.0).is_some())
+    let any_reference = fragment.0.iter().any(|(namespace, ns)| {
+        ns.actions.iter().any(|(action_id, a)| {
+            selected(namespace, action_id)
+                && a.applies_to
+                    .as_ref()
+                    .is_some_and(|ap| context_reference_name(&ap.context.0).is_some())
         })
     });
     if !any_reference {
@@ -118,6 +150,9 @@ fn inline_context_references(fragment: &mut Fragment<RawName>) -> Result<(), Str
     let mut replacements: Vec<(Option<Name>, SmolStr, Type<RawName>)> = Vec::new();
     for (ns_key, ns) in qualified.0.iter() {
         for (action_id, action) in ns.actions.iter() {
+            if !selected(ns_key, action_id) {
+                continue;
+            }
             let Some(applies_to) = action.applies_to.as_ref() else {
                 continue;
             };
@@ -387,33 +422,212 @@ fn add_bool_to_action(
     }
 }
 
-/// Add a `providers` record to EVERY action's context, whose fields are the
-/// hoisted information-provider outputs typed from the provider
-/// declarations. Multiple provider fields are grouped into a single
-/// `providers: { ... }` record per action.
+/// The annotation that tags an injected provider enum with its declared
+/// name: `@dogwood_provider_enum("GuardDuty::Severity")`. A later lowering
+/// finds an enum it injected by this tag (feed-forward) and reuses it.
+const PROVIDER_ENUM_ANNOTATION: &str = "dogwood_provider_enum";
+
+/// The namespace provider enums are exported into: the first namespace, in
+/// sorted order, that declares actions (the root namespace, `None`, sorts
+/// first). It depends only on the action schema, never on the policy set, so
+/// every schema built from the same action schema puts an enum in the same
+/// place. `None` (outer) if no namespace declares actions.
+pub(crate) fn provider_enum_home(fragment: &Fragment<RawName>) -> Option<Option<Name>> {
+    fragment
+        .0
+        .iter()
+        .filter(|(_, ns)| !ns.actions.is_empty())
+        .map(|(name, _)| name.clone())
+        .min_by_key(|name| name.as_ref().map(ToString::to_string))
+}
+
+/// The exported name of each declared provider enum in `referenced`, keyed
+/// by its declared name: `GuardDuty::Severity` -> `Drupe::GuardDuty_Severity`
+/// (`GuardDuty_Severity` if the home namespace is the root). Names
+/// `referenced` holds that the declarations do not declare (an app enum used
+/// as an argument) are left out. Empty if no namespace declares actions.
+pub(crate) fn provider_enum_names(
+    fragment: &Fragment<RawName>,
+    decls: &crate::extension::provider::declarations::ProviderDeclarations,
+    referenced: &BTreeSet<String>,
+) -> BTreeMap<String, String> {
+    let Some(home) = provider_enum_home(fragment) else {
+        return BTreeMap::new();
+    };
+    referenced
+        .iter()
+        .filter(|name| decls.entity_type_decls.contains_key(*name))
+        .map(|declared| {
+            let base = crate::extension::provider::declarations::exported_enum_basename(declared);
+            let exported = match &home {
+                Some(ns) => format!("{ns}::{base}"),
+                None => base,
+            };
+            (declared.clone(), exported)
+        })
+        .collect()
+}
+
+/// The declared name an injected provider enum is tagged with, if `entity`
+/// is one.
+fn provider_enum_tag(
+    entity: &cedar_policy_core::validator::json_schema::EntityType<RawName>,
+) -> Option<&str> {
+    entity
+        .annotations
+        .0
+        .iter()
+        .find(|(annotation, _)| annotation.to_string() == PROVIDER_ENUM_ANNOTATION)
+        .and_then(|(_, value)| value.as_ref())
+        .map(|value| value.val.as_str())
+}
+
+/// Inject the provider-declared enum entity types (`entityTypes` in
+/// `providers.json`) named in `referenced` into the schema, so hoisted
+/// provider fields can be typed by them and policies can name their literals.
+/// `referenced` is what the policy set's provider calls use; a name it holds
+/// that the declarations do not declare (an app-schema enum used as an
+/// argument) is left alone.
 ///
-/// **Every action, not just the rule's scope targets.** Provider execution
-/// is unconditional: a provider may be evaluated for any decision event
-/// (see the provider contract in the guide, 05-information-providers), and
-/// `build_context` binds every provider's output into every decision
-/// event's context. The declared schema must match that runtime shape, so
-/// the hoisted field is declared on every action that can receive a
-/// request. Actions without an `appliesTo` (pure action groups) receive no
-/// context and are skipped.
+/// Each enum goes into the **home namespace** ([`provider_enum_home`]) under
+/// its exported name ([`provider_enum_names`]), tagged with its declared
+/// name, so no namespace is ever added: a consumer that accepts only the
+/// action schema's namespaces accepts the result. There is exactly one copy,
+/// which the other namespaces refer to by its full name, so a policy literal
+/// matches the field's value on every action.
+///
+/// The exported name is fixed by the declaration: policies name it, and it
+/// must be the same in every schema that gets merged. So instead of getting
+/// a suffix, a clash is an error, reported against the BASE schema:
+///
+/// * the declared name is also declared by the action schema (a literal
+///   `GuardDuty::Severity::"HIGH"` would be ambiguous);
+/// * the home namespace already declares the exported name (an entity or
+///   common type), unless it is this enum, injected by an earlier lowering:
+///   then it is reused and takes the current values;
+/// * the exported name would shadow a root-namespace name, which Cedar
+///   rejects.
+///
+/// The declarations are built as Cedar JSON schema so ids need no Cedar
+/// string escaping here.
+pub fn add_provider_entity_types(
+    fragment: &mut Fragment<RawName>,
+    decls: &crate::extension::provider::declarations::ProviderDeclarations,
+    referenced: &BTreeSet<String>,
+) -> Result<(), String> {
+    let names = provider_enum_names(fragment, decls, referenced);
+    if names.is_empty() {
+        if decls
+            .entity_type_decls
+            .keys()
+            .any(|name| referenced.contains(name))
+        {
+            return Err(
+                "no namespace in the policy schema declares actions, so provider entity \
+                 types have nowhere to go"
+                    .to_string(),
+            );
+        }
+        return Ok(());
+    }
+    let home = provider_enum_home(fragment).expect("names are only built with a home");
+    let declares = |ns: &Option<Name>, base: &str| {
+        fragment.0.get(ns).is_some_and(|ns| {
+            ns.common_types
+                .keys()
+                .any(|id| id.as_ref().to_string() == base)
+                || ns.entity_types.keys().any(|id| id.to_string() == base)
+        })
+    };
+
+    let mut errors: Vec<String> = Vec::new();
+    let mut entries = serde_json::Map::new();
+    for (declared, exported) in &names {
+        let decl = &decls.entity_type_decls[declared];
+        // `ProviderDeclarations::check` guarantees a qualified, valid name.
+        if let Some((ns, base)) = declared.rsplit_once("::") {
+            if declares(&ns_key(ns)?, base) {
+                errors.push(format!(
+                    "entity type `{declared}` is also declared by the policy schema, so \
+                     `{declared}::\"…\"` would be ambiguous; rename one of them"
+                ));
+                continue;
+            }
+        }
+        let base = crate::extension::provider::declarations::exported_enum_basename(declared);
+        let reused = fragment
+            .0
+            .get(&home)
+            .and_then(|ns| {
+                ns.entity_types
+                    .iter()
+                    .find(|(id, _)| id.to_string() == base)
+            })
+            .is_some_and(|(_, entity)| provider_enum_tag(entity) == Some(declared.as_str()));
+        if !reused && declares(&home, &base) {
+            errors.push(format!(
+                "entity type `{declared}` is exported as `{exported}`, which the policy \
+                 schema already declares; rename the policy schema's type"
+            ));
+            continue;
+        }
+        if home.is_some() && declares(&None, &base) {
+            errors.push(format!(
+                "entity type `{declared}` is exported as `{exported}`, which would shadow \
+                 `{base}` declared in the policy schema's root namespace"
+            ));
+            continue;
+        }
+        let mut annotations = decl.annotations.clone();
+        annotations.insert(PROVIDER_ENUM_ANNOTATION.to_string(), declared.clone());
+        entries.insert(
+            base,
+            serde_json::json!({ "enum": decl.values, "annotations": annotations }),
+        );
+    }
+    if !errors.is_empty() {
+        return Err(errors.join("\n"));
+    }
+
+    // Build the entries as a one-namespace fragment, then move them into the
+    // home namespace, replacing a reused enum.
+    let home_json = home.as_ref().map(ToString::to_string).unwrap_or_default();
+    let injected = Fragment::<RawName>::from_json_value(serde_json::json!({
+        home_json: { "entityTypes": entries, "actions": {} }
+    }))
+    .map_err(|e| format!("provider entity types: {e}"))?;
+    let home_ns = fragment
+        .0
+        .get_mut(&home)
+        .expect("the home namespace is in the fragment");
+    for (_, ns) in injected.0 {
+        home_ns.entity_types.extend(ns.entity_types);
+    }
+    Ok(())
+}
+
+/// Define all hoisted information-provider outputs once in a shared common
+/// type, then add a `providers` reference only to actions reached by at least
+/// one provider-bearing policy.
+///
+/// Every provider-relevant action references the same all-provider record:
+/// fields are not filtered per action. This preserves the runtime's
+/// unconditional provider-output shape while avoiding the old
+/// fields-times-actions schema expansion. Actions untouched by every provider
+/// policy omit `providers` entirely.
 ///
 /// The field types are recovered by synthesizing a tiny `.cedarschema`
 /// common type, parsing it with Cedar's own parser (so arbitrary nested
-/// record/set/decimal types are handled correctly), and grafting the
-/// resulting record `Type` into each action's context.
+/// record/set/decimal types are handled correctly). Each touched namespace
+/// receives one annotated definition (normally `DogwoodProviders`, with a
+/// numeric suffix if that name is occupied), because an unqualified type
+/// nested inside a provider output must resolve relative to the action's
+/// namespace exactly as it did when the record was inline.
 ///
-/// **Additive across passes.** If an action's context *already* carries a
-/// `providers` record (from a prior augmentation of the same base schema —
-/// e.g. incremental / repeated lowering that feeds an augmented schema
-/// forward), this pass's fields are *merged into* that record rather than
-/// replacing it, so earlier providers survive. Field names are namespaced by
-/// their rule key (see [`crate::cedarify::rule_key`]), so distinct lowerings
-/// never collide; a name that does recur (the same set re-lowered) simply
-/// overwrites with an identically-typed field, which is a no-op.
+/// **Additive across passes.** A later lowering merges new fields into every
+/// previously emitted shared definition, so actions touched by an earlier
+/// provider policy see the complete accumulated provider set. Newly touched
+/// actions gain a reference; still-untouched actions remain unchanged.
 pub fn add_provider_context_fields(
     fragment: &mut Fragment<RawName>,
     fields: &[ProviderField],
@@ -421,27 +635,22 @@ pub fn add_provider_context_fields(
     if fields.is_empty() {
         return Ok(());
     }
-    // A context declared as a common-type reference (`context: SomeType`)
-    // must be inlined before hoisted fields can be inserted into it.
-    inline_context_references(fragment)?;
-    // Every action with an appliesTo, across every namespace in the schema.
-    let all_actions: Vec<(String, String)> = fragment
-        .0
+    let targets: BTreeSet<(String, String)> = fields
         .iter()
-        .flat_map(|(ns_name, ns)| {
-            let ns_str = ns_name.as_ref().map(|n| n.to_string()).unwrap_or_default();
-            ns.actions
-                .iter()
-                .filter(|(_, a)| a.applies_to.is_some())
-                .map(move |(id, _)| (ns_str.clone(), id.to_string()))
-        })
+        .flat_map(|field| field.target_actions.iter().cloned())
         .collect();
+    if targets.is_empty() {
+        return Ok(());
+    }
+    // A context declared as a common-type reference (`context: SomeType`)
+    // must be inlined before hoisted fields can be inserted into it. Only
+    // targeted actions need this expansion.
+    inline_context_references_for_actions(fragment, &targets)?;
 
     // Synthesize `type __PR = { f1: T1, f2: T2 };` once and parse it to
     // recover each field's Cedar `Type<RawName>`. (This parses a tiny
     // *synthetic* schema, not the base one — it is how we recover
-    // arbitrary nested record/set/decimal field types.) Loop-invariant:
-    // the same attribute record is grafted onto every action.
+    // arbitrary nested record/set/decimal field types.)
     let attrs = fields
         .iter()
         .map(|f| format!("{}: {}", f.field_name, f.cedar_type))
@@ -469,15 +678,145 @@ pub fn add_provider_context_fields(
         _ => return Err("internal: synthesized providers type is not a record".to_string()),
     };
 
-    for (namespace, action_id) in all_actions {
+    let target_namespaces: BTreeSet<String> = targets
+        .iter()
+        .map(|(namespace, _)| namespace.clone())
+        .collect();
+
+    // Start with fields carried by any shared definitions from earlier
+    // lowerings. They must all converge to the same record after this pass.
+    let mut all_attrs = BTreeMap::new();
+    let mut shared_type_ids: BTreeMap<String, CommonTypeId> = BTreeMap::new();
+    for (ns_key, ns) in &fragment.0 {
+        let namespace = namespace_string(ns_key);
+        let mut generated = ns
+            .common_types
+            .iter()
+            .filter(|(_, common)| is_dogwood_provider_type(common));
+        if let Some((id, common)) = generated.next() {
+            if generated.next().is_some() {
+                return Err(format!(
+                    "namespace `{namespace}` contains multiple Dogwood-generated provider types"
+                ));
+            }
+            let version = dogwood_provider_type_version(common).ok_or_else(|| {
+                format!(
+                    "namespace `{namespace}` contains a Dogwood provider type without a \
+                     representation version"
+                )
+            })?;
+            if version != SHARED_PROVIDER_TYPE_VERSION {
+                return Err(format!(
+                    "namespace `{namespace}` contains a Dogwood provider type with unsupported \
+                     representation version `{version}`"
+                ));
+            }
+            let attrs = common_type_record(common, &namespace)?;
+            merge_provider_attributes(&mut all_attrs, attrs.attributes.clone())?;
+            shared_type_ids.insert(namespace, id.clone());
+        }
+    }
+    for namespace in &target_namespaces {
+        if !shared_type_ids.contains_key(namespace) {
+            let ns = fragment
+                .0
+                .get(&ns_key(namespace)?)
+                .ok_or_else(|| format!("namespace `{namespace}` not found"))?;
+            shared_type_ids.insert(namespace.clone(), available_shared_provider_type_id(ns)?);
+        }
+    }
+
+    // A targeted action may carry an inline provider record from a schema
+    // produced by the older augmentation strategy, or from a customer schema.
+    // Preserve those fields when migrating that action to the shared type.
+    for (namespace, action_id) in &targets {
+        let ns_key = ns_key(namespace)?;
+        let ns = fragment
+            .0
+            .get(&ns_key)
+            .ok_or_else(|| format!("namespace `{namespace}` not found"))?;
+        let action = ns
+            .actions
+            .get(action_id.as_str())
+            .ok_or_else(|| format!("action `{}` not found", escaped_action_id(action_id)))?;
+        let applies_to = action
+            .applies_to
+            .as_ref()
+            .ok_or_else(|| format!("action `{}` has no appliesTo", escaped_action_id(action_id)))?;
+        match provider_attribute(&applies_to.context.0, action_id)? {
+            None => {}
+            Some(TypeOfAttribute {
+                ty:
+                    Type::Type {
+                        ty: TypeVariant::Record(existing),
+                        ..
+                    },
+                ..
+            }) => merge_provider_attributes(&mut all_attrs, existing.attributes.clone())?,
+            Some(attribute) => {
+                let shared_id = shared_type_ids
+                    .get(namespace)
+                    .expect("target namespace assigned a shared type");
+                let shared_name = shared_id.as_ref().to_string();
+                if !provider_type_reference_matches(&attribute.ty, namespace, &shared_name) {
+                    return Err(format!(
+                        "action `{}` already has a `providers` attribute that is neither an \
+                         inline record nor Dogwood's shared provider type",
+                        escaped_action_id(action_id)
+                    ));
+                }
+                let common = ns.common_types.get(shared_id).ok_or_else(|| {
+                    format!(
+                        "action `{}` references missing Dogwood shared provider type",
+                        escaped_action_id(action_id)
+                    )
+                })?;
+                if !is_dogwood_provider_type(common) {
+                    return Err(format!(
+                        "action `{}` references `{shared_name}`, but that common type was not \
+                         generated by Dogwood",
+                        escaped_action_id(action_id),
+                    ));
+                }
+            }
+        }
+    }
+    merge_provider_attributes(&mut all_attrs, new_attrs)?;
+
+    // Existing shared definitions must receive fields added by later passes,
+    // even when none of that pass's policies target their namespace.
+    for (namespace, shared_id) in &shared_type_ids {
         let ns_key = ns_key(&namespace)?;
         let ns = fragment
             .0
             .get_mut(&ns_key)
             .ok_or_else(|| format!("namespace `{namespace}` not found"))?;
-        let action = ns
-            .actions
-            .get_mut(&SmolStr::from(action_id.as_str()))
+        match ns.common_types.get_mut(shared_id) {
+            Some(common) if is_dogwood_provider_type(common) => {
+                common.ty = provider_record_type(all_attrs.clone());
+            }
+            Some(_) => unreachable!("available type name was checked before mutation"),
+            None => {
+                ns.common_types.insert(
+                    shared_id.clone(),
+                    CommonType {
+                        ty: provider_record_type(all_attrs.clone()),
+                        annotations: dogwood_provider_annotations()?,
+                        loc: None,
+                    },
+                );
+            }
+        }
+    }
+
+    // Only actions reached by at least one provider policy gain the shared
+    // reference. Every such action sees the complete all-provider record.
+    for (namespace, action_id) in targets {
+        let ns_key = ns_key(&namespace)?;
+        let action = fragment
+            .0
+            .get_mut(&ns_key)
+            .and_then(|ns| ns.actions.get_mut(&SmolStr::from(action_id.as_str())))
             .ok_or_else(|| format!("action `{}` not found", escaped_action_id(&action_id)))?;
         let applies_to = action.applies_to.as_mut().ok_or_else(|| {
             format!(
@@ -485,61 +824,201 @@ pub fn add_provider_context_fields(
                 escaped_action_id(&action_id)
             )
         })?;
-
-        insert_provider_record(&mut applies_to.context.0, new_attrs.clone(), &action_id)?;
+        let shared_id = shared_type_ids
+            .get(&namespace)
+            .expect("target namespace assigned a shared type");
+        let shared_name = shared_id.as_ref().to_string();
+        insert_provider_reference(
+            &mut applies_to.context.0,
+            &namespace,
+            &action_id,
+            &shared_name,
+        )?;
     }
 
     Ok(())
 }
 
-/// Insert (or merge) a `providers` record carrying `new_attrs` into one
-/// action's `context` record.
-fn insert_provider_record(
-    context: &mut Type<RawName>,
-    new_attrs: BTreeMap<SmolStr, TypeOfAttribute<RawName>>,
+fn available_shared_provider_type_id(
+    namespace: &cedar_policy_core::validator::json_schema::NamespaceDefinition<RawName>,
+) -> Result<CommonTypeId, String> {
+    for suffix in 0usize.. {
+        let candidate = if suffix == 0 {
+            SHARED_PROVIDER_TYPE_BASENAME.to_string()
+        } else {
+            format!("{SHARED_PROVIDER_TYPE_BASENAME}_{suffix}")
+        };
+        let id = candidate
+            .parse()
+            .map_err(|e| format!("invalid shared provider type name `{candidate}`: {e}"))?;
+        let id = CommonTypeId::new(id)
+            .map_err(|e| format!("invalid shared provider type name `{candidate}`: {e}"))?;
+        if !namespace.common_types.contains_key(&id)
+            && !namespace.entity_types.contains_key(id.as_ref())
+        {
+            return Ok(id);
+        }
+    }
+    unreachable!("the unbounded suffix space cannot be exhausted")
+}
+
+fn dogwood_provider_annotations() -> Result<Annotations, String> {
+    let annotation: AnyId = SHARED_PROVIDER_TYPE_ANNOTATION
+        .parse()
+        .map_err(|e| format!("invalid shared provider annotation name: {e}"))?;
+    Ok(Annotations(BTreeMap::from([(
+        annotation,
+        Some(Annotation {
+            val: SmolStr::from(SHARED_PROVIDER_TYPE_VERSION),
+            loc: None,
+        }),
+    )])))
+}
+
+fn is_dogwood_provider_type(common: &CommonType<RawName>) -> bool {
+    common
+        .annotations
+        .0
+        .keys()
+        .any(|annotation| annotation.to_string() == SHARED_PROVIDER_TYPE_ANNOTATION)
+}
+
+fn dogwood_provider_type_version(common: &CommonType<RawName>) -> Option<&str> {
+    common
+        .annotations
+        .0
+        .iter()
+        .find(|(annotation, _)| annotation.to_string() == SHARED_PROVIDER_TYPE_ANNOTATION)
+        .and_then(|(_, value)| value.as_ref())
+        .map(AsRef::as_ref)
+        .filter(|version: &&str| !version.is_empty())
+}
+
+fn common_type_record<'a>(
+    common: &'a CommonType<RawName>,
+    namespace: &str,
+) -> Result<&'a RecordType<RawName>, String> {
+    match &common.ty {
+        Type::Type {
+            ty: TypeVariant::Record(record),
+            ..
+        } => Ok(record),
+        _ => Err(format!(
+            "Dogwood shared provider type in namespace `{namespace}` is not a record"
+        )),
+    }
+}
+
+fn provider_record_type(attributes: BTreeMap<SmolStr, TypeOfAttribute<RawName>>) -> Type<RawName> {
+    Type::Type {
+        ty: TypeVariant::Record(RecordType {
+            attributes,
+            additional_attributes: false,
+        }),
+        loc: None,
+    }
+}
+
+fn merge_provider_attributes(
+    target: &mut BTreeMap<SmolStr, TypeOfAttribute<RawName>>,
+    source: BTreeMap<SmolStr, TypeOfAttribute<RawName>>,
+) -> Result<(), String> {
+    for (name, attribute) in source {
+        if let Some(existing) = target.get(&name)
+            && existing != &attribute
+        {
+            return Err(format!(
+                "provider field `{name}` was previously declared with a different type"
+            ));
+        }
+        target.insert(name, attribute);
+    }
+    Ok(())
+}
+
+fn namespace_string(namespace: &Option<Name>) -> String {
+    namespace
+        .as_ref()
+        .map(ToString::to_string)
+        .unwrap_or_default()
+}
+
+fn provider_attribute<'a>(
+    context: &'a Type<RawName>,
     action_id: &str,
+) -> Result<Option<&'a TypeOfAttribute<RawName>>, String> {
+    match context {
+        Type::Type {
+            ty: TypeVariant::Record(record),
+            ..
+        } => Ok(record.attributes.get("providers")),
+        Type::Type { .. } => Err(format!(
+            "action `{}` context is not a record",
+            escaped_action_id(action_id)
+        )),
+        _ => Err(format!(
+            "action `{}` context does not resolve to a record type \
+             (an action's context must be a record)",
+            escaped_action_id(action_id)
+        )),
+    }
+}
+
+fn provider_type_reference_matches(ty: &Type<RawName>, namespace: &str, type_name: &str) -> bool {
+    let Some(reference) = context_reference_name(ty) else {
+        return false;
+    };
+    reference == type_name
+        || (!namespace.is_empty() && reference == format!("{namespace}::{type_name}"))
+}
+
+/// Insert a reference to the namespace's shared provider type into one action.
+fn insert_provider_reference(
+    context: &mut Type<RawName>,
+    namespace: &str,
+    action_id: &str,
+    shared_type_name: &str,
 ) -> Result<(), String> {
     match context {
         Type::Type { ty, .. } => match ty {
             TypeVariant::Record(record) => {
+                let shared_type = Type::CommonTypeRef {
+                    type_name: RawName::parse_unqualified_name(shared_type_name)
+                        .map_err(|e| format!("invalid shared provider type reference: {e}"))?,
+                    loc: None,
+                };
                 match record.attributes.get_mut(&SmolStr::from("providers")) {
-                    // A `providers` record already exists (a prior pass, or
-                    // an earlier lowering whose augmented schema was fed
-                    // forward): MERGE this pass's fields into it so earlier
-                    // providers are preserved, rather than replacing the
-                    // whole record.
-                    Some(TypeOfAttribute {
-                        ty:
+                    Some(attribute)
+                        if matches!(
+                            attribute.ty,
                             Type::Type {
-                                ty: TypeVariant::Record(existing),
+                                ty: TypeVariant::Record(_),
                                 ..
-                            },
-                        ..
-                    }) => {
-                        existing.attributes.extend(new_attrs);
+                            }
+                        ) =>
+                    {
+                        attribute.ty = shared_type;
                         Ok(())
                     }
-                    // A `providers` attribute exists but is not an inline
-                    // record — a schema we did not produce. Refuse rather
-                    // than silently clobber it.
+                    Some(attribute)
+                        if provider_type_reference_matches(
+                            &attribute.ty,
+                            namespace,
+                            shared_type_name,
+                        ) =>
+                    {
+                        Ok(())
+                    }
                     Some(_) => Err(format!(
                         "action `{}` already has a `providers` attribute that \
-                         is not an inline record; cannot merge hoisted provider fields \
-                         into it",
+                         is neither an inline record nor Dogwood's shared provider type",
                         escaped_action_id(action_id)
                     )),
-                    // First provider pass for this action: install the record.
                     None => {
                         record.attributes.insert(
                             SmolStr::from("providers"),
                             TypeOfAttribute {
-                                ty: Type::Type {
-                                    ty: TypeVariant::Record(RecordType {
-                                        attributes: new_attrs,
-                                        additional_attributes: false,
-                                    }),
-                                    loc: None,
-                                },
+                                ty: shared_type,
                                 required: true,
                                 annotations: Default::default(),
                             },
@@ -711,9 +1190,13 @@ mod tests {
     /// A minimal provider leaf on `Drupe::Read` with the given field name
     /// and a `Bool` output type.
     fn provider_field(field_name: &str) -> ProviderField {
+        provider_field_for(field_name, "Drupe", "Read")
+    }
+
+    fn provider_field_for(field_name: &str, namespace: &str, action_id: &str) -> ProviderField {
         ProviderField {
-            action: ScopedAction::Concrete(("Drupe".to_string(), "Read".to_string())),
-            target_actions: vec![("Drupe".to_string(), "Read".to_string())],
+            action: ScopedAction::Concrete((namespace.to_string(), action_id.to_string())),
+            target_actions: vec![(namespace.to_string(), action_id.to_string())],
             field_name: field_name.to_string(),
             cedar_type: "Bool".to_string(),
             body_base: 0,
@@ -726,6 +1209,63 @@ mod tests {
             principal: crate::cedarify::ScopeConstraint::Any,
             resource: crate::cedarify::ScopeConstraint::Any,
         }
+    }
+
+    fn provider_field_for_first_appliable(
+        fragment: &Fragment<RawName>,
+        field_name: &str,
+    ) -> ProviderField {
+        for (namespace, schema) in &fragment.0 {
+            let namespace = namespace_string(namespace);
+            for action_id in schema.actions.keys() {
+                if action_is_appliable(fragment, &namespace, action_id) {
+                    return provider_field_for(field_name, &namespace, action_id);
+                }
+            }
+        }
+        panic!("test schema has no requestable action");
+    }
+
+    fn shared_provider_attr_names(
+        fragment: &Fragment<RawName>,
+        namespace: &str,
+    ) -> Option<Vec<String>> {
+        let common = fragment.0[&ns_key(namespace).unwrap()]
+            .common_types
+            .values()
+            .find(|common| is_dogwood_provider_type(common))?;
+        Some(
+            common_type_record(common, namespace)
+                .unwrap()
+                .attributes
+                .keys()
+                .map(ToString::to_string)
+                .collect(),
+        )
+    }
+
+    fn action_references_shared_provider_type(
+        fragment: &Fragment<RawName>,
+        namespace: &str,
+        action_id: &str,
+    ) -> bool {
+        let context = &fragment.0[&ns_key(namespace).unwrap()].actions[action_id]
+            .applies_to
+            .as_ref()
+            .unwrap()
+            .context
+            .0;
+        let shared_name = fragment.0[&ns_key(namespace).unwrap()]
+            .common_types
+            .iter()
+            .find(|(_, common)| is_dogwood_provider_type(common))
+            .map(|(id, _)| id.as_ref().to_string());
+        provider_attribute(context, action_id)
+            .unwrap()
+            .zip(shared_name.as_deref())
+            .is_some_and(|(attribute, shared_name)| {
+                provider_type_reference_matches(&attribute.ty, namespace, shared_name)
+            })
     }
 
     /// Helper: parse a `.cedarschema` string into a fragment.
@@ -901,11 +1441,16 @@ mod tests {
             );
             let context = &mut action.applies_to.as_mut().unwrap().context.0;
             assert_eq!(
-                insert_provider_record(context, BTreeMap::new(), &decoded)
-                    .expect_err("providers is not a record"),
+                insert_provider_reference(
+                    context,
+                    "Drupe",
+                    &decoded,
+                    SHARED_PROVIDER_TYPE_BASENAME,
+                )
+                .expect_err("providers is not a record"),
                 format!(
-                    "action `{escaped}` already has a `providers` attribute that is not an inline \
-                     record; cannot merge hoisted provider fields into it"
+                    "action `{escaped}` already has a `providers` attribute that is neither an \
+                     inline record nor Dogwood's shared provider type"
                 ),
                 "non-record providers {action_source:?}"
             );
@@ -917,8 +1462,13 @@ mod tests {
             };
             let context = &mut action.applies_to.as_mut().unwrap().context.0;
             assert_eq!(
-                insert_provider_record(context, BTreeMap::new(), &decoded)
-                    .expect_err("scalar context"),
+                insert_provider_reference(
+                    context,
+                    "Drupe",
+                    &decoded,
+                    SHARED_PROVIDER_TYPE_BASENAME,
+                )
+                .expect_err("scalar context"),
                 format!("action `{escaped}` context is not a record"),
                 "scalar provider context {action_source:?}"
             );
@@ -926,8 +1476,13 @@ mod tests {
             let mut action = take_action(action_source, "Ctx");
             let context = &mut action.applies_to.as_mut().unwrap().context.0;
             assert_eq!(
-                insert_provider_record(context, BTreeMap::new(), &decoded)
-                    .expect_err("unresolved context"),
+                insert_provider_reference(
+                    context,
+                    "Drupe",
+                    &decoded,
+                    SHARED_PROVIDER_TYPE_BASENAME,
+                )
+                .expect_err("unresolved context"),
                 format!(
                     "action `{escaped}` context does not resolve to a record type \
                      (an action's context must be a record)"
@@ -976,11 +1531,10 @@ mod tests {
     }
 
     #[test]
-    fn provider_augmentation_feed_forward_accumulates_on_every_action() {
-        // Feed-forward over a MULTI-ACTION schema: with graft-everywhere,
-        // each pass must merge its field into EVERY action's providers
-        // record, and a second lowering over the serialized result must
-        // accumulate (not clobber) on every action.
+    fn provider_augmentation_feed_forward_updates_one_shared_type() {
+        // Pass A touches Read. Pass B touches Write. After feed-forward both
+        // actions reference the one accumulated all-provider type, while an
+        // action untouched by either pass still has no providers attribute.
         let schema = r#"
             namespace App {
               entity User;
@@ -993,47 +1547,676 @@ mod tests {
                 principal: [User], resource: [Doc],
                 context: { input: { doc: String } }
               };
+              action "Delete" appliesTo {
+                principal: [User], resource: [Doc],
+                context: { input: { doc: String } }
+              };
             }
         "#;
         let mut fragment = parse(schema);
-        add_provider_context_fields(&mut fragment, &[provider_field("ruleA_0_p_0")]).unwrap();
+        add_provider_context_fields(
+            &mut fragment,
+            &[provider_field_for("ruleA_0_p_0", "App", "Read")],
+        )
+        .unwrap();
         let after_a = fragment.to_cedarschema().unwrap();
 
         let mut fragment_b = parse(&after_a);
-        add_provider_context_fields(&mut fragment_b, &[provider_field("ruleB_0_p_0")]).unwrap();
+        add_provider_context_fields(
+            &mut fragment_b,
+            &[provider_field_for("ruleB_0_p_0", "App", "Write")],
+        )
+        .unwrap();
 
-        // Both fields present on BOTH actions' contexts after the second pass.
+        assert_eq!(
+            shared_provider_attr_names(&fragment_b, "App"),
+            Some(vec!["ruleA_0_p_0".to_string(), "ruleB_0_p_0".to_string()])
+        );
         for action in ["Read", "Write"] {
-            let ctx = &fragment_b.0[&ns_key("App").unwrap()].actions[&SmolStr::from(action)]
-                .applies_to
-                .as_ref()
-                .unwrap()
-                .context
-                .0;
-            let Type::Type {
-                ty: TypeVariant::Record(record),
-                ..
-            } = ctx
-            else {
-                panic!("action {action} context not a record after augmentation");
-            };
-            let Some(TypeOfAttribute {
-                ty:
-                    Type::Type {
-                        ty: TypeVariant::Record(providers),
-                        ..
-                    },
-                ..
-            }) = record.attributes.get(&SmolStr::from("providers"))
-            else {
-                panic!("action {action} has no providers record");
-            };
-            for field in ["ruleA_0_p_0", "ruleB_0_p_0"] {
-                assert!(
-                    providers.attributes.contains_key(&SmolStr::from(field)),
-                    "action {action} missing provider field {field} after feed-forward"
-                );
+            assert!(
+                action_references_shared_provider_type(&fragment_b, "App", action),
+                "{action} should reference the accumulated shared provider type"
+            );
+        }
+        assert!(
+            !action_references_shared_provider_type(&fragment_b, "App", "Delete"),
+            "untouched Delete unexpectedly gained providers"
+        );
+    }
+
+    #[test]
+    fn feed_forward_updates_shared_provider_types_across_namespaces() {
+        let schema = r#"
+            namespace AppA {
+              entity User;
+              entity Doc;
+              action "Read" appliesTo {
+                principal: [User], resource: [Doc], context: {}
+              };
             }
+            namespace AppB {
+              entity User;
+              entity Doc;
+              action "Write" appliesTo {
+                principal: [User], resource: [Doc], context: {}
+              };
+            }
+        "#;
+        let mut fragment = parse(schema);
+        add_provider_context_fields(
+            &mut fragment,
+            &[provider_field_for("field_a", "AppA", "Read")],
+        )
+        .unwrap();
+
+        let mut fragment = parse(&fragment.to_cedarschema().unwrap());
+        let mut field_b = provider_field_for("field_b", "AppB", "Write");
+        field_b.cedar_type = "String".to_string();
+        add_provider_context_fields(&mut fragment, &[field_b]).unwrap();
+
+        let expected = Some(vec!["field_a".to_string(), "field_b".to_string()]);
+        assert_eq!(
+            shared_provider_attr_names(&fragment, "AppA"),
+            expected,
+            "the earlier namespace must receive fields introduced later elsewhere"
+        );
+        assert_eq!(
+            shared_provider_attr_names(&fragment, "AppB"),
+            expected,
+            "a newly touched namespace receives the complete accumulated type"
+        );
+        assert!(action_references_shared_provider_type(
+            &fragment, "AppA", "Read"
+        ));
+        assert!(action_references_shared_provider_type(
+            &fragment, "AppB", "Write"
+        ));
+
+        let schema: cedar_policy::SchemaFragment = fragment.try_into().unwrap();
+        cedar_policy::Schema::from_schema_fragments([schema])
+            .expect("cross-namespace shared types compile");
+    }
+
+    #[test]
+    fn targeted_inline_provider_record_migrates_to_shared_type() {
+        let mut fragment = parse(
+            r#"
+            namespace App {
+              entity User;
+              entity Doc;
+              action "Read" appliesTo {
+                principal: [User], resource: [Doc],
+                context: { providers: { legacy: String } }
+              };
+            }
+            "#,
+        );
+        add_provider_context_fields(
+            &mut fragment,
+            &[provider_field_for("generated", "App", "Read")],
+        )
+        .unwrap();
+
+        assert_eq!(
+            shared_provider_attr_names(&fragment, "App"),
+            Some(vec!["generated".to_string(), "legacy".to_string()])
+        );
+        assert!(action_references_shared_provider_type(
+            &fragment, "App", "Read"
+        ));
+    }
+
+    #[test]
+    fn customer_common_type_name_collision_uses_a_suffix() {
+        let mut fragment = parse(
+            r#"
+            namespace App {
+              type DogwoodProviders = { customer: Bool };
+              entity User;
+              entity Doc;
+              action "Read" appliesTo {
+                principal: [User], resource: [Doc], context: {}
+              };
+            }
+            "#,
+        );
+        add_provider_context_fields(
+            &mut fragment,
+            &[provider_field_for("generated", "App", "Read")],
+        )
+        .expect("Dogwood chooses a non-colliding generated name");
+
+        let namespace = &fragment.0[&ns_key("App").unwrap()];
+        let customer = namespace
+            .common_types
+            .iter()
+            .find(|(id, _)| id.as_ref().to_string() == SHARED_PROVIDER_TYPE_BASENAME)
+            .map(|(_, common)| common)
+            .expect("customer type remains");
+        assert!(
+            !is_dogwood_provider_type(customer),
+            "customer type was incorrectly claimed by Dogwood"
+        );
+        let generated_name = namespace
+            .common_types
+            .iter()
+            .find(|(_, common)| is_dogwood_provider_type(common))
+            .map(|(id, _)| id.as_ref().to_string())
+            .expect("generated provider type");
+        assert_eq!(generated_name, "DogwoodProviders_1");
+        assert!(action_references_shared_provider_type(
+            &fragment, "App", "Read"
+        ));
+    }
+
+    #[test]
+    fn suffixed_provider_type_is_reused_across_feed_forward() {
+        let schema = r#"
+            namespace App {
+              type DogwoodProviders = { customer: Bool };
+              entity User;
+              entity Doc;
+              action "Read" appliesTo {
+                principal: [User], resource: [Doc], context: {}
+              };
+              action "Write" appliesTo {
+                principal: [User], resource: [Doc], context: {}
+              };
+            }
+        "#;
+        let mut fragment = parse(schema);
+        add_provider_context_fields(&mut fragment, &[provider_field_for("first", "App", "Read")])
+            .unwrap();
+
+        let mut fragment = parse(&fragment.to_cedarschema().unwrap());
+        add_provider_context_fields(
+            &mut fragment,
+            &[provider_field_for("second", "App", "Write")],
+        )
+        .unwrap();
+
+        let namespace = &fragment.0[&ns_key("App").unwrap()];
+        let generated: Vec<_> = namespace
+            .common_types
+            .iter()
+            .filter(|(_, common)| is_dogwood_provider_type(common))
+            .collect();
+        assert_eq!(generated.len(), 1);
+        assert_eq!(generated[0].0.as_ref().to_string(), "DogwoodProviders_1");
+        assert_eq!(
+            shared_provider_attr_names(&fragment, "App"),
+            Some(vec!["first".to_string(), "second".to_string()])
+        );
+        assert!(
+            !fragment
+                .to_cedarschema()
+                .unwrap()
+                .contains("DogwoodProviders_2")
+        );
+        for action in ["Read", "Write"] {
+            assert!(action_references_shared_provider_type(
+                &fragment, "App", action
+            ));
+        }
+
+        let schema: cedar_policy::SchemaFragment = fragment.try_into().unwrap();
+        cedar_policy::Schema::from_schema_fragments([schema])
+            .expect("suffixed shared provider schema compiles");
+    }
+
+    #[test]
+    fn explicitly_qualified_shared_provider_reference_survives_reaugmentation() {
+        let schema = r#"
+            namespace App {
+              @dogwood_provider_context("1.1")
+              type DogwoodProviders = { existing: Bool };
+              entity User;
+              entity Doc;
+              action "Read" appliesTo {
+                principal: [User], resource: [Doc],
+                context: { providers: App::DogwoodProviders }
+              };
+            }
+        "#;
+        let mut fragment = parse(schema);
+        add_provider_context_fields(
+            &mut fragment,
+            &[provider_field_for("new_field", "App", "Read")],
+        )
+        .expect("a qualified local reference is the existing shared provider type");
+
+        assert_eq!(
+            shared_provider_attr_names(&fragment, "App"),
+            Some(vec!["existing".to_string(), "new_field".to_string()])
+        );
+        assert!(action_references_shared_provider_type(
+            &fragment, "App", "Read"
+        ));
+
+        let schema: cedar_policy::SchemaFragment = fragment.try_into().unwrap();
+        cedar_policy::Schema::from_schema_fragments([schema])
+            .expect("qualified shared provider reference compiles");
+    }
+
+    #[test]
+    fn legacy_inline_provider_records_migrate_across_separate_passes() {
+        let schema = r#"
+            namespace App {
+              entity User;
+              entity Doc;
+              action "Read" appliesTo {
+                principal: [User], resource: [Doc],
+                context: { providers: { read_legacy: String } }
+              };
+              action "Write" appliesTo {
+                principal: [User], resource: [Doc],
+                context: { providers: { write_legacy: Long } }
+              };
+            }
+        "#;
+        let mut fragment = parse(schema);
+        add_provider_context_fields(
+            &mut fragment,
+            &[provider_field_for("read_new", "App", "Read")],
+        )
+        .unwrap();
+        assert!(action_references_shared_provider_type(
+            &fragment, "App", "Read"
+        ));
+        assert!(
+            matches!(
+                provider_attribute(
+                    &fragment.0[&ns_key("App").unwrap()].actions["Write"]
+                        .applies_to
+                        .as_ref()
+                        .unwrap()
+                        .context
+                        .0,
+                    "Write"
+                )
+                .unwrap()
+                .map(|attribute| &attribute.ty),
+                Some(Type::Type {
+                    ty: TypeVariant::Record(_),
+                    ..
+                })
+            ),
+            "an untargeted legacy action should remain inline until it is migrated"
+        );
+
+        let mut fragment = parse(&fragment.to_cedarschema().unwrap());
+        add_provider_context_fields(
+            &mut fragment,
+            &[provider_field_for("write_new", "App", "Write")],
+        )
+        .unwrap();
+
+        assert_eq!(
+            shared_provider_attr_names(&fragment, "App"),
+            Some(vec![
+                "read_legacy".to_string(),
+                "read_new".to_string(),
+                "write_legacy".to_string(),
+                "write_new".to_string(),
+            ])
+        );
+        for action in ["Read", "Write"] {
+            assert!(action_references_shared_provider_type(
+                &fragment, "App", action
+            ));
+        }
+    }
+
+    #[test]
+    fn provider_field_with_no_requestable_targets_is_a_schema_noop() {
+        let schema = r#"
+            namespace App {
+              type SharedContext = { input: { key: String } };
+              entity User;
+              entity Doc;
+              action "Read" appliesTo {
+                principal: [User], resource: [Doc], context: SharedContext
+              };
+            }
+        "#;
+        let mut fragment = parse(schema);
+        let before = fragment.to_cedarschema().unwrap();
+        let mut field = provider_field_for("unreachable", "App", "Read");
+        field.target_actions.clear();
+        add_provider_context_fields(&mut fragment, &[field]).unwrap();
+        assert_eq!(fragment.to_cedarschema().unwrap(), before);
+    }
+
+    #[test]
+    fn asymmetric_cross_namespace_name_collisions_keep_local_generated_names() {
+        let schema = r#"
+            namespace Colliding {
+              type DogwoodProviders = { customer: Bool };
+              entity User;
+              entity Doc;
+              action "Read" appliesTo {
+                principal: [User], resource: [Doc], context: {}
+              };
+            }
+            namespace Available {
+              entity User;
+              entity Doc;
+              action "Write" appliesTo {
+                principal: [User], resource: [Doc], context: {}
+              };
+            }
+        "#;
+        let fields = [
+            provider_field_for("read_field", "Colliding", "Read"),
+            provider_field_for("write_field", "Available", "Write"),
+        ];
+        let mut fragment = parse(schema);
+        add_provider_context_fields(&mut fragment, &fields).unwrap();
+        let mut fragment = parse(&fragment.to_cedarschema().unwrap());
+        add_provider_context_fields(
+            &mut fragment,
+            &[provider_field_for("later_field", "Available", "Write")],
+        )
+        .unwrap();
+
+        for namespace in ["Colliding", "Available"] {
+            assert_eq!(
+                shared_provider_attr_names(&fragment, namespace),
+                Some(vec![
+                    "later_field".to_string(),
+                    "read_field".to_string(),
+                    "write_field".to_string(),
+                ])
+            );
+        }
+        let generated_name = |namespace: &str| {
+            fragment.0[&ns_key(namespace).unwrap()]
+                .common_types
+                .iter()
+                .find(|(_, common)| is_dogwood_provider_type(common))
+                .map(|(id, _)| id.as_ref().to_string())
+                .unwrap()
+        };
+        assert_eq!(generated_name("Colliding"), "DogwoodProviders_1");
+        assert_eq!(generated_name("Available"), "DogwoodProviders");
+        assert!(action_references_shared_provider_type(
+            &fragment,
+            "Colliding",
+            "Read"
+        ));
+        assert!(action_references_shared_provider_type(
+            &fragment,
+            "Available",
+            "Write"
+        ));
+
+        let schema: cedar_policy::SchemaFragment = fragment.try_into().unwrap();
+        cedar_policy::Schema::from_schema_fragments([schema])
+            .expect("asymmetric local generated names compile");
+    }
+
+    #[test]
+    fn unsupported_shared_provider_representation_version_is_rejected() {
+        let mut fragment = parse(
+            r#"
+            namespace App {
+              @dogwood_provider_context("2.0")
+              type DogwoodProviders = { old: Bool };
+              entity User;
+              entity Doc;
+              action "Read" appliesTo {
+                principal: [User], resource: [Doc], context: {
+                  providers: DogwoodProviders
+                }
+              };
+            }
+            "#,
+        );
+        let err = add_provider_context_fields(
+            &mut fragment,
+            &[provider_field_for("generated", "App", "Read")],
+        )
+        .expect_err("an unknown generated representation must not be silently rewritten");
+        assert!(
+            err.contains("unsupported representation version `2.0`"),
+            "unexpected error: {err}"
+        );
+    }
+
+    #[test]
+    fn malformed_generated_provider_metadata_is_rejected() {
+        let cases = [
+            (
+                "missing version",
+                r#"
+                namespace App {
+                  @dogwood_provider_context
+                  type DogwoodProviders = { old: Bool };
+                  entity User;
+                  entity Doc;
+                  action "Read" appliesTo {
+                    principal: [User], resource: [Doc], context: {}
+                  };
+                }
+                "#,
+                "without a representation version",
+            ),
+            (
+                "non-record",
+                r#"
+                namespace App {
+                  @dogwood_provider_context("1.1")
+                  type DogwoodProviders = Bool;
+                  entity User;
+                  entity Doc;
+                  action "Read" appliesTo {
+                    principal: [User], resource: [Doc], context: {}
+                  };
+                }
+                "#,
+                "is not a record",
+            ),
+            (
+                "multiple generated types",
+                r#"
+                namespace App {
+                  @dogwood_provider_context("1.1")
+                  type DogwoodProviders = { old: Bool };
+                  @dogwood_provider_context("1.1")
+                  type DogwoodProviders_1 = { other: String };
+                  entity User;
+                  entity Doc;
+                  action "Read" appliesTo {
+                    principal: [User], resource: [Doc], context: {}
+                  };
+                }
+                "#,
+                "multiple Dogwood-generated provider types",
+            ),
+        ];
+
+        for (label, schema, expected) in cases {
+            let mut fragment = parse(schema);
+            let err = add_provider_context_fields(
+                &mut fragment,
+                &[provider_field_for("new_field", "App", "Read")],
+            )
+            .unwrap_err();
+            assert!(
+                err.contains(expected),
+                "{label}: expected {expected:?}, got {err:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn provider_schema_is_invariant_to_policy_order() {
+        let schema = r#"
+            namespace App {
+              entity User;
+              entity Doc;
+              action "Read" appliesTo {
+                principal: [User], resource: [Doc], context: {}
+              };
+              action "Write" appliesTo {
+                principal: [User], resource: [Doc], context: {}
+              };
+            }
+        "#;
+        let read = provider_field_for("read_field", "App", "Read");
+        let mut write = provider_field_for("write_field", "App", "Write");
+        write.cedar_type = "String".to_string();
+
+        let mut read_then_write = parse(schema);
+        add_provider_context_fields(&mut read_then_write, &[read.clone()]).unwrap();
+        let mut read_then_write = parse(&read_then_write.to_cedarschema().unwrap());
+        add_provider_context_fields(&mut read_then_write, &[write.clone()]).unwrap();
+
+        let mut write_then_read = parse(schema);
+        add_provider_context_fields(&mut write_then_read, &[write]).unwrap();
+        let mut write_then_read = parse(&write_then_read.to_cedarschema().unwrap());
+        add_provider_context_fields(&mut write_then_read, &[read]).unwrap();
+
+        assert_eq!(
+            read_then_write.to_cedarschema().unwrap(),
+            write_then_read.to_cedarschema().unwrap(),
+            "provider schema should not depend on policy arrival order"
+        );
+    }
+
+    #[test]
+    fn reapplying_the_same_provider_field_is_idempotent() {
+        let field = provider_field("same_field");
+        let mut once = parse(BASE_SCHEMA);
+        add_provider_context_fields(&mut once, &[field.clone()]).unwrap();
+        let once_text = once.to_cedarschema().unwrap();
+
+        let mut twice = parse(&once_text);
+        add_provider_context_fields(&mut twice, &[field]).unwrap();
+        assert_eq!(twice.to_cedarschema().unwrap(), once_text);
+        assert_eq!(
+            shared_provider_attr_names(&twice, "Drupe"),
+            Some(vec!["same_field".to_string()])
+        );
+    }
+
+    #[test]
+    fn feed_forward_rejects_a_provider_field_with_a_changed_type() {
+        let mut fragment = parse(BASE_SCHEMA);
+        add_provider_context_fields(&mut fragment, &[provider_field("same_field")]).unwrap();
+
+        let mut fragment = parse(&fragment.to_cedarschema().unwrap());
+        let mut changed = provider_field("same_field");
+        changed.cedar_type = "String".to_string();
+        let err = add_provider_context_fields(&mut fragment, &[changed])
+            .expect_err("the same generated field cannot change type");
+        assert_eq!(
+            err,
+            "provider field `same_field` was previously declared with a different type"
+        );
+    }
+
+    #[test]
+    fn missing_provider_marker_fails_without_creating_a_second_type() {
+        let schema = r#"
+            namespace App {
+              type DogwoodProviders = { old_field: Bool };
+              entity User;
+              entity Doc;
+              action "Read" appliesTo {
+                principal: [User], resource: [Doc],
+                context: { providers: DogwoodProviders }
+              };
+            }
+        "#;
+        let mut fragment = parse(schema);
+        let before = fragment.to_cedarschema().unwrap();
+        let err = add_provider_context_fields(
+            &mut fragment,
+            &[provider_field_for("new_field", "App", "Read")],
+        )
+        .expect_err("an unmarked type must not be treated as Dogwood-owned");
+        assert!(
+            err.contains("neither an inline record nor Dogwood's shared provider type"),
+            "unexpected error: {err}"
+        );
+        assert_eq!(
+            fragment.to_cedarschema().unwrap(),
+            before,
+            "failure must not leave a partially generated suffixed type"
+        );
+    }
+
+    #[test]
+    fn large_provider_schema_defines_each_field_once_and_only_references_it_per_action() {
+        const ACTIONS: usize = 80;
+        const FIELDS: usize = 200;
+        let mut schema = String::from(
+            r#"
+            namespace Scale {
+              entity User;
+              entity Doc;
+            "#,
+        );
+        for action in 0..ACTIONS {
+            schema.push_str(&format!(
+                r#"
+                action "Action{action}" appliesTo {{
+                  principal: [User], resource: [Doc], context: {{}}
+                }};
+                "#
+            ));
+        }
+        schema.push_str(
+            r#"
+              action "Untouched" appliesTo {
+                principal: [User], resource: [Doc], context: {}
+              };
+            }
+            "#,
+        );
+
+        let fields: Vec<_> = (0..FIELDS)
+            .map(|field| {
+                provider_field_for(
+                    &format!("provider_field_{field}"),
+                    "Scale",
+                    &format!("Action{}", field % ACTIONS),
+                )
+            })
+            .collect();
+        let mut fragment = parse(&schema);
+        add_provider_context_fields(&mut fragment, &fields).unwrap();
+
+        assert_eq!(
+            shared_provider_attr_names(&fragment, "Scale")
+                .expect("shared provider type")
+                .len(),
+            FIELDS
+        );
+        for action in 0..ACTIONS {
+            assert!(action_references_shared_provider_type(
+                &fragment,
+                "Scale",
+                &format!("Action{action}")
+            ));
+        }
+        assert!(!action_references_shared_provider_type(
+            &fragment,
+            "Scale",
+            "Untouched"
+        ));
+
+        let text = fragment.to_cedarschema().unwrap();
+        assert!(!text.contains("DogwoodProviders_1"));
+        for field in 0..FIELDS {
+            let name = format!("provider_field_{field}");
+            let declaration = format!("{name}: ");
+            assert_eq!(
+                text.matches(&declaration).count(),
+                1,
+                "{name} should be defined once, not copied into every action"
+            );
         }
     }
 
@@ -1260,7 +2443,7 @@ mod tests {
             "should reject non-record providers attribute"
         );
         assert!(
-            result.unwrap_err().contains("not an inline record"),
+            result.unwrap_err().contains("neither an inline record"),
             "error should mention the reason"
         );
     }
@@ -1281,7 +2464,19 @@ mod tests {
     /// provider pass with a single Bool field.
     fn augmented_context_attrs(schema: &str, namespace: &str, action: &str) -> Vec<String> {
         let mut fragment = parse(schema);
-        add_provider_context_fields(&mut fragment, &[provider_field("p0")]).expect("augments");
+        add_provider_context_fields(
+            &mut fragment,
+            &[provider_field_for("p0", namespace, action)],
+        )
+        .expect("augments");
+        context_attr_names(&fragment, namespace, action)
+    }
+
+    fn context_attr_names(
+        fragment: &Fragment<RawName>,
+        namespace: &str,
+        action: &str,
+    ) -> Vec<String> {
         let ns_key = ns_key(namespace).unwrap();
         let ctx = &fragment.0[&ns_key].actions[&SmolStr::from(action)]
             .applies_to
@@ -1299,9 +2494,10 @@ mod tests {
     }
 
     #[test]
-    fn context_reference_on_untargeted_action_is_inlined() {
-        // The provider rule targets Read; Audit's referenced context must be
-        // inlined (not rejected) because provider fields graft everywhere.
+    fn context_reference_on_untargeted_action_stays_shared_and_gets_no_providers() {
+        // The provider rule targets Read. Audit should retain its common-type
+        // reference and remain provider-free because no provider policy
+        // reaches it.
         let schema = r#"
             namespace Drupe {
               type ReadInput = { document: String };
@@ -1318,15 +2514,193 @@ mod tests {
               };
             }
         "#;
-        let attrs = augmented_context_attrs(schema, "Drupe", "Audit");
-        assert!(
-            attrs.contains(&"input".to_string()),
-            "inlined attrs: {attrs:?}"
+        let mut fragment = parse(schema);
+        add_provider_context_fields(&mut fragment, &[provider_field_for("p0", "Drupe", "Read")])
+            .expect("augments Read");
+        let audit_context = &fragment.0[&ns_key("Drupe").unwrap()].actions["Audit"]
+            .applies_to
+            .as_ref()
+            .unwrap()
+            .context
+            .0;
+        assert_eq!(
+            context_reference_name(audit_context).as_deref(),
+            Some("AuditCtx"),
+            "untargeted context was unnecessarily expanded: {audit_context:?}"
         );
         assert!(
-            attrs.contains(&"providers".to_string()),
-            "grafted attrs: {attrs:?}"
+            provider_attribute(audit_context, "Audit").is_err(),
+            "an untouched common-type context should not have an inline providers attribute"
         );
+    }
+
+    #[test]
+    fn multiple_targets_inline_only_their_shared_context_references() {
+        let schema = r#"
+            namespace App {
+              type SharedContext = { input: { key: String } };
+              entity User;
+              entity Doc;
+              action "Read" appliesTo {
+                principal: [User], resource: [Doc], context: SharedContext
+              };
+              action "Write" appliesTo {
+                principal: [User], resource: [Doc], context: SharedContext
+              };
+              action "Delete" appliesTo {
+                principal: [User], resource: [Doc], context: SharedContext
+              };
+            }
+        "#;
+        let mut fragment = parse(schema);
+        add_provider_context_fields(
+            &mut fragment,
+            &[
+                provider_field_for("read_provider", "App", "Read"),
+                provider_field_for("write_provider", "App", "Write"),
+            ],
+        )
+        .expect("targeted shared contexts augment");
+
+        for action in ["Read", "Write"] {
+            assert!(
+                action_references_shared_provider_type(&fragment, "App", action),
+                "{action} should be inlined and reference the provider type"
+            );
+            assert!(
+                context_reference_name(
+                    &fragment.0[&ns_key("App").unwrap()].actions[action]
+                        .applies_to
+                        .as_ref()
+                        .unwrap()
+                        .context
+                        .0
+                )
+                .is_none(),
+                "{action}'s targeted context should be inlined"
+            );
+        }
+
+        let delete_context = &fragment.0[&ns_key("App").unwrap()].actions["Delete"]
+            .applies_to
+            .as_ref()
+            .unwrap()
+            .context
+            .0;
+        assert_eq!(
+            context_reference_name(delete_context).as_deref(),
+            Some("SharedContext"),
+            "the untouched action must retain its exact original common-type reference"
+        );
+        let shared_context = fragment.0[&ns_key("App").unwrap()]
+            .common_types
+            .iter()
+            .find(|(name, _)| name.as_ref().to_string() == "SharedContext")
+            .map(|(_, common)| common)
+            .expect("SharedContext remains");
+        assert!(
+            !common_type_record(shared_context, "App")
+                .unwrap()
+                .attributes
+                .contains_key("providers"),
+            "targeted inlining must not mutate the customer common type"
+        );
+
+        let schema: cedar_policy::SchemaFragment = fragment.try_into().unwrap();
+        cedar_policy::Schema::from_schema_fragments([schema])
+            .expect("partially inlined shared contexts compile");
+    }
+
+    #[test]
+    fn root_namespace_provider_type_survives_feed_forward() {
+        let schema = r#"
+            entity User;
+            entity Doc;
+            action "Read" appliesTo {
+              principal: [User], resource: [Doc], context: {}
+            };
+            action "Write" appliesTo {
+              principal: [User], resource: [Doc], context: {}
+            };
+        "#;
+        let mut fragment = parse(schema);
+        add_provider_context_fields(&mut fragment, &[provider_field_for("first", "", "Read")])
+            .expect("root namespace provider generation");
+
+        let mut fragment = parse(&fragment.to_cedarschema().unwrap());
+        add_provider_context_fields(&mut fragment, &[provider_field_for("second", "", "Write")])
+            .expect("root namespace provider feed-forward");
+
+        assert_eq!(
+            shared_provider_attr_names(&fragment, ""),
+            Some(vec!["first".to_string(), "second".to_string()])
+        );
+        for action in ["Read", "Write"] {
+            assert!(action_references_shared_provider_type(
+                &fragment, "", action
+            ));
+        }
+
+        let schema: cedar_policy::SchemaFragment = fragment.try_into().unwrap();
+        cedar_policy::Schema::from_schema_fragments([schema])
+            .expect("root namespace shared provider schema compiles");
+    }
+
+    #[test]
+    fn one_target_does_not_expand_many_shared_contexts() {
+        const UNTOUCHED_ACTIONS: usize = 64;
+        let mut schema = String::from(
+            r#"
+            namespace Scale {
+              type LargeContext = {
+                input: {
+                  a: String,
+                  b: Long,
+                  c: Bool,
+                  nested: { x: String, y: Set<Long> }
+                }
+              };
+              entity User;
+              entity Doc;
+              action "Target" appliesTo {
+                principal: [User], resource: [Doc], context: LargeContext
+              };
+            "#,
+        );
+        for action in 0..UNTOUCHED_ACTIONS {
+            schema.push_str(&format!(
+                r#"
+                action "Untouched{action}" appliesTo {{
+                  principal: [User], resource: [Doc], context: LargeContext
+                }};
+                "#
+            ));
+        }
+        schema.push('}');
+
+        let mut fragment = parse(&schema);
+        add_provider_context_fields(
+            &mut fragment,
+            &[provider_field_for("only_target", "Scale", "Target")],
+        )
+        .unwrap();
+
+        assert!(action_references_shared_provider_type(
+            &fragment, "Scale", "Target"
+        ));
+        for action in 0..UNTOUCHED_ACTIONS {
+            let action_id = format!("Untouched{action}");
+            let context = &fragment.0[&ns_key("Scale").unwrap()].actions[action_id.as_str()]
+                .applies_to
+                .as_ref()
+                .unwrap()
+                .context
+                .0;
+            assert!(
+                context_reference_name(context).is_some(),
+                "{action_id} duplicated the shared context: {context:?}"
+            );
+        }
     }
 
     #[test]
@@ -1426,7 +2800,8 @@ mod tests {
     /// over the fragment first, then compiled through Cedar).
     fn dogwood_inlined_validates(schema_src: &str, policy_src: &str) -> bool {
         let mut fragment = parse(schema_src);
-        add_provider_context_fields(&mut fragment, &[provider_field("p0")]).expect("augments");
+        let field = provider_field_for_first_appliable(&fragment, "p0");
+        add_provider_context_fields(&mut fragment, &[field]).expect("augments");
         let schema: cedar_policy::SchemaFragment = fragment.try_into().unwrap();
         let schema = cedar_policy::Schema::from_schema_fragments([schema]).unwrap();
         let policies: cedar_policy::PolicySet = policy_src.parse().unwrap();
@@ -1787,5 +3162,151 @@ mod tests {
             dogwood_inlined_validates(schema, reads_doc),
             "nested `Doc` inside the cloned record must keep meaning Shared::Doc"
         );
+    }
+
+    // ── Provider enums in the home namespace ────────────────────────────
+
+    fn enum_decls(
+        values: &[&str],
+    ) -> crate::extension::provider::declarations::ProviderDeclarations {
+        crate::extension::provider::declarations::ProviderDeclarations::from_json(
+            &serde_json::json!({
+                "entityTypes": { "MyGuardrails::Score": { "enum": values } },
+                "availableProviders": { "MyGuardrails::Filter": {
+                    "outputType": { "paramType": "entity", "entityType": "MyGuardrails::Score" } } }
+            })
+            .to_string(),
+        )
+        .expect("declarations load")
+    }
+
+    fn score_referenced() -> BTreeSet<String> {
+        BTreeSet::from(["MyGuardrails::Score".to_string()])
+    }
+
+    fn home_of(schema: &str) -> Option<String> {
+        provider_enum_home(&parse(schema)).map(|ns| ns.map(|n| n.to_string()).unwrap_or_default())
+    }
+
+    #[test]
+    fn home_is_the_first_namespace_that_declares_actions() {
+        let action = r#"action "Go" appliesTo { principal: [U], resource: [U], context: {} };"#;
+        assert_eq!(home_of(BASE_SCHEMA).as_deref(), Some("Drupe"));
+        assert_eq!(
+            home_of(&format!(
+                "namespace B {{ entity U; {action} }} namespace A {{ entity U; {action} }}"
+            ))
+            .as_deref(),
+            Some("A")
+        );
+        // A namespace that only declares types doesn't count.
+        assert_eq!(
+            home_of(&format!(
+                "namespace Aaa {{ type T = Long; }} namespace Zed {{ entity U; {action} }}"
+            ))
+            .as_deref(),
+            Some("Zed")
+        );
+        // The root namespace sorts first.
+        assert_eq!(
+            home_of(&format!("entity U; {action} namespace A {{ entity V; }}")).as_deref(),
+            Some("")
+        );
+        assert_eq!(home_of("namespace A { entity U; }"), None);
+    }
+
+    #[test]
+    fn enum_is_injected_into_the_home_namespace_with_its_declared_name() {
+        let mut fragment = parse(BASE_SCHEMA);
+        add_provider_entity_types(
+            &mut fragment,
+            &enum_decls(&["LOW", "HIGH"]),
+            &score_referenced(),
+        )
+        .unwrap();
+        let text = fragment.to_cedarschema().unwrap();
+        assert!(
+            text.contains(
+                "@dogwood_provider_enum(\"MyGuardrails::Score\")\n  entity MyGuardrails_Score enum [\"LOW\", \"HIGH\"];"
+            ),
+            "{text}"
+        );
+        assert!(!text.contains("namespace MyGuardrails"), "{text}");
+    }
+
+    #[test]
+    fn injected_enum_is_reused_on_feed_forward_and_takes_current_values() {
+        let mut fragment = parse(BASE_SCHEMA);
+        add_provider_entity_types(
+            &mut fragment,
+            &enum_decls(&["LOW", "HIGH"]),
+            &score_referenced(),
+        )
+        .unwrap();
+        // A later lowering against the augmented schema finds its own enum by
+        // the tag: no clash, no second copy, and the current values win.
+        let mut fragment = parse(&fragment.to_cedarschema().unwrap());
+        add_provider_entity_types(
+            &mut fragment,
+            &enum_decls(&["LOW", "HIGH", "CRITICAL"]),
+            &score_referenced(),
+        )
+        .expect("an enum injected by an earlier lowering is reused");
+        let text = fragment.to_cedarschema().unwrap();
+        assert_eq!(
+            text.matches("entity MyGuardrails_Score").count(),
+            1,
+            "{text}"
+        );
+        assert!(
+            text.contains(r#"enum ["LOW", "HIGH", "CRITICAL"]"#),
+            "{text}"
+        );
+    }
+
+    #[test]
+    fn an_untagged_type_with_the_exported_name_is_a_clash() {
+        let schema = BASE_SCHEMA.replace(
+            "entity Gateway;",
+            "entity Gateway; entity MyGuardrails_Score;",
+        );
+        let err = add_provider_entity_types(
+            &mut parse(&schema),
+            &enum_decls(&["LOW"]),
+            &score_referenced(),
+        )
+        .unwrap_err();
+        assert!(
+            err.contains("which the policy schema already declares"),
+            "{err}"
+        );
+    }
+
+    #[test]
+    fn other_namespaces_refer_to_the_one_home_enum() {
+        let schema = r#"
+            namespace App {
+              entity U;
+              action "Read" appliesTo { principal: [U], resource: [U], context: {} };
+            }
+            namespace Audit {
+              entity U;
+              action "Inspect" appliesTo { principal: [U], resource: [U], context: {} };
+            }
+        "#;
+        let mut fragment = parse(schema);
+        add_provider_entity_types(&mut fragment, &enum_decls(&["LOW"]), &score_referenced())
+            .unwrap();
+        let mut field = provider_field_for("p0", "App", "Read");
+        field
+            .target_actions
+            .push(("Audit".to_string(), "Inspect".to_string()));
+        field.cedar_type = "{ result: App::MyGuardrails_Score }".to_string();
+        add_provider_context_fields(&mut fragment, &[field]).unwrap();
+        let text = fragment.to_cedarschema().unwrap();
+        assert_eq!(text.matches(" enum [").count(), 1, "{text}");
+        let fragment: cedar_policy::SchemaFragment = fragment.try_into().unwrap();
+        cedar_policy::Schema::from_schema_fragments([fragment])
+            .expect("both namespaces' provider types resolve the one enum");
     }
 }

@@ -1,0 +1,3 @@
+@id("sell_after_2024")
+PERMIT any principal to perform SellShares on any resource
+  when: the request's system now > the datetime "2024-01-01T00:00:00Z"

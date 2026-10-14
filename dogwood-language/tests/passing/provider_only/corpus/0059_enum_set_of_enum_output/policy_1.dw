@@ -1,0 +1,7 @@
+// Set<MyGuardrails::Score> output; forbid when it contains HIGH.
+permit (principal, action == Drupe::Action::"Read", resource);
+
+forbid (principal, action == Drupe::Action::"Read", resource)
+when {
+    MyGuardrails::ContentFilter(context.input.document).labels.contains(MyGuardrails::Score::"HIGH")
+};

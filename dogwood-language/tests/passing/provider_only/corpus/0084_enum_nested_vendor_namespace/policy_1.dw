@@ -1,0 +1,6 @@
+permit (principal, action == Drupe::Action::"Read", resource);
+
+forbid (principal, action == Drupe::Action::"Read", resource)
+when {
+    Acme::Guard::Filter(context.input.document).result == Acme::Guard::Score::"HIGH"
+};

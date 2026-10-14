@@ -1,0 +1,3 @@
+@id("read_low_risk")
+PERMIT any principal to perform Read on any resource
+  when: the severityScore field of Content::Risk(the request's document) is less than the decimal "0.5"

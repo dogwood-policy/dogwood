@@ -1,0 +1,3 @@
+@id("cond_is_oauth_in_team")
+PERMIT any principal to perform GetStockInfo on any resource
+  when: the principal is an OAuthUser in Team "traders"

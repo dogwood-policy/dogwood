@@ -1,0 +1,3 @@
+@id("read_uppercase_only")
+PERMIT any principal to perform Read on any resource
+  when: the matched field of Strings::Matches(the request's document, "^[A-Z]+$") is true

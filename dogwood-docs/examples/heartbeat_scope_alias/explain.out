@@ -1,0 +1,6 @@
+Only past events from this request's principal count.
+
+@id("alert_recent_heartbeat")
+PERMIT any principal to perform Alert on any resource
+  when:
+    a Heartbeat request with this request's server and callerPrincipal = the principal and callerResource = the resource occurred within the last 1 hour

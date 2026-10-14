@@ -1,0 +1,5 @@
+// An OUTPUT entity type must be declared by the providers file itself.
+permit (principal, action == Drupe::Action::"Read", resource)
+when {
+    MyGuardrails::ContentFilter(context.input.document) has result
+};

@@ -1,0 +1,12 @@
+// A negative integer literal as an arithmetic operand: after `+` the `-2`
+// lexes as a literal, not an operator (`count <= 2`, written obliquely).
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    (count for (t: Timepoint). where (
+        formerly within 1h (Drupe::Action::"Transfer"::request{} && tp(t))
+    )) + -2 <= 0
+};

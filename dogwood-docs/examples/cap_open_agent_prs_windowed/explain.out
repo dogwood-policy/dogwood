@@ -1,0 +1,6 @@
+Only past events from this request's principal count.
+
+@id("cap_open_agent_prs_windowed")
+PERMIT any principal to perform OpenPullRequest on any resource
+  when:
+    (the number of OpenPullRequest responses within the last 24 hours) - (the number of CompleteReview responses within the last 24 hours) < 3

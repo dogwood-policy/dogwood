@@ -1,0 +1,18 @@
+// A value-macro call inside arithmetic inside a condition-macro argument:
+// after both expansions the guard is `net(1h) - 1 > 0`, i.e. at least two
+// unsettled transfers.
+def temporal net(?w) {
+    (count for ($t: Timepoint). where (formerly within ?w (Drupe::Action::"Transfer"::request{} && tp($t))))
+    - (count for ($t: Timepoint). where (formerly within ?w (Drupe::Action::"Transfer"::response{} && tp($t))))
+};
+
+def temporal exceeds(?v) { ?v > 0 };
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exceeds((net(1h) - 1))
+};

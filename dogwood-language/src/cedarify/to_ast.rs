@@ -57,7 +57,7 @@ pub(super) fn lower_expr(
     let span = expr.span;
     let b = || at(src, span);
     match &expr.kind {
-        ExprKind::Lit(lit) => Ok(b().val(lit.clone())),
+        ExprKind::Lit(lit) => Ok(b().val(rename_enum_literal(lit, &ctx.enum_names))),
         ExprKind::Var(v) => Ok(b().var(*v)),
         ExprKind::Slot(s) => Ok(b().slot(*s)),
 
@@ -79,7 +79,7 @@ pub(super) fn lower_expr(
                 action: action.clone(),
                 field_name: field_name.clone(),
                 temporal: t.clone(),
-                // Resolved after the fragment is parsed, in `cedarify_with_providers`,
+                // Resolved against the base schema in `cedarify_with_providers`,
                 // where the action hierarchy is available.
                 target_actions: Vec::new(),
                 principal: ctx.principal_scope.clone(),
@@ -210,6 +210,30 @@ pub(super) fn lower_expr(
 /// Desugar a surface unary op onto an already-lowered argument, stamping the
 /// node's `.dw` span. Extension constructors/methods become
 /// `ExtensionFunctionApp`s; the three core ops use the native builder.
+/// `lit`, with an entity literal of a used provider enum renamed to the
+/// enum's exported name: `GuardDuty::Severity::"HIGH"` ->
+/// `Drupe::GuardDuty_Severity::"HIGH"`. `names` maps declared to exported
+/// names. Any other literal, including one of a declared enum the policy set
+/// doesn't use, is unchanged.
+fn rename_enum_literal(
+    lit: &cedar_policy_core::ast::Literal,
+    names: &std::collections::BTreeMap<String, String>,
+) -> cedar_policy_core::ast::Literal {
+    use cedar_policy_core::ast::{EntityType, EntityUID, Literal};
+    if let Literal::EntityUID(uid) = lit {
+        if let Some(exported) = names.get(&uid.entity_type().to_string()) {
+            if let Ok(ty) = EntityType::from_normalized_str(exported) {
+                return Literal::EntityUID(Arc::new(EntityUID::from_components(
+                    ty,
+                    uid.eid().clone(),
+                    uid.loc().cloned(),
+                )));
+            }
+        }
+    }
+    lit.clone()
+}
+
 fn lower_unary(op: UnOp, arg: AstExpr, src: &Arc<str>, span: Span) -> AstExpr {
     let b = || at(src, span);
     match op {
@@ -456,10 +480,10 @@ fn lower_provider_invocation(
     let cedar_type = match methods.last() {
         Some(last) => decl
             .and_then(|d| d.methods.get(&last.name))
-            .map(|m| m.output_type.to_cedar_type())
+            .map(|m| m.output_type.to_cedar_type_with(&ctx.enum_names))
             .unwrap_or_else(|| "String".to_string()),
         None => decl
-            .map(|d| d.output_type.to_cedar_type())
+            .map(|d| d.output_type.to_cedar_type_with(&ctx.enum_names))
             .unwrap_or_else(|| "String".to_string()),
     };
 

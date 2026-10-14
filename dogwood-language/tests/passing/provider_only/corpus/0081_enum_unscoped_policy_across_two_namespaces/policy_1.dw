@@ -1,0 +1,7 @@
+// One unscoped forbid over actions in two namespaces.
+permit (principal, action, resource);
+
+forbid (principal, action, resource)
+when {
+    MyGuardrails::ContentFilter(context.input.document).result == MyGuardrails::Score::"HIGH"
+};

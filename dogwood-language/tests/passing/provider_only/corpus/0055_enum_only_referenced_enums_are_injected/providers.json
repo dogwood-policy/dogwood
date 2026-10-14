@@ -1,0 +1,26 @@
+{
+  "entityTypes": {
+    "Netskope::RiskLevel": { "enum": ["LOW", "HIGH"] },
+    "MyGuardrails::Score": { "enum": ["LOW", "MEDIUM", "HIGH"] }
+  },
+  "availableProviders": {
+    "Netskope::Scan": {
+      "argumentTypes": [ { "paramType": "string" } ],
+      "outputType": {
+        "paramType": "record",
+        "fields": { "risk": { "paramType": "entity", "entityType": "Netskope::RiskLevel" } },
+        "required": ["risk"]
+      },
+      "implementation": { "kind": "rhai", "scriptFile": "scan.rhai" }
+    },
+    "MyGuardrails::ContentFilter": {
+      "argumentTypes": [ { "paramType": "string" } ],
+      "outputType": {
+        "paramType": "record",
+        "fields": { "result": { "paramType": "entity", "entityType": "MyGuardrails::Score" } },
+        "required": ["result"]
+      },
+      "implementation": { "kind": "rhai", "scriptFile": "scan.rhai" }
+    }
+  }
+}

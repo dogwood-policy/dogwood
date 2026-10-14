@@ -1,0 +1,13 @@
+// `Shared` only declares types, so it can't hold the enum: it goes into `Drupe`.
+namespace Shared {
+  type Ctx = { input: { document: String } };
+}
+
+namespace Drupe {
+  entity OAuthUser;
+  entity Gateway;
+  action "Read" appliesTo {
+    principal: [OAuthUser], resource: [Gateway],
+    context: Shared::Ctx
+  };
+}

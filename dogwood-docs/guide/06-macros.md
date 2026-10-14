@@ -45,7 +45,7 @@ ends with a mandatory semicolon:
 
 ```text
 def cedar    <name>(?p, ?q, ...) { <cedar expression> } ;
-def temporal <name>(?w, ?s, ...) { <temporal condition or aggregation> } ;
+def temporal <name>(?w, ?s, ...) { <temporal condition or value> } ;
 ```
 
 The kind keyword after `def` — `cedar` or `temporal` — chooses the sub-language
@@ -131,7 +131,7 @@ spliced into the outer macro's body — nesting one macro call as an argument to
 another is fine. (Nesting a call *inside a macro's declared body* is not; see
 [No macro-in-macro](#no-macro-in-macro).)
 
-### `def temporal` — a temporal condition or aggregation
+### `def temporal` — a temporal condition or value
 
 A `def temporal` macro's body is written in the temporal sub-language (the same
 one you write inside a `when temporal { ... }` clause; see
@@ -141,9 +141,10 @@ automatically by the parser:
 
 - a **temporal condition** — for example a `formerly within ... ...` predicate,
   which is callable wherever a temporal condition is expected; or
-- a **temporal aggregation** — a `count`/`sum` expression, which is callable
-  only as an operand of a comparison (the value side of an aggregation), never
-  as a standalone condition.
+- a **temporal value** — a `count`/`sum` expression, or arithmetic over such
+  expressions (`(count …) - (count …)`), which is callable only as a
+  comparison operand, never as a standalone condition. A value body must
+  contain at least one aggregation; a bare constant is rejected.
 
 The distinction matters at call sites, because Dogwood enforces which flavour
 may appear where (see [Kind checking](#kind-checking)).
@@ -217,6 +218,29 @@ introduces the `n` the count is compared against (`exists` is the temporal
 sublanguage's only binder; see
 [Temporal expressions](04-temporal-expressions.md)). The macro call fills
 the aggregate slot.
+
+A value body may also be **arithmetic over aggregations**, which is how a
+derived quantity gets a name of its own. A net-open counter is a difference
+of two counts, and the body splices as a subtree wherever the call sits, so
+an enclosing expression keeps exact precedence (`2 * net(…)` multiplies the
+whole difference):
+
+```text
+def temporal net_open(?w) {
+    (count for ($t: Timepoint). where (formerly within ?w (Repo::Action::"Open"::request{} && tp($t))))
+    - (count for ($u: Timepoint). where (formerly within ?w (Repo::Action::"Close"::response{} && tp($u))))
+};
+
+permit (principal, action == Repo::Action::"Open", resource)
+when temporal {
+    net_open(24h) <= 10
+};
+```
+
+A value body must contain at least one `count`/`sum` — `def temporal
+cap() { 100 }` is rejected — and, like every macro body, may not call other
+macros, so a difference of two *named* counts is written by inlining the
+counts as above and naming only the difference.
 
 The `$t` in that body is a fresh binder the macro introduces itself,
 not a parameter. That is the subject of the next section.
@@ -365,11 +389,11 @@ a silent coercion. The messages are specific about what went wrong:
   temporal macro and cannot be called in a cedar expression position".
 - Calling a Cedar macro in a temporal condition position: "macro `<name>` is a
   cedar macro and cannot be called in a temporal condition position".
-- Calling an aggregation macro as if it were a condition: rejected — an
-  aggregation macro must appear as a comparison operand, not as a standalone
-  condition.
-- Calling a condition macro in an aggregation-value position: rejected — a
-  condition macro cannot be used where an aggregation value is expected.
+- Calling a value macro as if it were a condition: rejected — a value macro
+  (an aggregation or arithmetic over aggregations) must appear as a
+  comparison operand, not as a standalone condition.
+- Calling a condition macro in a value position: rejected — a condition
+  macro cannot be used where a comparison operand is expected.
 
 ### Argument-shape checking
 

@@ -1,0 +1,5 @@
+// Only the enums referenced by the providers a policy set calls are injected.
+permit (principal, action == Drupe::Action::"Read", resource)
+when {
+    Netskope::Scan(context.input.document) has risk
+};

@@ -1,0 +1,13 @@
+// Unlike-source budget: a settled-response sum plus the current request's
+// amount against one budget; the `+ context.input.amount` on a sum is
+// what this case exercises.
+permit (
+    principal,
+    action == Drupe::Action::"Refund",
+    resource
+)
+when temporal {
+    (sum a for (a: Long), (t: Timepoint). where (
+        formerly within 24h (Drupe::Action::"Refund"::response{ output.amount: a } && tp(t))
+    )) + context.input.amount <= 100
+};

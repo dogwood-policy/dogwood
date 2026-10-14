@@ -1,0 +1,5 @@
+// The same entity type declared twice is rejected (plain serde maps keep the last silently).
+permit (principal, action == Drupe::Action::"Read", resource)
+when {
+    MyGuardrails::ContentFilter(context.input.document) has result
+};

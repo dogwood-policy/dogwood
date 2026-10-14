@@ -1,0 +1,3 @@
+@id("approve_zero_proceeds")
+PERMIT any principal to perform SellShares on any resource
+  when: if the request context has output then the request's output proceeds == the decimal "0.0", otherwise false

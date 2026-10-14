@@ -43,6 +43,11 @@ impl Temporal {
         // operands, since-lefts, and filters must follow the restrictors of
         // the variables they consume. Seeded top-down over nested chains.
         check::check_demands(&condition)?;
+        // EXPERIMENTAL-ARITHMETIC: arithmetic operands pass the rules above
+        // but ship behind an off-by-default Cargo feature; reject last so a
+        // default build accepts no arithmetic. Removed when the feature is
+        // a stable part of the language.
+        check::reject_arithmetic_unless_enabled(&condition)?;
         Ok(Temporal {
             condition,
             span: body_span,

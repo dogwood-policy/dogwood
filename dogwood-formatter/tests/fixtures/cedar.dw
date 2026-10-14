@@ -1,0 +1,4 @@
+// Multiple ordinary Cedar policies exercise annotations, clauses, grouping,
+// strings, and top-level item separation.
+@id("sell_small_or_amzn_not_blocked") permit (principal, action == Drupe::Action::"SellShares", resource) when { (context.input.shares < 100 || context.input.stock == "AMZN") && !(context.input.stock == "BLOCKED") };
+@id("forbid_large_transfer") forbid (principal, action == Drupe::Action::"Transfer", resource) when { context.input.amount > 1000 && context.input.currency == "USD" };

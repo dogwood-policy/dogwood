@@ -1,0 +1,6 @@
+@id("sell_range_not_777")
+PERMIT any principal to perform SellShares on any resource
+  when:
+    the request's shares >= 1
+    and the request's shares <= 1000
+    and the request's shares != 777

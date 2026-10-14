@@ -1,0 +1,5 @@
+// Policies must write the qualified type: `Score::"LOW"` names a root-namespace type that doesn't exist.
+permit (principal, action == Drupe::Action::"Read", resource)
+when {
+    MyGuardrails::ContentFilter(context.input.document).result == Score::"LOW"
+};

@@ -1,0 +1,8 @@
+Only past events from this request's principal count.
+
+@id("read_prev_compute_open_session")
+PERMIT any principal to perform Read on any resource
+  when:
+    the immediately preceding event, at most 1 hour ago, was a Compute request with this request's user
+    and a Login request with this request's user occurred within the last 24 hours
+      and no Logout request for that user has occurred since then

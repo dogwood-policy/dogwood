@@ -1,0 +1,6 @@
+// Enum leaves nested inside per-category records.
+permit (principal, action == Drupe::Action::"Read", resource)
+when {
+    MyGuardrails::ContentFilter(context.input.document).VIOLENCE.level == MyGuardrails::Score::"LOW" &&
+    MyGuardrails::ContentFilter(context.input.document).HATE.level == MyGuardrails::Score::"LOW"
+};

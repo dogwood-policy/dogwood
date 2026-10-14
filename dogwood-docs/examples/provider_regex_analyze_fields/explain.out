@@ -1,0 +1,6 @@
+@id("read_regex_analyze")
+PERMIT any principal to perform Read on any resource
+  when:
+    the is_match field of Regex::Analyze(the request's document, "^[A-Z]") is true
+    and the count field of Regex::Analyze(the request's document, "[0-9]") >= 3
+    and the first_match field of Regex::Analyze(the request's document, "[0-9]+") == "42"

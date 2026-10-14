@@ -128,6 +128,14 @@ OVERWRITE=1 cargo test --test expected_failures -- --ignored generate_expected_e
   `passing/mixed/corpus/`: `0020_pattern_escape_hex_verdict` (`\x41` decoded as
   the pattern `x41`) and `0021_pattern_escape_unicode_underscore_verdict`
   (`\u{4_1}` left as literal text).
+- **Enum-typed provider values** (`2150`–`2192`, `NNNN_enum_*`): providers
+  declarations and policies using `entityTypes` / `paramType: "entity"` that
+  must be rejected. They cover malformed declarations (rejected when
+  `providers.json` loads, which counts as the rejection), enum literals that
+  aren't members or compare against a String, collisions with the action
+  schema, enum-typed arguments, and multi-vendor guardrail cases (`2189`–`2192`).
+  The matching verdict cases are `0053`–`0079_enum_*` in
+  `passing/provider_only/corpus/`.
 
 If a case both parses AND validates cleanly (e.g. a defect is reintroduced as
 valid), the harness panics.

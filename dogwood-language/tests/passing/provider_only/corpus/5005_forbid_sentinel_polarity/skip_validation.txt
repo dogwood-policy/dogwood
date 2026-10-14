@@ -1,0 +1,1 @@
+Validation rejects this case on purpose: `Ping`'s context has no `input.document`, so the provider gets its sentinel there. The case checks that a guard-false sentinel never makes a forbid fire.

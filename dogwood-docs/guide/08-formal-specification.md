@@ -71,9 +71,9 @@ The grammar is given in EBNF: `{ x }` is zero-or-more, `[ x ]` is optional,
 `x | y` is alternation, `"lit"` is a terminal. It is transcribed from the three
 `pest` grammars of record:
 
-- core policy — `src/parser/grammar.pest`
-- temporal — `src/extension/temporal/grammar.pest`
-- event schema — `src/event_schema/grammar.pest`
+- core policy — `dogwood-syntax/src/grammar.pest`
+- temporal — `dogwood-language/src/extension/temporal/grammar.pest`
+- event schema — `dogwood-language/src/event_schema/grammar.pest`
 
 (There is no provider grammar: an information-provider invocation is ordinary
 Cedar recognized at lowering — see [§2.5](#25-information-provider-invocations-no-dedicated-grammar).)
@@ -206,7 +206,11 @@ named_args  ::= named_arg { "," named_arg }
 named_arg   ::= field_path ":" term
 field_path  ::= ident { "." ident }
 
-comparison  ::= term cmp_op term
+comparison  ::= arith cmp_op arith
+arith       ::= arith_mul { add_op arith_mul }
+arith_mul   ::= term { mul_op term }
+add_op      ::= "+" | "-"
+mul_op      ::= "*"
 cmp_op      ::= "<=" | ">=" | "==" | "<" | ">"
 
 agg_expr    ::= sum_expr | count_expr | call
@@ -223,9 +227,11 @@ call        ::= ident "(" [ call_arg { "," call_arg } ] ")"
 call_arg    ::= interval_lit | condition | term
 interval_lit::= integer time_unit
 
-term        ::= entity | decimal_lit | paren_agg | agg_expr | integer
-              | string | "true" | "false" | array | context_field
+term        ::= entity | decimal_lit | paren_agg | paren_arith | agg_expr
+              | integer | string | "true" | "false" | array | context_field
               | scope_field | wildcard | param_ref | binder_ref | ident
+paren_agg   ::= "(" agg_expr ")"
+paren_arith ::= "(" arith ")"
 entity      ::= ident { "::" ident } "::" string
 decimal_lit ::= "decimal" "(" string ")"
 context_field ::= "context" ("." ident)+           (* the context record  *)
@@ -389,8 +395,12 @@ P  (Predicate)  ::= (ns: name*, action: string, kind: string, args: NamedArg*)
 NamedArg        ::= (name: field_path, value: t)
 t  (Term)       ::= Entity(ty,id) | Int n | Decimal s | Str s | Bool b
                   | ContextField(seg*) | Var x | Wildcard | Array(t*)
-                  | Agg a | ParamRef name | BinderRef name              (* last two transient *)
+                  | Agg a | Arith(⊕, t, t)
+                  | ParamRef name | BinderRef name                      (* last two transient *)
 a  (AggExpr)    ::= Sum(x, (x:T)*, φ) | Count((x:T)*, φ) | Call c
+⊕  (ArithOp)    ::= + | − | ×
+                    (* a zero-operator operand is a bare t, never a
+                       degenerate Arith *)
 ⋈  (CmpOp)      ::= ≤ | < | ≥ | > | =
 W  (WithinSpec) ::= Concrete(n, unit) | ParamRef name                  (* ParamRef transient *)
 T  (Type)       ::= Timepoint | Named(name*)
@@ -560,8 +570,9 @@ both cases lowering collects the base `Invocation`, its eager output-method chai
 (in source order), and any *trailing* field/index projection after the last
 method. The rule may use any action scope (`==`, `in [list]`, `in Group`, or a
 bare `action`); the hoisted field is typed from the declarations, declared on
-**every** action's context by schema augmentation, and evaluated for every
-decision event (execution is unconditional — see the provider contract in
+one shared all-provider common type, and made available on every action reached
+by at least one provider-bearing rule. It is evaluated for every decision event
+(execution is unconditional — see the provider contract in
 [Information providers](05-information-providers.md#the-provider-contract)). It
 hoists to a **two-level** reference `context.providers.<id>`:
 
@@ -602,11 +613,13 @@ Two schema transformations happen inside `lower`:
 
 2. **Augmentation.** The action schema is extended with the hoisted context
    fields the lowered policies reference: for each temporal leaf, a required
-   `Bool` attribute `context.<name>` on its action(s); for provider leaves, a
-   `providers` record grouping the fields, typed from the declarations. The
-   augmentation **merges** into an existing `providers` record rather than
-   replacing it, so feeding an augmented schema forward (incremental lowering)
-   preserves earlier providers (`cedarify/schema_augment.rs`).
+   `Bool` attribute `context.<name>` on its action(s); for provider leaves, one
+   annotated generated common type per touched namespace (normally
+   `DogwoodProviders`, with a collision-avoiding numeric suffix) containing
+   every provider field, typed from the declarations. Actions reached by any
+   provider rule reference that type. Feed-forward augmentation extends every
+   previously generated shared definition, preserving earlier providers
+   (`cedarify/schema_augment.rs`).
 
 Finally the temporal leaves' conditions have schema **pins** injected — a pinned
 event field `f` is conjoined `f: context.<pin-path>` onto every matching
@@ -719,7 +732,10 @@ plausible-looking policy, so they are given in full. All are **conservative**
 
 We write `x ∈ RR(φ)` for "`x` is range-restricted by a positive atom of `φ`",
 where `RR` collects restrictors from: predicate fields `P{f: x}`, `tp(x)`, a
-binding equality `(non-var, non-wildcard term) == x` or the mirror (`x == *` restricts nothing — a wildcard resolves to no value), the bodies of
+binding equality `(non-var, non-wildcard term) == x` or the mirror (`x == *`
+restricts nothing — a wildcard resolves to no value; a compound arithmetic
+side restricts only when it is wildcard-free, a wildcard atom making the
+whole expression unresolvable), the bodies of
 `formerly`/`previous`, and the **right** operand of `since` — descending through
 `&&` and nested `exists` (dropping the inner binder's own fact). A negation
 contributes **nothing, at any depth**: `RR` does not descend into `!ψ` —
@@ -761,13 +777,18 @@ order and walk left to right with an accumulator `ρ`:
   equality that binds nothing (`x == y` with both bare vars, both sides
   ground, or a `*` wildcard side — a wildcard is never a resolvable value),
   or a guarded negation `!ψ` (**WF-Neg-Guarded**) — demands all its free
-  variables and produces none. Otherwise: *"variable `v` is used in a filter
-  … that is not range-restricted by a preceding conjunct …"*.
-- a **binding equality** `x == v` produces `x` and demands the value side's
-  *outward* free variables — for an aggregate operand, `fv(body) ∖ for-list`
-  (a correlated aggregate is only per-`u` when `u` is already bound; with
-  `u` unbound the count/sum silently de-correlates). Otherwise: *"the
-  equality binding `n` reads `u` inside its aggregate operand …"*.
+  variables and produces none. A compound arithmetic operand contributes
+  all its variables to the demand (a compound never binds — there is no
+  algebraic solving, so `m + 1 == 5` binds nothing). Otherwise: *"variable
+  `v` is used in a filter … that is not range-restricted by a preceding
+  conjunct …"*.
+- a **binding equality** `x == v` — `v` a ground term, an aggregate, or a
+  wildcard-free compound expression, against a bare unbound `x` — produces
+  `x` and demands the value side's *outward* free variables: for an
+  aggregate, `fv(body) ∖ for-list` (a correlated aggregate is only per-`u`
+  when `u` is already bound; with `u` unbound the count/sum silently
+  de-correlates), and for a compound, every variable in it. Otherwise:
+  *"the equality binding `n` reads `u` inside its aggregate operand …"*.
 - a **`since`** produces `RR(anchor)` and demands `fv(left) ∖ RR(anchor)`
   (the standard `free(β) ⊆ free(γ)` side condition, relaxed to "or restricted
   earlier": the left is a per-step condition evaluated under the anchor's
@@ -909,18 +930,49 @@ wider precision as the two readings — an erroring implementation differs from 
 If a policy must not depend on any of this, keep window totals inside the `Long` range
 — which for the aggregate to be meaningful is normally already true.
 
-**Aggregate position.** An aggregate may appear **only** as the immediate operand
-of a comparison:
+**Aggregate and arithmetic position.** An aggregate may appear **only** in
+comparison-operand position — as a direct operand, or as a leaf of a compound
+arithmetic operand; an arithmetic expression is likewise
+comparison-operand-only:
 
 ```
   ─────────────────────────────────────────────────────── (WF-Agg-Operand)
-   an Agg is well-placed iff it is a direct operand of a Comparison;
+   an Agg is well-placed iff it is a direct operand of a Comparison or a
+   leaf of an Arith in that position;
    an Agg as a predicate-arg value, an array element, or otherwise nested ⟹ reject
+
+  ─────────────────────────────────────────────────────── (WF-Arith-Operand)
+   an Arith is well-placed iff it is a direct operand of a Comparison or
+   nested in another well-placed Arith;
+   an Arith as a predicate-arg value or an array element ⟹ reject
 ```
 
-*(`check.rs` `check_operand`.)* Violation: *"an aggregate (`sum`/`count`) may appear only as
-the immediate operand of a comparison …"*. This makes the aggregate-binding idiom `exists (n: T). ((A) == n && B)` well-formed: `(A) == n` binds
-`n` (restrictor), then `B`'s use of `n` is an already-restricted filter.
+*(`check.rs` `check_operand` / `reject_nested_agg`.)* Violations: *"an aggregate
+(`sum`/`count`) may appear only as the immediate operand of a comparison …"* /
+*"arithmetic (`+`/`-`/`*`) may appear only as the immediate operand of a
+comparison …"*. (The grammar already rejects the bare arithmetic form in those
+positions — they take a `term`, not an `arith` — so only the parenthesized
+grouping form reaches WF-Arith-Operand.) This makes the aggregate-binding
+idiom `exists (n: T). ((A) == n && B)` well-formed: `(A) == n` binds `n`
+(restrictor), then `B`'s use of `n` is an already-restricted filter.
+
+**Experimental gate.** Compound (`Arith`) operands are gated behind the
+off-by-default Cargo feature `experimental-arithmetic`. A build without the
+feature rejects, after the checks above, any condition containing an `Arith`
+(*"arithmetic in comparison operands is not yet supported"*); a build with
+the feature accepts it, and validation warns that arithmetic operators are
+experimental and may change in a future release. The arithmetic rules in
+this specification describe builds with the feature on.
+
+**Arithmetic out-of-range results.** A compound operand evaluates over `Long`.
+A result outside the `Long` range is **implementation-defined** exactly as an
+out-of-range aggregate total is (above): clamp, wider precision, or an error
+are all conforming. This implementation clamps (saturates) **per operation,
+in tree order**, which is observable against wider-precision evaluation away
+from a single endpoint: `0 + MAX + 5 - 10` is `MAX − 10` under per-operation
+clamping but `MAX − 5` at wider precision. A policy whose verdict depends on
+that difference is not portable; keep intermediate results inside the `Long`
+range (for cross-multiplied ratio guards, both products).
 
 ### 5.5 Temporal dialect validation (against the schema)
 
@@ -950,9 +1002,12 @@ the dialect additionally checks:
   environment: a predicate arg must match its declared field type; a use of a
   bound variable must be consistent with its declared type; an ordering
   comparison requires both operands **numeric** (only `int` is numeric — an
-  aggregate types as `int`, decimal is **not** numeric here); an equality
-  requires compatible types; and a `tp(x)` binder must be declared
-  `Timepoint` — any other declaration conflates a timepoint index with a
+  aggregate and a compound arithmetic operand type as `int`, decimal is
+  **not** numeric here); an equality requires compatible types; every atom
+  of a compound arithmetic operand must type `int` — decimal, string, bool,
+  entity, array, and wildcard atoms are rejected, the wildcard by name
+  since it would make the guard silently false (**TEMP-Arith-Long**); and a
+  `tp(x)` binder must be declared `Timepoint` — any other declaration conflates a timepoint index with a
   data value, making the condition permanently false (a validated dead
   guard). A check fires only when both types are known (**TEMP-Type-***).
 - **Max window** — every `within` window in the leaf (on a `formerly`,
@@ -1022,6 +1077,28 @@ always grows). A `Response ρ = (decision ∈ {Allow, Deny}, reason: DogwoodRule
 errors: String*)`. This is `Authorizer::is_authorized` (`authorize/mod.rs`,
 `api.rs`). The `None` result — "this event decided nothing" — is the essential
 difference from Cedar.
+
+An event `e` records a **single occurrence at one point in time**, carrying an
+action, event kind, fields, and timestamp. Under the default event schema, a
+`request` records an attempt to run an action, and its eventual `response` or
+`error` is a separate event recording the operation's result. The authorization
+verdict `ρ` is not itself recorded as an event. A `response`-kind event is
+therefore distinct from the authorization `Response ρ`.
+
+`H` is ordered by ingestion: its positions follow the order in which events
+are passed to the authorizer. This can differ from their creation order or
+their arrival order at an enforcement point. Trace positions determine the
+ordering used by the temporal operators, and `tp(t)` binds a position index.
+Timestamps determine membership in `within` windows. Evaluation at position
+`i` reads only positions `j <= i`, including the current event.
+
+Event timestamps are assumed to be **increasing** along `H`:
+`ts(i + 1) > ts(i)`, so timestamps are also unique. The reference interpreter
+neither sorts events nor checks this assumption. Other authorizer implementations
+can assign strictly increasing timestamps at ingestion; durable Local Engine
+submission does so. Traces with repeated or decreasing
+timestamps are outside the specified semantics. See
+[Evaluation semantics](04-temporal-expressions.md#evaluation-semantics).
 
 ### 6.1 Observe, then gate on decision kind
 

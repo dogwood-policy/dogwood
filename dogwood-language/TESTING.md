@@ -16,6 +16,7 @@ tests/
 │   └── mixed/                15+ cases
 ├── expected_failures/        164 cases (pinned error messages)
 ├── pending_fix/              0 cases (all resolved)
+├── experimental/             16 cases (experimental-arithmetic; not yet in the portable corpus)
 ├── docs_as_tests/            7 API usage examples
 └── fixtures/                 Shared event schema
 ```
@@ -50,5 +51,12 @@ Create a directory in `tests/passing/temporal_only/corpus/` with:
 - `expected_1.out` — expected verdicts
 
 No `schema.cedarschema` needed if the shared schema covers the actions used.
-To recategorize, move the directory between `passing/`, `pending_fix/`, or
-`expected_failures/`.
+To recategorize, move the directory between `passing/`, `experimental/`,
+`pending_fix/`, or `expected_failures/`.
+
+`experimental/` holds cases that pass in the reference interpreter but
+use syntax the portable corpus does not yet require of a conforming engine.
+It is not embedded in the shared corpus (`src/corpus.rs`), so harnesses that
+consume the embedded corpus never see it; its cases carry their own
+`schema.cedarschema` so the eventual move to `passing/temporal_only/corpus/`
+is a plain `git mv`.

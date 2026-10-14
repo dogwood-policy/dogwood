@@ -1,0 +1,7 @@
+Only past events from this request's principal count.
+
+@id("alert_heartbeat_and_login_rate")
+PERMIT any principal to perform Alert on any resource
+  when:
+    a Heartbeat request with this request's server occurred within the last 1 hour
+    and (the number of Login requests with any user and this request's server, counting only this request itself) > 2

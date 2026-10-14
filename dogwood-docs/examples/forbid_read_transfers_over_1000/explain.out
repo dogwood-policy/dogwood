@@ -1,0 +1,9 @@
+Only past events from this request's principal count.
+
+@id("forbid_read_when_transfers_over_1000")
+FORBID any principal to perform Read on any resource
+  when:
+    (the sum of a over the distinct (a, t) for which within the last 1 hour, at some point:
+      the event is a Transfer response with this request's user and output amount = a
+      and a > 0
+      and that timepoint is t) > 1000

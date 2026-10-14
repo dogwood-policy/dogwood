@@ -25,8 +25,12 @@
 //!    code that uses sigils at top level, which is not legal).
 //!
 //! Post-expansion: every `Call`, `ParamRef`, `BinderRef`, `SigilRef`,
-//! and `BinderSlot::{ParamRef, BinderRef}` is gone. The resulting
-//! `PolicySet` has `defs: Vec::new()` and ordinary cedar/temporal ASTs.
+//! `BinderSlot::{ParamRef, BinderRef}`, `WithinSpec::ParamRef`, and
+//! unfolded `Refine` is gone — these nodes exist only to represent macro
+//! syntax, and any one of them surviving expansion is **macro residue**.
+//! The resulting `PolicySet` has `defs: Vec::new()` and ordinary
+//! cedar/temporal ASTs; [`check_no_residue`] enforces the invariant for
+//! temporal bodies.
 
 use std::collections::BTreeMap;
 
@@ -165,9 +169,26 @@ fn check_def(def: &MacroDef, _registry: &Registry<'_>) -> Result<(), RawMacroErr
     match &def.body {
         MacroBody::Cedar(e) => check_cedar_body(e, &declared)?,
         MacroBody::TemporalCondition(c) => check_temporal_condition_body(c, &declared)?,
-        MacroBody::TemporalAgg(a) => check_temporal_agg_body(a, &declared)?,
+        MacroBody::TemporalValue(t) => check_temporal_value_body(t, &declared)?,
     }
     Ok(())
+}
+
+/// Check a value body: each aggregation leaf is checked like an
+/// aggregation body; arithmetic recurses; any other leaf term is checked
+/// for stray/undeclared sigils.
+fn check_temporal_value_body(
+    t: &Term,
+    declared: &std::collections::BTreeSet<&str>,
+) -> Result<(), RawMacroError> {
+    match t {
+        Term::Arith { left, right, .. } => {
+            check_temporal_value_body(left, declared)?;
+            check_temporal_value_body(right, declared)
+        }
+        Term::Agg(agg) => check_temporal_agg_body(agg, declared),
+        other => check_temporal_term(other, declared, Span::new(0, 0)),
+    }
 }
 
 fn check_cedar_body(
@@ -395,6 +416,10 @@ fn check_temporal_term(
         // An aggregate term (e.g. `count for … where φ` in a macro body): its
         // binders and `where` body are checked like an aggregation body.
         Term::Agg(agg) => check_temporal_agg_body(agg, declared),
+        Term::Arith { left, right, .. } => {
+            check_temporal_term(left, declared, span)?;
+            check_temporal_term(right, declared, span)
+        }
         _ => Ok(()),
     }
 }
@@ -515,7 +540,7 @@ fn expand_cedar_expr(e: &mut Expr, registry: &Registry<'_>) -> Result<(), RawMac
             })?;
             let body = match &def.body {
                 MacroBody::Cedar(e) => e.clone(),
-                MacroBody::TemporalCondition(_) | MacroBody::TemporalAgg(_) => {
+                MacroBody::TemporalCondition(_) | MacroBody::TemporalValue(_) => {
                     return Err(err(
                         format!(
                             "macro `{name}` is a temporal macro and cannot be called in a \
@@ -601,6 +626,12 @@ fn expand_extension(
         Extension::Temporal(t) => {
             let span = t.span;
             expand_temporal_condition(&mut t.condition, registry)?;
+            // The structural backstop: no macro residue may survive
+            // expansion. Each position-specific check in the walk above
+            // should already have replaced or rejected every call and
+            // sigil; a position missing from that enumeration would
+            // otherwise reach the evaluator's panic arms.
+            check_no_residue(&t.condition)?;
             // After expansion, re-run the temporal binding check on the
             // resolved body. (`Temporal::parse` skips it for bodies with
             // sigils; now that they're substituted, the check is
@@ -611,6 +642,11 @@ fn expand_extension(
             )
             .and_then(|()| crate::extension::temporal::check::check_leaf_closed(&t.condition))
             .and_then(|()| crate::extension::temporal::check::check_demands(&t.condition))
+            // EXPERIMENTAL-ARITHMETIC (see `reject_arithmetic_unless_enabled`):
+            // a macro body can carry arithmetic the parse-time gate never saw.
+            .and_then(|()| {
+                crate::extension::temporal::check::reject_arithmetic_unless_enabled(&t.condition)
+            })
             .map_err(|e| {
                 err(
                     format!("temporal binding check failed after expansion: {e}"),
@@ -619,6 +655,148 @@ fn expand_extension(
             })?;
             Ok(())
         }
+    }
+}
+
+// ─── Post-expansion residue sweep ───────────────────────────────────
+
+/// Verify the expanded temporal condition carries no **macro residue**:
+/// an AST node that exists only to represent macro syntax and that the
+/// expansion walk must therefore replace or consume — an unexpanded
+/// call (`ConditionKind::Call`, `AggExprKind::Call`), a `?p`/`$t` sigil
+/// reference in any position (condition, term, binder slot, `within`),
+/// or an unfolded field-injection refinement. Downstream stages assume
+/// these nodes are gone (see the module doc's post-expansion contract);
+/// the evaluator's arms for them are panics. Anything caught here
+/// slipped past the position-specific checks in the expansion walk —
+/// the sweep turns such a gap into a validation error instead of an
+/// evaluator panic (the "expansion did not run" arms in
+/// `interpreter/eval.rs`).
+fn check_no_residue(c: &Condition) -> Result<(), RawMacroError> {
+    match &c.kind {
+        ConditionKind::And { left, right } | ConditionKind::Or { left, right } => {
+            check_no_residue(left)?;
+            check_no_residue(right)
+        }
+        ConditionKind::Not { inner } => check_no_residue(inner),
+        ConditionKind::Formerly { within, body } | ConditionKind::Previous { within, body } => {
+            check_no_residue_within(within, c.span)?;
+            check_no_residue(body)
+        }
+        ConditionKind::Since {
+            left,
+            within,
+            right,
+            ..
+        } => {
+            check_no_residue_within(within, c.span)?;
+            check_no_residue(left)?;
+            check_no_residue(right)
+        }
+        ConditionKind::Predicate(p) => {
+            for arg in &p.args {
+                check_no_residue_term(&arg.value, c.span)?;
+            }
+            Ok(())
+        }
+        ConditionKind::Comparison { left, right, .. } => {
+            check_no_residue_term(left, c.span)?;
+            check_no_residue_term(right, c.span)
+        }
+        ConditionKind::Tp { var } => check_no_residue_slot(var, c.span),
+        ConditionKind::Exists { var, body } => {
+            check_no_residue_slot(&var.slot, c.span)?;
+            check_no_residue(body)
+        }
+        ConditionKind::Call(call) => Err(residue(
+            format!("unexpanded macro call `{}`", call.name),
+            c.span,
+        )),
+        ConditionKind::SigilRef { sigil, name } => {
+            let ch = match sigil {
+                Sigil::Param => "?",
+                Sigil::Binder => "$",
+            };
+            Err(residue(
+                format!("unsubstituted reference `{ch}{name}`"),
+                c.span,
+            ))
+        }
+        ConditionKind::Refine { .. } => Err(residue(
+            "an unfolded field-injection refinement".to_string(),
+            c.span,
+        )),
+    }
+}
+
+fn residue(what: String, span: Span) -> RawMacroError {
+    err(format!("macro residue survived expansion: {what}"), span)
+}
+
+fn check_no_residue_agg(a: &AggExpr) -> Result<(), RawMacroError> {
+    match &a.kind {
+        AggExprKind::Sum {
+            bound_var,
+            for_vars,
+            body,
+        } => {
+            check_no_residue_slot(bound_var, a.span)?;
+            for v in for_vars.iter() {
+                check_no_residue_slot(&v.slot, a.span)?;
+            }
+            check_no_residue(body)
+        }
+        AggExprKind::Count { for_vars, body } => {
+            for v in for_vars.iter() {
+                check_no_residue_slot(&v.slot, a.span)?;
+            }
+            check_no_residue(body)
+        }
+        AggExprKind::Call(call) => Err(residue(
+            format!("unexpanded macro call `{}`", call.name),
+            a.span,
+        )),
+    }
+}
+
+fn check_no_residue_term(t: &Term, span: Span) -> Result<(), RawMacroError> {
+    match t {
+        Term::ParamRef(name) => Err(residue(format!("unsubstituted reference `?{name}`"), span)),
+        Term::BinderRef(name) => Err(residue(format!("unsubstituted reference `${name}`"), span)),
+        Term::Array(items) => {
+            for it in items {
+                check_no_residue_term(it, span)?;
+            }
+            Ok(())
+        }
+        Term::Agg(agg) => check_no_residue_agg(agg),
+        Term::Arith { left, right, .. } => {
+            check_no_residue_term(left, span)?;
+            check_no_residue_term(right, span)
+        }
+        _ => Ok(()),
+    }
+}
+
+fn check_no_residue_slot(s: &BinderSlot, span: Span) -> Result<(), RawMacroError> {
+    let (ch, name) = match s {
+        BinderSlot::Name(_) => return Ok(()),
+        BinderSlot::ParamRef(name) => ("?", name),
+        BinderSlot::BinderRef(name) => ("$", name),
+    };
+    Err(residue(
+        format!("unsubstituted reference `{ch}{name}` in a binder position"),
+        span,
+    ))
+}
+
+fn check_no_residue_within(w: &WithinSpec, span: Span) -> Result<(), RawMacroError> {
+    match w {
+        WithinSpec::Concrete(_) => Ok(()),
+        WithinSpec::ParamRef(name) => Err(residue(
+            format!("unsubstituted reference `?{name}` in a `within` position"),
+            span,
+        )),
     }
 }
 
@@ -925,19 +1103,16 @@ fn expand_temporal_agg(a: &mut AggExpr, registry: &Registry<'_>) -> Result<(), R
             }
             expand_temporal_condition(body, registry)
         }
-        AggExprKind::Call(call) => {
-            let call = std::mem::replace(
-                call,
-                Call {
-                    span: a.span,
-                    name: String::new(),
-                    args: Vec::new(),
-                },
-            );
-            let expanded = expand_temporal_call_to_agg(call, registry)?;
-            *a = expanded;
-            Ok(())
-        }
+        // A value-macro call is intercepted one level up, at the operand
+        // term ([`expand_temporal_operand`]): its body may be arithmetic,
+        // which an `AggExpr` slot cannot hold, so the whole `Term` is
+        // replaced there. Post-parse, an `AggExprKind::Call` exists only
+        // as a direct operand term, so this arm is unreachable.
+        AggExprKind::Call(call) => unreachable!(
+            "value-macro call `{}` reached expand_temporal_agg — operand-level \
+             interception did not run",
+            call.name
+        ),
     }
 }
 
@@ -951,7 +1126,27 @@ fn expand_temporal_agg(a: &mut AggExpr, registry: &Registry<'_>) -> Result<(), R
 /// the authorizer. Any other term carries no macro condition/aggregate.
 fn expand_temporal_operand(t: &mut Term, registry: &Registry<'_>) -> Result<(), RawMacroError> {
     match t {
+        // A value-macro call replaces the whole term: its body may be
+        // arithmetic (`a() - b()` inlined), which cannot live inside an
+        // `AggExpr`. Splicing the body's `Term` node under the enclosing
+        // tree keeps precedence exact with no parenthesization step —
+        // `2 * pending()` becomes `Mul(2, <body tree>)`. The call is
+        // cloned: expansion is a one-time pass and a `Call` is small.
+        Term::Agg(agg) if matches!(agg.kind, AggExprKind::Call(_)) => {
+            let AggExprKind::Call(call) = &agg.kind else {
+                unreachable!("just matched AggExprKind::Call")
+            };
+            let call = call.clone();
+            *t = expand_temporal_call_to_value(call, registry)?;
+            Ok(())
+        }
         Term::Agg(agg) => expand_temporal_agg(agg, registry),
+        // A compound operand: expand each side (either may be an
+        // aggregate-valued macro call or carry a stray sigil).
+        Term::Arith { left, right, .. } => {
+            expand_temporal_operand(left, registry)?;
+            expand_temporal_operand(right, registry)
+        }
         Term::ParamRef(p) => Err(err(
             format!(
                 "stray macro parameter reference `?{p}` in a comparison-operand position \
@@ -1057,12 +1252,13 @@ fn expand_temporal_call_to_condition(
                 call.span,
             ));
         }
-        MacroBody::TemporalAgg(_) => {
+        MacroBody::TemporalValue(_) => {
             return Err(err(
                 format!(
-                    "macro `{}` is an aggregation macro; it must appear as a comparison operand \
-                     (e.g. `exists (n: Long). ((…) == n && n > 0)`), not as a standalone condition",
-                    call.name
+                    "macro `{}` is a value macro (an aggregation or arithmetic over \
+                     aggregations); it must appear as a comparison operand \
+                     (e.g. `{}(…) <= n`), not as a standalone condition",
+                    call.name, call.name
                 ),
                 call.span,
             ));
@@ -1090,19 +1286,29 @@ fn expand_temporal_call_to_condition(
 ///     `?A == ?n`). The comparison-operand-only rule is then checked
 ///     downstream, exactly as for a raw inline aggregate.
 ///   * any other condition argument (including a condition-macro call) is
-///     expanded as a condition, unchanged from before.
+///     expanded as a condition, unchanged from before;
+///   * a term argument (e.g. the parenthesized arithmetic `(net(1h) - 1)`)
+///     may carry value-macro calls at its leaves — expanded in place via
+///     the operand walker, exactly as in a raw comparison operand.
 fn expand_temporal_call_args(
     args: &mut [CallArg],
     registry: &Registry<'_>,
 ) -> Result<(), RawMacroError> {
     for arg in args.iter_mut() {
-        let CallArg::Condition(c) = arg else { continue };
+        let c = match arg {
+            CallArg::Condition(c) => c,
+            CallArg::Term(t) => {
+                expand_temporal_operand(t, registry)?;
+                continue;
+            }
+            CallArg::Within(_) => continue,
+        };
         // Is this argument a bare call to an aggregation macro? If so it is
         // a value, not a condition — expand it as an aggregate and re-tag.
         if let ConditionKind::Call(inner) = &c.kind
             && matches!(
                 registry.get(&inner.name).map(|d| &d.body),
-                Some(MacroBody::TemporalAgg(_))
+                Some(MacroBody::TemporalValue(_))
             )
         {
             let ConditionKind::Call(inner) = std::mem::replace(
@@ -1113,8 +1319,7 @@ fn expand_temporal_call_args(
             ) else {
                 unreachable!("just matched ConditionKind::Call")
             };
-            let agg = expand_temporal_call_to_agg(inner, registry)?;
-            *arg = CallArg::Term(Term::Agg(Box::new(agg)));
+            *arg = CallArg::Term(expand_temporal_call_to_value(inner, registry)?);
             continue;
         }
         // An ordinary condition argument (or a condition-macro call).
@@ -1123,10 +1328,10 @@ fn expand_temporal_call_args(
     Ok(())
 }
 
-fn expand_temporal_call_to_agg(
+fn expand_temporal_call_to_value(
     mut call: Call,
     registry: &Registry<'_>,
-) -> Result<AggExpr, RawMacroError> {
+) -> Result<Term, RawMacroError> {
     let def = registry.get(&call.name).ok_or_else(|| {
         err(
             format!("unknown macro `{}` (no declared `def temporal`)", call.name),
@@ -1134,11 +1339,11 @@ fn expand_temporal_call_to_agg(
         )
     })?;
     let body = match &def.body {
-        MacroBody::TemporalAgg(a) => a.clone(),
+        MacroBody::TemporalValue(t) => t.clone(),
         MacroBody::Cedar(_) => {
             return Err(err(
                 format!(
-                    "macro `{}` is a cedar macro and cannot be called in an aggregation position",
+                    "macro `{}` is a cedar macro and cannot be called in a value position",
                     call.name
                 ),
                 call.span,
@@ -1147,7 +1352,7 @@ fn expand_temporal_call_to_agg(
         MacroBody::TemporalCondition(_) => {
             return Err(err(
                 format!(
-                    "macro `{}` is a condition macro and cannot be used as an aggregation value \
+                    "macro `{}` is a condition macro and cannot be used as a value \
                      (a comparison operand); use it in a condition position instead",
                     call.name
                 ),
@@ -1157,7 +1362,7 @@ fn expand_temporal_call_to_agg(
     };
     check_arity(def, call.args.len(), call.span)?;
     expand_temporal_call_args(&mut call.args, registry)?;
-    let substituted = substitute_temporal_agg(body, def, registry, &call)?;
+    let substituted = substitute_temporal_value(body, def, registry, &call)?;
     Ok(substituted)
 }
 
@@ -1232,14 +1437,14 @@ fn substitute_temporal_condition(
     Ok(body)
 }
 
-fn substitute_temporal_agg(
-    mut body: AggExpr,
+fn substitute_temporal_value(
+    mut body: Term,
     def: &MacroDef,
     _registry: &Registry<'_>,
     call: &Call,
-) -> Result<AggExpr, RawMacroError> {
+) -> Result<Term, RawMacroError> {
     let mut maps = SubstMaps::build(def, call);
-    subst_temporal_agg(&mut body, &mut maps)?;
+    subst_temporal_term(&mut body, &mut maps, call.span)?;
     Ok(body)
 }
 
@@ -1443,6 +1648,10 @@ fn subst_temporal_term(
         // An aggregate term in a macro body (`(sum ?a for … where …) == ?n`):
         // substitute inside it like an aggregation body.
         Term::Agg(agg) => subst_temporal_agg(agg, maps),
+        Term::Arith { left, right, .. } => {
+            subst_temporal_term(left, maps, span)?;
+            subst_temporal_term(right, maps, span)
+        }
         _ => Ok(()),
     }
 }
@@ -2275,7 +2484,7 @@ mod tests {
         );
     }
 
-    // ─── tests for stray sigils in predicate-argument, tp, and exists binder positions 
+    // ─── tests for stray sigils in predicate-argument, tp, and exists binder positions
 
     #[test]
     fn temporal_with_tp_param_ref_rejected() {
@@ -2317,7 +2526,7 @@ mod tests {
 
     #[test]
     fn stray_binder_ref_in_predicate_arg_rejected() {
-        // Stray macro binder reference `$t` in a predicate argument value position 
+        // Stray macro binder reference `$t` in a predicate argument value position
         // must be rejected by expansion.
         let e = must_fail(
             r#"
@@ -2409,7 +2618,7 @@ mod tests {
 
     #[test]
     fn stray_param_ref_in_exists_binder_rejected() {
-        // An exists binder slot with a stray macro parameter reference 
+        // An exists binder slot with a stray macro parameter reference
         // must be rejected by expansion.
         let e = must_fail(
             r#"
@@ -2457,70 +2666,90 @@ mod tests {
     // ─── Helpers ────────────────────────────────────────────────────
 
     /// Walk a Condition and return false if any unresolved macro AST
-    /// node is found.
+    /// node is found — the production sweep ([`check_no_residue`]), as a
+    /// predicate.
     fn no_macro_residue_in_condition(c: &Condition) -> bool {
-        match &c.kind {
-            ConditionKind::And { left, right } => {
-                no_macro_residue_in_condition(left) && no_macro_residue_in_condition(right)
-            }
-            ConditionKind::Or { left, right } => {
-                no_macro_residue_in_condition(left) && no_macro_residue_in_condition(right)
-            }
-            ConditionKind::Not { inner } => no_macro_residue_in_condition(inner),
-            ConditionKind::Formerly { body, .. } | ConditionKind::Previous { body, .. } => {
-                no_macro_residue_in_condition(body)
-            }
-            ConditionKind::Since { left, right, .. } => {
-                no_macro_residue_in_condition(left) && no_macro_residue_in_condition(right)
-            }
-            ConditionKind::Predicate(p) => {
-                p.args.iter().all(|a| no_macro_residue_in_term(&a.value))
-            }
-            ConditionKind::Comparison { left, right, .. } => {
-                no_macro_residue_in_term(left) && no_macro_residue_in_term(right)
-            }
-            ConditionKind::Tp { var } => matches!(var, BinderSlot::Name(_)),
-            ConditionKind::Exists { var, body } => {
-                matches!(var.slot, BinderSlot::Name(_)) && no_macro_residue_in_condition(body)
-            }
-            // A surviving `Refine` means the field-injection fold did not
-            // run — that is macro residue, like an unresolved Call/SigilRef.
-            ConditionKind::Call(_)
-            | ConditionKind::SigilRef { .. }
-            | ConditionKind::Refine { .. } => false,
+        check_no_residue(c).is_ok()
+    }
+
+    // ─── The residue sweep itself ───────────────────────────────────
+
+    fn cond(kind: ConditionKind) -> Condition {
+        Condition {
+            kind,
+            span: Span::new(0, 0),
         }
     }
 
-    fn no_macro_residue_in_agg(a: &AggExpr) -> bool {
-        match &a.kind {
-            AggExprKind::Sum {
-                bound_var,
-                for_vars,
-                body,
-            } => {
-                matches!(bound_var, BinderSlot::Name(_))
-                    && for_vars
-                        .iter()
-                        .all(|v| matches!(v.slot, BinderSlot::Name(_)))
-                    && no_macro_residue_in_condition(body)
-            }
-            AggExprKind::Count { for_vars, body } => {
-                for_vars
-                    .iter()
-                    .all(|v| matches!(v.slot, BinderSlot::Name(_)))
-                    && no_macro_residue_in_condition(body)
-            }
-            AggExprKind::Call(_) => false,
-        }
+    #[test]
+    fn residue_sweep_reports_a_surviving_value_call() {
+        // An `AggExprKind::Call` buried inside an arithmetic operand —
+        // the shape the term-argument expansion gap produced. Built
+        // directly: every parse path that could produce it is now
+        // expanded, so the sweep is exercised as the backstop it is.
+        let call = Call {
+            span: Span::new(0, 0),
+            name: "net".to_string(),
+            args: Vec::new(),
+        };
+        let agg = AggExpr {
+            span: Span::new(0, 0),
+            kind: AggExprKind::Call(call),
+        };
+        let c = cond(ConditionKind::Comparison {
+            op: tast::CmpOp::Le,
+            left: Term::Arith {
+                op: tast::ArithOp::Mul,
+                left: Box::new(Term::Integer(2)),
+                right: Box::new(Term::Agg(Box::new(agg))),
+            },
+            right: Term::Integer(5),
+        });
+        let e = check_no_residue(&c).unwrap_err();
+        assert!(
+            e.message.contains("unexpanded macro call `net`"),
+            "got: {}",
+            e.message
+        );
     }
 
-    fn no_macro_residue_in_term(t: &Term) -> bool {
-        match t {
-            Term::ParamRef(_) | Term::BinderRef(_) => false,
-            Term::Array(items) => items.iter().all(no_macro_residue_in_term),
-            Term::Agg(a) => no_macro_residue_in_agg(a),
-            _ => true,
-        }
+    #[test]
+    fn residue_sweep_reports_a_surviving_sigil_in_an_array() {
+        // A `?p` hiding inside an array element of a predicate argument.
+        let c = cond(ConditionKind::Predicate(Predicate {
+            span: Span::new(0, 0),
+            namespace: vec!["Drupe".to_string(), "Action".to_string()],
+            action: "P".to_string(),
+            kind: "request".to_string(),
+            args: vec![NamedArg {
+                name: "f".to_string(),
+                value: Term::Array(vec![Term::ParamRef("p".to_string())]),
+            }],
+        }));
+        let e = check_no_residue(&c).unwrap_err();
+        assert!(
+            e.message.contains("unsubstituted reference `?p`"),
+            "got: {}",
+            e.message
+        );
+    }
+
+    #[test]
+    fn residue_sweep_reports_a_surviving_within_hole() {
+        // A `within ?w` that substitution never filled.
+        let c = cond(ConditionKind::Formerly {
+            within: WithinSpec::ParamRef("w".to_string()),
+            body: Box::new(cond(ConditionKind::Tp {
+                var: BinderSlot::Name("t".to_string()),
+            })),
+        });
+        let e = check_no_residue(&c).unwrap_err();
+        assert!(
+            e.message
+                .contains("unsubstituted reference `?w` in a `within` position"),
+            "got: {}",
+            e.message
+        );
     }
 
     // ─── Post-expansion closedness (the re-check's second half) ─────────

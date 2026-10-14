@@ -1,0 +1,44 @@
+{
+  "entityTypes": {
+    "MyGuardrails::Score": {
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH"
+      ]
+    }
+  },
+  "availableProviders": {
+    "MyGuardrails::Risk": {
+      "argumentTypes": [
+        {
+          "paramType": "string"
+        }
+      ],
+      "outputType": {
+        "paramType": "record",
+        "fields": {
+          "score": {
+            "paramType": "decimal"
+          }
+        },
+        "required": [
+          "score"
+        ]
+      },
+      "availableMethods": {
+        "bucket": {
+          "argumentTypes": [],
+          "outputType": {
+            "paramType": "entity",
+            "entityType": "MyGuardrails::Score"
+          }
+        }
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "risk.rhai"
+      }
+    }
+  }
+}

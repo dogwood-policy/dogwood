@@ -1,0 +1,36 @@
+{
+  "entityTypes": {
+    "Acme::Guard::Score": {
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH"
+      ]
+    }
+  },
+  "availableProviders": {
+    "Acme::Guard::Filter": {
+      "argumentTypes": [
+        {
+          "paramType": "string"
+        }
+      ],
+      "outputType": {
+        "paramType": "record",
+        "fields": {
+          "result": {
+            "paramType": "entity",
+            "entityType": "Acme::Guard::Score"
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "filter.rhai"
+      }
+    }
+  }
+}

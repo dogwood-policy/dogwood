@@ -1,0 +1,5 @@
+// A literal of a declared enum that no called provider uses is rejected.
+permit (principal, action == Drupe::Action::"Read", resource)
+when {
+    MyGuardrails::ContentFilter(context.input.document).result != MyGuardrails::Category::"HATE"
+};

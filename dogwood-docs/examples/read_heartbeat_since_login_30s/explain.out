@@ -1,0 +1,7 @@
+Only past events from this request's principal count.
+
+@id("read_heartbeat_since_login_30s")
+PERMIT any principal to perform Read on any resource
+  when:
+    a Login request with this request's user occurred within the last 30 seconds
+    and every event since then has been a Heartbeat request for that user

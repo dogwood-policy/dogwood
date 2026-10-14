@@ -1,0 +1,29 @@
+namespace Drupe {
+  entity Gateway;
+  entity OAuthUser;
+
+  action "Transfer" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: { user: String, amount: Long },
+      output?: { amount: Long }
+    }
+  };
+
+  action "Login" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: { user: String, server: String }
+    }
+  };
+
+  action "Alert" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: { level: Long, server: String }
+    }
+  };
+}

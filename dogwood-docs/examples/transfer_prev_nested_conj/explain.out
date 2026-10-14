@@ -1,0 +1,8 @@
+Only past events from this request's principal count.
+
+@id("transfer_after_prev_login_s1")
+PERMIT any principal to perform Transfer on any resource
+  when:
+    the immediately preceding event, at most 2 hours ago, satisfies:
+      the event is a Login request with this request's user
+      and the event is a Login request with server = "s1"

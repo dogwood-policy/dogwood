@@ -1,0 +1,2 @@
+@id("traders_only_scope")
+PERMIT any OAuthUser in Team "traders" to perform GetStockInfo on any resource

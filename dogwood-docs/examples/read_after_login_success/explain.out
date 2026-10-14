@@ -1,0 +1,6 @@
+Only past events from this request's principal count.
+
+@id("read_after_login_success")
+PERMIT any principal to perform Read on any resource
+  when:
+    a Login response with this request's user and output result = true occurred within the last 1 hour

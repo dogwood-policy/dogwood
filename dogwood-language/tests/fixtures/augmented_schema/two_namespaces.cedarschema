@@ -1,0 +1,54 @@
+namespace App {
+  @dogwood_provider_context("1.1")
+  type DogwoodProviders = {
+    policy_1_p_0: {
+      result: App::MyGuardrails_Score
+    }
+  };
+
+  type ReadInput = {
+    document: String
+  };
+
+  entity Doc;
+
+  @dogwood_provider_enum("MyGuardrails::Score")
+  entity MyGuardrails_Score enum ["LOW", "MEDIUM", "HIGH"];
+
+  entity User;
+
+  action "Read" appliesTo {
+    principal: [User],
+    resource: [Doc],
+    context: {
+      input: ReadInput,
+      providers: DogwoodProviders
+    }
+  };
+}
+
+namespace Audit {
+  @dogwood_provider_context("1.1")
+  type DogwoodProviders = {
+    policy_1_p_0: {
+      result: App::MyGuardrails_Score
+    }
+  };
+
+  type ReadInput = {
+    document: String
+  };
+
+  entity Doc;
+
+  entity User;
+
+  action "Inspect" appliesTo {
+    principal: [User],
+    resource: [Doc],
+    context: {
+      input: ReadInput,
+      providers: DogwoodProviders
+    }
+  };
+}

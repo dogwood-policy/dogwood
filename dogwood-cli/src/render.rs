@@ -7,7 +7,8 @@
 
 use crate::error::OpError;
 use crate::ops::{
-    CheckParseReport, LowerArtifacts, ReplayReport, SchemaCheckReport, ValidateReport, Verdict,
+    CheckParseReport, ExplainReport, LowerArtifacts, ReplayReport, SchemaCheckReport,
+    ValidateReport, Verdict,
 };
 use crate::{Emit, Format};
 
@@ -148,4 +149,13 @@ pub fn replay(report: &ReplayReport, format: Format) {
             println!("    error: {e}");
         }
     }
+}
+
+/// `explain`: the informalization as indented plain text, or the structured
+/// report (phrase trees with spans, plus the text) as JSON.
+pub fn explain(report: &ExplainReport, format: Format) {
+    if format == Format::Json {
+        return json(report);
+    }
+    println!("{}", report.text);
 }

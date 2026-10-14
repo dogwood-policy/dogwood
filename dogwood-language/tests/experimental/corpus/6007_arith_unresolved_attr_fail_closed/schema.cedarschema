@@ -1,0 +1,13 @@
+namespace Claims {
+  entity OAuthUser;
+  entity Policy = { coverage_limit: Long };
+
+  action "Payout" appliesTo {
+    principal: [OAuthUser],
+    resource: [Policy],
+    context: {
+      input: { policy: String, amount: Long },
+      output?: { amount: Long }
+    }
+  };
+}

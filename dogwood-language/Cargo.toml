@@ -1,6 +1,6 @@
 [package]
 name = "dogwood-language"
-version = "1.0.0"
+version.workspace = true
 edition = "2024"
 publish.workspace = true
 description = "The Dogwood surface language: parser, validator, interpreter, and the per-request authorizer. The single published front door; implementation modules are crate-private."
@@ -24,6 +24,7 @@ exclude = [
 name = "dogwood_language"
 
 [dependencies]
+dogwood-syntax = { path = "../dogwood-syntax", version = "1.1.0" }
 pest = "2"
 pest_derive = "2"
 thiserror = "1"
@@ -85,6 +86,16 @@ corpus = ["dep:include_dir"]
 # is a minimal synchronous HTTP/1.0 GET over `std::net`.
 net = []
 
+# EXPERIMENTAL-ARITHMETIC: accept arithmetic (`+`/`-`/`*`) in temporal
+# comparison operands. OFF BY DEFAULT: the implementation is complete and
+# tested, but arithmetic is not yet a stable part of the language — its
+# syntax and semantics may change in a future release. With the feature off,
+# a policy using arithmetic is rejected at parse time ("not yet supported");
+# with it on, the policy is accepted and validation emits a warning. This
+# feature and the gate it keys (grep EXPERIMENTAL-ARITHMETIC) may be deleted
+# when arithmetic is released.
+experimental-arithmetic = []
+
 [dev-dependencies]
 miette = { version = "7", features = ["fancy-no-backtrace"] }
 
@@ -117,6 +128,10 @@ path = "tests/passing/mixed/harness.rs"
 [[test]]
 name = "pending_fix"
 path = "tests/pending_fix/harness.rs"
+
+[[test]]
+name = "experimental"
+path = "tests/experimental/harness.rs"
 
 [[test]]
 name = "expected_failures"

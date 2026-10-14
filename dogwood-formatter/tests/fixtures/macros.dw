@@ -1,0 +1,4 @@
+// A local definition verifies that formatting preserves the effective AST
+// after Dogwood's parse phase expands macro calls.
+def cedar within_cap(?stock, ?shares) { if ?stock == "AMZN" then ?shares < 200 else ?shares < 100 };
+@id("sell_within_cap") permit (principal, action == Drupe::Action::"SellShares", resource) when { within_cap(context.input.stock, context.input.shares) };

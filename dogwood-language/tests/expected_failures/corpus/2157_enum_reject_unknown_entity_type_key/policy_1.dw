@@ -1,0 +1,5 @@
+// An entry accepts only `enum` and `annotations`, like Cedar's.
+permit (principal, action == Drupe::Action::"Read", resource)
+when {
+    MyGuardrails::ContentFilter(context.input.document) has result
+};

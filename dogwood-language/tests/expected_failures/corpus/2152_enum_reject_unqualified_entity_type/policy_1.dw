@@ -1,0 +1,5 @@
+// Unqualified names would bind relative to each action's namespace (probe 2c).
+permit (principal, action == Drupe::Action::"Read", resource)
+when {
+    MyGuardrails::ContentFilter(context.input.document) has result
+};

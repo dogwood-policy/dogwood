@@ -102,6 +102,35 @@ impl ActionHandle<'_> {
             .unwrap_or_default()
     }
 
+    /// The fully-qualified entity type (`Ns::Type`) of the `context.<path>`
+    /// field, or of its elements if it is a set; `None` when the path does not
+    /// resolve to a single entity type. [`resolve_context_path`] reports only
+    /// an entity's basename, which cannot tell `A::Score` from `B::Score`.
+    ///
+    /// [`resolve_context_path`]: ActionHandle::resolve_context_path
+    pub fn context_entity_type(&self, path: &[String]) -> Option<String> {
+        let (head, rest) = path.split_first()?;
+        let mut current = record_attrs(self.action.context())?
+            .get_attr(head)?
+            .attr_type
+            .as_ref();
+        for seg in rest {
+            current = record_attrs(current)?.get_attr(seg)?.attr_type.as_ref();
+        }
+        if let Type::Set {
+            element_type: Some(inner),
+        } = current
+        {
+            current = inner.as_ref();
+        }
+        match current {
+            Type::Entity(EntityKind::Entity(lub)) => {
+                lub.get_single_entity().map(|et| et.name().to_string())
+            }
+            _ => None,
+        }
+    }
+
     /// Resolve a `context.<seg0>.<seg1>…` field path against the scoped
     /// action's **full** declared context record — Cedar's `context` variable,
     /// which is a record whose members (`input`, `system`, `output`, …) are the

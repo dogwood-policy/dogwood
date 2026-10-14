@@ -1,0 +1,7 @@
+Only past events from this request's principal count.
+
+@id("access_not_revoked_since_grant")
+PERMIT any principal to perform Access on any resource
+  when:
+    a Grant response with this request's user and resource occurred within the last 1 hour
+    and no Revoke response for that user and resource has occurred since then

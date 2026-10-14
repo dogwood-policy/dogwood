@@ -8,13 +8,14 @@
 //! [`PolicySchema`] from the action schema and a [`ServiceSchema`] from the
 //! `request_response` event schema fixture and (when present) the case's
 //! [`ProviderDeclarations`]; parse the policy into a [`LoweredPolicySet`] via
-//! [`LoweredPolicySet::from_str`]; then replay the trace with [`replay_log`],
+//! [`LoweredPolicySet::from_str`]; check it validates (unless the case has a
+//! `skip_validation.txt`); then replay the trace with [`replay_log`],
 //! comparing the verdict stream to the expected output.
 
 use std::path::{Path, PathBuf};
 
 use dogwood_language::{
-    LoweredPolicySet, PolicySchema, ProviderDeclarations, ServiceSchema, replay_log,
+    LoweredPolicySet, PolicySchema, ProviderDeclarations, ServiceSchema, Validator, replay_log,
 };
 
 fn norm(s: &str) -> Vec<String> {
@@ -50,6 +51,21 @@ fn read_sorted(dir: &Path, prefix: &str, ext: &str) -> Vec<PathBuf> {
         .collect();
     v.sort();
     v
+}
+
+/// The top-level namespaces of a Cedar JSON schema (`""` is the root).
+fn namespaces(json: &str) -> std::collections::BTreeSet<String> {
+    let value: serde_json::Value = serde_json::from_str(json).expect("schema JSON");
+    value.as_object().expect("schema object").keys().cloned().collect()
+}
+
+/// `schema_src` (`.cedarschema` text) as Cedar JSON.
+fn base_schema_json(schema_src: &str) -> String {
+    cedar_policy::SchemaFragment::from_cedarschema_str(schema_src)
+        .expect("action schema parses")
+        .0
+        .to_json_string()
+        .expect("action schema to JSON")
 }
 
 #[test]
@@ -99,6 +115,7 @@ fn provider_corpus_verdicts() {
             None
         };
 
+        let skip_validation = dir.join("skip_validation.txt").exists();
         let traces = read_sorted(&dir, "trace_", "log");
         let mut case_ok = true;
         for trace_path in traces {
@@ -106,6 +123,9 @@ fn provider_corpus_verdicts() {
             let n = stem.trim_start_matches("trace_");
             let expected_path = dir.join(format!("expected_{n}.out"));
             if !expected_path.exists() {
+                // A trace without its expected verdicts would otherwise go unchecked.
+                case_ok = false;
+                failures.push(format!("{case}: trace_{n}: missing expected_{n}.out"));
                 continue;
             }
             let trace = std::fs::read_to_string(&trace_path).unwrap();
@@ -126,6 +146,35 @@ fn provider_corpus_verdicts() {
                 let service = builder.build().map_err(|e| format!("{e:?}"))?;
                 let policies = LoweredPolicySet::from_str(&policy_src, &service, &policy_schema)
                     .map_err(|e| format!("{e:?}"))?;
+                // Dogwood only adds to namespaces the action schema already
+                // declares (provider fields and provider enums alike), so an
+                // exported schema can be consumed where only the action
+                // schema's namespaces are allowed.
+                let added: Vec<String> = namespaces(
+                    &policies.cedar_schema_json().map_err(|e| format!("{e:?}"))?,
+                )
+                .difference(&namespaces(&base_schema_json(&schema_src)))
+                .cloned()
+                .collect();
+                if !added.is_empty() {
+                    return Err(format!("exported schema adds namespaces {added:?}"));
+                }
+                // A verdict case must also validate: otherwise a mis-typed
+                // declaration (the deprecated `String` fallback) could let an
+                // expected verdict pass vacuously. A case that deliberately
+                // exercises runtime behaviour validation rejects opts out with
+                // a `skip_validation.txt` saying why.
+                let result = Validator::new().validate(&policies);
+                if !skip_validation && !result.validation_passed() {
+                    return Err(format!(
+                        "validation: {}",
+                        result
+                            .validation_errors()
+                            .map(|e| e.to_string())
+                            .collect::<Vec<_>>()
+                            .join("\n")
+                    ));
+                }
                 replay_log(policies, &trace).map_err(|e| format!("{e:?}"))
             }));
             match result {

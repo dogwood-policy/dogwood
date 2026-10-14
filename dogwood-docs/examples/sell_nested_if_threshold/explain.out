@@ -1,0 +1,3 @@
+@id("sell_nested_if_threshold")
+PERMIT any principal to perform SellShares on any resource
+  when: the request's shares <= (if the request's stock == "AMZN" then 10, otherwise if the request's stock == "MSFT" then 50, otherwise 1000)

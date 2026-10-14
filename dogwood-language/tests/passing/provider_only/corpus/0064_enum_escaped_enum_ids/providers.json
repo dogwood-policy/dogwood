@@ -1,0 +1,36 @@
+{
+  "entityTypes": {
+    "MyGuardrails::Verdict": {
+      "enum": [
+        "ok",
+        "needs review",
+        "a\"b"
+      ]
+    }
+  },
+  "availableProviders": {
+    "MyGuardrails::ContentFilter": {
+      "argumentTypes": [
+        {
+          "paramType": "string"
+        }
+      ],
+      "outputType": {
+        "paramType": "record",
+        "fields": {
+          "result": {
+            "paramType": "entity",
+            "entityType": "MyGuardrails::Verdict"
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "filter.rhai"
+      }
+    }
+  }
+}

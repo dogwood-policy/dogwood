@@ -29,12 +29,34 @@ See [The policy language](02-policy-language.md) for the action schema, and
 
 ## Commands
 
-Every command takes the policy set as a positional argument (a `.dw` file, or
-`-` to read stdin) and `--format human|json` (human is the default; JSON is the
-stable machine shape). Exit codes are uniform: **0** success, **1** a usage or
-I/O error (a missing file, a bad flag), **2** rejected input (a policy, schema,
-or trace that does not check out). That `0` vs `2` split lets a CI job tell "the
-tool broke" from "the policy was rejected".
+Every policy command takes the policy set as a positional argument (a `.dw`
+file, or `-` to read stdin). Checking commands also accept
+`--format human|json` (human is the default; JSON is the stable machine shape).
+Exit codes are uniform: **0** success, **1** a usage or I/O error (a missing
+file, a bad flag), **2** rejected input (a policy, schema, or trace that does
+not check out). That `0` vs `2` split lets a CI job tell "the tool broke" from
+"the policy was rejected".
+
+### `format` — pretty-print authored policy source
+
+```text
+dogwood format policy.dw
+```
+
+Writes a consistently laid-out policy set to stdout: annotations and condition
+clauses get their own lines, long comma-separated or boolean groups are
+indented, and top-level declarations and policies are separated by a blank
+line. Formatting changes whitespace only, so strings, macro definitions, and
+token spelling are preserved. Standalone top-level comments are preserved too;
+when a comment occurs inside a statement, the formatter leaves the source
+unchanged rather than risk moving the comment unexpectedly.
+
+Use `-` for stdin, or redirect stdout to a new file:
+
+```text
+dogwood format policy.dw > policy.formatted.dw
+cat policy.dw | dogwood format -
+```
 
 ### `validate`
 
@@ -138,6 +160,69 @@ Parses and macro-expands, reporting only syntax and macro errors — no schema
 required. Useful as a fast first pass, or when you do not yet have the action
 schema. It reports each policy's temporal-leaf and provider-call counts, and
 flags any provider a policy calls that the service schema does not declare.
+
+### `explain` — read a policy set back in semi-English
+
+```text
+dogwood explain policy.dw --policy-schema schema.cedarschema
+```
+
+Prints each rule as structured prose, so a policy can be checked against the
+requirement it came from:
+
+```text
+Only past events from this request's principal count.
+
+@id("access_not_revoked_since_grant")
+PERMIT any principal to perform Access on any resource
+  when:
+    a Grant response with this request's user and resource occurred within the last 1 hour
+    and no Revoke response for that user and resource has occurred since then
+```
+
+The translation is deterministic — a pure function of the parsed,
+macro-expanded policy plus the schemas, with no language model — and
+meaning-preserving: read literally, it states the same condition as the
+policy. It follows the policy's structure, so the nesting of the prose is the
+nesting of the policy, except for a few rewrites of common shapes, each made
+only when it is exact:
+
+- `since` reads in time order (see below);
+- fields compared with the request's own merge into one phrase ("with this
+  request's user and stock");
+- a count or sum that uses a timepoint only to count each event once reads
+  "the number of Transfer requests within the last 1 hour" / "the total
+  amount of …";
+- an `exists` variable that only names an aggregate for one comparison, or
+  only carries one event field to a comparison, is folded into it ("… <= 3",
+  "a Transfer request with amount > 100").
+
+Schema identifiers are reproduced verbatim; only the language's own structure
+is verbalized. Because of the rewrites, the `--format json` phrase tree is not
+one phrase per AST node: a rewritten construct is one phrase carrying the span
+of the outermost node it covers. A few things to notice when reading the
+output:
+
+- **`@id("…")`** opens each rule on its own line; a rule without an `@id`
+  reads `Rule N`.
+- **The first line** (`Only past events from this request's principal
+  count.`) is not in the policy text: it states the *event schema's*
+  pins, which silently restrict every look-back match, because they change
+  verdicts.
+- **`since` reads in time order** — the anchor event and its window first,
+  then what has (or has not) happened since then.
+- **A `count` whose body is not under a past operator** reads "the number of
+  …, counting only this request itself": only the event being decided is
+  matched, so it is at most 1 — compare
+  `examples/alert_heartbeat_and_login_rate/` with
+  `examples/alert_login_in_last_hour/`.
+
+`--policy-schema` is optional: with it, a single declared namespace is dropped
+from names (`Drupe::Action::"Read"` → `Read`). Nothing is validated — run `validate` for that. `--format json` emits the phrase trees, each phrase with
+its `.dw` byte span.
+
+For more sample output, see the `explain.out` next to each bundle under
+[`examples/`](../examples/).
 
 ### `schema` — check a schema part on its own
 

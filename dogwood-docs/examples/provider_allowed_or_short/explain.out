@@ -1,0 +1,5 @@
+@id("read_allowed_or_short")
+PERMIT any principal to perform Read on any resource
+  when:
+    the allowed field of Lists::Allowed(the request's document) is true
+    or the length field of Strings::Length(the request's document) < 4

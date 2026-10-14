@@ -1,0 +1,30 @@
+namespace Loans {
+  entity Gateway;
+  entity OAuthUser;
+
+  action "Valuation" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: { loan: String },
+      output?: { value: Long }
+    }
+  };
+
+  action "BalanceUpdate" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: { loan: String },
+      output?: { balance: Long }
+    }
+  };
+
+  action "Refinance" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: { loan: String }
+    }
+  };
+}

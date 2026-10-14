@@ -1,0 +1,7 @@
+// One non-member inside a Set<enum> output fails the whole value → DENY.
+permit (principal, action == Drupe::Action::"Read", resource);
+
+forbid (principal, action == Drupe::Action::"Read", resource)
+when {
+    MyGuardrails::ContentFilter(context.input.document).labels.contains(MyGuardrails::Score::"HIGH")
+};

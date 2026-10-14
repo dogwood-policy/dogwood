@@ -1,0 +1,15 @@
+// Ratio guard, cross-multiplied: touchless approvals stay at most 85% of
+// decisions; the `*` on both comparison sides is what this case exercises.
+permit (
+    principal,
+    action == PriorAuth::Action::"TouchlessApprove",
+    resource
+)
+when temporal {
+    100 * (count for (t: Timepoint). where (
+        formerly within 24h (PriorAuth::Action::"TouchlessApprove"::response{} && tp(t))
+    ))
+    <= 85 * count for (t: Timepoint). where (
+        formerly within 24h (PriorAuth::Action::"Decide"::response{} && tp(t))
+    )
+};

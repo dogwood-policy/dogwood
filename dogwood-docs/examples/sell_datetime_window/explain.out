@@ -1,0 +1,5 @@
+@id("sell_in_2025_window")
+PERMIT any principal to perform SellShares on any resource
+  when:
+    the request's system now >= the datetime "2025-01-01T00:00:00Z"
+    and the request's system now < the datetime "2026-01-01T00:00:00Z"

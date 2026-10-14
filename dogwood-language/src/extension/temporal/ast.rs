@@ -323,6 +323,24 @@ pub enum CmpOp {
     NotEq,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ArithOp {
+    Add,
+    Sub,
+    Mul,
+}
+
+impl ArithOp {
+    /// The source token for this operator (`+` / `-` / `*`).
+    pub fn token(self) -> &'static str {
+        match self {
+            ArithOp::Add => "+",
+            ArithOp::Sub => "-",
+            ArithOp::Mul => "*",
+        }
+    }
+}
+
 /// A term: a literal, a reference to a bound variable / context field,
 /// or a structured value.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -371,6 +389,17 @@ pub enum Term {
     /// immediate operand of a comparison, never a predicate-arg value or a
     /// nested term — is enforced by validation (`check`), not the grammar.
     Agg(Box<AggExpr>),
+    /// `a + b` / `a - b` / `a * b` — a compound arithmetic expression
+    /// over `Long`-valued terms, yielding `Long`. Like [`Term::Agg`], it
+    /// is a term syntactically but legal only as an immediate comparison
+    /// operand, enforced by validation (`check`), not the grammar. A
+    /// zero-operator expression is not represented: the parser collapses
+    /// it to the bare operand `Term`.
+    Arith {
+        op: ArithOp,
+        left: Box<Term>,
+        right: Box<Term>,
+    },
     /// `?p` — a macro value-parameter reference. Replaced during macro
     /// expansion by the literal call-site argument. Only legal inside a
     /// macro body; the post-expansion AST contains none.
@@ -379,6 +408,24 @@ pub enum Term {
     /// expansion by a deterministic gensym (`<name>$<call-span>`). Only
     /// legal inside a macro body; the post-expansion AST contains none.
     BinderRef(String),
+}
+
+impl Term {
+    /// Visit every aggregate in comparison-operand position within this
+    /// term: the term itself if it is an aggregate, or the aggregates at
+    /// the leaves of a compound arithmetic operand. Does not descend into
+    /// arrays or aggregate bodies (an aggregate nested there is not in
+    /// operand position).
+    pub fn for_each_operand_agg<'a>(&'a self, f: &mut impl FnMut(&'a AggExpr)) {
+        match self {
+            Term::Agg(agg) => f(agg),
+            Term::Arith { left, right, .. } => {
+                left.for_each_operand_agg(f);
+                right.for_each_operand_agg(f);
+            }
+            _ => {}
+        }
+    }
 }
 
 /// A type annotation on a declaration-site binder. Drawn from the

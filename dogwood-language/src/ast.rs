@@ -70,13 +70,17 @@ pub struct MacroParam {
 /// sub-language. The variant tags the syntactic category — at call
 /// sites the demanded category dictates kind-compatibility (a cedar
 /// macro is callable only in cedar-expression position; a
-/// temporal-condition macro only in condition slot; an aggregation
-/// macro only in `let r = <agg> in BODY`'s value slot).
+/// temporal-condition macro only in condition slot; a value macro only
+/// in comparison-operand position).
 #[derive(Debug, Clone)]
 pub enum MacroBody {
     Cedar(Expr),
     TemporalCondition(crate::extension::temporal::ast::Condition),
-    TemporalAgg(crate::extension::temporal::ast::AggExpr),
+    /// A numeric-valued body: an aggregation, or arithmetic over
+    /// aggregations (`a() - b()` written out inline), carried as the
+    /// operand term it splices as. Must contain at least one aggregation
+    /// (checked at parse), so a macro cannot be a bare constant.
+    TemporalValue(crate::extension::temporal::ast::Term),
 }
 
 /// Permit or forbid.

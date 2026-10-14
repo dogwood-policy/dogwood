@@ -1,0 +1,8 @@
+// An unknown paramType that involves no entity type is deprecated but still
+// accepted (typed String): `note` validates and evaluates as a String next to
+// an enum-typed field.
+permit (principal, action == Drupe::Action::"Read", resource)
+when {
+    MyGuardrails::ContentFilter(context.input.document).result != MyGuardrails::Score::"HIGH" &&
+    MyGuardrails::ContentFilter(context.input.document).note == "maybe"
+};

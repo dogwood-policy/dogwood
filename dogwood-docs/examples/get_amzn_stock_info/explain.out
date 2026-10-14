@@ -1,0 +1,3 @@
+@id("get_amzn_stock_info")
+PERMIT any principal to perform GetStockInfo on any resource
+  when: the request's stock == "AMZN"

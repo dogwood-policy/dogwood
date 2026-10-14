@@ -1,0 +1,6 @@
+Only past events from this request's principal count.
+
+@id("alert_pending_transfers")
+PERMIT any principal to perform Alert on any resource
+  when:
+    the number of Transfer responses with any requestId within the last 1 hour < the number of Transfer requests with any requestId within the last 1 hour

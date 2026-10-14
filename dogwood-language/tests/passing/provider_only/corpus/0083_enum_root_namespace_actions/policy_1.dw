@@ -1,0 +1,6 @@
+permit (principal, action == Action::"Read", resource);
+
+forbid (principal, action == Action::"Read", resource)
+when {
+    MyGuardrails::ContentFilter(context.input.document).result == MyGuardrails::Score::"HIGH"
+};

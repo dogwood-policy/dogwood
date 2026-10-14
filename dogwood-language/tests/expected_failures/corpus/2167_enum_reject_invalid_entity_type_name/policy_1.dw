@@ -1,0 +1,5 @@
+// An `entityTypes` key must be a valid Cedar name.
+permit (principal, action == Drupe::Action::"Read", resource)
+when {
+    MyGuardrails::ContentFilter(context.input.document) has result
+};

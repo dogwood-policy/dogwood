@@ -18,11 +18,8 @@ use crate::error::{ValidationError, ValidationWarning};
 /// and the concrete diagnostic are decided together in one place.
 pub enum Rendered {
     Error(ValidationError),
-    /// A dialect warning. No shipping dialect emits one yet (temporal and
-    /// provider only build `Error`), but the variant keeps the severity axis
-    /// symmetric so a future dialect — or a future lint on an existing one —
-    /// can warn without reshaping this enum or the `run` partition.
-    #[allow(dead_code)]
+    /// A dialect warning: a problem that doesn't fail validation (e.g. the
+    /// provider dialect's deprecated unknown-`paramType` fallback).
     Warning(ValidationWarning),
 }
 

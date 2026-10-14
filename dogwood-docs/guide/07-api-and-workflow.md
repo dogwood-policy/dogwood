@@ -218,9 +218,9 @@ impl ParsedPolicySet {
 
 - `parse(source, &service)` — **phase 1**, schema-free. Parses and macro-expands against the `ServiceSchema` alone; catches syntax and macro-resolution errors but **not** schema-dependent ones (unknown attributes, type errors) — those need the action schema. Useful to reject a broken policy before the action schema is available. The returned `ParsedPolicySet` carries its `ServiceSchema`, so phase 2 needs only the `PolicySchema`.
 - `lower(&policy_schema)` — **phase 2**. Derives the event schema against the action schema, lowers to Cedar, augments the schema with hoisted `context.<id>` fields, and injects pins. Produces the `LoweredPolicySet`. Emitted policy ids and hoisted field names use the default `policy_<index>` namespace.
-- `lower_with_distincter(&policy_schema, distincter)` — like `lower`, but namespaces this call's policy ids and hoisted field names under `distincter` (ids become `<distincter>_<index>`). Supply a **distinct** value per call when combining independently-lowered sets into one Cedar `PolicySet` / policy store, or when feeding an augmented schema forward. The `distincter` must be a valid Cedar identifier (`[_A-Za-z][_A-Za-z0-9]*`) — else `Error::InvalidDistincter`. It is **not** derived from a source `@id`; distinctness is the caller's decision. Note the plain `lower` path uses the namespace `policy`, so it is not automatically distinct from a `"policy"` distincter.
+- `lower_with_distincter(&policy_schema, distincter)` — like `lower`, but namespaces this call's policy ids and hoisted field names under `distincter` (ids become `<distincter>_<index>`). Supply a **distinct** value per call when combining independently-lowered sets into one Cedar `PolicySet` / policy store, or when feeding an augmented schema forward; `lower_many(&[(&parsed, distincter)], &policy_schema)`, where each `distincter` is a `Distincter`, lowers each entry independently against `policy_schema` and returns one merged `LoweredPolicySet` whose schema is `policy_schema` augmented once with every entry's hoisted fields (a repeated distincter is `Error::DuplicateDistincter`). Its entries are parsed sets, so like `lower` it needs only the `PolicySchema`. The `distincter` must be a valid Cedar identifier (`[_A-Za-z][_A-Za-z0-9]*`) — else `Error::InvalidDistincter`. A `Distincter` is a string validated against that rule once, at construction (`"tenant_42".parse::<Distincter>()` or `Distincter::try_from`); `lower_with_distincter` parses its `&str` into one. It is **not** derived from a source `@id`; distinctness is the caller's decision. Note the plain `lower` path uses the namespace `policy`, so it is not automatically distinct from a `"policy"` distincter.
 
-`LoweredPolicySet::from_str(src, &service, &policy_schema)` (below) is the fused form of `parse` then `lower` for when the action schema is already in hand.
+`LoweredPolicySet::from_str(src, &service, &policy_schema)` (below) is the fused form of `parse` then `lower` for when the action schema is already in hand; `LoweredPolicySet::from_many_str(&[(text, distincter)], &service, &policy_schema)` is likewise the fused form of `parse` on each entry then `lower_many`.
 
 ### LoweredPolicySet and the Cedar export accessors
 
@@ -325,7 +325,7 @@ impl EventBuilder {
 ```
 
 - Setting a principal **or** resource marks the event as wrapping an authorization request (it gains a principal/resource scope).
-- `timestamp` defaults to `0`; timestamps order events for temporal operators, and the first event of a fresh authorizer can safely stay at `0`.
+- `timestamp` defaults to `0`; the first event of a fresh authorizer can use that value. The reference interpreter preserves supplied timestamps. Test authors must deliberately choose the observation sequence and supply **strictly increasing timestamps**. Trace positions follow the order events are passed to `is_authorized`; timestamps measure `within` windows. The interpreter validates neither the observation sequence nor the timestamp contract. See [Evaluation semantics](04-temporal-expressions.md#evaluation-semantics).
 - `field(group, name, value)` accumulates into the logged record's nested `group` object (`input` is one such group, not privileged). It is **not** read by a policy's `context.<group>.<name>` clause — that reads the separate request-context bag set via `request_context(group, name, value)`. A field a policy reads *and* a temporal predicate correlates on must be supplied to **both**.
 - Entity uid strings are parsed as `Type::"id"` (possibly namespaced); a string that is not of that shape yields no scope value.
 
@@ -470,7 +470,7 @@ pub trait TemporalEngine: Send {
 The lifecycle has three points:
 
 - `prepare(leaves, schema, events)` — **once**, at authorizer-build time. A custom backend does its one-time setup here (an engine that precomputes queries against a store, say, would build them now); `events` carries the declared signature of every event kind the policy set can see (each field's dotted path and type), which such a backend needs to emit type-correct comparisons.
-- `observe(event)` — for **every** ingested event (decision or history-only), in timestamp order, before any `evaluate` that includes it. A backend persists the event (in memory, or in an external store).
+- `observe(event)` — for **every** ingested event (decision or history-only), in ingestion order, before any `evaluate` that includes it. A backend persists the event (in memory, or in an external store).
 - `evaluate()` — at each decision point, **after** that point's event has been observed. It returns each leaf's boolean keyed by id. The in-memory backend re-runs the interpreter; a custom backend evaluates however it prepared. A failure (an external store being unreachable, say) **fails the decision closed** by returning `Err(String)`.
 
 The built-in default is `InMemoryTemporalEngine` (implements `Default`, with `InMemoryTemporalEngine::new()`): it keeps the event history in memory and re-runs the in-process temporal interpreter over the trace so far. `prepare` stores the leaves (no compilation), `observe` appends to an in-memory log, and `evaluate` runs the interpreter at the last timepoint.
@@ -676,6 +676,16 @@ Two behaviors thread through the whole API and deserve to be stated plainly.
 - A **decision-kind event** makes `is_authorized` return `Some(Response)` — it observes the event *and* decides.
 - A **history-only event** makes `is_authorized` return `None` — it observes the event to update temporal state but yields no verdict, and contributes no line in `replay_log`.
 - **Statelessness is just a special case:** a single stateless decision is a fresh `Authorizer` fed one `request`-kind event (for example via `Event::from_request`).
+
+**For an enforcing integration, the caller is the enforcement point.** Verdicts are computed over events in the order you pass them to `is_authorized`. An integration should:
+
+- **run the action only after an `Allow` verdict** for its decision event;
+- **report history-only events** (`response`, `error` by default) promptly and reliably once the action resolves;
+- **supply increasing timestamps**, each greater than the previous one, in the order events are passed in.
+
+See the [observed-sequence example](04-temporal-expressions.md#evaluation-semantics)
+for how delayed or missing history-only events can flip a verdict despite
+correctly increasing timestamps.
 
 **Authorization never aborts, and this implementation resolves evaluation failures to `Deny`.** Any evaluation failure — a provider that errors, the temporal engine erroring, a decision event missing a principal/resource, a policy engine that was never prepared — yields a `Deny` with the reason recorded in `Response::diagnostics().errors()`. (For provider errors this deny is a description of this implementation, not a semantic guarantee: an erroring provider is undefined behavior under [the provider contract](05-information-providers.md#the-provider-contract), so a policy set must never rely on deny-on-error.) The temporal seam's `evaluate` returning `Err` and the policy seam's `errors` vector both funnel into this same place. So a caller that wants to distinguish "denied by policy" from "denied because something broke" should always inspect `diagnostics().errors()`, not just `decision()`.
 

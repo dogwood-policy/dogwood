@@ -1,0 +1,5 @@
+// An argument entity type must exist in the app schema or `entityTypes`.
+permit (principal, action == Drupe::Action::"Alert", resource)
+when {
+    !MyGuardrails::Escalate(context.input.level).escalate
+};

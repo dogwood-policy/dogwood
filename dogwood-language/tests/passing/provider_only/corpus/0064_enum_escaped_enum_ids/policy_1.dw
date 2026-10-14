@@ -1,0 +1,5 @@
+// Enum ids with a space and a quote round-trip from providers.json to the injected schema to Cedar.
+permit (principal, action == Drupe::Action::"Read", resource)
+when {
+    MyGuardrails::ContentFilter(context.input.document).result in [MyGuardrails::Verdict::"ok", MyGuardrails::Verdict::"a\"b"]
+};

@@ -1,0 +1,7 @@
+Only past events from this request's principal count.
+
+@id("login_then_read")
+PERMIT any principal to perform Write on any resource
+  when:
+    a Login response with this request's user occurred within the last 1 hour
+    and a Read response with this request's user and document occurred within the last 1 hour

@@ -8,11 +8,15 @@
 //!      not set for a separate crate's tests);
 //!   2. `dogwood validate`s every bundle, asserting a clean exit (the example
 //!      parses, lowers, and type-checks);
-//!   3. for every bundle that ships a trace, `dogwood replay`s it and asserts
+//!   3. `dogwood explain`s every bundle and asserts the semi-English
+//!      rendering matches `explain.out` byte-for-byte;
+//!   4. for every bundle that ships a trace, `dogwood replay`s it and asserts
 //!      the verdict stream matches `expected.out` byte-for-byte.
 //!
-//! A documentation example that no longer parses, validates, or replays as
-//! written fails this test — the guide cannot drift from the language.
+//! A documentation example that no longer parses, validates, explains, or
+//! replays as written fails this test — the guide cannot drift from the
+//! language. After an intended change to the informalizer's wording, refresh
+//! every `explain.out` with `dogwood-docs/examples/regenerate-explain.sh`.
 //!
 //! ## Bundle layout
 //!
@@ -23,9 +27,16 @@
 //!   events.dwschema    (optional) event-schema DSL          → --event-schema
 //!   providers.json     (optional) provider declarations     → --providers
 //!   macros.dw          (optional) macro library             → --macros
+//!   explain.out        (required) the `dogwood explain` output to match
 //!   trace.log          (optional) event trace               → replay --trace
 //!   expected.out       (required iff trace.log) the verdict stream to match
 //!   README.md          (optional) what the example shows (ignored by the harness)
+//!   requires-experimental-arithmetic
+//!                      (optional) marker: the bundle uses arithmetic in
+//!                      temporal operands, which the language gates behind the
+//!                      off-by-default `experimental-arithmetic` feature. The
+//!                      bundle is checked only when this harness is compiled
+//!                      with that feature; otherwise it is skipped.
 //! ```
 
 use std::path::{Path, PathBuf};
@@ -40,11 +51,13 @@ use escargot::CargoBuild;
 fn dogwood_bin() -> &'static Path {
     static BIN: OnceLock<PathBuf> = OnceLock::new();
     BIN.get_or_init(|| {
-        let run = CargoBuild::new()
-            .bin("dogwood")
-            .package("dogwood-cli")
-            .run()
-            .expect("build the `dogwood` binary");
+        let mut build = CargoBuild::new().bin("dogwood").package("dogwood-cli");
+        // EXPERIMENTAL-ARITHMETIC: a feature-on harness checks the arithmetic
+        // bundles, so the binary must accept them too.
+        if cfg!(feature = "experimental-arithmetic") {
+            build = build.features("experimental-arithmetic");
+        }
+        let run = build.run().expect("build the `dogwood` binary");
         run.path().to_path_buf()
     })
 }
@@ -111,6 +124,12 @@ fn discover() -> Vec<Bundle> {
             name: dir.file_name().unwrap().to_string_lossy().into_owned(),
             dir,
         })
+        // EXPERIMENTAL-ARITHMETIC: without the feature, the language rejects
+        // arithmetic, so the marked bundles cannot validate — skip them.
+        .filter(|b| {
+            cfg!(feature = "experimental-arithmetic")
+                || b.optional("requires-experimental-arithmetic").is_none()
+        })
         .collect();
     bundles.sort_by(|a, b| a.name.cmp(&b.name));
     bundles
@@ -156,6 +175,44 @@ fn validate_problem(bin: &Path, b: &Bundle) -> Option<String> {
     ))
 }
 
+/// `dogwood explain …` stdout must equal `explain.out` (after trimming
+/// trailing whitespace). Returns a failure description, or `None` on success.
+fn explain_problem(bin: &Path, b: &Bundle) -> Option<String> {
+    let Some(expected_path) = b.optional("explain.out") else {
+        return Some(format!(
+            "`{}`: missing explain.out (run dogwood-docs/examples/regenerate-explain.sh)",
+            b.name
+        ));
+    };
+    let expected = std::fs::read_to_string(expected_path).expect("read explain.out");
+
+    let mut cmd = Command::new(bin);
+    cmd.arg("explain")
+        .arg(b.policy())
+        .arg("--policy-schema")
+        .arg(b.schema());
+    b.push_schema_flags(&mut cmd);
+    let out = cmd.output().expect("run dogwood explain");
+    if !out.status.success() {
+        return Some(format!(
+            "`{}`: `dogwood explain` failed (exit {:?})\n{}",
+            b.name,
+            out.status.code(),
+            String::from_utf8_lossy(&out.stderr),
+        ));
+    }
+    let actual = String::from_utf8_lossy(&out.stdout);
+    if actual.trim_end() != expected.trim_end() {
+        return Some(format!(
+            "`{}`: explain output does not match explain.out \
+             (if intended, run dogwood-docs/examples/regenerate-explain.sh)\n\
+             --- expected ---\n{}\n--- actual ---\n{}",
+            b.name, expected, actual,
+        ));
+    }
+    None
+}
+
 /// For a bundle with a trace: `dogwood replay …` stdout must equal
 /// `expected.out` (after trimming trailing whitespace). Returns a failure
 /// description, or `None` on success / no trace.
@@ -199,8 +256,9 @@ struct BundleOutcome {
     replayed: bool,
 }
 
-/// Run all checks for one bundle: well-formedness, `dogwood validate`, and
-/// (if it ships a trace) `dogwood replay` vs `expected.out`.
+/// Run all checks for one bundle: well-formedness, `dogwood validate`,
+/// `dogwood explain` vs `explain.out`, and (if it ships a trace)
+/// `dogwood replay` vs `expected.out`.
 fn check_bundle(bin: &Path, b: &Bundle) -> BundleOutcome {
     if let Some(p) = well_formed_problem(b) {
         // Can't meaningfully run the CLI on a malformed bundle.
@@ -211,6 +269,12 @@ fn check_bundle(bin: &Path, b: &Bundle) -> BundleOutcome {
     }
     if let Some(p) = validate_problem(bin, b) {
         // A bundle that doesn't validate can't be replayed.
+        return BundleOutcome {
+            failure: Some(p),
+            replayed: false,
+        };
+    }
+    if let Some(p) = explain_problem(bin, b) {
         return BundleOutcome {
             failure: Some(p),
             replayed: false,

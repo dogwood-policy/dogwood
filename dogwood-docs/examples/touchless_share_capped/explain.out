@@ -1,0 +1,6 @@
+Only past events from this request's principal count.
+
+@id("touchless_share_capped")
+PERMIT any principal to perform TouchlessApprove on any resource
+  when:
+    100 * (the number of TouchlessApprove responses within the last 24 hours) <= 85 * (the number of Decide responses within the last 24 hours)

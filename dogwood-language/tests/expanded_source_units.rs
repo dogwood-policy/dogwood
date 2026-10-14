@@ -897,3 +897,115 @@ fn record_key_keyword_roundtrips() {
         Decision::Allow,
     );
 }
+
+// --- temporal gensym binders never alias a user binder ---
+
+/// A macro that mints a gensym binder `t$<call-site offset>`.
+const GENSYM_MACROS: &str = r#"
+def temporal bigger(?v) {
+    formerly within 1h (
+        exists ($t: Long). (
+            T::Action::"Login"::request{ input.amount: $t } && $t > ?v
+        )
+    )
+};
+"#;
+
+fn gensym_service() -> ServiceSchema {
+    ServiceSchema::builder()
+        .event_schema_str(EVENT_SCHEMA)
+        .macros_str(GENSYM_MACROS)
+        .build()
+        .expect("service schema with macros builds")
+}
+
+fn collision_policy(user_binder: &str) -> String {
+    temporal_when(&format!(
+        "exists ({user_binder}: Long). (\
+            T::Action::\"Read\"::request{{ input.amount: {user_binder} }} \
+            && bigger({user_binder}))"
+    ))
+}
+
+/// The `exists` binders a temporal condition declares, outermost first.
+fn declared_binders(c: &dogwood_language::temporal_ast::Condition, out: &mut Vec<String>) {
+    use dogwood_language::temporal_ast::{BinderSlot, ConditionKind as K};
+    match &c.kind {
+        K::Exists { var, body } => {
+            if let BinderSlot::Name(n) = &var.slot {
+                out.push(n.clone());
+            }
+            declared_binders(body, out);
+        }
+        K::And { left, right } | K::Or { left, right } | K::Since { left, right, .. } => {
+            declared_binders(left, out);
+            declared_binders(right, out);
+        }
+        K::Not { inner } | K::Formerly { body: inner, .. } | K::Previous { body: inner, .. } => {
+            declared_binders(inner, out)
+        }
+        _ => {}
+    }
+}
+
+/// The binders of the one temporal block in `src`, parsed against `svc`.
+fn binders_of(src: &str, svc: &ServiceSchema) -> Vec<String> {
+    let parsed = ParsedPolicySet::parse(src, svc).expect("parses");
+    let policy = parsed.policies().next().expect("one policy");
+    let mut names = Vec::new();
+    for c in policy.temporal_conditions() {
+        declared_binders(c, &mut names);
+    }
+    names
+}
+
+#[test]
+fn gensym_binder_does_not_alias_a_same_named_user_binder() {
+    let svc = gensym_service();
+    // The gensym number shifts with the user binder's length, so search for it.
+    let (user, gensym) = (0..500)
+        .find_map(|k| {
+            let user = format!("t_{k}");
+            let gensym = binders_of(&collision_policy(&user), &svc)
+                .into_iter()
+                .find(|n| n.contains('$'))?;
+            (gensym.replace('$', "_") == user).then_some((user, gensym))
+        })
+        .expect("no colliding offset in t_0..t_500; the fixture no longer collides");
+
+    let rendered = expanded_document(&collision_policy(&user), &svc);
+    let surface = binders_of(&rendered, &svc);
+    assert_eq!(
+        surface.len(),
+        2,
+        "binder count changed: {surface:?}\n{rendered}"
+    );
+    assert_ne!(
+        surface[0], surface[1],
+        "`{gensym}` rendered onto the user binder `{user}`:\n{rendered}"
+    );
+    assert_eq!(
+        surface[0], user,
+        "the user binder keeps its name:\n{rendered}"
+    );
+    assert_eq!(
+        surface[1],
+        format!("{user}_1"),
+        "the gensym takes the next free name"
+    );
+}
+
+#[test]
+fn gensym_binder_keeps_its_natural_spelling_when_nothing_collides() {
+    let svc = gensym_service();
+    let gensym = binders_of(&collision_policy("v"), &svc)
+        .into_iter()
+        .find(|n| n.contains('$'))
+        .expect("the macro mints a gensym");
+    let rendered = expanded_document(&collision_policy("v"), &svc);
+    let natural = gensym.replace('$', "_");
+    assert!(
+        rendered.contains(&format!("exists ({natural}: Long)")),
+        "expected the natural spelling `{natural}` in:\n{rendered}"
+    );
+}

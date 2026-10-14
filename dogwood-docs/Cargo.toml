@@ -1,9 +1,10 @@
 [package]
 name = "dogwood-docs"
-version = "1.0.0"
+version.workspace = true
 edition = "2024"
 # The docs + example bundles + their check harness are a reference/verification
-# target, not a library other packages consume. Not published.
+# target, not a library other packages consume. Not published (publish = false),
+# but kept at the workspace version so all crates stay in lockstep.
 publish = false
 description = "The Dogwood documentation: the guide prose plus complete, CLI-checked example bundles. A test harness runs every bundle through the `dogwood` binary, so a doc example that no longer parses/validates/replays is a build failure."
 exclude = ["/build", "/Config", "/build-tools/"]
@@ -13,6 +14,13 @@ exclude = ["/build", "/Config", "/build-tools/"]
 [lib]
 name = "dogwood_docs"
 path = "src/lib.rs"
+
+[features]
+# EXPERIMENTAL-ARITHMETIC: build the `dogwood` binary with the arithmetic
+# feature and check the example bundles that carry a
+# `requires-experimental-arithmetic` marker file. Off by default: those
+# bundles are skipped.
+experimental-arithmetic = []
 
 [dev-dependencies]
 # Builds and locates the `dogwood` binary from the CLI crate so the harness can

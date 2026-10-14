@@ -1,0 +1,5 @@
+// A literal outside the enum is rejected by Cedar's validator.
+permit (principal, action == Drupe::Action::"Read", resource)
+when {
+    MyGuardrails::ContentFilter(context.input.document).result == MyGuardrails::Score::"LWO"
+};
