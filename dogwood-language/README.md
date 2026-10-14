@@ -148,6 +148,11 @@ An [`Authorizer`] is **stateful**. You build it once from a
 each event is folded into an accumulated history so that temporal predicates
 can look back over earlier events.
 
+Event timestamps are assumed to be **increasing** in ingestion order:
+each must be greater than the previous one, so timestamps are also unique.
+The authorizer uses ingestion order for trace positions and timestamps for
+temporal windows; it neither sorts events nor checks the timestamp assumption.
+
 An [`Event`] is a timestamped occurrence of an action, of a given *kind*,
 carrying named input fields and — when it wraps an authorization request — a
 principal and resource. Build one with [`Event::builder`]:

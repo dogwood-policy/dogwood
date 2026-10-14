@@ -1,0 +1,4 @@
+@id("sell_capped_not_blocked")
+PERMIT any principal to perform SellShares on any resource
+  when: the request's shares <= 1000
+  unless: the request's stock == "BLOCKED"

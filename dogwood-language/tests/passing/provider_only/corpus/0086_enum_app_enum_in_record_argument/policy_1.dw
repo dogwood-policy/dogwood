@@ -1,0 +1,5 @@
+// App-owned enum fields are passed inside a record argument.
+permit (principal, action == Drupe::Action::"Alert", resource)
+when {
+    !MyGuardrails::Escalate(context.input).escalate
+};

@@ -1,9 +1,9 @@
 //! The Dogwood parser.
 //!
-//! Built on a `pest` grammar (`grammar.pest`) that is a translation of
-//! Cedar's policy grammar extended with the dialect-marker condition
-//! form (`when temporal { ... }`, `unless provider { ... }`). The
-//! parse tree is walked into the surface [`crate::ast`].
+//! Built on the shared `dogwood-syntax` Pest grammar, a translation of Cedar's
+//! policy grammar extended with the dialect-marker condition form (`when
+//! temporal { ... }`, `unless provider { ... }`). The parse tree is walked
+//! into the surface [`crate::ast`].
 //!
 //! The body of a `when`/`unless` clause is parsed into a structured
 //! [`crate::ast::Expr`] tree via [`build_expr`] — a tree-walk over the
@@ -15,14 +15,12 @@
 //! parsed into structured loc-bearing `cedar_ast` constraints by
 //! [`build_scope`], so a scope error points at the offending token.
 
-use pest::Parser;
-use pest_derive::Parser;
-
 use cedar_ast::{ActionConstraint, EntityReference, PrincipalConstraint, ResourceConstraint};
 use cedar_policy::pst;
 use cedar_policy_core::ast as cedar_ast;
 use cedar_policy_core::parser::Loc;
 use cedar_policy_core::parser::unescape::to_unescaped_string;
+use dogwood_syntax::{Pair, Rule};
 use rustc_literal_escaper::{EscapeError, unescape_str};
 
 use crate::ast::{
@@ -34,12 +32,6 @@ use crate::extension::temporal;
 use crate::extension::{Dialect, Extension};
 
 use std::cell::Cell;
-
-#[derive(Parser)]
-#[grammar = "parser/grammar.pest"]
-struct DogwoodParser;
-
-type Pair<'i> = pest::iterators::Pair<'i, Rule>;
 
 // Tracks whether expression parsing is currently inside a scope constraint
 // (as opposed to a condition body). Used by `resolve_name` to tailor error
@@ -437,11 +429,11 @@ fn extract_token(src: &str, pos: usize) -> Option<String> {
 pub fn parse_policies(src: &str) -> Result<PolicySet, Vec<RawParseError>> {
     // Strip a leading UTF-8 BOM (U+FEFF) if present — editors and Windows
     // tools sometimes prepend it, and the grammar doesn't expect it.
-    let src = src.strip_prefix('\u{FEFF}').unwrap_or(src);
+    let (_, src) = dogwood_syntax::split_bom(src);
     // Shared `.dw` source for scope entity-UID `Loc`s (so a scope error
     // points at the offending token, not the whole rule).
     let dw_src: std::sync::Arc<str> = std::sync::Arc::from(src);
-    let mut pairs = match DogwoodParser::parse(Rule::policies, src) {
+    let mut pairs = match dogwood_syntax::parse(Rule::policies, src) {
         Ok(p) => p,
         Err(e) => {
             // Convert the pest syntax error into a single RawParseError
@@ -555,7 +547,7 @@ enum DefKind {
 /// the macro definition's `{` and `}` — we run the standard `expr_entry`
 /// rule and rebase any error span back into the original source.
 fn parse_cedar_macro_body(src: &str, body_span: Span) -> Result<Expr, RawParseError> {
-    let mut pairs = DogwoodParser::parse(Rule::expr_entry, src).map_err(|e| {
+    let mut pairs = dogwood_syntax::parse(Rule::expr_entry, src).map_err(|e| {
         let (start, end) = match e.location {
             pest::error::InputLocation::Pos(p) => (p, (p + 1).min(src.len().max(p + 1))),
             pest::error::InputLocation::Span((s, e)) => (s, e),
@@ -2099,7 +2091,7 @@ mod macro_parse_smoke {
 
     use super::*;
     use crate::ast::ExprKind;
-    use crate::extension::temporal::ast::{AggExprKind, ConditionKind};
+    use crate::extension::temporal::ast::{AggExprKind, ConditionKind, Term as TemporalTerm};
 
     fn parse(src: &str) -> PolicySet {
         parse_policies(src).unwrap_or_else(|errs| panic!("parse failed: {errs:?}"))
@@ -2157,11 +2149,11 @@ mod macro_parse_smoke {
         assert_eq!(def.params[0].name, "w");
         assert_eq!(def.params[1].name, "s");
         match &def.body {
-            MacroBody::TemporalAgg(agg) => match &agg.kind {
+            MacroBody::TemporalValue(TemporalTerm::Agg(agg)) => match &agg.kind {
                 AggExprKind::Count { .. } => {}
                 other => panic!("expected Count, got {other:?}"),
             },
-            other => panic!("expected TemporalAgg body, got {other:?}"),
+            other => panic!("expected TemporalValue(Agg) body, got {other:?}"),
         }
     }
 
@@ -2177,11 +2169,11 @@ mod macro_parse_smoke {
         let def = &ps.defs[0];
         assert_eq!(def.params.len(), 3);
         match &def.body {
-            MacroBody::TemporalAgg(agg) => match &agg.kind {
+            MacroBody::TemporalValue(TemporalTerm::Agg(agg)) => match &agg.kind {
                 AggExprKind::Sum { .. } => {}
                 other => panic!("expected Sum, got {other:?}"),
             },
-            other => panic!("expected TemporalAgg body, got {other:?}"),
+            other => panic!("expected TemporalValue(Agg) body, got {other:?}"),
         }
     }
 
@@ -2397,10 +2389,10 @@ mod pattern_escape_differential {
     fn matches_cedar_on_the_common_escapes_and_wildcards() {
         for body in [
             r"plain",
-            r"a*b",       // wildcard
-            r"a\*b",      // literal star — legal only in a pattern
-            r"\\*",       // literal backslash, then wildcard
-            r"a\\b",      // literal backslash
+            r"a*b",  // wildcard
+            r"a\*b", // literal star — legal only in a pattern
+            r"\\*",  // literal backslash, then wildcard
+            r"a\\b", // literal backslash
             r"a\nb",
             r"a\tb",
             r"a\rb",
@@ -2442,8 +2434,7 @@ mod pattern_escape_differential {
 
     #[test]
     fn an_escape_error_reports_as_such() {
-        let src =
-            r#"permit(principal, action, resource) when { context.p like "a\qb" };"#;
+        let src = r#"permit(principal, action, resource) when { context.p like "a\qb" };"#;
         let errs = super::parse_policies(src).expect_err("`\\q` must be rejected");
         let msg = format!("{errs:?}");
         assert!(

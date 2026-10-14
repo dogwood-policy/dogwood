@@ -1,0 +1,6 @@
+@id("permit_read")
+PERMIT any principal to perform Read on any resource
+
+@id("forbid_severe")
+FORBID any principal to perform Read on any resource
+  when: the severity field of Vendor::ThreatScan(the request's document) is in [Vendor::Severity::"HIGH", Vendor::Severity::"CRITICAL"]

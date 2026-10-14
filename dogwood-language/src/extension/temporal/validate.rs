@@ -492,6 +492,11 @@ fn check_types_for_action(
             }
         }
         ConditionKind::Comparison { op, left, right } => {
+            for operand in [left, right] {
+                if matches!(operand, Term::Arith { .. }) {
+                    check_arith_atoms(operand, &env, rule_sig.as_ref(), narrow, node.span, errs);
+                }
+            }
             let (lt, rt) = (
                 term_type(left, &env, rule_sig.as_ref(), narrow),
                 term_type(right, &env, rule_sig.as_ref(), narrow),
@@ -521,6 +526,46 @@ fn check_types_for_action(
         }
         _ => {}
     });
+}
+
+/// The all-`Long` atom rule for a compound arithmetic operand: every leaf
+/// must type as `Long`. Decimals stay equality-only; strings, booleans,
+/// entities, and arrays cannot be operated on; a wildcard is unresolvable
+/// (a silently-false guard). A macro sigil leaf is opaque, and an
+/// unresolvable variable is owned by the closedness check.
+fn check_arith_atoms(
+    t: &Term,
+    env: &BTreeMap<String, RichType>,
+    rule_sig: Option<&ActionHandle>,
+    narrow: ScopeNarrowing<'_>,
+    span: Span,
+    errs: &mut Vec<LeafError>,
+) {
+    match t {
+        Term::Arith { left, right, .. } => {
+            check_arith_atoms(left, env, rule_sig, narrow, span, errs);
+            check_arith_atoms(right, env, rule_sig, narrow, span, errs);
+        }
+        Term::Wildcard => errs.push(LeafError {
+            message: "a wildcard (`*` / `_`) cannot appear inside an arithmetic \
+                      expression; it resolves to no value, so the whole guard \
+                      would be silently false"
+                .to_string(),
+            span: Some(span),
+        }),
+        Term::ParamRef(_) | Term::BinderRef(_) => {}
+        atom => match term_type(atom, env, rule_sig, narrow) {
+            Some(RichType::Long) | None => {}
+            Some(other) => errs.push(LeafError {
+                message: format!(
+                    "arithmetic operates only on `Long` values, but this \
+                     operand has type `{}`",
+                    other.display()
+                ),
+                span: Some(span),
+            }),
+        },
+    }
 }
 
 // ─── Aggregation summand typing ──────────────────────────────────────
@@ -593,16 +638,14 @@ fn collect_declared_binder_types(c: &Condition) -> BTreeMap<String, super::ast::
         ConditionKind::Exists { var, .. } => record(var, &mut map),
         ConditionKind::Comparison { left, right, .. } => {
             for operand in [left, right] {
-                if let Term::Agg(agg) = operand {
-                    match &agg.kind {
-                        AggExprKind::Sum { for_vars, .. } | AggExprKind::Count { for_vars, .. } => {
-                            for v in for_vars {
-                                record(v, &mut map);
-                            }
+                operand.for_each_operand_agg(&mut |agg| match &agg.kind {
+                    AggExprKind::Sum { for_vars, .. } | AggExprKind::Count { for_vars, .. } => {
+                        for v in for_vars {
+                            record(v, &mut map);
                         }
-                        AggExprKind::Call(_) => {}
                     }
-                }
+                    AggExprKind::Call(_) => {}
+                });
             }
         }
         _ => {}
@@ -718,16 +761,14 @@ fn collect_declared_binders(c: &Condition, env: &mut BTreeMap<String, RichType>)
         ConditionKind::Exists { var, .. } => record(var, env),
         ConditionKind::Comparison { left, right, .. } => {
             for operand in [left, right] {
-                if let Term::Agg(agg) = operand {
-                    match &agg.kind {
-                        AggExprKind::Sum { for_vars, .. } | AggExprKind::Count { for_vars, .. } => {
-                            for v in for_vars {
-                                record(v, env);
-                            }
+                operand.for_each_operand_agg(&mut |agg| match &agg.kind {
+                    AggExprKind::Sum { for_vars, .. } | AggExprKind::Count { for_vars, .. } => {
+                        for v in for_vars {
+                            record(v, env);
                         }
-                        AggExprKind::Call(_) => {}
                     }
-                }
+                    AggExprKind::Call(_) => {}
+                });
             }
         }
         _ => {}
@@ -781,6 +822,9 @@ fn term_type(
         // comparison against it (`(count …) == n`, `sum … > k`) checks like
         // any numeric operand.
         Term::Agg(_) => Some(RichType::Long),
+        // A compound arithmetic expression is Long-valued by construction
+        // (its all-Long-atoms rule is checked separately).
+        Term::Arith { .. } => Some(RichType::Long),
         Term::Wildcard | Term::ParamRef(_) | Term::BinderRef(_) => None,
     }
 }
@@ -1078,6 +1122,12 @@ fn term_is_tp_dep(t: &Term, env: &BTreeSet<String>) -> bool {
         // timepoint, so its value varies with the timepoint — tp-dependent
         // by construction (like a predicate match).
         Term::Agg(_) => true,
+        // A compound expression varies with the timepoint iff one of its
+        // operands does; a compound of only literals and context fields
+        // stays timepoint-independent and is rejected like any other.
+        Term::Arith { left, right, .. } => {
+            term_is_tp_dep(left, env) || term_is_tp_dep(right, env)
+        }
         Term::Entity { .. }
         | Term::Integer(_)
         | Term::Decimal(_)
@@ -1169,15 +1219,17 @@ fn descend(c: &Condition, f: &mut impl FnMut(&Condition), positive_only: bool) {
             // still visits the aggregate bodies so their predicates/terms are
             // checked.
             if !positive_only {
+                let mut bodies = Vec::new();
                 for operand in [left, right] {
-                    if let Term::Agg(agg) = operand {
-                        match &agg.kind {
-                            AggExprKind::Sum { body, .. } | AggExprKind::Count { body, .. } => {
-                                recurse(body, f);
-                            }
-                            AggExprKind::Call(_) => {}
+                    operand.for_each_operand_agg(&mut |agg| match &agg.kind {
+                        AggExprKind::Sum { body, .. } | AggExprKind::Count { body, .. } => {
+                            bodies.push(body.as_ref());
                         }
-                    }
+                        AggExprKind::Call(_) => {}
+                    });
+                }
+                for body in bodies {
+                    recurse(body, f);
                 }
             }
         }
@@ -1491,10 +1543,17 @@ fn for_each_term(node: &Condition, f: &mut impl FnMut(&Term)) {
 
 fn visit_term(t: &Term, f: &mut impl FnMut(&Term)) {
     f(t);
-    if let Term::Array(items) = t {
-        for it in items {
-            visit_term(it, f);
+    match t {
+        Term::Array(items) => {
+            for it in items {
+                visit_term(it, f);
+            }
         }
+        Term::Arith { left, right, .. } => {
+            visit_term(left, f);
+            visit_term(right, f);
+        }
+        _ => {}
     }
 }
 
@@ -1535,5 +1594,110 @@ fn known_entities_help(info: &SchemaInfo) -> String {
         "the schema declares no entity types".to_string()
     } else {
         format!("known entity types: {}", known.join(", "))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    //! Unit tests for the compound-operand (arithmetic) all-`Long` sort
+    //! rule, on a directly constructed leaf against a small fixture schema.
+
+    use super::*;
+    use crate::api::ActionRef;
+    use crate::error::Span;
+    use crate::extension::temporal::parse::parse_condition;
+
+    const SCHEMA: &str = r#"
+namespace Drupe {
+  type PayInput = { amount: Long, note: String };
+  type PayOutput = { };
+  type SystemContext = { now: datetime };
+  entity Gateway = { limit: Long };
+  entity OAuthUser = { id: String };
+  action "Pay" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: { input: PayInput, output?: PayOutput, system: SystemContext }
+  };
+}
+"#;
+
+    /// Validate a temporal body against the fixture schema, scoped to
+    /// `Drupe::Action::"Pay"`, and return every error message.
+    fn errors(body: &str) -> Vec<String> {
+        let condition =
+            parse_condition(body).unwrap_or_else(|e| panic!("parse `{body}` failed: {e}"));
+        let leaf = crate::extension::temporal::Temporal {
+            condition,
+            span: Span::new(0, 0),
+        };
+        let schema = cedar_policy::Schema::from_cedarschema_str(SCHEMA)
+            .expect("fixture schema parses")
+            .0;
+        let info = SchemaInfo::from_validator_schema(schema.as_ref());
+        let actions = [ActionRef {
+            namespace: Some("Drupe".to_string()),
+            id: "Pay".to_string(),
+        }];
+        validate_leaf(&leaf, &info, &actions, ScopeNarrowing::default())
+            .into_iter()
+            .map(|e| e.message)
+            .collect()
+    }
+
+    fn has_sort_error(errs: &[String], needle: &str) -> bool {
+        errs.iter().any(|m| m.contains(needle))
+    }
+
+    #[test]
+    fn wildcard_atom_in_compound_is_rejected() {
+        let errs = errors(r#"context.input.amount == * * 2"#);
+        assert!(
+            has_sort_error(&errs, "wildcard"),
+            "expected a wildcard sort error, got: {errs:?}"
+        );
+    }
+
+    #[test]
+    fn decimal_atom_in_compound_is_rejected() {
+        let errs = errors(r#"context.input.amount <= decimal("1.5") + 1"#);
+        assert!(
+            has_sort_error(&errs, "arithmetic operates only on `Long`"),
+            "expected a Long-only sort error, got: {errs:?}"
+        );
+    }
+
+    #[test]
+    fn string_typed_atom_in_compound_is_rejected() {
+        let errs = errors(r#"context.input.note + 1 <= 5"#);
+        assert!(
+            has_sort_error(&errs, "arithmetic operates only on `Long`"),
+            "expected a Long-only sort error, got: {errs:?}"
+        );
+    }
+
+    #[test]
+    fn long_atoms_in_compound_pass_the_sort_rule() {
+        // The pre-admission budget shape: an aggregate (tp-dependent,
+        // Long) plus a Long context field against a literal. No errors.
+        let errs = errors(
+            r#"(sum a for (a: Long), (t: Timepoint). where (
+                   formerly within 1h (Drupe::Action::"Pay"::request{ input.amount: a } && tp(t))
+               )) + context.input.amount <= 100"#,
+        );
+        assert!(errs.is_empty(), "expected no errors, got: {errs:?}");
+    }
+
+    #[test]
+    fn var_and_attribute_atoms_in_compound_pass_the_sort_rule() {
+        // A bound `Long` event variable and a `Long` entity attribute are
+        // legal compound atoms under every operator.
+        let errs = errors(
+            r#"exists (a: Long). (
+                   formerly within 1h Drupe::Action::"Pay"::request{ input.amount: a }
+                   && a * 2 - resource.limit <= context.input.amount + 5
+               )"#,
+        );
+        assert!(errs.is_empty(), "expected no errors, got: {errs:?}");
     }
 }

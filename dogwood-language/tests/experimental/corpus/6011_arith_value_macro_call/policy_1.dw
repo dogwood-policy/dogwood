@@ -1,0 +1,17 @@
+// A value macro (arithmetic body) called bare and inside arithmetic. The
+// two thresholds disagree at net = 3; the final ALLOW (net = 2 with one
+// settled transfer) holds only if `10 * net(1h)` multiplies the whole
+// spliced body rather than its first term.
+def temporal net(?w) {
+    (count for ($t: Timepoint). where (formerly within ?w (Drupe::Action::"Transfer"::request{} && tp($t))))
+    - (count for ($t: Timepoint). where (formerly within ?w (Drupe::Action::"Transfer"::response{} && tp($t))))
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    net(1h) <= 3 && 10 * net(1h) <= 25
+};

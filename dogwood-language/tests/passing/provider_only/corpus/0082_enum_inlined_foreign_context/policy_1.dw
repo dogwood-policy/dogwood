@@ -1,0 +1,6 @@
+permit (principal, action == Drupe::Action::"Read", resource);
+
+forbid (principal, action == Drupe::Action::"Read", resource)
+when {
+    MyGuardrails::ContentFilter(context.input.document).result == MyGuardrails::Score::"HIGH"
+};

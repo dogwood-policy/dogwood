@@ -1,0 +1,5 @@
+// An argument type must be an enum: a provider sees an entity only as its bare id.
+permit (principal, action == Drupe::Action::"Alert", resource)
+when {
+    !MyGuardrails::Escalate(context.input.level).escalate
+};

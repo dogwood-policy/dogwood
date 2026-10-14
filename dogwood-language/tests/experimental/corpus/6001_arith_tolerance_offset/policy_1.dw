@@ -1,0 +1,17 @@
+// Tolerance offset: the invoice amount may exceed the matched PO amount
+// by at most a constant; the `+` on a bound variable (`po_amount + 50`)
+// is what this case exercises.
+permit (
+    principal,
+    action == Procure::Action::"PayInvoice",
+    resource
+)
+when temporal {
+    exists (po_amount: Long). (
+        formerly within 24h Procure::Action::"CreatePurchaseOrder"::response{
+            input.po_id: context.input.po_id,
+            input.amount: po_amount
+        }
+        && context.input.amount <= po_amount + 50
+    )
+};

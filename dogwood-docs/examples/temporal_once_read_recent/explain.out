@@ -1,0 +1,6 @@
+Only past events from this request's principal count.
+
+@id("read_recently_via_once")
+PERMIT any principal to perform any action in Read or Write on any resource
+  when:
+    a Read request with this request's user and document occurred within the last 1 hour

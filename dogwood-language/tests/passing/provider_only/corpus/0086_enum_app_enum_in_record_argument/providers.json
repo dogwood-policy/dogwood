@@ -1,0 +1,45 @@
+{
+  "entityTypes": {},
+  "availableProviders": {
+    "MyGuardrails::Escalate": {
+      "argumentTypes": [
+        {
+          "paramType": "record",
+          "fields": {
+            "level": {
+              "paramType": "entity",
+              "entityType": "Drupe::AlertLevel"
+            },
+            "kind": {
+              "paramType": "entity",
+              "entityType": "Drupe::AlertKind"
+            },
+            "user": {
+              "paramType": "string"
+            }
+          },
+          "required": [
+            "level",
+            "kind",
+            "user"
+          ]
+        }
+      ],
+      "outputType": {
+        "paramType": "record",
+        "fields": {
+          "escalate": {
+            "paramType": "bool"
+          }
+        },
+        "required": [
+          "escalate"
+        ]
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "escalate.rhai"
+      }
+    }
+  }
+}

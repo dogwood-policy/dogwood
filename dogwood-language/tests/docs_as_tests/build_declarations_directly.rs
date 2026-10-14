@@ -23,9 +23,7 @@ use dogwood_language::{
 fn leaf(param_type: &str) -> ParamType {
     ParamType {
         param_type: param_type.to_string(),
-        fields: Default::default(),
-        items: None,
-        required: vec![],
+        ..Default::default()
     }
 }
 
@@ -38,8 +36,8 @@ fn declarations() -> ProviderDeclarations {
         fields: [("score".to_string(), leaf("decimal"))]
             .into_iter()
             .collect(),
-        items: None,
         required: vec!["score".to_string()],
+        ..Default::default()
     };
 
     // availableMethods: { above: (decimal) -> bool }
@@ -75,6 +73,7 @@ fn declarations() -> ProviderDeclarations {
 
     ProviderDeclarations {
         available: [("Risk::Score".to_string(), decl)].into_iter().collect(),
+        ..Default::default()
     }
 }
 
@@ -120,4 +119,85 @@ fn hand_built_declarations_match_the_json_backed_corpus_run() {
         norm(&expected),
         "hand-built declarations must produce the same verdicts as the JSON-backed corpus case"
     );
+}
+
+/// Declarations built in code skip `ProviderDeclarations::from_json`, so
+/// `ServiceSchemaBuilder::build` runs the same checks. An unknown `paramType`
+/// that involves no entity type is the deprecated `String` fallback and is
+/// accepted, as it is from JSON.
+#[test]
+fn hand_built_unknown_param_type_falls_back_to_string() {
+    let mut decls = declarations();
+    decls
+        .available
+        .get_mut("Risk::Score")
+        .unwrap()
+        .output_type
+        .fields
+        .insert("level".to_string(), leaf("strng"));
+    ServiceSchema::builder()
+        .providers(decls)
+        .build()
+        .expect("an unknown paramType without an entity type is accepted");
+}
+
+/// A hand-built unknown `paramType` carrying an `entityType` is rejected by
+/// the builder: falling back to `String` would hide the enum.
+#[test]
+fn hand_built_unknown_param_type_with_entity_type_is_rejected() {
+    let mut decls = declarations();
+    decls
+        .available
+        .get_mut("Risk::Score")
+        .unwrap()
+        .output_type
+        .fields
+        .insert(
+            "level".to_string(),
+            ParamType {
+                entity_type: Some("Risk::Level".to_string()),
+                ..leaf("entiy")
+            },
+        );
+    let err = ServiceSchema::builder()
+        .providers(decls)
+        .build()
+        .expect_err("an unknown paramType with an entityType must be rejected");
+    assert!(
+        err.to_string()
+            .contains("provider `Risk::Score` outputType.level: unknown paramType `entiy`"),
+        "got: {err}"
+    );
+}
+
+/// An enum-typed output built in code: `entityTypes` declares the enum, the
+/// field references it, and the builder accepts it.
+#[test]
+fn hand_built_enum_entity_declaration_is_accepted() {
+    let mut decls = declarations();
+    decls.entity_type_decls.insert(
+        "Risk::Level".to_string(),
+        dogwood_language::EntityTypeDecl {
+            values: vec!["LOW".to_string(), "HIGH".to_string()],
+            annotations: Default::default(),
+        },
+    );
+    decls
+        .available
+        .get_mut("Risk::Score")
+        .unwrap()
+        .output_type
+        .fields
+        .insert(
+            "level".to_string(),
+            ParamType {
+                param_type: "entity".to_string(),
+                entity_type: Some("Risk::Level".to_string()),
+                ..Default::default()
+            },
+        );
+    ServiceSchema::builder()
+        .providers(decls)
+        .build()
+        .expect("a well-formed enum declaration builds");
 }

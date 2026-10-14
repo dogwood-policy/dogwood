@@ -1,0 +1,2 @@
+provider `MyGuardrails::Escalate`: entityType `Drupe::Gateway` is not an enum entity type; provider values may only be enum entities
+provider `MyGuardrails::Escalate`: argument `context.input.level` has type `entity:Drupe::AlertLevel` on action `Drupe::Action::"Alert"` but the provider declares argument type `Drupe::Gateway`

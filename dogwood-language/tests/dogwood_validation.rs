@@ -1238,7 +1238,8 @@ fn when_provider_is_undeclared_then_provider_error() {
 // action(s) its rule scopes. Historically this required a concrete
 // `action == …` scope; these pin that a provider now also lowers cleanly
 // under an `action in [list]`, a bare `action`, and an `action in Group`
-// scope (the hoisted field is declared on every action's context).
+// scope. Every action reached by at least one provider scope references the
+// shared all-provider common type.
 
 /// A schema with an action group hierarchy: `Sell` and `Approve` are both
 /// `in [Trade]`, so `action in [App::Action::"Trade"]` (a group) must reach
@@ -1266,9 +1267,9 @@ namespace App {
 #[test]
 fn when_provider_under_action_in_list_scope_then_no_errors() {
     // A provider call under an `action in [list]` scope must lower and
-    // validate — the hoisted `context.providers.<id>` field is declared on
-    // every action's context. We list only `Read`, whose input declares
-    // `document`. (Listing `Login` too would now ERROR: the provider dialect
+    // validate — the listed action references the shared provider type. We
+    // list only `Read`, whose input declares `document`. (Listing `Login` too
+    // would now ERROR: the provider dialect
     // resolves the field-path argument against every listed action, and
     // `Login` declares no `document` — see
     // `when_provider_field_path_arg_absent_from_eq_scope_then_error`.)
@@ -1285,8 +1286,8 @@ fn when_provider_under_action_in_list_scope_then_no_errors() {
 #[test]
 fn when_provider_under_bare_action_scope_then_no_errors() {
     // A provider call under a bare `action` scope must lower and validate —
-    // the hoisted field is grafted onto every action's context. The field-path
-    // ARGUMENT, however, must resolve on every action the bare scope reaches
+    // every requestable action references the shared provider type. The
+    // field-path ARGUMENT must resolve on every action the bare scope reaches
     // (`Login` and `Read`), so it uses `user`, which both declare. (Using
     // `document` here would now ERROR: `Login` has no `document` — see
     // `when_provider_field_path_arg_absent_under_wildcard_then_error`.)

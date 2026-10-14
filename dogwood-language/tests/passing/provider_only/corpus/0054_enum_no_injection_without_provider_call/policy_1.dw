@@ -1,0 +1,5 @@
+// Enums are injected only for a policy set that calls a provider.
+permit (principal, action == Drupe::Action::"Read", resource)
+when {
+    context.input.document == "hello"
+};

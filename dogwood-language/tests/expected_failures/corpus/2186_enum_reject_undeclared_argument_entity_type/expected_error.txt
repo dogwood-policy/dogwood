@@ -1,0 +1,2 @@
+provider `MyGuardrails::Escalate`: entityType `Drupe::Nope` is not declared in the policy schema or the provider declarations' `entityTypes`
+provider `MyGuardrails::Escalate`: argument `context.input.level` has type `entity:Drupe::AlertLevel` on action `Drupe::Action::"Alert"` but the provider declares argument type `Drupe::Nope`

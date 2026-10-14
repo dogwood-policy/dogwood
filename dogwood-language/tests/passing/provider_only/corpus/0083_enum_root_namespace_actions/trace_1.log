@@ -1,0 +1,2 @@
+@0 scope(principal: OAuthUser::"alice", resource: Gateway::"gw1") request_context(input: { document: "hello" }) Action::"Read"::request(input: { document: "hello" }, callerPrincipal: OAuthUser::"alice", callerResource: Gateway::"gw1", requestId: "u1")
+@10 scope(principal: OAuthUser::"alice", resource: Gateway::"gw1") request_context(input: { document: "attack" }) Action::"Read"::request(input: { document: "attack" }, callerPrincipal: OAuthUser::"alice", callerResource: Gateway::"gw1", requestId: "u2")

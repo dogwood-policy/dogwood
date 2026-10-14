@@ -11,8 +11,8 @@ use pest_derive::Parser;
 use cedar_policy_core::parser::unescape::to_unescaped_string;
 
 use super::ast::{
-    AggExpr, AggExprKind, BinderSlot, Call, CallArg, CmpOp, Condition, ConditionKind, Interval,
-    NamedArg, Predicate, Term, TimeUnit, Type, TypedBinder, WithinSpec,
+    AggExpr, AggExprKind, ArithOp, BinderSlot, Call, CallArg, CmpOp, Condition, ConditionKind,
+    Interval, NamedArg, Predicate, Term, TimeUnit, Type, TypedBinder, WithinSpec,
 };
 use crate::error::Span;
 
@@ -40,10 +40,11 @@ pub fn parse_condition(body: &str) -> Result<Condition, String> {
     Ok(build_condition(cond))
 }
 
-/// Parse a `def temporal` macro body. The body is either a bare
-/// aggregation expression (in which case the macro is callable as an
-/// aggregate value — a comparison operand, e.g.
-/// `(my_agg(...)) == n`) or a temporal condition.
+/// Parse a `def temporal` macro body. The body is either a VALUE — an
+/// aggregation, or arithmetic over aggregations, callable as a comparison
+/// operand (`my_value(...) <= n`) — or a temporal condition. A value body
+/// must contain at least one aggregation: a bare constant or variable
+/// expression names nothing over the trace and is rejected.
 pub fn parse_macro_body(body: &str) -> Result<crate::ast::MacroBody, String> {
     let mut pairs = TemporalParser::parse(Rule::temporal_macro_body_entry, body)
         .map_err(|e| enhance_temporal_error(&e, body))?;
@@ -52,11 +53,34 @@ pub fn parse_macro_body(body: &str) -> Result<crate::ast::MacroBody, String> {
         .expect("temporal_macro_body_entry yields one pair");
     let inner = entry
         .into_inner()
-        .find(|p| matches!(p.as_rule(), Rule::agg_expr | Rule::condition))
-        .expect("temporal_macro_body_entry contains an agg_expr or condition");
+        .find(|p| matches!(p.as_rule(), Rule::macro_value_body | Rule::condition))
+        .expect("temporal_macro_body_entry contains a macro_value_body or condition");
     validate_string_escapes(&inner)?;
     match inner.as_rule() {
-        Rule::agg_expr => Ok(crate::ast::MacroBody::TemporalAgg(build_agg_expr(inner))),
+        Rule::macro_value_body => {
+            let arith = inner
+                .into_inner()
+                .find(|p| p.as_rule() == Rule::arith)
+                .expect("macro_value_body wraps an arith");
+            let term = build_arith(arith);
+            let mut has_agg = false;
+            term.for_each_operand_agg(&mut |_| has_agg = true);
+            if has_agg {
+                return Ok(crate::ast::MacroBody::TemporalValue(term));
+            }
+            // Aggregation-free, so not a value body. Some such shapes are
+            // conditions that `arith` also fully parses (a bare `?a`
+            // condition-sigil); re-read the body as a condition to keep
+            // their meaning, and reject the rest with an error naming both
+            // readings.
+            match parse_condition(body) {
+                Ok(cond) => Ok(crate::ast::MacroBody::TemporalCondition(cond)),
+                Err(_) => Err("a `def temporal` body must be a temporal condition, an \
+                               aggregation, or arithmetic over aggregations (a value \
+                               body needs at least one `count`/`sum`)"
+                    .to_string()),
+            }
+        }
         Rule::condition => Ok(crate::ast::MacroBody::TemporalCondition(build_condition(
             inner,
         ))),
@@ -533,14 +557,16 @@ fn build_call_arg(pair: Pair<'_>) -> CallArg {
     }
 }
 
-/// `comparison = term cmp_op term`. Either term may be an aggregate
+/// `comparison = arith cmp_op arith`. A zero-operator `arith` collapses
+/// to its bare `Term`, so a pre-arithmetic comparison builds the same
+/// AST as before. Either operand may be (or contain) an aggregate
 /// (`Term::Agg`); the comparison-operand-only rule is checked by `check`.
 fn build_comparison(pair: Pair<'_>, span: Span) -> Condition {
-    let mut terms = Vec::new();
+    let mut operands = Vec::new();
     let mut op = CmpOp::Eq;
     for p in pair.into_inner() {
         match p.as_rule() {
-            Rule::term => terms.push(build_term(p)),
+            Rule::arith => operands.push(build_arith(p)),
             Rule::cmp_op => {
                 op = match p.as_str() {
                     "<=" => CmpOp::Le,
@@ -555,13 +581,53 @@ fn build_comparison(pair: Pair<'_>, span: Span) -> Condition {
             _ => {}
         }
     }
-    let mut it = terms.into_iter();
+    let mut it = operands.into_iter();
     let left = it.next().expect("comparison left");
     let right = it.next().expect("comparison right");
     Condition {
         span,
         kind: ConditionKind::Comparison { op, left, right },
     }
+}
+
+/// `arith = arith_mul (add_op arith_mul)*` — left-associative `+`/`-`
+/// over multiplicative sub-expressions. A single `arith_mul` with no
+/// operator collapses to its operand (no `Term::Arith` node is built).
+fn build_arith(pair: Pair<'_>) -> Term {
+    let mut iter = pair.into_inner();
+    let mut acc = build_arith_mul(iter.next().expect("arith has an arith_mul"));
+    while let Some(op_pair) = iter.next() {
+        debug_assert_eq!(op_pair.as_rule(), Rule::add_op);
+        let op = match op_pair.as_str().trim() {
+            "+" => ArithOp::Add,
+            "-" => ArithOp::Sub,
+            other => unreachable!("unexpected add_op `{other}`"),
+        };
+        let right = build_arith_mul(iter.next().expect("add_op followed by arith_mul"));
+        acc = Term::Arith {
+            op,
+            left: Box::new(acc),
+            right: Box::new(right),
+        };
+    }
+    acc
+}
+
+/// `arith_mul = term (mul_op term)*` — left-associative `*` over terms.
+/// A single `term` with no operator collapses to that term.
+fn build_arith_mul(pair: Pair<'_>) -> Term {
+    let mut iter = pair.into_inner();
+    let mut acc = build_term(iter.next().expect("arith_mul has a term"));
+    while let Some(op_pair) = iter.next() {
+        debug_assert_eq!(op_pair.as_rule(), Rule::mul_op);
+        let right = build_term(iter.next().expect("mul_op followed by term"));
+        acc = Term::Arith {
+            op: ArithOp::Mul,
+            left: Box::new(acc),
+            right: Box::new(right),
+        };
+    }
+    acc
 }
 
 /// `within = "within" within_payload`. The payload is either a
@@ -647,6 +713,17 @@ fn build_term(pair: Pair<'_>) -> Term {
                 .find(|c| c.as_rule() == Rule::agg_expr)
                 .expect("paren_agg wraps an agg_expr");
             Term::Agg(Box::new(build_agg_expr(agg)))
+        }
+        // A parenthesized arithmetic grouping (`(a + b) * c`). The parens
+        // carry no semantics: the payload is built directly, so `(a)`
+        // collapses to the bare term `a`.
+        Some(Rule::paren_arith) => {
+            let arith = inner
+                .unwrap()
+                .into_inner()
+                .find(|c| c.as_rule() == Rule::arith)
+                .expect("paren_arith wraps an arith");
+            build_arith(arith)
         }
         Some(Rule::integer) => Term::Integer(inner.unwrap().as_str().parse().unwrap_or(0)),
         Some(Rule::string) => Term::String(unquote(inner.unwrap().as_str())),
@@ -805,6 +882,7 @@ fn temporal_rule_display(rule: &Rule) -> &'static str {
         // Entry points (should not normally appear in user-facing errors)
         Rule::condition_entry => "temporal condition",
         Rule::temporal_macro_body_entry => "temporal macro body",
+        Rule::macro_value_body => "aggregation or arithmetic value",
 
         // Condition structure
         Rule::condition => "temporal condition",
@@ -840,6 +918,12 @@ fn temporal_rule_display(rule: &Rule) -> &'static str {
         // Comparison
         Rule::comparison => "comparison",
         Rule::cmp_op => "comparison operator",
+        Rule::arith => "value",
+        Rule::arith_mul => "value",
+        // One shared display name keeps the expected set under the
+        // formatter's description cap (richer expectations still print).
+        Rule::add_op | Rule::mul_op => "arithmetic operator",
+        Rule::paren_arith => "'('",
 
         // Aggregation
         Rule::agg_expr => "aggregation",
@@ -1615,6 +1699,268 @@ mod tests {
             }
             other => panic!("expected Comparison, got {other:?}"),
         }
+    }
+
+    // ─── Arithmetic in comparison operands (`+`, `-`, `*`) ──────────
+
+    /// Accessor: the comparison of a condition.
+    fn comparison(c: &Condition) -> (CmpOp, &Term, &Term) {
+        match &c.kind {
+            ConditionKind::Comparison { op, left, right } => (*op, left, right),
+            other => panic!("expected Comparison, got {other:?}"),
+        }
+    }
+
+    /// Accessor: an Arith term's parts.
+    fn arith(t: &Term) -> (ArithOp, &Term, &Term) {
+        match t {
+            Term::Arith { op, left, right } => (*op, left, right),
+            other => panic!("expected Arith, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn zero_operator_comparison_builds_bare_terms() {
+        // NEGATIVE CONTROL: a pre-arithmetic comparison must build the
+        // exact same AST as before — no `Arith` wrapper for a
+        // zero-operator operand.
+        let c = parse(r#"context.input.amount <= 100"#);
+        let (op, left, right) = comparison(&c);
+        assert_eq!(op, CmpOp::Le);
+        assert!(matches!(left, Term::ContextField(_)));
+        assert!(matches!(right, Term::Integer(100)));
+    }
+
+    #[test]
+    fn addition_is_left_associative() {
+        // `a - b + c` groups as `(a - b) + c`.
+        let c = parse(r#"a - b + c == d"#);
+        let (_, left, _) = comparison(&c);
+        let (op, l, r) = arith(left);
+        assert_eq!(op, ArithOp::Add);
+        assert!(matches!(r, Term::Var(v) if v == "c"));
+        let (inner_op, il, ir) = arith(l);
+        assert_eq!(inner_op, ArithOp::Sub);
+        assert!(matches!(il, Term::Var(v) if v == "a"));
+        assert!(matches!(ir, Term::Var(v) if v == "b"));
+    }
+
+    #[test]
+    fn multiplication_binds_tighter_than_addition() {
+        // `a + b * c` groups as `a + (b * c)`.
+        let c = parse(r#"a + b * c == d"#);
+        let (_, left, _) = comparison(&c);
+        let (op, l, r) = arith(left);
+        assert_eq!(op, ArithOp::Add);
+        assert!(matches!(l, Term::Var(v) if v == "a"));
+        let (inner_op, il, ir) = arith(r);
+        assert_eq!(inner_op, ArithOp::Mul);
+        assert!(matches!(il, Term::Var(v) if v == "b"));
+        assert!(matches!(ir, Term::Var(v) if v == "c"));
+    }
+
+    #[test]
+    fn parens_override_precedence() {
+        // `(a + b) * c` — the paren_arith grouping beats `*`'s binding.
+        let c = parse(r#"(a + b) * c == d"#);
+        let (_, left, _) = comparison(&c);
+        let (op, l, r) = arith(left);
+        assert_eq!(op, ArithOp::Mul);
+        assert!(matches!(r, Term::Var(v) if v == "c"));
+        let (inner_op, ..) = arith(l);
+        assert_eq!(inner_op, ArithOp::Add);
+    }
+
+    #[test]
+    fn parenthesized_single_term_collapses() {
+        // `(x)` is a paren_arith whose payload is a single term; the
+        // parser collapses it to the bare term.
+        let c = parse(r#"(x) == 5"#);
+        let (_, left, _) = comparison(&c);
+        assert!(matches!(left, Term::Var(v) if v == "x"));
+    }
+
+    #[test]
+    fn negative_literal_still_lexes_after_cmp_op() {
+        // `x == -1` — in operand position `-1` is the negative integer
+        // literal, not a subtraction.
+        let c = parse(r#"x == -1"#);
+        let (_, _, right) = comparison(&c);
+        assert!(matches!(right, Term::Integer(-1)));
+    }
+
+    #[test]
+    fn minus_after_term_is_subtraction() {
+        // `x - 1` — after a complete term, `-` can only be `add_op`,
+        // regardless of spacing.
+        for src in [r#"x - 1 == y"#, r#"x -1 == y"#, r#"x- 1 == y"#] {
+            let c = parse(src);
+            let (_, left, _) = comparison(&c);
+            let (op, _, r) = arith(left);
+            assert_eq!(op, ArithOp::Sub, "in {src}");
+            assert!(matches!(r, Term::Integer(1)), "in {src}");
+        }
+    }
+
+    #[test]
+    fn negative_literal_after_add_op_is_an_operand() {
+        // `c + -2` — after `+` the parser is back in operand position,
+        // so `-2` lexes as the negative literal, not a second operator.
+        let c = parse(r#"c + -2 <= 0"#);
+        let (_, left, _) = comparison(&c);
+        let (op, l, r) = arith(left);
+        assert_eq!(op, ArithOp::Add);
+        assert!(matches!(l, Term::Var(v) if v == "c"));
+        assert!(matches!(r, Term::Integer(-2)));
+    }
+
+    #[test]
+    fn wildcard_operand_stays_a_wildcard() {
+        // `x == *` — in operand position `*` is the wildcard term, not a
+        // multiplication; the comparison parses with a bare Wildcard.
+        let c = parse(r#"x == *"#);
+        let (_, _, right) = comparison(&c);
+        assert!(matches!(right, Term::Wildcard));
+    }
+
+    #[test]
+    fn wildcard_inside_compound_parses_for_later_rejection() {
+        // `* * 2` parses (Arith{Mul, Wildcard, 2}); the sort check — not
+        // the grammar — rejects a wildcard inside a compound.
+        let c = parse(r#"x == * * 2"#);
+        let (_, _, right) = comparison(&c);
+        let (op, l, r) = arith(right);
+        assert_eq!(op, ArithOp::Mul);
+        assert!(matches!(l, Term::Wildcard));
+        assert!(matches!(r, Term::Integer(2)));
+    }
+
+    #[test]
+    fn aggregate_difference_parses_with_fencing_parens() {
+        // The backlog-slack shape: both aggregates parenthesized, the
+        // difference compared against a constant.
+        let c = parse(
+            r#"(count for (t: Timepoint). where (Drupe::Action::"Open"::request{} && tp(t)))
+               - (count for (t: Timepoint). where (Drupe::Action::"Close"::response{} && tp(t))) <= 10"#,
+        );
+        let (op, left, right) = comparison(&c);
+        assert_eq!(op, CmpOp::Le);
+        assert!(matches!(right, Term::Integer(10)));
+        let (aop, l, r) = arith(left);
+        assert_eq!(aop, ArithOp::Sub);
+        assert!(matches!(l, Term::Agg(_)));
+        assert!(matches!(r, Term::Agg(_)));
+    }
+
+    #[test]
+    fn final_aggregate_operand_needs_no_parens() {
+        // An aggregate in the final position of the final operand keeps
+        // its greedy `where` body: `m <= 5 * count …` parses with the
+        // bare aggregate as the multiplication's right factor.
+        let c = parse(
+            r#"m <= 5 * count for (t: Timepoint). where (Drupe::Action::"Decide"::response{} && tp(t))"#,
+        );
+        let (_, _, right) = comparison(&c);
+        let (op, l, r) = arith(right);
+        assert_eq!(op, ArithOp::Mul);
+        assert!(matches!(l, Term::Integer(5)));
+        assert!(matches!(r, Term::Agg(_)));
+    }
+
+    #[test]
+    fn macro_call_difference_parses() {
+        // Named accumulators compose with arithmetic at the call site
+        // with no macro changes: a call is a term.
+        let c = parse(r#"transfers_requested() - transfers_completed() <= 5"#);
+        let (_, left, _) = comparison(&c);
+        let (op, l, r) = arith(left);
+        assert_eq!(op, ArithOp::Sub);
+        assert!(
+            matches!(l, Term::Agg(a) if matches!(&a.kind, AggExprKind::Call(c) if c.name == "transfers_requested"))
+        );
+        assert!(
+            matches!(r, Term::Agg(a) if matches!(&a.kind, AggExprKind::Call(c) if c.name == "transfers_completed"))
+        );
+    }
+
+    #[test]
+    fn division_and_modulo_do_not_parse() {
+        assert!(
+            parse_condition(r#"a / b <= 5"#).is_err(),
+            "`/` must not parse in a temporal comparison"
+        );
+        assert!(
+            parse_condition(r#"a % b <= 5"#).is_err(),
+            "`%` must not parse in a temporal comparison"
+        );
+    }
+
+    #[test]
+    fn sum_plus_context_field_parses() {
+        // The pre-admission budget shape: a settled-response sum plus the
+        // current request's amount against a budget.
+        let c = parse(
+            r#"(sum a for (a: Long), (t: Timepoint). where (
+                   formerly within 24h (Drupe::Action::"Refund"::response{ output.amount: a } && tp(t))
+               )) + context.input.amount <= 100"#,
+        );
+        let (op, left, right) = comparison(&c);
+        assert_eq!(op, CmpOp::Le);
+        assert!(matches!(right, Term::Integer(100)));
+        let (aop, l, r) = arith(left);
+        assert_eq!(aop, ArithOp::Add);
+        assert!(matches!(l, Term::Agg(a) if matches!(a.kind, AggExprKind::Sum { .. })));
+        assert!(matches!(r, Term::ContextField(_)));
+    }
+
+    // ─── Macro value bodies (aggregations and arithmetic over them) ──
+
+    #[test]
+    fn difference_macro_body_parses_as_value() {
+        let body = crate::extension::temporal::parse::parse_macro_body(
+            r#"(count for (t: Timepoint). where (Drupe::Action::"A"::request{} && tp(t)))
+               - (count for (t: Timepoint). where (Drupe::Action::"B"::response{} && tp(t)))"#,
+        )
+        .expect("a difference of two aggregations is a value body");
+        assert!(
+            matches!(
+                &body,
+                crate::ast::MacroBody::TemporalValue(Term::Arith {
+                    op: ArithOp::Sub,
+                    ..
+                })
+            ),
+            "expected TemporalValue(Arith), got {body:?}"
+        );
+    }
+
+    #[test]
+    fn condition_body_with_term_prefix_still_parses_as_condition() {
+        // REGRESSION GUARD: without `macro_value_body`'s `&EOI` lookahead
+        // this body stops parsing (see the grammar comment on the entry
+        // rule for the PEG commit trap).
+        let body = crate::extension::temporal::parse::parse_macro_body(
+            r#"formerly within 1h Drupe::Action::"Login"::request{}"#,
+        )
+        .expect("a condition body must keep parsing");
+        assert!(matches!(&body, crate::ast::MacroBody::TemporalCondition(_)));
+    }
+
+    #[test]
+    fn bare_sigil_body_stays_a_condition() {
+        // `?a` fully parses as an arith (a ParamRef term) but has no
+        // aggregation; the fallback re-reads it as the condition-sigil
+        // body it always was.
+        let body = crate::extension::temporal::parse::parse_macro_body(r#"?a"#)
+            .expect("a bare `?a` body is a condition sigil");
+        assert!(matches!(&body, crate::ast::MacroBody::TemporalCondition(_)));
+    }
+
+    #[test]
+    fn aggregation_free_value_body_is_rejected() {
+        let err = crate::extension::temporal::parse::parse_macro_body(r#"1 + 2"#)
+            .expect_err("a value body without an aggregation is rejected");
+        assert!(err.contains("at least one `count`/`sum`"), "got: {err}");
     }
 
     #[test]

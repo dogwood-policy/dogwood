@@ -18,10 +18,11 @@
 //!   schema is augmented with that field on the rule's action(s);
 //! * an **information-provider** extension leaf hoists its invocation to
 //!   `context.providers.<name>` and lowers the projection/comparison as
-//!   native Cedar `ast::Expr` nodes. The hoisted field is declared on
-//!   EVERY action's context and its provider is evaluated for every
-//!   decision event — provider execution is unconditional (see the
-//!   provider contract in the guide, 05-information-providers).
+//!   native Cedar `ast::Expr` nodes. All hoisted provider fields are declared
+//!   once in a shared common type, referenced by each action reached by at
+//!   least one provider policy. Providers are still evaluated for every
+//!   decision event — execution is unconditional (see the provider contract
+//!   in the guide, 05-information-providers).
 //!
 //! The hoisted field is populated by the extension's evaluator at
 //! authorize time; Cedar's validator and authorizer only ever see a
@@ -37,13 +38,17 @@ mod to_ast;
 pub(crate) use to_ast::cedar_call_to_invocation;
 
 use std::any::{Any, TypeId};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
 use cedar_policy_core::ast as cedar_ast;
+use cedar_policy_core::validator::RawName;
 
 use crate::ast::{CondKeyword, Effect, Policy, PolicySet};
-use crate::error::{RawCedarifyError, Span};
+use crate::error::{RawCedarifyError, SourceLoc, Span};
+
+/// A parsed action schema, as schema augmentation mutates it.
+pub(crate) type Fragment = schema_augment::Fragment<RawName>;
 
 /// The action scope a rule pins, as seen by extension lowering.
 ///
@@ -141,13 +146,6 @@ pub struct Cedarified {
     /// round-trip. Each node carries its `.dw` source location, so Cedar
     /// validation diagnostics rebase into the original `.dw`.
     pub policy_set: cedar_ast::PolicySet,
-    /// The augmented Cedar schema the policies validate against — the base
-    /// action schema plus the hoisted `context.<name>` fields contributed by
-    /// extension leaves. Carried as a `cedar_policy::SchemaFragment` (the
-    /// lossless form), from which `parse` derives the compiled
-    /// `cedar_policy::Schema`, the cedarschema text, and the JSON — each
-    /// without re-parsing text.
-    pub schema: cedar_policy::SchemaFragment,
     /// The hoisted extension leaves, keyed by dialect leaf type (temporal
     /// `ContextField`, provider `ProviderField`, …), in emission order.
     /// `parse` drains them by type via `hoisted.take_leaves::<L>()` to build
@@ -158,13 +156,23 @@ pub struct Cedarified {
     /// `k`. Lets `authorize` map a Cedar determining-policy id in the
     /// authorization response back to the originating Dogwood rule.
     pub rule_ids: Vec<String>,
-    /// The originating `.dw` span of each Dogwood rule, parallel to
-    /// `rule_ids`: `rule_spans[k]` is the source span of rule `k`. The lowered
-    /// `ast` now carries a `.dw` location on every node, so a Cedar diagnostic's
-    /// own label usually pinpoints the offending sub-expression; this whole-rule
-    /// span is the validator's fallback when a diagnostic carries no label (it
-    /// names only a lowered policy id, mapped back via `rule_ids`).
-    pub rule_spans: Vec<Span>,
+    /// The originating `.dw` location of each Dogwood rule, parallel to
+    /// `rule_ids`: `rule_locs[k]` is rule `k`'s span and source text. The
+    /// validator reports a Cedar diagnostic that carries no label against it.
+    pub rule_locs: Vec<SourceLoc>,
+    /// `temporal_rules[j]` is the rule index of the `j`-th hoisted temporal
+    /// leaf.
+    pub temporal_rules: Vec<usize>,
+    /// `provider_rules[j]` is the rule index of the `j`-th hoisted provider
+    /// leaf.
+    pub provider_rules: Vec<usize>,
+    /// The declared names of the provider enums this policy set uses: those
+    /// referenced by the providers it calls and the methods it chains on them.
+    /// [`augment_schema`] injects exactly these.
+    pub referenced_enums: BTreeSet<String>,
+    /// The exported name of each provider enum the policy set uses, keyed by
+    /// its declared name (`GuardDuty::Severity` -> `Drupe::GuardDuty_Severity`).
+    pub enum_names: BTreeMap<String, String>,
 }
 
 /// The **rule key** minted for the `k`-th Dogwood rule: the string used both
@@ -197,17 +205,16 @@ use crate::extension::provider::declarations::ProviderDeclarations;
 /// provider's implementation, bound into `context.providers.<field_name>`).
 #[derive(Debug, Clone)]
 pub struct ProviderField {
-    /// The action scope the field's rule pins. Informational: the hoisted
-    /// field is grafted onto EVERY action's context and evaluated for every
-    /// decision event (unconditional provider execution); this records the
-    /// originating rule's declared scope. Mirrors [`ContextField::action`].
+    /// The action scope the field's rule pins. Any action reached by at least
+    /// one provider field receives a reference to the shared all-provider
+    /// common type. Provider evaluation remains unconditional for every
+    /// decision event. Mirrors [`ContextField::action`].
     pub action: ScopedAction,
     /// The concrete `(namespace, action_id)` actions this field's scope
     /// resolves to against the schema — a group expanded to its descendants,
-    /// an unconstrained scope to every action. Informational (see
-    /// [`ProviderField::action`]); populated at lowering by
-    /// [`schema_augment::scope_target_actions`], and available to
-    /// alternative implementations for as-if optimizations.
+    /// an unconstrained scope to every action. Populated at lowering by
+    /// [`schema_augment::scope_target_actions`] and used to decide which
+    /// actions reference the shared provider type.
     pub target_actions: Vec<(String, String)>,
     pub field_name: String,
     /// The Cedar type of the value bound into `context.providers.<field_name>`:
@@ -252,6 +259,10 @@ struct Ctx<'a> {
     /// hoisted field name deterministic and unique across lowering calls.
     field_ordinal: usize,
     provider_declarations: Option<&'a ProviderDeclarations>,
+    /// The exported name of each provider enum the policy set uses, keyed by
+    /// its declared name (`GuardDuty::Severity` -> `Drupe::GuardDuty_Severity`).
+    /// Empty on the first lowering pass; see [`cedarify_with_providers`].
+    enum_names: BTreeMap<String, String>,
     /// The original `.dw` source, shared into every lowered node's `Loc`
     /// so Cedar diagnostics carry `.dw`-accurate spans.
     dw_src: Arc<str>,
@@ -260,14 +271,18 @@ struct Ctx<'a> {
 /// Lower a Dogwood policy set to Cedar, with information-provider
 /// declarations available for typing (and backing) the hoisted
 /// `context.providers.<name>` fields.
+///
+/// Each hoisted field's `target_actions` is resolved against `base`, the
+/// parsed action schema; the schema itself is augmented separately by
+/// [`augment_schema`].
 pub fn cedarify_with_providers(
     policy_set: &PolicySet,
-    schema_source: &str,
+    base: &Fragment,
     provider_declarations: Option<&ProviderDeclarations>,
     distincter: Option<&str>,
     dw_src: &Arc<str>,
 ) -> Result<Cedarified, RawCedarifyError> {
-    let mut ctx = Ctx {
+    let new_ctx = |enum_names: BTreeMap<String, String>| Ctx {
         bool_fields: Vec::new(),
         provider_fields: Vec::new(),
         rule_key: String::new(),
@@ -275,19 +290,124 @@ pub fn cedarify_with_providers(
         resource_scope: ScopeConstraint::Any,
         field_ordinal: 0,
         provider_declarations,
+        enum_names,
         dw_src: Arc::clone(dw_src),
     };
+    let mut ctx = new_ctx(BTreeMap::new());
+    let mut rules = lower_policies(policy_set, distincter, dw_src, &mut ctx)?;
 
+    // The provider enums to inject: those referenced by the providers the
+    // policy set calls (and the methods it chains on them). Like the provider
+    // fields themselves, declarations it does not use cannot make it fail.
+    let referenced_enums: BTreeSet<String> = match provider_declarations {
+        Some(decls) => ctx
+            .provider_fields
+            .iter()
+            .filter_map(|f| {
+                decls.get(&f.invocation.key()).map(|decl| {
+                    decl.referenced_entity_types(f.methods.iter().map(|m| m.name.as_str()))
+                })
+            })
+            .flatten()
+            .collect(),
+        None => Default::default(),
+    };
+    // Each is exported under a name in the action schema's home namespace.
+    // Which enums are used is only known once every policy is lowered, so a
+    // policy set that uses any is lowered again with the names, to type its
+    // provider fields and rewrite its enum literals by them. Lowering is
+    // deterministic, so the second pass hoists the same fields.
+    let enum_names = provider_declarations
+        .map(|decls| schema_augment::provider_enum_names(base, decls, &referenced_enums))
+        .unwrap_or_default();
+    if !enum_names.is_empty() {
+        ctx = new_ctx(enum_names.clone());
+        rules = lower_policies(policy_set, distincter, dw_src, &mut ctx)?;
+    }
+    let LoweredRules {
+        policy_set: ast_policy_set,
+        rule_ids,
+        rule_locs,
+        temporal_rules,
+        provider_rules,
+    } = rules;
+
+    // Resolve each temporal leaf's action scope to the concrete actions its
+    // rule can match — a group expanded to its transitive members, an
+    // unconstrained scope to every action. The SAME resolution the
+    // augmentation grafts with, and the one validation consumes, so the two
+    // cannot drift.
+    for f in ctx.bool_fields.iter_mut() {
+        f.target_actions =
+            schema_augment::scope_target_actions(&f.action, base).map_err(|message| {
+                RawCedarifyError {
+                    message: format!("resolve temporal action scope: {message}"),
+                    span: None,
+                }
+            })?;
+    }
+    // Resolve each provider field's action scope the same way. The union of
+    // these sets determines which actions reference the shared all-provider
+    // type; evaluation itself remains unconditional.
+    for f in ctx.provider_fields.iter_mut() {
+        f.target_actions =
+            schema_augment::scope_target_actions(&f.action, base).map_err(|message| {
+                RawCedarifyError {
+                    message: format!("resolve provider action scope: {message}"),
+                    span: None,
+                }
+            })?;
+    }
+
+    // Deposit each dialect's leaves into the type-keyed store, keyed by leaf
+    // type; downstream (schema augmentation, validation, `Lowered`
+    // construction) consumes them dialect-agnostically.
+    let mut hoisted = HoistedLeaves::default();
+    hoisted.insert(ctx.bool_fields);
+    hoisted.insert(ctx.provider_fields);
+
+    Ok(Cedarified {
+        policy_set: ast_policy_set,
+        hoisted,
+        rule_ids,
+        rule_locs,
+        temporal_rules,
+        provider_rules,
+        referenced_enums,
+        enum_names,
+    })
+}
+
+/// The Cedar policies lowered from a Dogwood policy set, with each rule's id
+/// and `.dw` location and each hoisted leaf's rule index.
+struct LoweredRules {
+    policy_set: cedar_ast::PolicySet,
+    rule_ids: Vec<String>,
+    rule_locs: Vec<SourceLoc>,
+    temporal_rules: Vec<usize>,
+    provider_rules: Vec<usize>,
+}
+
+/// Lower every rule of `policy_set` into a Cedar policy set, accumulating the
+/// hoisted fields into `ctx`.
+fn lower_policies(
+    policy_set: &PolicySet,
+    distincter: Option<&str>,
+    dw_src: &Arc<str>,
+    ctx: &mut Ctx,
+) -> Result<LoweredRules, RawCedarifyError> {
     let mut ast_policy_set = cedar_ast::PolicySet::new();
     let mut rule_ids = Vec::with_capacity(policy_set.policies.len());
-    let mut rule_spans = Vec::with_capacity(policy_set.policies.len());
+    let mut rule_locs = Vec::with_capacity(policy_set.policies.len());
+    let mut temporal_rules = Vec::new();
+    let mut provider_rules = Vec::new();
     for (i, policy) in policy_set.policies.iter().enumerate() {
         let id = rule_key(distincter, i);
         // Each rule opens a fresh field-ordinal namespace under its own key, so
         // hoisted names are `<rule_key>__temporal_0`, `…__temporal_1`, ….
         ctx.rule_key = id.clone();
         ctx.field_ordinal = 0;
-        let static_policy = emit_policy(policy, &id, &mut ctx)?;
+        let static_policy = emit_policy(policy, &id, ctx)?;
         ast_policy_set
             .add_static(static_policy)
             .map_err(|e| RawCedarifyError {
@@ -295,93 +415,90 @@ pub fn cedarify_with_providers(
                 span: None,
             })?;
         rule_ids.push(id);
-        rule_spans.push(policy.span);
+        rule_locs.push(SourceLoc::new(policy.span, Arc::clone(dw_src)));
+        temporal_rules.resize(ctx.bool_fields.len(), i);
+        provider_rules.resize(ctx.provider_fields.len(), i);
     }
+    Ok(LoweredRules {
+        policy_set: ast_policy_set,
+        rule_ids,
+        rule_locs,
+        temporal_rules,
+        provider_rules,
+    })
+}
 
-    // Augment the schema with hoisted boolean (temporal) and
-    // information-provider context fields. Parse the base schema once into a
-    // fragment, mutate it in place through both passes, and hand the fragment
-    // out — no serialize/re-parse round-trip between passes or downstream.
-    let (mut fragment, _warnings) = schema_augment::Fragment::from_cedarschema_str(
+/// Parse `.cedarschema` text into the fragment that [`cedarify_with_providers`]
+/// resolves action scopes against and [`augment_schema`] grafts onto.
+pub fn parse_base_schema(schema_source: &str) -> Result<Fragment, RawCedarifyError> {
+    Fragment::from_cedarschema_str(
         schema_source,
         cedar_policy_core::extensions::Extensions::all_available(),
     )
+    .map(|(fragment, _warnings)| fragment)
     .map_err(|e| RawCedarifyError {
         message: format!("parse base schema: {e}"),
         span: None,
+    })
+}
+
+/// Augment `base` with the provider enums in `referenced_enums` and the
+/// hoisted boolean (temporal) and information-provider context fields, in one
+/// pass each.
+///
+/// Fails if two fields of one kind share a name, or if an enum's exported
+/// name clashes with the base schema.
+pub fn augment_schema(
+    mut fragment: Fragment,
+    provider_declarations: Option<&ProviderDeclarations>,
+    referenced_enums: &BTreeSet<String>,
+    bool_fields: &[ContextField],
+    provider_fields: &[ProviderField],
+) -> Result<cedar_policy::SchemaFragment, RawCedarifyError> {
+    fn duplicate<'a>(mut names: impl Iterator<Item = &'a String>) -> Option<&'a String> {
+        let mut seen = std::collections::BTreeSet::new();
+        names.find(|name| !seen.insert(*name))
+    }
+    if let Some(name) = duplicate(bool_fields.iter().map(|f| &f.field_name))
+        .or_else(|| duplicate(provider_fields.iter().map(|f| &f.field_name)))
+    {
+        return Err(RawCedarifyError {
+            message: format!("hoisted context field `{name}` is declared more than once"),
+            span: None,
+        });
+    }
+    // Inject the used provider enums first: the provider fields below are
+    // typed by them. Collisions are checked against the base schema, before
+    // anything is added.
+    if let Some(decls) = provider_declarations {
+        schema_augment::add_provider_entity_types(&mut fragment, decls, referenced_enums).map_err(
+            |message| RawCedarifyError {
+                message: format!("provider entity types: {message}"),
+                span: None,
+            },
+        )?;
+    }
+    schema_augment::add_bool_context_fields(&mut fragment, bool_fields).map_err(|message| {
+        RawCedarifyError {
+            message: format!("schema augmentation failed: {message}"),
+            span: None,
+        }
     })?;
-    if !ctx.bool_fields.is_empty() {
-        // Resolve each temporal leaf's action scope to the concrete actions its
-        // rule can match — a group expanded to its transitive members, an
-        // unconstrained scope to every action — now, while the fragment carries
-        // the action hierarchy. The SAME resolution the augmentation below grafts
-        // with, and the one validation consumes, so the two cannot drift.
-        for f in ctx.bool_fields.iter_mut() {
-            f.target_actions =
-                schema_augment::scope_target_actions(&f.action, &fragment).map_err(|message| {
-                    RawCedarifyError {
-                        message: format!("resolve temporal action scope: {message}"),
-                        span: None,
-                    }
-                })?;
-        }
-        schema_augment::add_bool_context_fields(&mut fragment, &ctx.bool_fields).map_err(
-            |message| RawCedarifyError {
-                message: format!("schema augmentation failed: {message}"),
-                span: None,
-            },
-        )?;
-    }
-    if !ctx.provider_fields.is_empty() {
-        // Resolve each provider field's action scope to the concrete set of
-        // actions its rule can match (groups expanded to descendants, an
-        // unconstrained scope to every action) — now, while the fragment
-        // carries the action hierarchy. Informational metadata: evaluation
-        // is unconditional and grafting covers every action, but the set is
-        // exposed on the public ProviderField for alternative
-        // implementations' as-if optimizations.
-        for f in ctx.provider_fields.iter_mut() {
-            f.target_actions =
-                schema_augment::scope_target_actions(&f.action, &fragment).map_err(|message| {
-                    RawCedarifyError {
-                        message: format!("resolve provider action scope: {message}"),
-                        span: None,
-                    }
-                })?;
-        }
-        schema_augment::add_provider_context_fields(&mut fragment, &ctx.provider_fields).map_err(
-            |message| RawCedarifyError {
-                message: format!("provider schema augmentation failed: {message}"),
-                span: None,
-            },
-        )?;
-    }
+    schema_augment::add_provider_context_fields(&mut fragment, provider_fields).map_err(
+        |message| RawCedarifyError {
+            message: format!("provider schema augmentation failed: {message}"),
+            span: None,
+        },
+    )?;
 
     // Convert the mutated core fragment to the public `SchemaFragment` (the
     // lossless form) in memory — no text round-trip. This is a `#[doc(hidden)]`
     // conversion (private/internal type coupling). Unguarded: a Cedar release that drops
     // the impl breaks the build rather than being caught by a test. This comment used to
     // claim a canary test covered it; none has ever existed.
-    let schema: cedar_policy::SchemaFragment =
-        fragment.try_into().map_err(|e| RawCedarifyError {
-            message: format!("assemble augmented schema fragment: {e}"),
-            span: None,
-        })?;
-
-    // Deposit each dialect's leaves into the type-keyed store, keyed by leaf
-    // type. Schema augmentation above still consumed the concrete
-    // accumulators (a lowering concern); the store is what downstream
-    // (validation, `Lowered` construction) consumes dialect-agnostically.
-    let mut hoisted = HoistedLeaves::default();
-    hoisted.insert(ctx.bool_fields);
-    hoisted.insert(ctx.provider_fields);
-
-    Ok(Cedarified {
-        policy_set: ast_policy_set,
-        schema,
-        hoisted,
-        rule_ids,
-        rule_spans,
+    fragment.try_into().map_err(|e| RawCedarifyError {
+        message: format!("assemble augmented schema fragment: {e}"),
+        span: None,
     })
 }
 

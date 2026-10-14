@@ -1,0 +1,128 @@
+{
+  "App": {
+    "commonTypes": {
+      "DogwoodProviders": {
+        "type": "Record",
+        "attributes": {
+          "policy_1_p_0": {
+            "type": "Record",
+            "attributes": {
+              "result": {
+                "type": "EntityOrCommon",
+                "name": "App::MyGuardrails_Score"
+              }
+            }
+          }
+        },
+        "annotations": {
+          "dogwood_provider_context": "1.1"
+        }
+      },
+      "ReadInput": {
+        "type": "Record",
+        "attributes": {
+          "document": {
+            "type": "EntityOrCommon",
+            "name": "String"
+          }
+        }
+      }
+    },
+    "entityTypes": {
+      "Doc": {},
+      "MyGuardrails_Score": {
+        "enum": [
+          "LOW",
+          "MEDIUM",
+          "HIGH"
+        ],
+        "annotations": {
+          "dogwood_provider_enum": "MyGuardrails::Score"
+        }
+      },
+      "User": {}
+    },
+    "actions": {
+      "Read": {
+        "appliesTo": {
+          "resourceTypes": [
+            "Doc"
+          ],
+          "principalTypes": [
+            "User"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {
+              "input": {
+                "type": "EntityOrCommon",
+                "name": "ReadInput"
+              },
+              "providers": {
+                "type": "DogwoodProviders"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "Audit": {
+    "commonTypes": {
+      "DogwoodProviders": {
+        "type": "Record",
+        "attributes": {
+          "policy_1_p_0": {
+            "type": "Record",
+            "attributes": {
+              "result": {
+                "type": "EntityOrCommon",
+                "name": "App::MyGuardrails_Score"
+              }
+            }
+          }
+        },
+        "annotations": {
+          "dogwood_provider_context": "1.1"
+        }
+      },
+      "ReadInput": {
+        "type": "Record",
+        "attributes": {
+          "document": {
+            "type": "EntityOrCommon",
+            "name": "String"
+          }
+        }
+      }
+    },
+    "entityTypes": {
+      "Doc": {},
+      "User": {}
+    },
+    "actions": {
+      "Inspect": {
+        "appliesTo": {
+          "resourceTypes": [
+            "Doc"
+          ],
+          "principalTypes": [
+            "User"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {
+              "input": {
+                "type": "EntityOrCommon",
+                "name": "ReadInput"
+              },
+              "providers": {
+                "type": "DogwoodProviders"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

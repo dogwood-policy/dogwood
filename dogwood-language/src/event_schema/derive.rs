@@ -40,7 +40,7 @@ pub const DEFAULT_MAX_WINDOW: Interval = Interval {
 
 /// The derived event signatures: one entry per (action, kind) pair the
 /// DSL produces against the action schema.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct DerivedEventSchema {
     pub events: Vec<DerivedEvent>,
     /// The maximum temporal look-back window any policy `within` clause may
@@ -51,7 +51,7 @@ pub struct DerivedEventSchema {
 }
 
 /// One derived event signature.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct DerivedEvent {
     /// Qualified action path including the action entity-type segment,
     /// e.g. `["Drupe", "Action"]` — what a predicate's namespace must

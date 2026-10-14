@@ -1,0 +1,4 @@
+@id("read_after_login_attempt")
+PERMIT any principal to perform Read on any resource
+  when:
+    a Login attempt event with this request's user and actor = the principal occurred within the last 1 hour

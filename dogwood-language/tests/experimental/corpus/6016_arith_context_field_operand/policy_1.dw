@@ -1,0 +1,13 @@
+// Context fields as arithmetic atoms under `*` and `-`: twice the alert
+// level, less one, must be covered by the transfer count (a bare aggregate
+// in final position needs no parentheses).
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    context.input.level * 2 - 1 <= count for (t: Timepoint). where (
+        formerly within 1h (Drupe::Action::"Transfer"::request{} && tp(t))
+    )
+};

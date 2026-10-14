@@ -1,0 +1,6 @@
+Only past events from this request's principal count.
+
+@id("submit_after_approval")
+PERMIT any principal to perform Submit on any resource
+  when:
+    an Approve request with this request's user and status = "approved" occurred within the last 1 hour

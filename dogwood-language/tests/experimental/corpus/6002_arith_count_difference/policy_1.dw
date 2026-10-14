@@ -1,0 +1,15 @@
+// Difference with slack: PRs opened minus reviews completed stays at
+// most 2; the `-` between two counts is what this case exercises.
+permit (
+    principal,
+    action == Repo::Action::"OpenPullRequest",
+    resource
+)
+when temporal {
+    (count for (t: Timepoint). where (
+        formerly within 24h (Repo::Action::"OpenPullRequest"::response{} && tp(t))
+    ))
+    - (count for (t: Timepoint). where (
+        formerly within 24h (Repo::Action::"CompleteReview"::response{} && tp(t))
+    )) <= 2
+};

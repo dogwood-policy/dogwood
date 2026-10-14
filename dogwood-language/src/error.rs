@@ -122,6 +122,11 @@ impl SourceLoc {
         &self.src
     }
 
+    /// The owning source handle, for diagnostics that must outlive the lowering.
+    pub(crate) fn src(&self) -> &std::sync::Arc<str> {
+        &self.src
+    }
+
     /// The shared source as a `miette::SourceCode` (the sized `Arc<str>`, so it
     /// coerces to `&dyn SourceCode`).
     fn source_code(&self) -> &dyn miette::SourceCode {
@@ -471,8 +476,8 @@ pub enum ValidationError {
 /// A single validation *warning*. Superset of Cedar's `ValidationWarning`:
 /// the `Cedar` variant carries Cedar's own warning verbatim (so a caller
 /// migrating from Cedar loses nothing), the `Extension` variant carries a
-/// sublanguage-dialect warning. No dialect emits a warning today; the variant
-/// exists so the warning channel is symmetric with the error channel.
+/// sublanguage-dialect warning (today the provider dialect's deprecated
+/// unknown-`paramType` fallback).
 ///
 /// Like the error type, the `Extension` variant is self-rendering (it carries
 /// its `.dw` source); the `Cedar` variant forwards to Cedar's own warning,
@@ -489,7 +494,7 @@ pub enum ValidationWarning {
 
     /// A sublanguage-extension warning. `code` is the dialect's marker.
     #[error("{message}")]
-    #[diagnostic(code(extension))]
+    #[diagnostic(code(extension), severity(Warning))]
     Extension {
         /// The dialect marker this warning came from (e.g. `"temporal"`).
         code: &'static str,

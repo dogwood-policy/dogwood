@@ -11,6 +11,9 @@
 //! defects surface as `validate` findings. Panics only if a case builds a
 //! service schema AND lowers a policy set AND validates cleanly.
 //!
+//! A `providers.json` that fails to load counts as the rejection (its load
+//! error is the case's error message); it is never silently dropped.
+//!
 //! Additionally, when a case directory contains an `expected_error.txt` file,
 //! the harness asserts that the error message matches its contents. This pins
 //! error-message parity with Cedar for pure-Cedar parse errors and prevents
@@ -27,11 +30,14 @@ fn case_error_message(
     policy_src: &str,
     schema_src: &str,
     event_schema: &str,
-    providers: Option<&ProviderDeclarations>,
+    providers: Option<&Result<ProviderDeclarations, String>>,
 ) -> Option<String> {
     let mut builder = ServiceSchema::builder().event_schema_str(event_schema);
-    if let Some(p) = providers {
-        builder = builder.providers(p.clone());
+    match providers {
+        // A providers.json that fails to load is itself the rejection.
+        Some(Err(e)) => return Some(e.clone()),
+        Some(Ok(p)) => builder = builder.providers(p.clone()),
+        None => {}
     }
     let service_schema = match builder.build() {
         Err(e) => return Some(e.to_string()),
@@ -73,7 +79,8 @@ struct CaseFiles {
     policy_src: String,
     schema_src: String,
     event_schema: String,
-    providers: Option<ProviderDeclarations>,
+    /// `Err` holds the load error of a `providers.json` that doesn't load.
+    providers: Option<Result<ProviderDeclarations, String>>,
     dir: std::path::PathBuf,
 }
 
@@ -125,9 +132,10 @@ fn load_cases() -> Vec<CaseFiles> {
             let schema_src =
                 std::fs::read_to_string(dir.join("schema.cedarschema")).unwrap_or_default();
 
-            let providers = std::fs::read_to_string(dir.join("providers.json"))
-                .ok()
-                .and_then(|json| ProviderDeclarations::from_json(&json).ok());
+            let providers_path = dir.join("providers.json");
+            let providers = providers_path.exists().then(|| {
+                ProviderDeclarations::from_json_file(&providers_path).map_err(|e| e.to_string())
+            });
 
             Some(CaseFiles {
                 name,

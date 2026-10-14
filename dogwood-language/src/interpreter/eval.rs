@@ -20,8 +20,8 @@
 use std::collections::BTreeMap;
 
 use crate::extension::temporal::ast::{
-    AggExpr, AggExprKind, CmpOp, Condition, ConditionKind, Interval, NamedArg, Predicate, Term,
-    TypedBinder,
+    AggExpr, AggExprKind, ArithOp, CmpOp, Condition, ConditionKind, Interval, NamedArg, Predicate,
+    Term, TypedBinder,
 };
 
 use super::value::{Trace, Value};
@@ -679,6 +679,20 @@ fn eval_comparison(
 fn resolve_term_at(env: &Env, trace: &Trace, i: usize, term: &Term) -> Option<Value> {
     match term {
         Term::Agg(agg) => Some(Value::Int(eval_agg_expr(trace, i, env, agg))),
+        // A compound arithmetic operand: saturating i64, the same
+        // out-of-range policy as `sum_column` (§5.4: clamp, never panic
+        // or wrap), applied per operation in tree order. A side that does
+        // not resolve to an integer makes the whole operand unresolved,
+        // so the enclosing comparison is false.
+        Term::Arith { op, left, right } => {
+            let l = resolve_term_at(env, trace, i, left)?.as_int()?;
+            let r = resolve_term_at(env, trace, i, right)?.as_int()?;
+            Some(Value::Int(match op {
+                ArithOp::Add => l.saturating_add(r),
+                ArithOp::Sub => l.saturating_sub(r),
+                ArithOp::Mul => l.saturating_mul(r),
+            }))
+        }
         other => resolve_term(env, other),
     }
 }
@@ -724,6 +738,10 @@ fn resolve_term(env: &Env, term: &Term) -> Option<Value> {
         Term::Agg(_) => panic!(
             "resolve_term reached an aggregate outside a comparison operand — \
              validation did not run or admitted an aggregate in a non-operand position"
+        ),
+        Term::Arith { .. } => panic!(
+            "resolve_term reached arithmetic outside a comparison operand — \
+             validation did not run or admitted arithmetic in a non-operand position"
         ),
         Term::ParamRef(p) => {
             panic!("resolve_term reached unresolved macro param `?{p}` — expansion did not run")

@@ -1,0 +1,3 @@
+// Nested temporal groups exercise the formatter's recursive comma and boolean
+// breaking without involving an action schema.
+@id("alert_total_transfer_over_200") permit (principal, action == Drupe::Action::"Alert", resource) when temporal { exists (total: Long). ((sum a for (a: Long). where Drupe::Action::"Transfer"::request{ input.amount: a }) == total && total > 200) };

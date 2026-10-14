@@ -35,6 +35,7 @@ pub(crate) mod cedarify;
 pub(crate) mod error;
 pub(crate) mod event_schema;
 pub(crate) mod extension;
+pub(crate) mod informalize;
 pub(crate) mod interpreter;
 pub(crate) mod macros;
 pub(crate) mod parser;
@@ -63,7 +64,16 @@ pub use crate::policy_schema::PolicySchema;
 /// is the analog of `cedar_policy::PolicySet` and the source of the compiled
 /// Cedar artifacts for external-service interop. [`ParsedPolicy`] is the opaque per-policy
 /// handle from [`ParsedPolicySet::policies`], for pre-lowering diagnostics.
-pub use crate::policy_set::{LoweredPolicySet, ParsedPolicy, ParsedPolicySet};
+/// [`lower_many`] lowers several policies independently and merges them into one set,
+/// each under a validated [`Distincter`].
+pub use crate::policy_set::{
+    Distincter, LoweredPolicySet, ParsedPolicy, ParsedPolicySet, lower_many,
+};
+
+/// The semi-English informalization of a parsed policy (set), produced by
+/// [`ParsedPolicy::informalize`](crate::policy_set::ParsedPolicy::informalize)
+/// and [`ParsedPolicySet::informalize`](crate::policy_set::ParsedPolicySet::informalize).
+pub use crate::informalize::{Informalization, Layout, Phrase};
 
 /// The Dogwood-owned **scope view** returned by
 /// [`ParsedPolicy::scope`](crate::policy_set::ParsedPolicy::scope): a
@@ -102,8 +112,12 @@ pub use crate::api::{EventFieldPath, EventFieldType, EventPin, EventPinRoot, Eve
 /// `#[non_exhaustive]`, so a caller can build declarations **directly** with
 /// struct literals — the alternative to deserializing them from JSON via
 /// [`ProviderDeclarations::from_json`] / [`ProviderDeclarations::from_json_file`].
+/// [`ProviderDeclarations`] and [`ParamType`] implement `Default`; end their
+/// literals in `..Default::default()` to stay source-compatible as fields are
+/// added. Hand-built declarations are checked by
+/// [`ServiceSchemaBuilder::build`](crate::ServiceSchemaBuilder::build).
 pub use crate::extension::provider::declarations::{
-    Implementation, MethodDecl, ParamType, ProviderDecl,
+    EntityTypeDecl, Implementation, MethodDecl, ParamType, ProviderDecl,
 };
 
 /// Schema-aware validation. Analog of `cedar_policy::Validator` and its
@@ -161,8 +175,8 @@ pub use crate::leaf_map::DecisionLeafMap;
 /// kept in one module so it can be revisited as a unit.
 pub mod temporal_ast {
     pub use crate::extension::temporal::ast::{
-        AggExpr, AggExprKind, BinderSlot, CmpOp, Condition, ConditionKind, Interval, NamedArg,
-        Predicate, Term, TimeUnit, Type, TypedBinder, WithinSpec,
+        AggExpr, AggExprKind, ArithOp, BinderSlot, CmpOp, Condition, ConditionKind, Interval,
+        NamedArg, Predicate, Term, TimeUnit, Type, TypedBinder, WithinSpec,
     };
 }
 

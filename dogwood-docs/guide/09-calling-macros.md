@@ -132,12 +132,12 @@ when temporal {
 
 > Runnable: [`examples/call_temporal_aggregation_macro_count/`](../examples/call_temporal_aggregation_macro_count/) — `dogwood validate` and `dogwood replay`.
 
-Argument-nesting works for temporal macros too: because an aggregation macro
-expands to a value (a `count`/`sum` term), a call to one may be passed as the
-argument to another temporal macro whose parameter sits in a comparison-operand
-position — the argument is expanded first, then spliced into that operand slot.
-Given `count_within` (an aggregation macro) and `bind` (which names the
-`exists … == …` binding scaffold):
+Argument-nesting works for temporal macros too: because a value macro
+expands to a comparison operand (a `count`/`sum` term, or arithmetic over
+them), a call to one may be passed as the argument to another temporal macro
+whose parameter sits in a comparison-operand position — the argument is
+expanded first, then spliced into that operand slot. Given `count_within` (a
+value macro) and `bind` (which names the `exists … == …` binding scaffold):
 
 ```text
 def temporal count_within(?w, ?s) {

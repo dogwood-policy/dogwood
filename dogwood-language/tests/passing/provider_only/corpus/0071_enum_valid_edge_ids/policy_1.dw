@@ -1,0 +1,5 @@
+// Valid but unusual ids: case-distinct members (`LOW` vs `low`), the empty string, and Unicode with a space are all legal Cedar eids.
+permit (principal, action == Drupe::Action::"Read", resource)
+when {
+    MyGuardrails::ContentFilter(context.input.document).result in [MyGuardrails::Score::"low", MyGuardrails::Score::"", MyGuardrails::Score::"日本 語"]
+};

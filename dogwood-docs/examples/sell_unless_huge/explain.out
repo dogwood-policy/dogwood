@@ -1,0 +1,3 @@
+@id("sell_unless_huge")
+PERMIT any principal to perform SellShares on any resource
+  unless: the request's shares > 10000

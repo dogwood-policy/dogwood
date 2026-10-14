@@ -1,0 +1,3 @@
+@id("gate_on_semver_compare")
+PERMIT any principal to perform GetStockInfo on any resource
+  when: if the major field of { major: 2, minor: 1, patch: 1 } == the major field of { major: 2, minor: 1, patch: 0 } then (if the minor field of { major: 2, minor: 1, patch: 1 } == the minor field of { major: 2, minor: 1, patch: 0 } then the patch field of { major: 2, minor: 1, patch: 1 } > the patch field of { major: 2, minor: 1, patch: 0 }, otherwise the minor field of { major: 2, minor: 1, patch: 1 } > the minor field of { major: 2, minor: 1, patch: 0 }), otherwise the major field of { major: 2, minor: 1, patch: 1 } > the major field of { major: 2, minor: 1, patch: 0 }

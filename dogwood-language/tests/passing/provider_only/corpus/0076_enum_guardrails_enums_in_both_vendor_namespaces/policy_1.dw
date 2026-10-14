@@ -1,0 +1,22 @@
+// The same guardrails with an enum from each vendor namespace in one policy set.
+permit (principal, action == Drupe::Action::"Read", resource);
+
+// Bedrock: an enum bucket alongside the unchanged decimal score.
+forbid (principal, action == Drupe::Action::"Read", resource)
+when {
+    BedrockGuardrails::ContentFilter([context.input.document], ["VIOLENCE"]).VIOLENCE.confidence
+        in [BedrockGuardrails::Confidence::"MEDIUM", BedrockGuardrails::Confidence::"HIGH"]
+};
+
+forbid (principal, action == Drupe::Action::"Read", resource)
+when {
+    BedrockGuardrails::PromptAttack([context.input.document], ["JAILBREAK"])
+        .maxConfidenceScore().greaterThan(decimal("0.5"))
+};
+
+// GuardDuty: severity retyped from String to its own enum.
+forbid (principal, action == Drupe::Action::"Read", resource)
+when {
+    GuardDuty::ThreatDetector([context.input.document]).threatSeverity
+        in [GuardDuty::Severity::"HIGH", GuardDuty::Severity::"CRITICAL"]
+};

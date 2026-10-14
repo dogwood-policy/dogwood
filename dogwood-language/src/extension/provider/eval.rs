@@ -29,7 +29,7 @@ use rhai::packages::{
 use rhai::{Dynamic, Engine, Map, Scope};
 
 use super::ast::Invocation;
-use super::declarations::{Implementation, ProviderDecl};
+use super::declarations::{EntityTypeDecl, Implementation, ParamType, ProviderDecl};
 use crate::interpreter::value::Value;
 
 /// Max Rhai operations per evaluation — a runaway-script backstop so a
@@ -260,21 +260,30 @@ pub fn evaluate(
                      declarations with `from_json_file`)"
                 )
             })?;
-            eval_rhai(&key, script, args)
+            eval_rhai(&key, script, args, &decl.argument_types)
         }
     }
 }
 
 /// Run a Rhai provider script: compile it, push the converted arguments,
 /// call `evaluate(arg0, …)`, and convert the result back to a [`Value`].
-fn eval_rhai(key: &str, script: &str, args: &[Value]) -> Result<Value, String> {
+fn eval_rhai(
+    key: &str,
+    script: &str,
+    args: &[Value],
+    arg_types: &[ParamType],
+) -> Result<Value, String> {
     let engine = engine();
     let ast = engine
         .compile(script)
         .map_err(|e| format!("provider `{key}`: script compile error: {e}"))?;
 
     let mut scope = Scope::new();
-    let rhai_args: Vec<Dynamic> = args.iter().map(value_to_dynamic).collect();
+    let rhai_args: Vec<Dynamic> = args
+        .iter()
+        .enumerate()
+        .map(|(i, v)| rhai_arg(v, arg_types.get(i)))
+        .collect();
 
     let result: Dynamic = engine
         .call_fn(&mut scope, &ast, "evaluate", to_arg_tuple(rhai_args))
@@ -293,6 +302,13 @@ fn eval_rhai(key: &str, script: &str, args: &[Value]) -> Result<Value, String> {
 /// accessor case. Any Rhai error (missing function, wrong arity, runtime
 /// failure) is surfaced as an `Err` so the decision fails closed.
 ///
+/// Each stage's value is converted to its declared type before the next
+/// method runs, as [`coerce_to_declared`] does for the last stage: a value
+/// outside its enum is an error here too. Otherwise a `"CRITICAL"` base would
+/// reach an `isHigh` method, which returns false, and a `forbid` on it would
+/// silently not fire. `entity_types` and `names` are as for
+/// [`coerce_to_declared`].
+///
 /// The declaration's implementation must be Rhai (a resolver supplies only the
 /// base, not method bodies); a missing implementation is an error.
 pub fn run_methods(
@@ -300,6 +316,8 @@ pub fn run_methods(
     decl: &ProviderDecl,
     base: Value,
     methods: &[(&str, Vec<Value>)],
+    entity_types: &std::collections::BTreeMap<String, EntityTypeDecl>,
+    names: &std::collections::BTreeMap<String, String>,
 ) -> Result<Value, String> {
     let implementation = decl.implementation.as_ref().ok_or_else(|| {
         format!(
@@ -323,13 +341,26 @@ pub fn run_methods(
         .map_err(|e| format!("provider `{key}`: script compile error: {e}"))?;
 
     let mut current = base;
+    // The declared type of `current`, the base output and then each method's
+    // output, and where `current` came from, for messages.
+    let mut current_ty = Some(&decl.output_type);
+    let mut at = String::new();
     for (name, args) in methods {
         let mut scope = Scope::new();
+        let method = decl.methods.get(*name);
+        if let Some(ty) = current_ty {
+            current = coerce_to_declared(key, current, ty, entity_types, names, &at)?;
+        }
         // The method receives the previous stage's value first, then its own
         // resolved arguments.
         let mut rhai_args: Vec<Dynamic> = Vec::with_capacity(args.len() + 1);
-        rhai_args.push(value_to_dynamic(&current));
-        rhai_args.extend(args.iter().map(value_to_dynamic));
+        rhai_args.push(rhai_arg(&current, current_ty));
+        let arg_types = method.map(|m| m.argument_types.as_slice());
+        rhai_args.extend(
+            args.iter()
+                .enumerate()
+                .map(|(i, v)| rhai_arg(v, arg_types.and_then(|t| t.get(i)))),
+        );
 
         let result: Dynamic = engine
             .call_fn(&mut scope, &ast, name, to_arg_tuple(rhai_args))
@@ -338,6 +369,8 @@ pub fn run_methods(
         current = dynamic_to_value(&result).ok_or_else(|| {
             format!("provider `{key}`: method `{name}` returned an unsupported value type")
         })?;
+        current_ty = method.map(|m| &m.output_type);
+        at = format!(".{name}()");
     }
     Ok(current)
 }
@@ -347,6 +380,157 @@ pub fn run_methods(
 /// kept as a named seam for clarity.
 fn to_arg_tuple(args: Vec<Dynamic>) -> Vec<Dynamic> {
     args
+}
+
+/// Convert a provider's final value to its declared type, turning each
+/// enum id at an `entity` slot into the entity `Ns::Type::"id"`.
+///
+/// An enum is closed, as in Cedar: an id that is not one of its values, or a
+/// value of the wrong kind at an `entity` slot, is an error, which denies the
+/// request. Without this, `"CRITICAL"` would become a well-typed entity that
+/// matches nothing, and a `forbid … == HIGH` would silently not fire. Slots
+/// that are not entities are left unchanged; sets and records are walked.
+///
+/// A set or record whose type contains an enum must also have its declared
+/// shape: a value of another kind (a bare `"HIGH"` for a record), or a missing
+/// required enum field, is an error too. Otherwise Cedar fails on the field,
+/// skips the policy reading it, and the `forbid` silently doesn't fire. Types
+/// without an enum keep the loose behaviour.
+/// `entity_types` holds the enums the field's provider references, and
+/// `names` the name each is exported under: the converted entity has the
+/// exported type, the one the hoisted field is typed by. Messages use the
+/// declared name.
+pub(crate) fn coerce_to_declared(
+    key: &str,
+    value: Value,
+    ty: &ParamType,
+    entity_types: &std::collections::BTreeMap<String, EntityTypeDecl>,
+    names: &std::collections::BTreeMap<String, String>,
+    at: &str,
+) -> Result<Value, String> {
+    match ty.param_type.as_str() {
+        "entity" => {
+            let name = ty.entity_type.as_deref().unwrap_or_default();
+            let decl = entity_types.get(name).ok_or_else(|| {
+                format!("provider `{key}`{at}: no declaration for entity type `{name}`")
+            })?;
+            let exported = names.get(name).map(String::as_str).unwrap_or(name);
+            let id = match value {
+                Value::String(id) => id,
+                // A resolver may return the entity under either name.
+                Value::Entity { ty, id } if ty == name || ty == exported => id,
+                Value::Entity { ty, .. } => {
+                    return Err(format!(
+                        "provider `{key}`{at}: expected a `{name}`, got a `{ty}`"
+                    ));
+                }
+                other => {
+                    return Err(format!(
+                        "provider `{key}`{at}: expected a `{name}` id (a string), got {}",
+                        value_kind(&other)
+                    ));
+                }
+            };
+            if decl.values.contains(&id) {
+                Ok(Value::Entity {
+                    ty: exported.to_string(),
+                    id,
+                })
+            } else {
+                Err(format!(
+                    "provider `{key}`{at}: `{id}` is not a member of `{name}`"
+                ))
+            }
+        }
+        "set" => match (value, ty.items.as_deref()) {
+            (Value::Array(items), Some(item_ty)) => items
+                .into_iter()
+                .enumerate()
+                .map(|(i, v)| {
+                    coerce_to_declared(key, v, item_ty, entity_types, names, &format!("{at}[{i}]"))
+                })
+                .collect::<Result<_, _>>()
+                .map(Value::Array),
+            (other, _) if ty.mentions_entity() => Err(format!(
+                "provider `{key}`{at}: expected a set, got {}",
+                value_kind(&other)
+            )),
+            (other, _) => Ok(other),
+        },
+        "record" => match value {
+            Value::Object(mut fields) => {
+                for (name, field_ty) in &ty.fields {
+                    if field_ty.mentions_entity()
+                        && ty.required.contains(name)
+                        && !fields.contains_key(name)
+                    {
+                        return Err(format!(
+                            "provider `{key}`{at}: missing required field `{name}`"
+                        ));
+                    }
+                    if let Some(v) = fields.remove(name) {
+                        let v = coerce_to_declared(
+                            key,
+                            v,
+                            field_ty,
+                            entity_types,
+                            names,
+                            &format!("{at}.{name}"),
+                        )?;
+                        fields.insert(name.clone(), v);
+                    }
+                }
+                Ok(Value::Object(fields))
+            }
+            other if ty.mentions_entity() => Err(format!(
+                "provider `{key}`{at}: expected a record, got {}",
+                value_kind(&other)
+            )),
+            other => Ok(other),
+        },
+        _ => Ok(value),
+    }
+}
+
+/// A short name for a value's kind, for conversion errors.
+fn value_kind(v: &Value) -> &'static str {
+    match v {
+        Value::Null => "no value",
+        Value::Bool(_) => "a bool",
+        Value::Int(_) => "an integer",
+        Value::Decimal(_) => "a decimal",
+        Value::String(_) => "a string",
+        Value::Entity { .. } => "an entity",
+        Value::Array(_) => "a set",
+        Value::Object(_) => "a record",
+    }
+}
+
+/// Convert one argument for a Rhai script, by its declared type: an entity
+/// at an `entity` slot is passed as its bare id (`"high"`), the same form a
+/// script returns enum values in. Sets and records are walked, so the slot may
+/// be nested at any depth. Rhai has no entity type; without a declared
+/// `entity` type (an undeclared record field, an untyped argument) an entity
+/// is passed as its uid text, as before.
+fn rhai_arg(value: &Value, ty: Option<&ParamType>) -> Dynamic {
+    match (value, ty) {
+        (Value::Entity { id, .. }, Some(t)) if t.param_type == "entity" => {
+            Dynamic::from(id.clone())
+        }
+        (Value::Array(items), Some(t)) if t.param_type == "set" => {
+            let item_ty = t.items.as_deref();
+            let arr: rhai::Array = items.iter().map(|v| rhai_arg(v, item_ty)).collect();
+            Dynamic::from(arr)
+        }
+        (Value::Object(fields), Some(t)) if t.param_type == "record" => {
+            let mut m = Map::new();
+            for (k, v) in fields {
+                m.insert(k.as_str().into(), rhai_arg(v, t.fields.get(k)));
+            }
+            Dynamic::from(m)
+        }
+        _ => value_to_dynamic(value),
+    }
 }
 
 /// Convert a resolved [`Value`] into a Rhai [`Dynamic`] for passing into
@@ -420,6 +604,192 @@ fn dynamic_to_value(d: &Dynamic) -> Option<Value> {
 #[cfg(test)]
 mod tests {
     use super::engine;
+
+    mod enum_conversion {
+        use super::super::coerce_to_declared;
+        use crate::extension::provider::declarations::{EntityTypeDecl, ParamType};
+        use crate::interpreter::value::Value;
+        use std::collections::BTreeMap;
+
+        fn convert(value: Value) -> Result<Value, String> {
+            convert_as(
+                r#"{ "paramType": "entity", "entityType": "GuardDuty::Severity" }"#,
+                value,
+            )
+        }
+
+        fn convert_as(ty: &str, value: Value) -> Result<Value, String> {
+            let ty: ParamType = serde_json::from_str(ty).unwrap();
+            let decls = BTreeMap::from([(
+                "GuardDuty::Severity".to_string(),
+                EntityTypeDecl {
+                    values: vec!["LOW".into(), "HIGH".into()],
+                    annotations: BTreeMap::new(),
+                },
+            )]);
+            let names = BTreeMap::from([(
+                "GuardDuty::Severity".to_string(),
+                "Drupe::GuardDuty_Severity".to_string(),
+            )]);
+            coerce_to_declared("GuardDuty::ThreatDetector", value, &ty, &decls, &names, "")
+        }
+
+        const ENUM_RECORD: &str = r#"{ "paramType": "record", "required": ["severity"],
+            "fields": { "severity": { "paramType": "entity", "entityType": "GuardDuty::Severity" } } }"#;
+        const STRING_RECORD: &str = r#"{ "paramType": "record", "required": ["severity"],
+            "fields": { "severity": { "paramType": "string" } } }"#;
+
+        fn exported(id: &str) -> Value {
+            Value::Entity {
+                ty: "Drupe::GuardDuty_Severity".into(),
+                id: id.into(),
+            }
+        }
+
+        #[test]
+        fn ids_convert_to_the_exported_type() {
+            assert_eq!(convert(Value::String("HIGH".into())), Ok(exported("HIGH")));
+        }
+
+        #[test]
+        fn resolvers_may_return_either_name() {
+            let declared = Value::Entity {
+                ty: "GuardDuty::Severity".into(),
+                id: "LOW".into(),
+            };
+            assert_eq!(convert(declared), Ok(exported("LOW")));
+            assert_eq!(convert(exported("LOW")), Ok(exported("LOW")));
+        }
+
+        #[test]
+        fn messages_use_the_declared_name() {
+            assert_eq!(
+                convert(Value::String("CRITICAL".into())),
+                Err(
+                    "provider `GuardDuty::ThreatDetector`: `CRITICAL` is not a member of \
+                     `GuardDuty::Severity`"
+                        .into()
+                )
+            );
+        }
+
+        #[test]
+        fn a_bare_value_for_an_enum_record_is_an_error() {
+            assert_eq!(
+                convert_as(ENUM_RECORD, Value::String("HIGH".into())),
+                Err("provider `GuardDuty::ThreatDetector`: expected a record, got a string".into())
+            );
+        }
+
+        #[test]
+        fn a_missing_required_enum_field_is_an_error() {
+            let value = Value::Object(BTreeMap::from([(
+                "score".to_string(),
+                Value::String("HIGH".into()),
+            )]));
+            assert_eq!(
+                convert_as(ENUM_RECORD, value),
+                Err(
+                    "provider `GuardDuty::ThreatDetector`: missing required field `severity`"
+                        .into()
+                )
+            );
+        }
+
+        #[test]
+        fn a_bare_value_for_an_enum_set_is_an_error() {
+            let ty = r#"{ "paramType": "set",
+                "items": { "paramType": "entity", "entityType": "GuardDuty::Severity" } }"#;
+            assert_eq!(
+                convert_as(ty, Value::String("HIGH".into())),
+                Err("provider `GuardDuty::ThreatDetector`: expected a set, got a string".into())
+            );
+        }
+
+        #[test]
+        fn types_without_an_enum_keep_the_loose_shape() {
+            let bare = Value::String("HIGH".into());
+            assert_eq!(convert_as(STRING_RECORD, bare.clone()), Ok(bare));
+            let empty = Value::Object(BTreeMap::new());
+            assert_eq!(convert_as(STRING_RECORD, empty.clone()), Ok(empty));
+        }
+    }
+
+    /// An enum reaches a script as its bare id at any depth of its declared
+    /// type, not as uid text a script comparing against `"high"` misses.
+    mod enum_arguments {
+        use super::super::{dynamic_to_value, rhai_arg};
+        use crate::extension::provider::declarations::ParamType;
+        use crate::interpreter::value::Value;
+        use std::collections::BTreeMap;
+
+        fn pass(ty: &str, value: &Value) -> Value {
+            let ty: ParamType = serde_json::from_str(ty).unwrap();
+            dynamic_to_value(&rhai_arg(value, Some(&ty))).unwrap()
+        }
+
+        fn level(id: &str) -> Value {
+            Value::Entity {
+                ty: "Drupe::AlertLevel".into(),
+                id: id.into(),
+            }
+        }
+
+        fn bare(id: &str) -> Value {
+            Value::String(id.into())
+        }
+
+        fn record(fields: &[(&str, Value)]) -> Value {
+            Value::Object(
+                fields
+                    .iter()
+                    .map(|(k, v)| (k.to_string(), v.clone()))
+                    .collect::<BTreeMap<_, _>>(),
+            )
+        }
+
+        const LEVEL: &str = r#"{ "paramType": "entity", "entityType": "Drupe::AlertLevel" }"#;
+
+        #[test]
+        fn a_record_field_is_passed_as_its_id() {
+            let ty = format!(r#"{{ "paramType": "record", "fields": {{ "level": {LEVEL} }} }}"#);
+            assert_eq!(
+                pass(&ty, &record(&[("level", level("high"))])),
+                record(&[("level", bare("high"))])
+            );
+        }
+
+        #[test]
+        fn nested_sets_and_records_are_walked() {
+            // set<record { levels: set<entity>, inner: record { level: entity } }>
+            let ty = format!(
+                r#"{{ "paramType": "set", "items": {{ "paramType": "record", "fields": {{
+                    "levels": {{ "paramType": "set", "items": {LEVEL} }},
+                    "inner": {{ "paramType": "record", "fields": {{ "level": {LEVEL} }} }}
+                }} }} }}"#
+            );
+            let value = Value::Array(vec![record(&[
+                ("levels", Value::Array(vec![level("low"), level("high")])),
+                ("inner", record(&[("level", level("high"))])),
+            ])]);
+            assert_eq!(
+                pass(&ty, &value),
+                Value::Array(vec![record(&[
+                    ("levels", Value::Array(vec![bare("low"), bare("high")])),
+                    ("inner", record(&[("level", bare("high"))])),
+                ])])
+            );
+        }
+
+        #[test]
+        fn an_undeclared_field_keeps_the_uid_text() {
+            let ty = r#"{ "paramType": "record", "fields": {} }"#;
+            assert_eq!(
+                pass(ty, &record(&[("level", level("high"))])),
+                record(&[("level", bare("Drupe::AlertLevel::\"high\""))])
+            );
+        }
+    }
 
     /// The provider engine must be deterministic: `timestamp()` (the one
     /// impure function rhai's `StandardPackage` ships) must NOT be

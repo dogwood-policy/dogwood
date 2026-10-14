@@ -1,5 +1,5 @@
 //! The core policy operations behind each command: `check-parse`, `validate`,
-//! `lower`, and `replay`. Each is one task-oriented function that reads `&str`
+//! `lower`, `replay`, and `explain`. Each is one task-oriented function that reads `&str`
 //! sources, drives the `dogwood-language` frontend, and returns an owned,
 //! serializable report (or an [`OpError`]). The frontend handle types
 //! (`ParsedPolicySet`, `LoweredPolicySet`, `Authorizer`, `Response`, `Event`)
@@ -7,8 +7,8 @@
 //! deals only in owned reports — which is also what `--format json` needs.
 
 use dogwood_language::{
-    Authorizer, Decision, LoweredPolicySet, ParsedPolicySet, PolicySchema, ProviderDeclarations,
-    ServiceSchema, Validator, cedar, mcp_to_cedar_schema, parse_trace,
+    Authorizer, Decision, Informalization, LoweredPolicySet, ParsedPolicySet, PolicySchema,
+    ProviderDeclarations, ServiceSchema, Validator, cedar, mcp_to_cedar_schema, parse_trace,
 };
 use serde::Serialize;
 
@@ -111,6 +111,47 @@ fn summarize_parsed(parsed: &ParsedPolicySet) -> CheckParseReport {
         policy_count: parsed.policy_count(),
         policies,
     }
+}
+
+// ─── explain ─────────────────────────────────────────────────────────
+
+/// The result of `explain`: the policy set's deterministic informalization —
+/// the structured [`Informalization`] (one phrase tree per rule, each phrase
+/// carrying its `.dw` span) and the same rendered as indented plain text.
+#[derive(Debug, Clone, Serialize)]
+pub struct ExplainReport {
+    /// The phrase trees (JSON consumers walk this; spans are `[start, end)`
+    /// byte offsets into the `.dw` source).
+    pub informalization: Informalization,
+    /// The plain-text rendering (what human mode prints).
+    pub text: String,
+}
+
+/// Parse (with macro expansion) and informalize a `.dw` policy set. The action
+/// schema is optional: with it, namespaces are dropped when the schema declares
+/// exactly one; without it every name is spelled in full. Nothing is validated here — an
+/// invalid-but-parsable policy is still explained (run `validate` for that).
+pub fn explain_policies(
+    source: &str,
+    schema: &SchemaInputs,
+    action_schema: Option<&str>,
+) -> Result<ExplainReport, OpError> {
+    let service = schema.build_service_schema()?;
+    let parsed = ParsedPolicySet::parse(source, &service)
+        .map_err(|e| OpError::from_diagnostic(&e, source.to_string()))?;
+    let policy_schema = match action_schema {
+        Some(src) => Some(
+            PolicySchema::from_cedarschema_str(src)
+                .map_err(|e| OpError::from_diagnostic(&e, src.to_string()))?,
+        ),
+        None => None,
+    };
+    let informalization = parsed.informalize(policy_schema.as_ref());
+    let text = informalization.to_string();
+    Ok(ExplainReport {
+        informalization,
+        text,
+    })
 }
 
 // ─── validate ────────────────────────────────────────────────────────
@@ -300,7 +341,7 @@ pub struct SchemaCheckReport {
     pub kind: String,
     /// True iff the artifact parsed and is well-formed.
     pub ok: bool,
-    /// Non-fatal warnings (only the action-schema check surfaces these today).
+    /// Non-fatal warnings (from the action-schema and providers checks).
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub warnings: Vec<String>,
 }
@@ -337,13 +378,14 @@ pub fn check_event_schema(source: &str) -> Result<SchemaCheckReport, OpError> {
 }
 
 /// Check an information-provider declarations file (`providers.json`) in
-/// isolation — that it deserializes and is internally well-formed.
+/// isolation — that it deserializes and is internally well-formed. Unknown
+/// `paramType`s that fall back to `String` are reported as warnings.
 pub fn check_providers(json: &str) -> Result<SchemaCheckReport, OpError> {
     ProviderDeclarations::from_json(json)
-        .map(|_| SchemaCheckReport {
+        .map(|decls| SchemaCheckReport {
             kind: "providers".to_string(),
             ok: true,
-            warnings: Vec::new(),
+            warnings: decls.warnings(),
         })
         .map_err(OpError::message)
 }
@@ -354,7 +396,6 @@ pub fn check_providers(json: &str) -> Result<SchemaCheckReport, OpError> {
 pub fn generate_mcp_schema(manifest_json: &str) -> Result<String, OpError> {
     mcp_to_cedar_schema(manifest_json).map_err(OpError::message)
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -374,6 +415,48 @@ mod tests {
         let input = format!("\u{FEFF}{SCHEMA}");
         let report = check_action_schema(&input).expect("BOM should be stripped");
         assert!(report.ok);
+    }
+
+    #[test]
+    fn check_providers_warns_on_unknown_param_type() {
+        let report = check_providers(
+            r#"{ "availableProviders": { "A::F": {
+                "argumentTypes": [ { "paramType": "strng" } ],
+                "outputType": { "paramType": "bool" } } } }"#,
+        )
+        .expect("an unknown paramType without an entity type still loads");
+        assert!(report.ok);
+        assert_eq!(report.warnings.len(), 1, "{:?}", report.warnings);
+        assert!(
+            report.warnings[0].contains(
+                "unknown paramType `strng` does not match a known paramType; falling back to String"
+            ),
+            "{:?}",
+            report.warnings
+        );
+    }
+
+    #[test]
+    fn validate_reports_provider_fallback_as_a_warning() {
+        let providers = r#"{ "availableProviders": { "A::F": {
+            "argumentTypes": [ { "paramType": "integer" } ],
+            "outputType": { "paramType": "bolean" },
+            "implementation": { "kind": "rhai", "script": "fn evaluate(x) { true }" } } } }"#;
+        let schema = SchemaInputs {
+            event_schema: None,
+            providers: Some(providers),
+            macros: None,
+        };
+        let report = validate_policies(
+            r#"permit (principal, action == Ns::Action::"Act", resource) when { A::F(context.x) == "true" };"#,
+            &schema,
+            SCHEMA,
+        )
+        .expect("lowers");
+        assert!(report.passed);
+        assert!(!report.passed_without_warnings);
+        assert_eq!(report.warnings.len(), 1, "{:?}", report.warnings);
+        assert_eq!(report.warnings[0].severity, crate::error::Severity::Warning);
     }
 
     #[test]

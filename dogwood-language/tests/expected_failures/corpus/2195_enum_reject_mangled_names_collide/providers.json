@@ -1,0 +1,46 @@
+{
+  "entityTypes": {
+    "A_B::C": {
+      "enum": [
+        "X"
+      ]
+    },
+    "A::B_C": {
+      "enum": [
+        "Y"
+      ]
+    }
+  },
+  "availableProviders": {
+    "A_B::P": {
+      "argumentTypes": [
+        {
+          "paramType": "string"
+        }
+      ],
+      "outputType": {
+        "paramType": "entity",
+        "entityType": "A_B::C"
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "filter.rhai"
+      }
+    },
+    "A::Q": {
+      "argumentTypes": [
+        {
+          "paramType": "string"
+        }
+      ],
+      "outputType": {
+        "paramType": "entity",
+        "entityType": "A::B_C"
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "filter.rhai"
+      }
+    }
+  }
+}

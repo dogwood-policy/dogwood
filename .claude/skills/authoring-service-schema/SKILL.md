@@ -212,6 +212,43 @@ provider whose value your own code supplies; it validates and lowers, but cannot
 be *evaluated* by the CLI (`replay` errors "has no implementation"). This is
 also documented in the CLI chapter (guide 12, under `validate`).
 
+**Enum-typed values (a value from a fixed list).** When a provider field can only
+take a fixed set of values (a severity, a confidence level), declare it as an
+enum instead of a `string`: policies then get typos caught at validation, and an
+out-of-list value at runtime denies the request. Declare the list under the
+top-level `entityTypes` key, in the namespace of a provider in the same file, and
+reference it with `"paramType": "entity"` plus `entityType`:
+
+```json
+{
+  "entityTypes": { "GuardDuty::Severity": { "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"] } },
+  "availableProviders": {
+    "GuardDuty::ThreatDetector": {
+      "argumentTypes": [ { "paramType": "set", "items": { "paramType": "string" } } ],
+      "outputType": { "paramType": "record",
+        "fields": { "threatSeverity": { "paramType": "entity", "entityType": "GuardDuty::Severity" } },
+        "required": ["threatSeverity"] }
+    }
+  }
+}
+```
+
+- The Rhai `evaluate` returns the **bare id** as a string (`"HIGH"`), not an entity.
+- Policies write `GuardDuty::Severity::"HIGH"` (quoted, as in Cedar) and compare
+  with `==`, `!=` or `in [..]`; `== "HIGH"` and `<` are rejected.
+- Retyping an existing `string` field to an enum breaks policies that compare it
+  with a string. Add the enum as a **new** field instead.
+- An unknown `paramType` that involves `entity`/`entityType` is a load error.
+  Any other unknown `paramType` (`"strng"`) falls back to `String` with a
+  deprecation **warning**, so read the warnings from `dogwood schema providers`.
+- Dogwood exports the enum into the action schema's home namespace as
+  `<Home>::GuardDuty_Severity`. The action schema must **not** declare that name
+  or `GuardDuty::Severity` itself; validation fails if it does.
+
+Full rules: guide 10, *Enum-typed values*. Runnable bundles:
+`../../../dogwood-docs/examples/provider_enum_severity_forbid/` and
+`../../../dogwood-docs/examples/provider_enum_two_namespaces/`.
+
 ## Step 3 — Macros (the related seam)
 
 A macro library (`def cedar` / `def temporal`, passed with `--macros`) is the

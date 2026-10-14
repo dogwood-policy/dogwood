@@ -1,0 +1,28 @@
+{
+  "entityTypes": {
+    "MyGuardrails::Score": {
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH"
+      ]
+    }
+  },
+  "availableProviders": {
+    "MyGuardrails::Grade": {
+      "argumentTypes": [
+        {
+          "paramType": "string"
+        }
+      ],
+      "outputType": {
+        "paramType": "entity",
+        "entityType": "MyGuardrails::Score"
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "grade.rhai"
+      }
+    }
+  }
+}

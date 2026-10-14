@@ -1,0 +1,871 @@
+{
+  "entityTypes": {
+    "Shared::Severity": {
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL"
+      ]
+    }
+  },
+  "availableProviders": {
+    "BedrockGuardrails::ContentFilter": {
+      "argumentTypes": [
+        {
+          "paramType": "set",
+          "items": {
+            "paramType": "string"
+          }
+        },
+        {
+          "paramType": "set",
+          "items": {
+            "paramType": "string"
+          }
+        }
+      ],
+      "availableMethods": {
+        "maxConfidenceScore": {
+          "argumentTypes": [],
+          "outputType": {
+            "paramType": "decimal"
+          }
+        },
+        "minConfidenceScore": {
+          "argumentTypes": [],
+          "outputType": {
+            "paramType": "decimal"
+          }
+        },
+        "count": {
+          "argumentTypes": [],
+          "outputType": {
+            "paramType": "integer"
+          }
+        },
+        "categories": {
+          "argumentTypes": [],
+          "outputType": {
+            "paramType": "set",
+            "items": {
+              "paramType": "string"
+            }
+          }
+        }
+      },
+      "outputType": {
+        "paramType": "record",
+        "fields": {
+          "VIOLENCE": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "HATE": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "SEXUAL": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "MISCONDUCT": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "INSULTS": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          }
+        },
+        "required": [
+          "VIOLENCE",
+          "HATE",
+          "SEXUAL",
+          "MISCONDUCT",
+          "INSULTS"
+        ]
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "contentfilter.rhai"
+      }
+    },
+    "BedrockGuardrails::PromptAttack": {
+      "argumentTypes": [
+        {
+          "paramType": "set",
+          "items": {
+            "paramType": "string"
+          }
+        },
+        {
+          "paramType": "set",
+          "items": {
+            "paramType": "string"
+          }
+        }
+      ],
+      "availableMethods": {
+        "maxConfidenceScore": {
+          "argumentTypes": [],
+          "outputType": {
+            "paramType": "decimal"
+          }
+        },
+        "minConfidenceScore": {
+          "argumentTypes": [],
+          "outputType": {
+            "paramType": "decimal"
+          }
+        },
+        "count": {
+          "argumentTypes": [],
+          "outputType": {
+            "paramType": "integer"
+          }
+        },
+        "categories": {
+          "argumentTypes": [],
+          "outputType": {
+            "paramType": "set",
+            "items": {
+              "paramType": "string"
+            }
+          }
+        }
+      },
+      "outputType": {
+        "paramType": "record",
+        "fields": {
+          "JAILBREAK": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "PROMPT_INJECTION": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "PROMPT_LEAKAGE": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          }
+        },
+        "required": [
+          "JAILBREAK",
+          "PROMPT_INJECTION",
+          "PROMPT_LEAKAGE"
+        ]
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "promptattack.rhai"
+      }
+    },
+    "BedrockGuardrails::SensitiveInformation": {
+      "argumentTypes": [
+        {
+          "paramType": "set",
+          "items": {
+            "paramType": "string"
+          }
+        },
+        {
+          "paramType": "set",
+          "items": {
+            "paramType": "string"
+          }
+        }
+      ],
+      "availableMethods": {
+        "maxConfidenceScore": {
+          "argumentTypes": [],
+          "outputType": {
+            "paramType": "decimal"
+          }
+        },
+        "minConfidenceScore": {
+          "argumentTypes": [],
+          "outputType": {
+            "paramType": "decimal"
+          }
+        },
+        "count": {
+          "argumentTypes": [],
+          "outputType": {
+            "paramType": "integer"
+          }
+        },
+        "categories": {
+          "argumentTypes": [],
+          "outputType": {
+            "paramType": "set",
+            "items": {
+              "paramType": "string"
+            }
+          }
+        }
+      },
+      "outputType": {
+        "paramType": "record",
+        "fields": {
+          "ADDRESS": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "AGE": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "CREDIT_DEBIT_CARD_NUMBER": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "EMAIL": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "NAME": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "PHONE": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "US_SOCIAL_SECURITY_NUMBER": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "IP_ADDRESS": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "URL": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "PASSWORD": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "USERNAME": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "DRIVER_ID": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "PIN": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "AWS_ACCESS_KEY": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "AWS_SECRET_KEY": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "LICENSE_PLATE": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "MAC_ADDRESS": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "SWIFT_CODE": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "CREDIT_DEBIT_CARD_CVV": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "CREDIT_DEBIT_CARD_EXPIRY": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "INTERNATIONAL_BANK_ACCOUNT_NUMBER": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "US_BANK_ACCOUNT_NUMBER": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "US_BANK_ROUTING_NUMBER": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "US_INDIVIDUAL_TAX_IDENTIFICATION_NUMBER": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "US_PASSPORT_NUMBER": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "VEHICLE_IDENTIFICATION_NUMBER": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "UK_NATIONAL_HEALTH_SERVICE_NUMBER": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "UK_NATIONAL_INSURANCE_NUMBER": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "UK_UNIQUE_TAXPAYER_REFERENCE_NUMBER": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "CA_HEALTH_NUMBER": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          },
+          "CA_SOCIAL_INSURANCE_NUMBER": {
+            "paramType": "record",
+            "fields": {
+              "confidenceScore": {
+                "paramType": "decimal"
+              },
+              "confidence": {
+                "paramType": "entity",
+                "entityType": "Shared::Severity"
+              }
+            },
+            "required": [
+              "confidenceScore",
+              "confidence"
+            ]
+          }
+        },
+        "required": [
+          "ADDRESS",
+          "AGE",
+          "CREDIT_DEBIT_CARD_NUMBER",
+          "EMAIL",
+          "NAME",
+          "PHONE",
+          "US_SOCIAL_SECURITY_NUMBER",
+          "IP_ADDRESS",
+          "URL",
+          "PASSWORD",
+          "USERNAME",
+          "DRIVER_ID",
+          "PIN",
+          "AWS_ACCESS_KEY",
+          "AWS_SECRET_KEY",
+          "LICENSE_PLATE",
+          "MAC_ADDRESS",
+          "SWIFT_CODE",
+          "CREDIT_DEBIT_CARD_CVV",
+          "CREDIT_DEBIT_CARD_EXPIRY",
+          "INTERNATIONAL_BANK_ACCOUNT_NUMBER",
+          "US_BANK_ACCOUNT_NUMBER",
+          "US_BANK_ROUTING_NUMBER",
+          "US_INDIVIDUAL_TAX_IDENTIFICATION_NUMBER",
+          "US_PASSPORT_NUMBER",
+          "VEHICLE_IDENTIFICATION_NUMBER",
+          "UK_NATIONAL_HEALTH_SERVICE_NUMBER",
+          "UK_NATIONAL_INSURANCE_NUMBER",
+          "UK_UNIQUE_TAXPAYER_REFERENCE_NUMBER",
+          "CA_HEALTH_NUMBER",
+          "CA_SOCIAL_INSURANCE_NUMBER"
+        ]
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "sensitiveinformation.rhai"
+      }
+    },
+    "GuardDuty::ThreatDetector": {
+      "argumentTypes": [
+        {
+          "paramType": "set",
+          "items": {
+            "paramType": "string"
+          }
+        }
+      ],
+      "outputType": {
+        "paramType": "record",
+        "fields": {
+          "threatSeverity": {
+            "paramType": "entity",
+            "entityType": "Shared::Severity"
+          }
+        },
+        "required": [
+          "threatSeverity"
+        ]
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "threatdetector.rhai"
+      }
+    }
+  }
+}

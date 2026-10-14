@@ -1,0 +1,124 @@
+name: Publish to crates.io
+
+# Manual GitHub Action to publish the Dogwood language crates to crates.io.
+#
+# Publishes four crates in dependency order: dogwood-syntax, then
+# dogwood-language and dogwood-formatter (both depend on syntax), then
+# dogwood-cli (depends on language + formatter). dogwood-docs is publish = false
+# and is never uploaded.
+#
+# This workflow is branch-agnostic: it names crates, never versions. The version
+# comes from [workspace.package] in Cargo.toml, so a new release line (v1.2, ...)
+# needs no edit here — only the workspace version bump. The crate version is
+# read from the checked-out source; crates.io rejects a re-publish of an
+# existing version, so bump [workspace.package] version before running.
+#
+# Auth is Trusted Publishing over OIDC, so no API token is stored as a secret.
+# Each crate's config on crates.io must name this repository and this file,
+# publish.yml, exactly. See https://crates.io/docs/trusted-publishing
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run only (build, package and verify; no upload)"
+        type: boolean
+        default: true
+
+permissions:
+  id-token: write # mint the OIDC token crates.io exchanges for a registry token
+  contents: read
+
+concurrency:
+  group: publish-crates-io
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      CARGO_INCREMENTAL: 0
+      CARGO_PROFILE_DEV_DEBUG: line-tables-only
+
+    # Optional approval gate. Needs a `release` environment in repo settings AND
+    # the same name in each crate's crates.io config — the environment is part of
+    # the OIDC claim, so a mismatch fails at token-minting time.
+    # environment: release
+
+    steps:
+      # persist-credentials: false — the checkout token isn't used after checkout.
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install Rust toolchain
+        run: |
+          rustup update stable --no-self-update
+          rustup default stable
+          rustc --version
+
+      # Runs on every invocation, dry run included. Not redundant with ci.yml:
+      # Cargo.lock is not committed, so dependency resolution floats and a
+      # semver-compatible upstream release can land between the commit CI
+      # validated and this publish.
+      - name: Test
+        run: cargo test --workspace
+
+      # Verify each publishable crate packages cleanly, in dependency order, from
+      # a clean tarball — catches a file that `exclude` drops but the build needs.
+      # `-p` names the internal crate; the public tree renames it, so the public
+      # workflow runs against the public names. Cannot catch an already-published
+      # version (that check is server-side at upload), so the real publish below
+      # is the only version check — bump [workspace.package] version and re-run.
+      - name: Verify build and packaging
+        run: |
+          cargo publish -p dogwood-syntax --dry-run
+          cargo publish -p dogwood-language --dry-run
+          cargo publish -p dogwood-formatter --dry-run
+          cargo publish -p dogwood-cli --dry-run
+
+      # Pinned to a commit SHA rather than a mutable tag or branch; the action
+      # handles the registry credential and revokes it in a post step.
+      - name: Authenticate to crates.io (Trusted Publishing)
+        if: ${{ !inputs.dry_run }}
+        id: auth
+        uses: rust-lang/crates-io-auth-action@c6f97d42243bad5fab37ca0427f495c86d5b1a18 # v1.0.5
+
+      # Publish in dependency order. A later crate's publish needs the earlier
+      # one already on the registry (crates.io resolves version requirements at
+      # upload), so these run sequentially, not in parallel.
+      - name: Publish dogwood-syntax
+        if: ${{ !inputs.dry_run }}
+        run: cargo publish -p dogwood-syntax
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+
+      - name: Publish dogwood-language
+        if: ${{ !inputs.dry_run }}
+        run: cargo publish -p dogwood-language
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+
+      - name: Publish dogwood-formatter
+        if: ${{ !inputs.dry_run }}
+        run: cargo publish -p dogwood-formatter
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+
+      - name: Publish dogwood-cli
+        if: ${{ !inputs.dry_run }}
+        id: publish_cli
+        run: cargo publish -p dogwood-cli
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+
+      - name: Summary
+        if: ${{ always() }}
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "Dry run only — nothing was uploaded to crates.io."
+          else
+            echo "Publish attempted for dogwood-syntax, dogwood-language, dogwood-formatter, dogwood-cli."
+            echo "Check the per-crate step outcomes above; publishing stops at the first failure."
+          fi >> "$GITHUB_STEP_SUMMARY"

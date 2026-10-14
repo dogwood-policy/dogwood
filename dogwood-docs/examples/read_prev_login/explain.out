@@ -1,0 +1,6 @@
+Only past events from this request's principal count.
+
+@id("read_after_prev_login")
+PERMIT any principal to perform Read on any resource
+  when:
+    the immediately preceding event, at most 1 hour ago, was a Login request with this request's user

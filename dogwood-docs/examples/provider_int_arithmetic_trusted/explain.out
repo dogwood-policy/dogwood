@@ -1,0 +1,5 @@
+@id("read_trusted_and_few_digits")
+PERMIT any principal to perform Read on any resource
+  when:
+    the request's trusted is true
+    and the count field of Strings::DigitCount(the request's document) + 1 <= 3

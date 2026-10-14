@@ -1,0 +1,4 @@
+@id("forbid_large_except_amzn")
+FORBID any principal to perform SellShares on any resource
+  when: the request's shares > 100
+  unless: the request's stock == "AMZN"

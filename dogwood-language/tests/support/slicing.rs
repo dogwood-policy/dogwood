@@ -125,12 +125,13 @@ pub fn scope_could_match(
         ActionScope::Concrete(a) => {
             uid_of(a.namespace.as_deref(), &a.id, schema).is_none_or(|listed| &listed == action)
         }
-        ActionScope::List(list) => list.iter().any(|a| {
-            match uid_of(a.namespace.as_deref(), &a.id, schema) {
-                Some(listed) => &listed == action || actions.is_ancestor_of(&listed, action),
-                None => true,
-            }
-        }),
+        ActionScope::List(list) => {
+            list.iter()
+                .any(|a| match uid_of(a.namespace.as_deref(), &a.id, schema) {
+                    Some(listed) => &listed == action || actions.is_ancestor_of(&listed, action),
+                    None => true,
+                })
+        }
     }
 }
 

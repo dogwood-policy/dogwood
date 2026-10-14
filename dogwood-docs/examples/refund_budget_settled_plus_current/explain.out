@@ -1,0 +1,6 @@
+Only past events from this request's principal count.
+
+@id("refund_budget_settled_plus_current")
+PERMIT any principal to perform Refund on any resource
+  when:
+    (the total output amount of Refund responses within the last 24 hours) + the request's amount <= 100

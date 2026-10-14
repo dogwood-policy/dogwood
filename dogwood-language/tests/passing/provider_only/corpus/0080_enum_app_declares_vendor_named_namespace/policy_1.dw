@@ -1,0 +1,7 @@
+// The action schema has a `GuardDuty` namespace of its own; the enum still goes into `Drupe`.
+permit (principal, action == Drupe::Action::"Read", resource);
+
+forbid (principal, action == Drupe::Action::"Read", resource)
+when {
+    GuardDuty::ThreatDetector([context.input.document]).threatSeverity == GuardDuty::Severity::"HIGH"
+};

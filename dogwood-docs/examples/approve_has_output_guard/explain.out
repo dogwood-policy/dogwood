@@ -1,0 +1,5 @@
+@id("approve_when_approved")
+PERMIT any principal to perform ApproveSale on any resource
+  when:
+    the request context has output
+    and the request's output approved is true

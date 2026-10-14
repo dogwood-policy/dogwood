@@ -1,0 +1,14 @@
+// An entity attribute inside a compound operand. Trace replay carries no
+// entity store, so `resource.coverage_limit` never resolves and the
+// comparison is false at every decision point: this pins the fail-closed
+// unresolved-atom rule for compound operands.
+permit (
+    principal,
+    action == Claims::Action::"Payout",
+    resource
+)
+when temporal {
+    (sum a for (a: Long), (t: Timepoint). where (
+        formerly within 24h (Claims::Action::"Payout"::response{ input.policy: context.input.policy, output.amount: a } && tp(t))
+    )) + context.input.amount <= resource.coverage_limit
+};

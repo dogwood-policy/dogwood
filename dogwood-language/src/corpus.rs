@@ -24,6 +24,13 @@
 //! Category is derived from physical directory location — there are no
 //! separate name lists to maintain. To recategorize a case, move it
 //! between directories.
+//!
+//! `tests/experimental/corpus/` is deliberately *not* embedded: its
+//! cases pass in the reference interpreter but use syntax the embedded
+//! corpus does not yet require of a conforming engine, and embedding them
+//! would put them in front of every harness that consumes the corpus. When
+//! the syntax joins that portable contract, move the case to
+//! `tests/passing/temporal_only/corpus/`.
 
 use include_dir::{Dir, include_dir};
 

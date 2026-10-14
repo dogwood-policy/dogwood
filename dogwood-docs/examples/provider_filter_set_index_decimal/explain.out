@@ -1,0 +1,3 @@
+@id("read_low_violence")
+PERMIT any principal to perform Read on any resource
+  when: the severityScore field of the VIOLENCE field of Content::Filter(the request's document, ["VIOLENCE", "HATE"]) is less than the decimal "0.5"

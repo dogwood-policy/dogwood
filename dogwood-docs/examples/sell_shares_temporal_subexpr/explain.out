@@ -1,0 +1,7 @@
+Only past events from this request's principal count.
+
+@id("sell_shares_and_prior_sell")
+PERMIT any principal to perform SellShares on any resource
+  when:
+    the request's shares > 5
+    and a SellShares request occurred within the last 1 hour

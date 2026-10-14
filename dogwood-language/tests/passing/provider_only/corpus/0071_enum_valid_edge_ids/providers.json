@@ -1,0 +1,37 @@
+{
+  "entityTypes": {
+    "MyGuardrails::Score": {
+      "enum": [
+        "LOW",
+        "low",
+        "",
+        "\u65e5\u672c \u8a9e"
+      ]
+    }
+  },
+  "availableProviders": {
+    "MyGuardrails::ContentFilter": {
+      "argumentTypes": [
+        {
+          "paramType": "string"
+        }
+      ],
+      "outputType": {
+        "paramType": "record",
+        "fields": {
+          "result": {
+            "paramType": "entity",
+            "entityType": "MyGuardrails::Score"
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "filter.rhai"
+      }
+    }
+  }
+}

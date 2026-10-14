@@ -1,0 +1,18 @@
+// A condition macro whose argument is a compound aggregate expression:
+// substitution puts the arithmetic in comparison-operand position, so the
+// expanded form is a legal comparison.
+def temporal exceeds(?v) { ?v > 0 };
+
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exceeds(((count for (t: Timepoint). where (
+        formerly within 1h (Drupe::Action::"Transfer"::request{} && tp(t))
+    ))
+    - (count for (t: Timepoint). where (
+        formerly within 1h (Drupe::Action::"Transfer"::response{} && tp(t))
+    ))))
+};

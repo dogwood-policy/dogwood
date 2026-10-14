@@ -1,0 +1,8 @@
+Only past events from this request's principal count.
+
+@id("touchless_invoice_within_tolerance")
+PERMIT any principal to perform PayInvoice on any resource
+  when:
+    for some amount po_amount:
+      a CreatePurchaseOrder response with this request's po_id and amount = po_amount occurred within the last 24 hours
+      and the request's amount <= po_amount + 50

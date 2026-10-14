@@ -21,6 +21,8 @@
 //! only carry the **parsed but unbound** event-schema DSL; the derivation
 //! itself is deferred to `lower`, where the action schema is present.
 
+use std::sync::Arc;
+
 use crate::api::Error;
 use crate::event_schema::ast::EventSchema;
 use crate::extension::provider::declarations::ProviderDeclarations;
@@ -74,7 +76,10 @@ pub const DEFAULT_MACROS: &str = include_str!("../configuration/default_macros.d
 /// [`ServiceSchema::builder`], or take the all-defaults form with
 /// [`ServiceSchema::defaults`].
 #[derive(Debug, Clone)]
-pub struct ServiceSchema {
+pub struct ServiceSchema(Arc<Inner>);
+
+#[derive(Debug)]
+struct Inner {
     /// The event schema, parsed from its DSL but **not** derived against an
     /// action schema (derivation is deferred to `lower`).
     event_schema: EventSchema,
@@ -109,15 +114,20 @@ impl ServiceSchema {
     // ─── crate-internal accessors (used by lowering) ─────────────────
 
     pub(crate) fn event_schema(&self) -> &EventSchema {
-        &self.event_schema
+        &self.0.event_schema
     }
 
     pub(crate) fn provider_declarations(&self) -> Option<&ProviderDeclarations> {
-        self.providers.as_ref()
+        self.0.providers.as_ref()
     }
 
     pub(crate) fn macros(&self) -> &str {
-        &self.macros
+        &self.0.macros
+    }
+
+    /// Whether `self` and `other` are clones of one value.
+    pub(crate) fn same_instance(&self, other: &ServiceSchema) -> bool {
+        Arc::ptr_eq(&self.0, &other.0)
     }
 }
 
@@ -189,14 +199,20 @@ impl ServiceSchemaBuilder {
         let event_schema = crate::event_schema::parse::parse_event_schema(event_schema_src)
             .map_err(Error::EventSchema)?;
 
+        // Declarations built directly in code never pass through
+        // `ProviderDeclarations::from_json`, so check them here too.
+        if let Some(providers) = &self.providers {
+            providers.check().map_err(Error::Providers)?;
+        }
+
         let macros = self
             .macros_src
             .unwrap_or_else(|| DEFAULT_MACROS.to_string());
 
-        Ok(ServiceSchema {
+        Ok(ServiceSchema(Arc::new(Inner {
             event_schema,
             providers: self.providers,
             macros,
-        })
+        })))
     }
 }

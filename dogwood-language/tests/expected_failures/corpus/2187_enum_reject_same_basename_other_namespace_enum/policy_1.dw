@@ -1,0 +1,5 @@
+// A field typed `Drupe::Score` cannot feed a `MyGuardrails::Score` parameter, although both are named `Score`.
+permit (principal, action == Drupe::Action::"Alert", resource)
+when {
+    !MyGuardrails::Escalate(context.input.level).escalate
+};

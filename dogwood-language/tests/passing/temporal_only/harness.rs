@@ -113,6 +113,11 @@ fn run_temporal_case(dir: &Path, shared_schema: &str, event_schema: &str) -> Cas
         let n = stem.trim_start_matches("trace_");
         let expected_path = dir.join(format!("expected_{n}.out"));
         if !expected_path.exists() {
+            // A trace without its expected verdicts would otherwise go unchecked.
+            result.case_ok = false;
+            result
+                .failures
+                .push(format!("{case}: trace_{n}: missing expected_{n}.out"));
             continue;
         }
         let trace = std::fs::read_to_string(&trace_path).unwrap();

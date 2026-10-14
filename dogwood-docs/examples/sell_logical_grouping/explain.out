@@ -1,0 +1,6 @@
+@id("sell_small_or_amzn_not_blocked")
+PERMIT any principal to perform SellShares on any resource
+  when:
+    the request's shares < 100
+      or the request's stock == "AMZN"
+    and not (the request's stock == "BLOCKED")

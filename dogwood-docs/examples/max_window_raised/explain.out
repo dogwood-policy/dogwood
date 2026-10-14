@@ -1,0 +1,4 @@
+@id("read_after_recent_login_7d")
+PERMIT any principal to perform Read on any resource
+  when:
+    a Login response with this request's user occurred within the last 7 days

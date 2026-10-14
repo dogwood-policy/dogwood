@@ -1,6 +1,6 @@
 # Temporal Expressions
 
-This page is the reference and tutorial for Dogwood's **temporal sublanguage** — the code you write inside a `when temporal { … }` (or `unless temporal { … }`) block. Ordinary Cedar authorization decides *this* request from *this* request's attributes. Temporal expressions extend that decision to the **event history**: they let a policy say "allow this only if such-and-such happened (or did not happen) recently." This document motivates why that matters, then builds the sublanguage up operator by operator — the three past operators (`formerly`, `previous`, `since`) and their mandatory windows, conjunction and negation, the `exists` and `tp` binders, aggregations (`count`, `sum`), predicates and field patterns, field-injection refinement, and finally the legality rules that decide which expressions are accepted. It closes with the precise evaluation semantics. If you are new to Dogwood policies overall, read [02-policy-language.md](02-policy-language.md) first; this page assumes you know what `permit`/`forbid`, `when`, and `unless` mean. Every policy example below is backed by a runnable bundle under [`examples/`](../examples/) that the `dogwood` CLI validates (and, where a `trace.log` is present, replays) on each build.
+This page is the reference and tutorial for Dogwood's **temporal sublanguage** — the code you write inside a `when temporal { … }` (or `unless temporal { … }`) block. Ordinary Cedar authorization decides *this* request from *this* request's attributes. Temporal expressions extend that decision to the **event history**: they let a policy say "allow this only if such-and-such happened (or did not happen) recently." This document motivates why that matters, then builds the sublanguage up operator by operator — the three past operators (`formerly`, `previous`, `since`) and their mandatory windows, conjunction and negation, the `exists` and `tp` binders, aggregations (`count`, `sum`), comparisons and the arithmetic (`+`, `-`, `*`) their operands admit, predicates and field patterns, field-injection refinement, and finally the legality rules that decide which expressions are accepted. It closes with the precise evaluation semantics. If you are new to Dogwood policies overall, read [02-policy-language.md](02-policy-language.md) first; this page assumes you know what `permit`/`forbid`, `when`, and `unless` mean. Every policy example below is backed by a runnable bundle under [`examples/`](../examples/) that the `dogwood` CLI validates (and, where a `trace.log` is present, replays) on each build.
 
 ## Why temporal? Authorization over event history
 
@@ -109,6 +109,7 @@ Beyond field patterns, terms appear on both sides of comparisons and as macro ar
 | Wildcard | `*`, or a bare `_` | matches anything, binds nothing; each independent |
 | Array | `[a, b, c]` | |
 | Aggregate | `count …` / `sum …` | comparison-operand-only (see aggregations) |
+| Arithmetic | `a + b`, `a - b`, `a * b` | **experimental** (off-by-default Cargo feature); comparison-operand-only, over `Long`s; `*` binds tighter (see comparisons) |
 
 ## The past operators and their windows
 
@@ -211,13 +212,13 @@ when temporal {
 
 A positive left operand is rarely what you actually want: it demands that `left` match at **every** timepoint since the anchor, with no exceptions — including timepoints that are simply a different event kind (a `response`, or an unrelated action) and so never match `left` at all. In a realistic trace this is easy to fail by accident and hard to satisfy on purpose. The robust idiom is almost always a *negated* left, `!P since Q` ("`P` has **not** happened since `Q`"), which only requires the absence of something at each intervening step rather than an exact match — see the "open session" idiom just below.
 
-**Negated left — the "open session" idiom.** There is no dedicated "hasn't happened since" operator; you write it with a negated left operand, `!left since …`. Because negation binds tighter than `since` (see [Precedence](#conjunction-negation-and-precedence)), `!A since within W B` negates only `A`. This expresses "no `A` has happened since `B`" — e.g. "the user has not been revoked since they were granted" (corpus `0156_without_since_access_control`; runnable as [`examples/access_not_revoked_since_grant/`](../examples/access_not_revoked_since_grant/)):
+**Negated left — the "open session" idiom.** There is no dedicated "hasn't happened since" operator; you write it with a negated left operand, `!left since …`. Because negation binds tighter than `since` (see [Precedence](#conjunction-negation-and-precedence)), `!A since within W B` negates only `A`. This expresses "no `A` has happened since `B`" — e.g. "a completed grant has been observed, with no completed revocation observed since" (corpus `0156_without_since_access_control`; runnable as [`examples/access_not_revoked_since_grant/`](../examples/access_not_revoked_since_grant/)):
 
 ```text
 when temporal {
-    !Drupe::Action::"Revoke"::request{ input.user: context.input.user, input.resource: context.input.resource }
+    !Drupe::Action::"Revoke"::response{ input.user: context.input.user, input.resource: context.input.resource }
     since within 1h
-    Drupe::Action::"Grant"::request{ input.user: context.input.user, input.resource: context.input.resource }
+    Drupe::Action::"Grant"::response{ input.user: context.input.user, input.resource: context.input.resource }
 };
 ```
 
@@ -367,9 +368,9 @@ The `for <binders>.` clause names the **aggregation domain**: the satisfying ass
 
 ### Two rules that shape how you write aggregations
 
-**1. Aggregates may appear only as an immediate comparison operand.** An aggregate is syntactically a term, but it is legal *only* directly on one side of a comparison — never as a predicate-argument value, never nested inside an array or another term. `P{ f: count … }` and `[count …] == x` are both rejected.
+**1. Aggregates may appear only in comparison-operand position.** An aggregate is syntactically a term, but it is legal *only* on one side of a comparison — directly, or as a leaf of an arithmetic operand (`(count …) - (count …) <= 5`) — never as a predicate-argument value, never nested inside an array. `P{ f: count … }` and `[count …] == x` are both rejected.
 
-**2. Parenthesize an aggregate on the left of a comparison.** The `where` body is a greedy full condition, so `(count …) == n` needs parentheses around the aggregate or the `where` body will swallow the `== n`. On the *right* of a comparison no parentheses are needed, because there is nothing to the right for the greedy body to eat: `0 < count for (t: Timepoint). where φ` parses fine. The parentheses carry no semantics; they only fence the greedy body.
+**2. Parenthesize an aggregate that is not in final position.** The `where` body is a greedy full condition, so `(count …) == n` needs parentheses around the aggregate or the `where` body will swallow the `== n`. In general: an aggregate anywhere but the final position of the final operand must be parenthesized; the rightmost one needs none, because there is nothing left for the greedy body to eat — `0 < count for (t: Timepoint). where φ` and `… <= 85 * count for (t: Timepoint). where φ` both parse fine. The parentheses carry no semantics; they only fence the greedy body.
 
 ### `count` examples
 
@@ -454,16 +455,45 @@ The two-binder domain `for (a: Long), (t: Timepoint).` is what keeps equal amoun
 Comparisons filter or bind. The operators are `<`, `<=`, `>`, `>=`, `==`, and `!=`:
 
 ```text
-term cmp_op term
+arith cmp_op arith
 ```
 
-Both operands are terms, and either may be an aggregate (subject to the comparison-operand-only rule above). Semantics:
+Each operand is an **arithmetic expression** over terms: one or more terms combined with `+`, `-`, and `*`. A single term is an expression with zero operators, and either operand may be (or contain) an aggregate, subject to the comparison-operand-only rule above. Semantics:
 
 - `==` and `!=` use domain equality on the resolved values.
 - Ordering comparisons (`<`, `<=`, `>`, `>=`) require **both** sides to resolve to integers; otherwise the comparison is `false`. Decimals are kept as text and are effectively equality-only — a `decimal(…)` in an ordering comparison resolves but fails the integer conversion and yields `false`.
 - If either operand fails to resolve (an unbound variable, a wildcard), the comparison is `false`.
 
 **`==` doubles as a binder.** In a relational context, an `a == x` (or `x == a`) with exactly one *unbound* variable operand **binds** that variable to the other side's value. This is the mechanism behind `exists (n: Long). ((agg) == n && …)` — the `== n` binds `n` to the aggregate's value so the following `n > 2` can filter it. An `==` with no unbound operand, or any ordering comparison, is a plain filter.
+
+### Arithmetic in comparison operands
+
+> **EXPERIMENTAL.** Arithmetic in comparison operands is gated behind the
+> off-by-default Cargo feature `experimental-arithmetic`. A default build
+> rejects a policy that uses it (`arithmetic in comparison operands is not
+> yet supported`); a build with the feature on accepts it, and validation
+> warns that arithmetic operators are experimental and may change in a
+> future release. Everything in this section is subject to that caveat.
+
+An operand may combine terms with `+`, `-`, and `*` — left-associative, `*` binding tighter, with parentheses for grouping (`(a + b) * c`). This is what expresses backlog caps with slack, tolerance comparisons, budgets that add the current request to a past sum, and cross-multiplied percentage guards:
+
+```text
+(count …opens…) - (count …reviews…) <= 2         // backlog slack
+context.input.amount <= po_amount + 50            // tolerance
+(sum …settled…) + context.input.amount <= 100     // budget incl. this request
+100 * (count …touchless…) <= 85 * count …decided… // share-of-total
+```
+
+> Runnable: [`examples/cap_open_agent_prs_windowed/`](../examples/cap_open_agent_prs_windowed/), [`examples/touchless_invoice_within_tolerance/`](../examples/touchless_invoice_within_tolerance/), [`examples/refund_budget_settled_plus_current/`](../examples/refund_budget_settled_plus_current/), and [`examples/touchless_share_capped/`](../examples/touchless_share_capped/).
+
+The rules:
+
+- **Comparison-operand-only**, exactly like aggregates: arithmetic may not appear as a predicate-argument value, an array element, or a macro-call term argument.
+- **All atoms must be `Long`.** Decimals stay equality-only; strings, booleans, entities, arrays, and wildcards are rejected inside a compound expression. A bare `*` is still the wildcard when it is a whole operand (`x == *`); after a complete term, `*` is multiplication.
+- **There is no `/` or `%`.** Percentages cross-multiply (`100 * errors <= 5 * total`), which stays exact over integers; Cedar has no division either.
+- **A compound never binds.** The `==`-binder rule above applies only to a bare-variable side; every variable *inside* a compound expression must be restricted by a preceding conjunct, and there is no algebraic solving — `m + 1 == 5` does not bind `m`. A bare variable *against* a compound does bind: `n1 + n2 == m` binds `m` once `n1` and `n2` are restricted.
+- **Fencing extends to chains.** An aggregate anywhere but the final position of the final operand must be parenthesized, or its greedy `where` body swallows what follows: `(count …) - (count …) <= 5`.
+- **Evaluation clamps.** Results are computed in `i64`, saturating at the range endpoints per operation in tree order (the same out-of-range posture as `sum`; see [§5.4 of the formal specification](08-formal-specification.md#54-temporal-acceptance-well-formedness)). An operand side that fails to resolve to an integer makes the comparison `false`.
 
 ## Field-injection refinement
 
@@ -527,8 +557,8 @@ An `exists (x: T). φ` is accepted only if `x` is range-restricted by a **positi
 
 Within a `&&` chain, every conjunct may *produce* bindings (a predicate field, `tp`, a binding equality) and may *consume* bindings — variables that must already be bound when it evaluates. A consumer is accepted only when the variables it consumes are restricted by a **preceding** conjunct — in the same chain, or inherited from an enclosing chain (parenthesized sub-chains and nested `exists`/`formerly` bodies see everything already established at their position; an enclosing *binder* alone establishes nothing, and a shadowing binder cuts inherited restrictions of its name). The consumers:
 
-- a **pure filter** — an ordering comparison, a guarded negation `!φ`, or a non-binding `==` (including `x == *`: a wildcard is not a value, so the equality binds nothing) — consumes all its free variables;
-- a **binding equality** `x == (aggregate)` produces `x` but consumes the aggregate's *correlated* variables (free in its `where` body, not in its `for` list) — with them unbound, the count/sum would silently de-correlate into a global tally;
+- a **pure filter** — an ordering comparison, a guarded negation `!φ`, or a non-binding `==` (including `x == *`: a wildcard is not a value, so the equality binds nothing) — consumes all its free variables; a compound arithmetic operand consumes every variable inside it (a compound never binds);
+- a **binding equality** `x == (aggregate)` — or `x` against a wildcard-free compound expression — produces `x` but consumes the value side's *correlated* variables (free in an aggregate's `where` body and not in its `for` list, or inside the compound) — with them unbound, the count/sum would silently de-correlate into a global tally;
 - a **`since`** consumes the left operand's variables not restricted by its anchor (the left is checked per step and can bind nothing itself).
 
 **❌ Rejected — filter before its restrictor:**
@@ -608,13 +638,81 @@ Beyond the structural rules, the schema-aware validation pass also requires: eve
 
 ### Legality in one sentence
 
-A temporal expression is legal exactly when: it parses under the grammar (only `&&`, `!`, `since`, the three temporal operators, `exists`, `tp`, comparisons, `count`/`sum`, predicates, refinements, and macro calls); it is closed (every variable bound by an `exists` or a `for` list); every aggregation's `for` domain binds every free body variable, includes any summed variable, and each `for` variable occurs in — and is range-restricted by a positive atom of — the body; every `exists` binder is range-restricted by a positive atom; every aggregate appears only as an immediate comparison operand; every consumer (a pure filter, a binding equality's aggregate operand, a since-left) is preceded — in its chain or an enclosing one — by a restrictor of the variables it consumes; and, at the schema stage, every entity/enum reference and `context.input.X` path resolves, every monitoring scope is timepoint-dependent, and all operands type-check.
+A temporal expression is legal exactly when: it parses under the grammar (only `&&`, `!`, `since`, the three temporal operators, `exists`, `tp`, comparisons with `+`/`-`/`*` operands, `count`/`sum`, predicates, refinements, and macro calls); it is closed (every variable bound by an `exists` or a `for` list); every aggregation's `for` domain binds every free body variable, includes any summed variable, and each `for` variable occurs in — and is range-restricted by a positive atom of — the body; every `exists` binder is range-restricted by a positive atom; every aggregate and every arithmetic expression appears only in comparison-operand position; every consumer (a pure filter, a compound operand, a binding equality's value side, a since-left) is preceded — in its chain or an enclosing one — by a restrictor of the variables it consumes; and, at the schema stage, every entity/enum reference and `context.input.X` path resolves, every monitoring scope is timepoint-dependent, and all operands type-check (a compound's atoms all `Long`).
 
 ## Evaluation semantics
 
 This section states precisely how a temporal condition is evaluated. Any conforming temporal engine must produce these verdicts.
 
 **Decision timepoint and history.** A condition is evaluated at a single **decision timepoint `i`** against the trace history `0..=i` — everything up to and including `i`. The language is **past-only**: nothing at any `j > i` is ever read. The request's own fields seed the initial bindings (nested groups flattened to dotted keys), plus the scope aliases `@principal` and `@resource`.
+
+**Policies describe the observed sequence.** `previous` and `since` refer to
+positions in the sequence Dogwood has observed. This can differ from agent
+invocation order, enforcement-point order, or the order in which underlying
+activities occurred. A decision uses only the history observed so far.
+Timestamps measure temporal windows; they do not establish trace order. They
+may be assigned by the authorizer rather than supplied in the event. In either
+case, timestamps must be strictly increasing in the observed sequence.
+
+Policy authors should be aware that timestamps and ordering might not correspond
+to events as they occurred at enforcement points. For example, the
+[access-control bundle](../examples/access_not_revoked_since_grant/) contains
+this policy and the trace below. It permits `Access` only if a completed grant
+for the same user and resource has been observed within the last hour, with no
+completed revocation observed since:
+
+```text
+@id("access_not_revoked_since_grant")
+permit (
+    principal,
+    action == Drupe::Action::"Access",
+    resource
+)
+when temporal {
+    !Drupe::Action::"Revoke"::response{ input.user: context.input.user, input.resource: context.input.resource }
+    since within 1h
+    Drupe::Action::"Grant"::response{ input.user: context.input.user, input.resource: context.input.resource }
+};
+```
+
+With this as the only policy, consider this observed log, with timestamps shown
+as seconds since midnight:
+
+```text
+@35940 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { resource: "doc1", user: "alice" }) Drupe::Action::"Grant"::response(input: { resource: "doc1", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u1")
+@36060 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { resource: "doc1", user: "alice" }) Drupe::Action::"Access"::request(input: { resource: "doc1", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u2")
+@36120 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { resource: "doc1", user: "alice" }) Drupe::Action::"Revoke"::response(input: { resource: "doc1", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u3")
+@36180 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { resource: "doc1", user: "alice" }) Drupe::Action::"Access"::request(input: { resource: "doc1", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u4")
+```
+
+The `Grant::response` records an access grant observed at 09:59. At 10:00,
+another service revokes that access, but delivery of its revocation notice is
+delayed. At 10:01, Dogwood receives the access request and returns `Allow`:
+the log contains the grant but no revocation yet. At 10:02, Dogwood receives the
+`Revoke::response` notice and assigns it an ingestion timestamp. The next access
+request, at 10:03, returns `Deny` because the revocation has now been observed.
+
+If the revocation notice had been reported promptly at 10:00 (`@36000`), before
+the first access request, that request would instead have returned `Deny`.
+Delaying or losing the notice changes that verdict to `Allow`, even though the
+underlying access was already revoked. The timestamps increase correctly, but
+cannot make a decision see a notice that has not arrived. Later receipt does not
+revise the earlier `Allow`.
+
+Conversely, with no revocation, delaying the completed grant's response until
+after the 10:01 access request, or losing it, makes that request return `Deny`
+instead of the `Allow` obtained with prompt reporting. For this policy, missing
+history-only events can therefore cause either an unintended allow or an
+unintended deny.
+
+The reference interpreter is for testing semantics. Test authors must
+deliberately choose the observation sequence and supply strictly increasing
+timestamps. The interpreter preserves supplied timestamps; it neither constructs
+nor validates that sequence, and does not check the timestamp contract. Accepting
+an input does not establish that it satisfies that contract. Durable Local Engine
+submission instead assigns timestamps at ingestion.
+
+**A tool invocation spans separate events.** The authorizer calls the temporal engine's `observe` for every ingested event before deciding it. A successfully recorded `request` remains in history even if subsequent evaluation denies it or fails closed on an error, so it records an attempt. The verdict is returned separately and is not appended to history. An enforcing caller executes the action only after `Allow`; its eventual `response` or `error` is a separate event. Other events can be ingested between request and outcome. Authorization does not make the whole invocation atomic: actions can overlap and complete in a different order from their authorization.
 
 **Key-local semantics under universal pins.** The semantics below are stated over the *whole* trace. When the event schema declares a **universal symmetric pin** (a field pinned on every event kind to its own request-side path — see [The event schema](03-event-schema.md)), every temporal condition is instead evaluated over the **slice** of the trace agreeing with the current request on the pinned field(s): `previous` means "this key's previous event," and the `∀`-side of `since` ranges over this key's positions only. For `formerly`, aggregations, and the negated-left `since` idiom the two readings coincide: a pinned predicate cannot match another key's event, and a body containing no such predicate is guarded so that a foreign position cannot witness it either. The slice reading is what makes per-key storage and evaluation verdict-preserving. **The default event schema declares such a pin**, on `callerPrincipal`, so the key-local reading is the one that applies unless you replace it. Without a universal symmetric pin — a schema that declares none, or one that is partial or asymmetric — the global reading below applies verbatim.
 
@@ -630,7 +728,7 @@ This section states precisely how a temporal condition is evaluated. Any conform
 - **`exists (x: T). φ`** holds iff `φ`'s relation is non-empty (≥ 1), not a count; `x`'s candidate values come only from the atom that binds it, with no enumeration of the type.
 - **`tp(t)`** binds or unifies `t` with the current timepoint index `i`.
 - **`count` / `sum`** project the `where` body's satisfying rows onto the `for` domain, deduplicate, then count the rows or sum the named column. Distinctness is the visible choice you make in the `for` list. Summation is exact for every total a `Long` can hold, including totals reached by way of partial sums that a `Long` cannot, and does not depend on the order rows are visited. What a total OUTSIDE the `Long` range means is implementation-defined — a conforming implementation may clamp, widen, or report an error, and the shapes that can observe the choice are enumerated in [§5.4 Temporal acceptance](08-formal-specification.md#54-temporal-acceptance-well-formedness). This implementation clamps rather than raising, so a pathological trace cannot overflow into a panic. Only the binder *name* is used at evaluation time; the type annotation is not consulted.
-- **Comparisons** — `==` and `!=` are domain equality; ordering requires both sides to be integers, else `false`; an unresolved operand makes the comparison `false`. An `==` with exactly one unbound variable operand binds that variable.
+- **Comparisons** — `==` and `!=` are domain equality; ordering requires both sides to be integers, else `false`; an unresolved operand makes the comparison `false`. An `==` with exactly one unbound bare-variable operand binds that variable. A compound arithmetic operand evaluates in `i64`, saturating at the range endpoints per operation in tree order; a side that fails to resolve to an integer leaves the operand unresolved (comparison `false`).
 
 ## See also
 

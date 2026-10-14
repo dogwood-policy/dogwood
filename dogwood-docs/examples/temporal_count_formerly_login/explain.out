@@ -1,0 +1,6 @@
+Only past events from this request's principal count.
+
+@id("login_count_positive")
+PERMIT any principal to perform Alert on any resource
+  when:
+    the number of Login requests with any user and this request's server within the last 1 hour > 0

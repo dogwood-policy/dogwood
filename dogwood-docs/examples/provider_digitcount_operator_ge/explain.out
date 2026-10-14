@@ -1,0 +1,3 @@
+@id("read_digits_gte_two")
+PERMIT any principal to perform Read on any resource
+  when: the count field of Strings::DigitCount(the request's document) >= 2

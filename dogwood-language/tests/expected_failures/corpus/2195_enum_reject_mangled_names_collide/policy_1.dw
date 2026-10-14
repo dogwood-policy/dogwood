@@ -1,0 +1,3 @@
+// The providers file itself is rejected.
+permit (principal, action == Drupe::Action::"Read", resource)
+when { A_B::P(context.input.document) == A_B::C::"X" };

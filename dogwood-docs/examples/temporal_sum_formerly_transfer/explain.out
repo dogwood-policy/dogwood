@@ -1,0 +1,6 @@
+Only past events from this request's principal count.
+
+@id("transfer_sum_over_100")
+PERMIT any principal to perform Alert on any resource
+  when:
+    the total amount of Transfer requests with any user within the last 1 hour > 100

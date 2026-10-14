@@ -1,0 +1,8 @@
+Only past events from this request's principal count.
+
+@id("alert_login_and_big_transfer")
+PERMIT any principal to perform Alert on any resource
+  when:
+    for some user u:
+      a Login request with user = u occurred within the last 1 hour
+      and a Transfer request with user = u and amount > 100 occurred within the last 1 hour

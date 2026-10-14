@@ -1,0 +1,7 @@
+// Forbid MEDIUM or HIGH via `in [..]` (the idiom for "at least MEDIUM").
+permit (principal, action == Drupe::Action::"Read", resource);
+
+forbid (principal, action == Drupe::Action::"Read", resource)
+when {
+    MyGuardrails::ContentFilter(context.input.document).result in [MyGuardrails::Score::"MEDIUM", MyGuardrails::Score::"HIGH"]
+};

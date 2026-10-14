@@ -1,0 +1,58 @@
+namespace Drupe {
+  type AlertInput = {
+    kind: AlertKind,
+    level: AlertLevel,
+    user: String
+  };
+
+  @dogwood_provider_context("1.1")
+  type DogwoodProviders = {
+    policy_1_p_0: decimal,
+    policy_2_p_0: {
+      JAILBREAK: {
+        confidenceScore: decimal
+      },
+      PROMPT_INJECTION: {
+        confidenceScore: decimal
+      },
+      PROMPT_LEAKAGE: {
+        confidenceScore: decimal
+      }
+    },
+    policy_3_p_0: Long,
+    policy_4_p_0: {
+      threatSeverity: String
+    }
+  };
+
+  type ReadInput = {
+    document: String
+  };
+
+  entity AlertKind enum ["spam", "abuse"];
+
+  entity AlertLevel enum ["low", "high"];
+
+  entity Gateway;
+
+  entity OAuthUser = {
+    id: String
+  } tags String;
+
+  action "Alert" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: AlertInput
+    }
+  };
+
+  action "Read" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: ReadInput,
+      providers: DogwoodProviders
+    }
+  };
+}

@@ -1,0 +1,6 @@
+@id("sell_eligible_unblocked")
+PERMIT any principal to perform SellShares on any resource
+  when:
+    the request's shares < 100
+      or the request's stock == "FOO"
+    and not (the request's stock == "BLOCKED")

@@ -1,0 +1,28 @@
+namespace Trip {
+  entity Gateway;
+  entity OAuthUser;
+
+  action "BookFlight" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: { trip: String, price: Long }
+    }
+  };
+
+  action "BookHotel" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: { trip: String, price: Long }
+    }
+  };
+
+  action "Authorize" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: {
+      input: { trip: String, price: Long, budget: Long }
+    }
+  };
+}

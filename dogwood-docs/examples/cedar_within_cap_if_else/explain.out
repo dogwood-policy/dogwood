@@ -1,0 +1,3 @@
+@id("sell_within_cap")
+PERMIT any principal to perform SellShares on any resource
+  when: if the request's stock == "FOO" then the request's shares <= 10, otherwise the request's shares <= 1000

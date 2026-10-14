@@ -783,10 +783,7 @@ mod tests {
         let input = e.event.logged.get("input").expect("input field");
         match input {
             Value::Object(map) => {
-                assert_eq!(
-                    map.get("note"),
-                    Some(&Value::String("a\"".to_string()))
-                );
+                assert_eq!(map.get("note"), Some(&Value::String("a\"".to_string())));
             }
             other => panic!("expected object, got {other:?}"),
         }

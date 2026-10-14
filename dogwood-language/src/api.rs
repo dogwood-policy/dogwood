@@ -32,18 +32,17 @@ use cedar_policy::{
     Context, Entities, EntityUid, PolicySet as CedarPolicySet, Request, RestrictedExpression,
     Schema,
 };
-use cedar_policy_core::ast as cedar_ast;
 
 use crate::authorize::DogwoodRuleRef;
 use crate::cedarify::cedarify_with_providers;
 use crate::error::{
     CedarifyError, MacroError, ParseError, ParseErrors, RawCedarifyError, RawParseError, SourceLoc,
-    Span,
 };
 use crate::event_schema::derive::{DerivedEventSchema, derive};
 use crate::extension::temporal::Temporal;
 use crate::interpreter::value::{EntityRecord, Event, EventData, Scope, Value, value_uid_string};
 use crate::policy_schema::PolicySchema;
+use crate::policy_set::Distincter;
 use crate::service_schema::ServiceSchema;
 
 // ─── Identifiers / references (re-exported by the public modules) ────
@@ -297,17 +296,15 @@ impl EventSignature {
 #[non_exhaustive]
 pub struct ProviderField {
     pub id: ExtensionId,
-    /// The action scope the provider's rule pins. Informational: the hoisted
-    /// `context.providers.<id>` field is declared on EVERY action's context
-    /// and the provider is evaluated for every decision event (provider
-    /// execution is unconditional — see the provider contract in the guide);
-    /// this records which scope the originating rule declared.
+    /// The action scope the provider's rule pins. Actions reached by at least
+    /// one provider policy reference a shared common type containing every
+    /// hoisted provider field. The provider is still evaluated for every
+    /// decision event (execution is unconditional).
     pub action: ActionScope,
     /// The concrete `(namespace, action_id)` actions [`action`](Self::action)
-    /// resolves to against the schema. Informational: the reference
-    /// implementation evaluates every provider unconditionally, but an
-    /// alternative implementation may use this set for as-if optimizations
-    /// (skipping evaluations whose result cannot affect the verdicts).
+    /// resolves to against the schema. The union of these targets determines
+    /// which actions receive `context.providers`; it may also support as-if
+    /// evaluation optimizations in alternative implementations.
     pub target_actions: Vec<ActionRef>,
     /// What the rule's `principal` scope admits on the entity-type axis
     /// (`principal is T` / `== T::"x"` / `in G`, or unconstrained). Recorded so
@@ -329,6 +326,16 @@ pub struct ProviderField {
     /// The resolved declaration for this provider (arg/output types +
     /// implementation). `None` if the provider was undeclared at parse time.
     pub declaration: Option<crate::extension::provider::declarations::ProviderDecl>,
+    /// The enum entity types this call's types reference (its provider's and
+    /// its chained methods'), copied from the declarations' `entityTypes`.
+    /// Only those: a large declarations file is not copied into every field.
+    /// Used to convert the provider's enum ids into entities at authorize time.
+    pub entity_types: BTreeMap<String, crate::extension::provider::declarations::EntityTypeDecl>,
+    /// The name each of [`entity_types`](Self::entity_types) is exported
+    /// under, in the action schema's namespace, keyed by its declared name
+    /// (`GuardDuty::Severity` -> `Drupe::GuardDuty_Severity`). Converted
+    /// values are entities of the exported type.
+    pub entity_type_names: BTreeMap<String, String>,
 }
 
 // ─── The lowered artifacts (crate-internal; LoweredPolicySet wraps them) ─
@@ -373,15 +380,23 @@ pub(crate) struct Lowered {
     pub providers: Vec<ProviderField>,
     /// `rule_ids[k]` is the synthesized Cedar policy id for Dogwood rule k.
     pub rule_ids: Vec<String>,
-    /// `rule_spans[k]` is the originating `.dw` span of Dogwood rule k.
-    pub rule_spans: Vec<Span>,
-    /// The original `.dw` source, shared so each validation finding can embed
-    /// it and self-render (see [`crate::error::SourceLoc`]).
-    pub dw_src: std::sync::Arc<str>,
+    /// `rule_locs[k]` is the `.dw` span and source text of Dogwood rule k.
+    pub rule_locs: Vec<SourceLoc>,
+    /// `rule_sources[k]` is the input-entry index of Dogwood rule k, in input order.
+    pub rule_sources: Vec<usize>,
+    /// `temporal_rules[j]` is the rule index of `temporal[j]` (and of
+    /// `temporal_rewritten[j]`).
+    pub temporal_rules: Vec<usize>,
+    /// `provider_rules[j]` is the rule index of `providers[j]`.
+    pub provider_rules: Vec<usize>,
     /// The derived event schema (event kinds + fields per action).
     pub event_schema: DerivedEventSchema,
     /// The event kinds the event schema marks `decision`.
     pub decision_kinds: BTreeSet<String>,
+    /// The exported name of each provider enum the policy set uses, keyed by
+    /// its declared name. Validation maps exported names in Cedar's messages
+    /// back to the declared ones.
+    pub enum_names: BTreeMap<String, String>,
 }
 
 impl Lowered {
@@ -550,12 +565,21 @@ pub enum Error {
     #[error("event schema error: {0}")]
     EventSchema(String),
 
+    /// The information-provider declarations are inconsistent (an unknown
+    /// `paramType`, a malformed `entityTypes` entry, an output entity type
+    /// that is not declared, …) — returned by
+    /// [`ServiceSchemaBuilder::build`](crate::ServiceSchemaBuilder::build) for
+    /// declarations that did not come through
+    /// [`ProviderDeclarations::from_json`](crate::ProviderDeclarations::from_json).
+    #[error("provider declarations: {0}")]
+    Providers(String),
+
     /// A hoisted extension leaf could not be prepared.
     #[error("extension leaf `{id}`: {message}")]
     Leaf { id: ExtensionId, message: String },
 
-    /// The `distincter` passed to
-    /// [`lower_with_distincter`](crate::policy_set::ParsedPolicySet::lower_with_distincter)
+    /// A string given as a [`Distincter`](crate::Distincter) (directly or via
+    /// [`lower_with_distincter`](crate::policy_set::ParsedPolicySet::lower_with_distincter))
     /// is not a valid Cedar identifier fragment. The distincter is
     /// interpolated into the synthesized Cedar policy ids and the hoisted
     /// `context.<id>` attribute names, so it must be a legal identifier
@@ -563,6 +587,23 @@ pub enum Error {
     /// schema / policy that fails opaquely downstream.
     #[error("invalid distincter `{0}`: must be a Cedar identifier ([_A-Za-z][_A-Za-z0-9]*)")]
     InvalidDistincter(String),
+
+    /// The same distincter was passed for two entries of
+    /// [`lower_many`](crate::lower_many). Each entry's ids are namespaced by its
+    /// distincter, so a repeat would mint colliding policy ids and field names.
+    #[error("duplicate distincter `{0}`: each policy needs its own")]
+    DuplicateDistincter(String),
+
+    /// [`lower_many`](crate::lower_many) was given no policies.
+    #[error("lower_many needs at least one policy")]
+    NoPolicies,
+
+    /// An entry of [`lower_many`](crate::lower_many) was parsed with a
+    /// [`ServiceSchema`] that is not a clone of the first entry's.
+    #[error(
+        "lower_many: entry {0} was parsed with a different ServiceSchema; parse every entry with clones of one value"
+    )]
+    MismatchedServiceSchema(usize),
 
     /// Partitioned temporal evaluation
     /// ([`partition_temporal`](crate::AuthorizerBuilder::partition_temporal)) was
@@ -675,40 +716,177 @@ pub(crate) fn parse(source: &str, service_schema: &ServiceSchema) -> Result<Pars
 pub(crate) fn lower(
     parsed: &Parsed,
     policy_schema: &PolicySchema,
-    distincter: Option<&str>,
+    distincter: Option<&Distincter>,
 ) -> Result<Lowered, Error> {
-    let Parsed {
-        surface,
-        service_schema,
-        dw_src,
-    } = parsed;
+    let base = Base::derive(&parsed.service_schema, policy_schema)?;
+    let entry = lower_entry(parsed, &base, distincter)?;
+    merge(base, vec![entry])
+}
 
-    // The distincter is interpolated into synthesized policy ids and hoisted
-    // `context.<id>` attribute names, so it must be a valid Cedar identifier
-    // fragment — otherwise it silently produces an invalid schema / policy that
-    // only fails later (at validation, Cedar `PolicySet` construction, or the policy store).
-    // Reject a malformed one up front with a clear error. (`AnyId` also admits
-    // Cedar keywords, which is harmless here since it is only a name fragment.)
-    if let Some(d) = distincter
-        && d.parse::<cedar_ast::AnyId>().is_err()
-    {
-        return Err(Error::InvalidDistincter(d.to_string()));
+/// The lowering inputs that depend only on the service schema and the action
+/// schema, derived once and shared by every entry lowered against them.
+pub(crate) struct Base<'a> {
+    provider_declarations:
+        Option<&'a crate::extension::provider::declarations::ProviderDeclarations>,
+    /// The parsed action schema, before augmentation.
+    fragment: crate::cedarify::Fragment,
+    event_schema: DerivedEventSchema,
+    pins: Vec<crate::event_schema::relativize::UniversalPin>,
+    partition_keys: Vec<crate::engine::PartitionKey>,
+    decision_kinds: BTreeSet<String>,
+}
+
+impl<'a> Base<'a> {
+    /// Derive the event schema, its universal pins, partition keys, and
+    /// decision kinds, and parse the action schema.
+    pub(crate) fn derive(
+        service_schema: &'a ServiceSchema,
+        policy_schema: &PolicySchema,
+    ) -> Result<Self, Error> {
+        let action_schema_src = policy_schema.action_schema_src();
+
+        // Derive the event schema against the action schema. This binds the
+        // symbolic event-schema DSL (carried on the ServiceSchema, unbound) to the
+        // concrete action schema — the one lowering step that needs both halves.
+        let event_schema =
+            derive(service_schema.event_schema(), action_schema_src).map_err(Error::EventSchema)?;
+        let fragment = crate::cedarify::parse_base_schema(action_schema_src)
+            .map_err(|e| cedarify_error(e, &std::sync::Arc::from("")))?;
+
+        // The schema's universal symmetric pins: the leaves are relativized for
+        // them (the "pinned ⇒ safe to partition" encoding), and they are exposed
+        // as engine-facing partition keys. A partitioning temporal engine routes
+        // each event to a monitor keyed by these fields and runs the
+        // NON-relativized `temporal` leaves within it — the equivalent-but-cheaper
+        // alternative to the relativization rewrite. Empty when the schema
+        // declares no universal symmetric pin. The default is not such a case —
+        // it pins `callerPrincipal` on every kind.
+        let pins = crate::event_schema::relativize::universal_pins(&event_schema);
+        let partition_keys: Vec<crate::engine::PartitionKey> = pins
+            .iter()
+            .map(|p| crate::engine::PartitionKey {
+                // Route on the pinned *logged* field — the dataset μ matches
+                // candidates on. `root`/`context_path` are retained for diagnostics
+                // but are NOT the routing key (see `PartitionKey`).
+                field_path: p.field_path.clone(),
+                root: match p.root {
+                    crate::event_schema::ast::PinRoot::Scope => EventPinRoot::Scope,
+                    crate::event_schema::ast::PinRoot::Context => EventPinRoot::Context,
+                },
+                context_path: p.context_path.clone(),
+            })
+            .collect();
+
+        let decision_kinds = event_schema
+            .decision_kinds()
+            .into_iter()
+            .map(str::to_string)
+            .collect();
+
+        Ok(Base {
+            provider_declarations: service_schema.provider_declarations(),
+            fragment,
+            event_schema,
+            pins,
+            partition_keys,
+            decision_kinds,
+        })
+    }
+}
+
+/// One input lowered against a [`Base`], before schema augmentation.
+pub(crate) struct Entry {
+    policies: CedarPolicySet,
+    context_fields: Vec<crate::cedarify::ContextField>,
+    provider_fields: Vec<crate::cedarify::ProviderField>,
+    rule_ids: Vec<String>,
+    rule_locs: Vec<SourceLoc>,
+    temporal_rules: Vec<usize>,
+    provider_rules: Vec<usize>,
+    referenced_enums: BTreeSet<String>,
+    enum_names: BTreeMap<String, String>,
+}
+
+/// Reject `parsed` if a temporal predicate contains an array constant.
+pub(crate) fn reject_temporal_arrays(parsed: &Parsed) -> Result<(), Error> {
+    use crate::extension::temporal::ast::{AggExprKind, Condition, ConditionKind, Term};
+
+    /// Check whether a term is or contains an array constant.
+    fn term_has_array(term: &Term) -> bool {
+        match term {
+            Term::Array(_) => true,
+            Term::Agg(agg) => match &agg.kind {
+                AggExprKind::Sum { body, .. } | AggExprKind::Count { body, .. } => {
+                    condition_has_array(body)
+                }
+                AggExprKind::Call(_) => false,
+            },
+            _ => false,
+        }
     }
 
-    let action_schema_src = policy_schema.action_schema_src();
-    let provider_declarations = service_schema.provider_declarations();
+    /// Walk a temporal condition tree, returning `true` if any predicate
+    /// argument or comparison operand is a `Term::Array`.
+    fn condition_has_array(cond: &Condition) -> bool {
+        match &cond.kind {
+            ConditionKind::And { left, right }
+            | ConditionKind::Or { left, right }
+            | ConditionKind::Since { left, right, .. } => {
+                condition_has_array(left) || condition_has_array(right)
+            }
+            ConditionKind::Not { inner }
+            | ConditionKind::Formerly { body: inner, .. }
+            | ConditionKind::Previous { body: inner, .. }
+            | ConditionKind::Exists { body: inner, .. } => condition_has_array(inner),
+            ConditionKind::Predicate(pred) => {
+                pred.args.iter().any(|arg| term_has_array(&arg.value))
+            }
+            ConditionKind::Comparison { left, right, .. } => {
+                term_has_array(left) || term_has_array(right)
+            }
+            ConditionKind::Tp { .. } | ConditionKind::Call(_) | ConditionKind::SigilRef { .. } => {
+                false
+            }
+            ConditionKind::Refine { base, fields, .. } => {
+                condition_has_array(base) || fields.iter().any(|arg| term_has_array(&arg.value))
+            }
+        }
+    }
 
-    // Derive the event schema against the action schema. This binds the
-    // symbolic event-schema DSL (carried on the ServiceSchema, unbound) to the
-    // concrete action schema — the one lowering step that needs both halves.
-    let event_schema =
-        derive(service_schema.event_schema(), action_schema_src).map_err(Error::EventSchema)?;
+    for (_policy_idx, policy) in parsed.policies().iter().enumerate() {
+        for (block_idx, temporal_block) in policy.temporal_conditions().into_iter().enumerate() {
+            if condition_has_array(temporal_block) {
+                // Point the error at the temporal block's span.
+                let span = policy.temporal_block_spans().into_iter().nth(block_idx);
+                let message = format!(
+                    "temporal predicate arguments cannot contain array constants \
+                     (e.g. `field: [\"a\", \"b\"]`); use scalar values or \
+                     `context` field references instead"
+                );
+                let raw = RawCedarifyError { message, span };
+                return Err(cedarify_error(raw, parsed.dw_src()));
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Cedarify `parsed` against `base` and inject the event schema's pins.
+pub(crate) fn lower_entry(
+    parsed: &Parsed,
+    base: &Base<'_>,
+    distincter: Option<&Distincter>,
+) -> Result<Entry, Error> {
+    reject_temporal_arrays(parsed)?;
+    let Parsed {
+        surface, dw_src, ..
+    } = parsed;
 
     let mut lowered = cedarify_with_providers(
         surface,
-        action_schema_src,
-        provider_declarations,
-        distincter,
+        &base.fragment,
+        base.provider_declarations,
+        distincter.map(Distincter::as_str),
         dw_src,
     )
     .map_err(|e| cedarify_error(e, dw_src))?;
@@ -725,7 +903,7 @@ pub(crate) fn lower(
     // onto every matching predicate, after macro expansion so the pinned
     // field rides on the canonical leaf.
     for leaf in context_fields.iter_mut() {
-        crate::event_schema::pin::inject_pins(&mut leaf.temporal.condition, &event_schema);
+        crate::event_schema::pin::inject_pins(&mut leaf.temporal.condition, &base.event_schema);
     }
 
     // Convert the loc-bearing `ast::PolicySet` into the public
@@ -736,6 +914,77 @@ pub(crate) fn lower(
     // to claim a canary test protected it, and no such test has ever existed.
     let policies =
         CedarPolicySet::try_from(lowered.policy_set).map_err(|e| Error::PolicySet(Box::new(e)))?;
+
+    Ok(Entry {
+        policies,
+        context_fields,
+        provider_fields,
+        rule_ids: lowered.rule_ids,
+        rule_locs: lowered.rule_locs,
+        temporal_rules: lowered.temporal_rules,
+        provider_rules: lowered.provider_rules,
+        referenced_enums: lowered.referenced_enums,
+        enum_names: lowered.enum_names,
+    })
+}
+
+/// Combine `entries`, in order, into one [`Lowered`] over `base` augmented
+/// once with every entry's hoisted fields.
+///
+/// Entry `i`'s rule `k` becomes rule `k` plus the rule count of the entries
+/// before it. Fails if two entries hoist a field of the same name.
+pub(crate) fn merge(base: Base<'_>, entries: Vec<Entry>) -> Result<Lowered, Error> {
+    let Base {
+        provider_declarations,
+        fragment,
+        event_schema,
+        pins,
+        partition_keys,
+        decision_kinds,
+    } = base;
+
+    let mut policies = CedarPolicySet::new();
+    let mut context_fields = Vec::new();
+    let mut provider_fields = Vec::new();
+    let mut rule_ids = Vec::new();
+    let mut rule_locs = Vec::new();
+    let mut temporal_rules = Vec::new();
+    let mut provider_rules = Vec::new();
+    let mut rule_sources = Vec::new();
+    // Every entry exports an enum under the same name (it depends only on the
+    // action schema), so the union is consistent.
+    let mut referenced_enums = BTreeSet::new();
+    let mut enum_names = BTreeMap::new();
+    for (i, entry) in entries.into_iter().enumerate() {
+        if i == 0 {
+            policies = entry.policies;
+        } else {
+            for policy in entry.policies.policies() {
+                policies
+                    .add(policy.clone())
+                    .map_err(|e| Error::PolicySet(Box::new(e)))?;
+            }
+        }
+        let offset = rule_ids.len();
+        context_fields.extend(entry.context_fields);
+        provider_fields.extend(entry.provider_fields);
+        temporal_rules.extend(entry.temporal_rules.into_iter().map(|k| k + offset));
+        provider_rules.extend(entry.provider_rules.into_iter().map(|k| k + offset));
+        rule_sources.resize(offset + entry.rule_ids.len(), i);
+        rule_ids.extend(entry.rule_ids);
+        rule_locs.extend(entry.rule_locs);
+        referenced_enums.extend(entry.referenced_enums);
+        enum_names.extend(entry.enum_names);
+    }
+
+    let augmented_schema_fragment = crate::cedarify::augment_schema(
+        fragment,
+        provider_declarations,
+        &referenced_enums,
+        &context_fields,
+        &provider_fields,
+    )
+    .map_err(|e| cedarify_error(e, &std::sync::Arc::from("")))?;
 
     let temporal: Vec<TemporalField> = context_fields
         .into_iter()
@@ -753,11 +1002,8 @@ pub(crate) fn lower(
         })
         .collect();
 
-    // Relativize each leaf for the schema's universal symmetric pins (the
-    // "pinned ⇒ safe to partition" encoding). A no-op clone when the schema declares
-    // no universal symmetric pin. The default is not such a case — it pins
-    // `callerPrincipal` on every kind, so its leaves are relativized.
-    let pins = crate::event_schema::relativize::universal_pins(&event_schema);
+    // Relativize each leaf for the schema's universal symmetric pins. A no-op
+    // clone when the schema declares none.
     let temporal_rewritten: Vec<TemporalField> = temporal
         .iter()
         .map(|f| TemporalField {
@@ -777,27 +1023,6 @@ pub(crate) fn lower(
         })
         .collect();
 
-    // The same universal symmetric pins expressed as engine-facing partition
-    // keys. A partitioning temporal engine routes each event to a monitor keyed
-    // by these fields and runs the NON-relativized `temporal` leaves within it —
-    // the equivalent-but-cheaper alternative to the relativization rewrite. Empty
-    // when the schema declares no universal symmetric pin (nothing to partition
-    // on; `temporal` and `temporal_rewritten` are identical there anyway).
-    let partition_keys: Vec<crate::engine::PartitionKey> = pins
-        .iter()
-        .map(|p| crate::engine::PartitionKey {
-            // Route on the pinned *logged* field — the dataset μ matches
-            // candidates on. `root`/`context_path` are retained for diagnostics
-            // but are NOT the routing key (see `PartitionKey`).
-            field_path: p.field_path.clone(),
-            root: match p.root {
-                crate::event_schema::ast::PinRoot::Scope => EventPinRoot::Scope,
-                crate::event_schema::ast::PinRoot::Context => EventPinRoot::Context,
-            },
-            context_path: p.context_path.clone(),
-        })
-        .collect();
-
     // Resolve each hoisted provider field's declaration now (so the engine
     // carries the implementation and need not re-consult the declarations
     // file at authorize time).
@@ -807,6 +1032,17 @@ pub(crate) fn lower(
             let declaration = provider_declarations
                 .and_then(|d| d.get(&f.invocation.key()))
                 .cloned();
+            let entity_types = match (provider_declarations, &declaration) {
+                (Some(decls), Some(decl)) => decl
+                    .referenced_entity_types(f.methods.iter().map(|m| m.name.as_str()))
+                    .into_iter()
+                    .filter_map(|name| {
+                        let enum_decl = decls.entity_type_decls.get(&name)?.clone();
+                        Some((name, enum_decl))
+                    })
+                    .collect(),
+                _ => BTreeMap::new(),
+            };
             ProviderField {
                 id: f.field_name,
                 action: action_scope(&f.action),
@@ -820,7 +1056,12 @@ pub(crate) fn lower(
                 invocation: f.invocation,
                 methods: f.methods,
                 body_base: f.body_base,
+                entity_type_names: entity_types
+                    .keys()
+                    .filter_map(|name| Some((name.clone(), enum_names.get(name)?.clone())))
+                    .collect(),
                 declaration,
+                entity_types,
             }
         })
         .collect();
@@ -828,19 +1069,12 @@ pub(crate) fn lower(
     // Compile the augmented schema from its fragment — an in-memory conversion
     // (no text re-parse). The fragment is retained on `Lowered` as the source
     // of truth for the text / JSON serializations.
-    let augmented_schema_fragment = lowered.schema;
     let augmented_schema: Schema = augmented_schema_fragment
         .clone()
         .try_into()
         // `TryInto<Schema>` yields a `SchemaError`, which converts into a
         // `CedarSchemaError` (its `Schema` variant).
         .map_err(|e: cedar_policy::SchemaError| Error::CedarSchema(Box::new(e.into())))?;
-
-    let decision_kinds = event_schema
-        .decision_kinds()
-        .into_iter()
-        .map(str::to_string)
-        .collect();
 
     Ok(Lowered {
         policies,
@@ -850,11 +1084,14 @@ pub(crate) fn lower(
         temporal_rewritten,
         partition_keys,
         providers,
-        rule_ids: lowered.rule_ids,
-        rule_spans: lowered.rule_spans,
-        dw_src: dw_src.clone(),
+        rule_ids,
+        rule_locs,
+        rule_sources,
+        temporal_rules,
+        provider_rules,
         event_schema,
         decision_kinds,
+        enum_names,
     })
 }
 
@@ -1197,9 +1434,10 @@ fn build_context(
         // UB. There is deliberately NO applicability gate here: deciding
         // whether a rule's scope could match the event would re-implement
         // Cedar's scope semantics (the source of the historical `in Group`
-        // silent-never-fires bug). Cedar alone decides which policies fire;
-        // the hoisted outputs are just context enrichment, declared on every
-        // action by `add_provider_context_fields`.
+        // silent-never-fires bug). Cedar alone decides which policies fire.
+        // The runtime context remains a superset: even an action untouched by
+        // provider policies receives these outputs, although its exported
+        // schema omits `providers`.
         let mut provider_outputs: BTreeMap<String, Value> = BTreeMap::new();
         for field in providers {
             let value = eval_provider(field, resolver, data)?;
@@ -1222,6 +1460,38 @@ fn build_context(
 /// model — is computed). Otherwise the built-in sandboxed Rhai implementation
 /// runs.
 fn eval_provider(
+    field: &ProviderField,
+    resolver: Option<&dyn crate::engine::ProviderResolver>,
+    event: &EventData,
+) -> Result<Value, String> {
+    let value = eval_provider_raw(field, resolver, event)?;
+    // Type the final value by the LAST stage's declared type (the one the
+    // hoisted field is typed by): enum ids become entities, and a value
+    // outside its enum is an error, which denies the request. Earlier stages
+    // are converted the same way in `run_methods`.
+    let Some(decl) = field.declaration.as_ref() else {
+        return Ok(value);
+    };
+    let ty = match field.methods.last() {
+        Some(last) => match decl.methods.get(&last.name) {
+            Some(m) => &m.output_type,
+            None => return Ok(value),
+        },
+        None => &decl.output_type,
+    };
+    crate::extension::provider::eval::coerce_to_declared(
+        &field.invocation.key(),
+        value,
+        ty,
+        &field.entity_types,
+        &field.entity_type_names,
+        "",
+    )
+}
+
+/// The provider's value before conversion to its declared type: the
+/// resolver's or Rhai's base output, threaded through the method chain.
+fn eval_provider_raw(
     field: &ProviderField,
     resolver: Option<&dyn crate::engine::ProviderResolver>,
     event: &EventData,
@@ -1279,7 +1549,14 @@ fn eval_provider(
             (m.name.as_str(), margs)
         })
         .collect();
-    crate::extension::provider::eval::run_methods(&field.invocation.key(), decl, base, &resolved)
+    crate::extension::provider::eval::run_methods(
+        &field.invocation.key(),
+        decl,
+        base,
+        &resolved,
+        &field.entity_types,
+        &field.entity_type_names,
+    )
 }
 
 /// Resolve one provider invocation argument to a [`Value`] against the
@@ -1752,18 +2029,18 @@ mod tests {
             // Regression case: null + bell:
             ("a", "\0\u{7}"),
             // Individual control characters:
-            ("a", "\0"),       // null — escape_debug renders as \0
-            ("a", "\u{7}"),   // bell — escape_debug renders as \u{7}
-            ("a", "\u{8}"),   // backspace — escape_debug renders as \u{8}
-            ("a", "\t"),      // tab — escape_debug renders as \t
-            ("a", "\n"),      // newline — escape_debug renders as \n
-            ("a", "\r"),      // carriage return — escape_debug renders as \r
-            ("a", "\u{1b}"),  // escape char
-            ("a", "\u{7f}"),  // DEL
+            ("a", "\0"),     // null — escape_debug renders as \0
+            ("a", "\u{7}"),  // bell — escape_debug renders as \u{7}
+            ("a", "\u{8}"),  // backspace — escape_debug renders as \u{8}
+            ("a", "\t"),     // tab — escape_debug renders as \t
+            ("a", "\n"),     // newline — escape_debug renders as \n
+            ("a", "\r"),     // carriage return — escape_debug renders as \r
+            ("a", "\u{1b}"), // escape char
+            ("a", "\u{7f}"), // DEL
             // Multiple control chars combined:
             ("a", "\0\0\u{4}"),
-            ("a", "\u{1}\u{2}\u{3}"),   // low controls
-            ("a", "\u{10}\u{1f}"),      // upper C0 range
+            ("a", "\u{1}\u{2}\u{3}"), // low controls
+            ("a", "\u{10}\u{1f}"),    // upper C0 range
             // Mix of control + printable:
             ("a", "hello\0world"),
             ("a", "\nnewline\n"),
@@ -1772,12 +2049,12 @@ mod tests {
             ("a", "e"),
             ("a", "R"),
             // Whitespace that escape_debug may handle differently:
-            ("a", " "),                // plain space
+            ("a", " "), // plain space
             ("a", "  leading"),
             ("a", "trailing "),
             // Unicode above BMP (escape_debug passes through, Cedar should too):
             ("a", "emoji\u{1f600}"),
-            ("a", "\u{10000}"),        // first supplementary char
+            ("a", "\u{10000}"), // first supplementary char
         ];
         for (ty, id) in cases {
             let ours = crate::interpreter::value::entity_uid_string(ty, id);
@@ -1804,7 +2081,7 @@ mod tests {
         use cedar_policy::EntityUid;
         use std::str::FromStr;
         let ids: &[&str] = &[
-            "\0\u{7}",    // null + bell regression case
+            "\0\u{7}", // null + bell regression case
             "\0",
             "\u{7}",
             "normal",
@@ -1817,10 +2094,9 @@ mod tests {
         for id in ids {
             let uid_str = crate::interpreter::value::entity_uid_string("a", id);
             // Step 1: parse it back (as build_entity does)
-            let parsed = EntityUid::from_str(&uid_str)
-                .unwrap_or_else(|e| panic!(
-                    "EntityUid::from_str failed for id={id:?} (uid_str={uid_str:?}): {e}"
-                ));
+            let parsed = EntityUid::from_str(&uid_str).unwrap_or_else(|e| {
+                panic!("EntityUid::from_str failed for id={id:?} (uid_str={uid_str:?}): {e}")
+            });
             // Step 2: render it (as request.principal().to_string() does)
             let rendered = parsed.to_string();
             assert_eq!(

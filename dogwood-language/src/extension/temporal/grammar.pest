@@ -47,12 +47,16 @@ binder_slot = { param_ref | binder_ref | ident }
 
 // ── Entry ──────────────────────────────────────────────────────────
 condition_entry = { SOI ~ condition ~ EOI }
-// Macro-body entries: a `def temporal foo(...)` body is either an
-// aggregation expression (the `sum`/`count` value, without the
-// surrounding `let r = … in BODY` scaffold) or a condition. The
-// `agg_expr` form is tried first because `let_agg`/`let_agg_tp` start
-// with `sum`/`count`, which `condition` does not.
-temporal_macro_body_entry = { SOI ~ (agg_expr | condition) ~ EOI }
+// Macro-body entries: a `def temporal foo(...)` body is either a VALUE —
+// an aggregation, or arithmetic over aggregations (`(count …) - (count …)`)
+// — or a condition. The `&EOI` lookahead INSIDE the value alternative is
+// load-bearing: `arith` alone would succeed on the leading term of many
+// condition bodies (`formerly` lexes as an identifier term), and a PEG
+// choice never retries a committed alternative when a LATER sequence
+// element fails — so the value branch must itself demand it consumed the
+// whole body before the choice can commit to it.
+temporal_macro_body_entry = { SOI ~ (macro_value_body | condition) ~ EOI }
+macro_value_body          = { arith ~ &EOI }
 
 // ── Condition structure (mirrors the specified temporal grammar) ───
 //
@@ -171,13 +175,36 @@ field_path     = { ident ~ ("." ~ ident)* }
 
 // ── Comparison ─────────────────────────────────────────────────────
 //
-// Both operands are `term`s. An aggregate is a `term` (see the `term`
-// rule), so `0 < count for … where φ` and `(count …) == n` are ordinary
+// Both operands are `arith` expressions: one or more `term`s combined
+// with `+`, `-`, and `*` (`*` binds tighter, mirroring the Cedar-side
+// `add`/`mult` rules). A single `term` is an `arith` with zero
+// operators, so every pre-arithmetic comparison parses unchanged. An
+// aggregate is a `term` (see the `term` rule), so
+// `0 < count for … where φ` and `(count …) == n` are ordinary
 // comparisons; the "aggregate only as a comparison operand" rule is
-// enforced by validation, not the grammar. Parenthesizing the aggregate on
-// the LEFT of `== n` fences off the `== n` from its greedy `where` body
-// — the `term` rule admits a parenthesized aggregate.
-comparison = { term ~ cmp_op ~ term }
+// enforced by validation, not the grammar. Parenthesizing the aggregate
+// on the LEFT of `== n` fences off the `== n` from its greedy `where`
+// body — the `term` rule admits a parenthesized aggregate. The same
+// fencing applies inside an arithmetic chain: an aggregate anywhere but
+// the final position of the final operand must be parenthesized
+// (`(count …) - (count …) <= 5`).
+//
+// Operator tokens are position-disambiguated against the rest of the
+// grammar:
+//   * `+` is used nowhere else.
+//   * `-` also begins a negative `integer` literal; in continuation
+//     position after a complete term it can only be `add_op`, and in
+//     operand position the atomic `integer` rule still lexes `-1`.
+//   * `*` is also the `wildcard` term; in operand position it is the
+//     wildcard (`x == *`), and in continuation position after a complete
+//     term it can only be `mul_op` (no rule lets a wildcard follow a
+//     term). A wildcard *inside* a compound (`* * 2`) parses but is
+//     rejected by the sort check in validation.
+comparison = { arith ~ cmp_op ~ arith }
+arith      = { arith_mul ~ (add_op ~ arith_mul)* }
+arith_mul  = { term ~ (mul_op ~ term)* }
+add_op     = { "+" | "-" }
+mul_op     = { "*" }
 cmp_op     = { "<=" | ">=" | "!=" | "==" | "<" | ">" }
 
 // ── Aggregation ────────────────────────────────────────────────────
@@ -263,16 +290,20 @@ interval_lit  = { integer ~ time_unit }
 //     `decimal("1.5")` as a call named `decimal` (and an `Ns::"x"` head as
 //     a call). Both are matched first, so aggregates never see them.
 //   * `paren_agg` is a parenthesized aggregate — the fencing form
-//     `(count …) == n`. Nothing else in `term` starts with `(`, so it is
-//     unambiguous; a parenthesized *condition* `(A && B)` is not an
-//     aggregate, so `paren_agg` fails and the enclosing `comparison`
-//     falls through to `parenthesized` at the conjunct level.
+//     `(count …) == n`. It precedes `paren_arith` so `(count …)` keeps
+//     its existing parse; a parenthesized *arithmetic grouping*
+//     `(a + b) * c` fails `paren_agg` and is taken by `paren_arith`. A
+//     parenthesized *condition* `(A && B)` is neither an aggregate nor
+//     an arith (a predicate is not a term), so both fail and the
+//     enclosing `comparison` falls through to `parenthesized` at the
+//     conjunct level.
 //   * `agg_expr` precedes `ident` so a bare `count`/`sum` keyword wins
 //     over being read as an identifier.
 term = {
     entity
   | decimal_lit
   | paren_agg
+  | paren_arith
   | agg_expr
   | integer
   | string
@@ -285,7 +316,8 @@ term = {
   | binder_ref
   | ident
 }
-paren_agg = { "(" ~ agg_expr ~ ")" }
+paren_agg   = { "(" ~ agg_expr ~ ")" }
+paren_arith = { "(" ~ arith ~ ")" }
 
 entity        = { ident ~ ("::" ~ ident)* ~ "::" ~ string }
 decimal_lit   = { "decimal" ~ "(" ~ string ~ ")" }

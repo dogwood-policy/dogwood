@@ -1,5 +1,5 @@
 // =============================================================================
-// Cedar policy grammar for `pest`
+// Shared Dogwood policy grammar for `pest`
 // =============================================================================
 //
 // This grammar describes the Cedar policy language
@@ -13,10 +13,9 @@
 //
 //  * We intentionally keep the grammar flat and readable. Where the upstream
 //    grammar layered rules to encode operator precedence (`Or` wraps `And`
-//    wraps `Relation` ...), we keep those layers here too, because the
-//    downstream consumer is Cedar's own CST — and Cedar's CST has the same
-//    shape. Keeping our rule shape aligned with the CST shape makes the
-//    pest-tree → CST conversion almost mechanical.
+//    wraps `Relation` ...), we keep those layers here too. The semantic parser
+//    consumes that structure directly, while source tools use its spans as a
+//    concrete-syntax outline.
 //
 //  * `WHITESPACE` and `COMMENT` are implicit between tokens in non-atomic
 //    rules. Atomic rules (`@{ ... }`) handle their own spacing.

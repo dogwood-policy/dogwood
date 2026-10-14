@@ -1,0 +1,5 @@
+// The app's own `Drupe::Score` doesn't collide with the exported `Drupe::MyGuardrails_Score`.
+permit (principal, action == Drupe::Action::"Read", resource)
+when {
+    MyGuardrails::ContentFilter(context.input.document).result == MyGuardrails::Score::"LOW"
+};

@@ -1,0 +1,18 @@
+// A compound `==` side binds a bare variable: the sum of two counts binds
+// `m`, which the threshold conjunct then consumes.
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    exists (m: Long). (
+        (count for (t: Timepoint). where (
+            formerly within 1h (Drupe::Action::"Transfer"::request{} && tp(t))
+        ))
+        + (count for (t: Timepoint). where (
+            formerly within 1h (Drupe::Action::"Login"::request{} && tp(t))
+        )) == m
+        && m <= 5
+    )
+};

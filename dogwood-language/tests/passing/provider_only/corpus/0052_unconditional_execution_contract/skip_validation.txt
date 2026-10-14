@@ -1,0 +1,1 @@
+Validation rejects this case on purpose: `Ping`'s context has no `input.document`. The case checks that a provider still runs, with a unit argument, for every decision event.

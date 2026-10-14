@@ -73,6 +73,12 @@ updates what the temporal expressions can see but produces no verdict. This is
 why Dogwood's authorizer is **stateful**: you feed it events one at a time, and
 each is remembered.
 
+An event records a **single occurrence at one point in time**. A `request` and a
+tool's eventual `response` or `error` are separate events. The authorizer does
+not record the verdict as an event. Policies read events **in ingestion order**,
+which can differ from their order at the source or an enforcement point. See
+[Evaluation semantics](04-temporal-expressions.md#evaluation-semantics).
+
 ### 3. Schemas
 
 A **schema** tells Dogwood about your world. Dogwood composes *three*

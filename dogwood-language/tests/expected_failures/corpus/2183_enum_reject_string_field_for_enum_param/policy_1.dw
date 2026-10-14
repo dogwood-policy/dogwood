@@ -1,0 +1,5 @@
+// A String field cannot feed an `entity` parameter.
+permit (principal, action == Drupe::Action::"Alert", resource)
+when {
+    !MyGuardrails::Escalate(context.input.user).escalate
+};

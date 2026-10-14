@@ -5,9 +5,7 @@
 //! a BOM. Dogwood strips it at each entry point so users never see a
 //! confusing "unexpected token" or "expected value at line 1" error.
 
-use dogwood_language::{
-    LoweredPolicySet, PolicySchema, ProviderDeclarations, ServiceSchema,
-};
+use dogwood_language::{LoweredPolicySet, PolicySchema, ProviderDeclarations, ServiceSchema};
 
 const BOM: &str = "\u{FEFF}";
 

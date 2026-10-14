@@ -1,0 +1,3 @@
+@id("read_principal_allowed")
+PERMIT any principal to perform Read on any resource
+  when: the allowed field of Access::Allowed(the principal's id) is true

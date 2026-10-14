@@ -1,0 +1,19 @@
+[package]
+name = "dogwood-syntax"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+description = "Lossless lexical and concrete-syntax support for Dogwood policy files."
+license = "Apache-2.0"
+repository = "https://github.com/dogwood-policy/dogwood"
+homepage = "https://dogwood-policy.github.io/dogwood/"
+documentation = "https://dogwood-policy.github.io/dogwood/"
+readme = "README.md"
+exclude = ["/build", "/Config", "/build-tools/"]
+
+[lib]
+name = "dogwood_syntax"
+
+[dependencies]
+pest = "2"
+pest_derive = "2"

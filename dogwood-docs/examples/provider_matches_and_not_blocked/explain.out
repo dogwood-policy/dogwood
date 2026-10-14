@@ -1,0 +1,5 @@
+@id("read_allowed_and_not_blocked")
+PERMIT any principal to perform Read on any resource
+  when:
+    the matched field of Strings::Matches(the request's document, "^[a-z]+$") is true
+    and not (the blocked field of Lists::Blocked(the request's document) is true)

@@ -1,0 +1,7 @@
+// The same typo against `threatSeverity` declared as `GuardDuty::Severity`.
+permit (principal, action == Drupe::Action::"Read", resource);
+
+forbid (principal, action == Drupe::Action::"Read", resource)
+when {
+    GuardDuty::ThreatDetector([context.input.document]).threatSeverity == GuardDuty::Severity::"HIHG"
+};

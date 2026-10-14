@@ -1,0 +1,17 @@
+// Parenthesized grouping: twice the unsettled transfer value must cover
+// the alert level. The ALLOW verdicts hold only under `(s1 - s2) * 2`,
+// not the ungrouped reading `s1 - s2 * 2`.
+permit (
+    principal,
+    action == Drupe::Action::"Alert",
+    resource
+)
+when temporal {
+    ((sum a for (a: Long), (t: Timepoint). where (
+        formerly within 1h (Drupe::Action::"Transfer"::request{ input.amount: a } && tp(t))
+    ))
+    - (sum a for (a: Long), (t: Timepoint). where (
+        formerly within 1h (Drupe::Action::"Transfer"::response{ output.amount: a } && tp(t))
+    ))) * 2
+    >= context.input.level
+};

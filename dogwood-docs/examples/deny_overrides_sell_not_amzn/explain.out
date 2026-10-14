@@ -1,0 +1,6 @@
+@id("permit-sell-shares")
+PERMIT any principal to perform SellShares on any resource
+
+@id("forbid-sell-amzn")
+FORBID any principal to perform SellShares on any resource
+  when: the request's stock == "AMZN"

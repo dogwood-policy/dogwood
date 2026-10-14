@@ -1,0 +1,1 @@
+Validation rejects this case: the policy is scoped to the `CallTool` group, and `CallTool`'s own context has no `input.document` for `Strings::Matches`. The case checks group scoping at runtime.

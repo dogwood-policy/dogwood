@@ -1,0 +1,5 @@
+// An enum must list at least one value.
+permit (principal, action == Drupe::Action::"Read", resource)
+when {
+    MyGuardrails::ContentFilter(context.input.document) has result
+};

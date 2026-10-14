@@ -1,0 +1,3 @@
+@id("sell_small")
+PERMIT any principal to perform SellShares on any resource
+  when: the request's shares < 100

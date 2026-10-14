@@ -1,0 +1,7 @@
+Only past events from this request's principal count.
+
+@id("alert_level_and_recent_login")
+PERMIT any principal to perform Alert on any resource
+  when:
+    the request's level >= 2
+    and a Login request with any user and this request's server occurred within the last 1 hour

@@ -1,0 +1,5 @@
+// KNOWN GAP (open question): comparing to a DIFFERENT enum validates in Cedar and is constant. Here `!=` is always true, so every request is permitted, including HIGH.
+permit (principal, action == Drupe::Action::"Read", resource)
+when {
+    MyGuardrails::ContentFilter(context.input.document).result != MyGuardrails::Category::"HATE"
+};

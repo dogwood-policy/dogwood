@@ -1,0 +1,3 @@
+@id("sell_a_prefixed")
+PERMIT any principal to perform SellShares on any resource
+  when: the request's stock matches the pattern "A*"

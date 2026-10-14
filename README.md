@@ -39,15 +39,20 @@ of important limitations of the interpreter.
 
 | Path | Description |
 |------|-------------|
+| [`dogwood-syntax/`](dogwood-syntax/README.md) | Shared policy grammar and lossless concrete syntax |
 | [`dogwood-language/`](dogwood-language/README.md) | The core Rust library — parser, interpreter, lowering, and API |
+| [`dogwood-formatter/`](dogwood-formatter/README.md) | Source-preserving pretty-printer for Dogwood policies |
 | [`dogwood-docs/guide/`](dogwood-docs/guide/README.md) | The language guide (syntax, schemas, temporal expressions, providers, formal spec) |
-| [`dogwood-cli/`](dogwood-docs/guide/12-cli.md) | The `dogwood` CLI (validate, lower, replay) |
+| [`dogwood-cli/`](dogwood-docs/guide/12-cli.md) | The `dogwood` CLI (validate, lower, replay, explain) |
 | [`dogwood-docs/examples/`](dogwood-docs/examples/) | Runnable example policies with traces and expected output |
 | [`dogwood-language/configuration/`](dogwood-language/configuration/README.md) | Starter action schemas and event schemas |
 
 ## Quick start
 
 ```bash
+# Pretty-print a policy:
+dogwood format policy.dw
+
 # Validate a policy against its schemas:
 dogwood validate policy.dw --policy-schema schema.cedarschema
 
@@ -144,9 +149,11 @@ policies.
 A production-ready authorization engine needs to deal with several concerns
 not addressed by the reference interpreter, including but not limited to:
 
-- **Event timestamp integrity.** The interpreter accepts timestamps as provided
-  and does not validate them. Production systems should use timestamps provided
-  by a trusted time source or validate them before ingestion.
+- **Event timestamp integrity.** The interpreter preserves supplied timestamps
+  and does not validate them. Test authors must deliberately choose the
+  observation sequence and supply strictly increasing timestamps. Accepting an
+  input does not establish that it satisfies the supported timestamp contract.
+  Production systems should enforce that contract and use a trusted time source.
 
 - **Event authentication.** The reference interpreter does not provide any kind
   of authentication on events. A production implementation should bind the

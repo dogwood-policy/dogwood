@@ -1,0 +1,7 @@
+// A method maps a decimal score to an enum bucket; the LAST stage's type drives conversion.
+permit (principal, action == Drupe::Action::"Read", resource);
+
+forbid (principal, action == Drupe::Action::"Read", resource)
+when {
+    MyGuardrails::Risk(context.input.document).bucket() == MyGuardrails::Score::"HIGH"
+};

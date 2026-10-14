@@ -1,0 +1,46 @@
+{
+  "entityTypes": {
+    "MyGuardrails::Score": {
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH"
+      ]
+    },
+    "MyGuardrails::Category": {
+      "enum": [
+        "VIOLENCE",
+        "HATE"
+      ]
+    }
+  },
+  "availableProviders": {
+    "MyGuardrails::ContentFilter": {
+      "argumentTypes": [
+        {
+          "paramType": "string"
+        }
+      ],
+      "outputType": {
+        "paramType": "record",
+        "fields": {
+          "result": {
+            "paramType": "entity",
+            "entityType": "MyGuardrails::Score"
+          },
+          "category": {
+            "paramType": "entity",
+            "entityType": "MyGuardrails::Category"
+          }
+        },
+        "required": [
+          "result"
+        ]
+      },
+      "implementation": {
+        "kind": "rhai",
+        "scriptFile": "filter.rhai"
+      }
+    }
+  }
+}

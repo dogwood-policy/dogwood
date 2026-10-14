@@ -1,0 +1,25 @@
+// Guardrail policies, unchanged from before enum support:
+// decimal scores via zero-argument methods, a String severity.
+permit (principal, action == Drupe::Action::"Read", resource);
+
+forbid (principal, action == Drupe::Action::"Read", resource)
+when {
+    BedrockGuardrails::ContentFilter([context.input.document], ["VIOLENCE"])
+        .maxConfidenceScore().greaterThan(decimal("0.5"))
+};
+
+forbid (principal, action == Drupe::Action::"Read", resource)
+when {
+    BedrockGuardrails::PromptAttack([context.input.document], ["JAILBREAK"]).JAILBREAK
+        .confidenceScore.greaterThan(decimal("0.5"))
+};
+
+forbid (principal, action == Drupe::Action::"Read", resource)
+when {
+    BedrockGuardrails::SensitiveInformation([context.input.document], ["ADDRESS"]).count() > 0
+};
+
+forbid (principal, action == Drupe::Action::"Read", resource)
+when {
+    GuardDuty::ThreatDetector([context.input.document]).threatSeverity == "HIGH"
+};

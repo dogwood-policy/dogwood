@@ -26,9 +26,11 @@ pub use cedar_policy::Decision;
 /// originating `.dw` rule.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DogwoodRuleRef {
-    /// 0-based index of the rule in the source policy set.
+    /// 0-based index of the rule in this set (its position in the merged set
+    /// for a [`lower_many`](crate::lower_many) result).
     pub rule_index: usize,
-    /// The synthesized Cedar policy id (e.g. `policy0`).
+    /// The synthesized Cedar policy id (e.g. `policy_0`, or `<distincter>_0`
+    /// for a distincter-lowered rule).
     pub cedar_policy_id: String,
 }
 

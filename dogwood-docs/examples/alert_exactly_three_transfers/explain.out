@@ -1,0 +1,4 @@
+@id("alert_exactly_three_transfers")
+PERMIT any principal to perform Alert on any resource
+  when:
+    the number of Transfer requests with any amount within the last 1 hour == 3

@@ -11,7 +11,7 @@
 //! lowered to native Cedar), so it is not re-checked here.
 
 use crate::api::{ActionRef, ProviderField, ScopeConstraint};
-use crate::error::{Span, ValidationError};
+use crate::error::{Span, ValidationError, ValidationWarning};
 use crate::extension::dialect::{DogwoodDialect, Rendered, ValidationCtx};
 use crate::extension::provider::ast::Arg;
 use crate::extension::provider::declarations::ParamType;
@@ -24,6 +24,8 @@ use crate::extension::temporal::schema_info::{
 pub struct ProviderFinding {
     pub message: String,
     pub span: Span,
+    /// Rendered as a warning instead of an error.
+    pub warning: bool,
 }
 
 /// The provider dialect. Owns its leaf type — the public [`ProviderField`],
@@ -47,6 +49,9 @@ impl DogwoodDialect for ProviderDialect {
         // projection). `cedar_policy::Schema` is a transparent newtype over a
         // `ValidatorSchema`, so `as_ref()` avoids re-parsing a schema string.
         let info = SchemaInfo::from_validator_schema(ctx.schema.as_ref());
+        // Fallback warnings already reported, so a provider called several
+        // times warns once, at its first call.
+        let mut warned = std::collections::BTreeSet::new();
         for field in leaves {
             let key = field.invocation.key();
             // The invocation's span is relative to the `provider { … }` block
@@ -64,9 +69,62 @@ impl DogwoodDialect for ProviderDialect {
                         "provider `{key}` is not present in the provider declarations"
                     ),
                     span,
+                    warning: false,
                 });
                 continue;
             };
+
+            // ── Deprecated `String` fallback ────────────────────────────
+            // An unknown `paramType` in a type this call uses loads and is
+            // typed `String`; warn, so a typo (`decimel`) doesn't pass
+            // silently. Becomes an error in the next major version.
+            let mut fallbacks = Vec::new();
+            decl.collect_fallback_warnings(
+                &key,
+                field.methods.iter().map(|m| m.name.as_str()),
+                &mut fallbacks,
+            );
+            for message in fallbacks {
+                if warned.insert(message.clone()) {
+                    findings.push(ProviderFinding {
+                        message,
+                        span,
+                        warning: true,
+                    });
+                }
+            }
+
+            // ── Entity types ────────────────────────────────────────────
+            // Every entity type the call's types name must exist — in the
+            // policy schema (an app enum used as an argument) or among the
+            // injected provider enums — and must be an enum: a provider sees
+            // an entity as its bare id, which only identifies an enum value.
+            let methods = field.methods.iter().map(|m| m.name.as_str());
+            for name in decl.referenced_entity_types(methods) {
+                // A provider enum is in the schema under its exported name.
+                let in_schema = field.entity_type_names.get(&name).unwrap_or(&name);
+                match info.entity_type(None, in_schema) {
+                    None => findings.push(ProviderFinding {
+                        message: format!(
+                            "provider `{key}`: entityType `{name}` is not declared in the \
+                             policy schema or the provider declarations' `entityTypes`"
+                        ),
+                        span,
+                        warning: false,
+                    }),
+                    Some(handle) if handle.enum_eids().is_none() => {
+                        findings.push(ProviderFinding {
+                            message: format!(
+                                "provider `{key}`: entityType `{name}` is not an enum entity \
+                                 type; provider values may only be enum entities"
+                            ),
+                            span,
+                            warning: false,
+                        })
+                    }
+                    Some(_) => {}
+                }
+            }
 
             let expected = &decl.argument_types;
             let got = &field.invocation.args;
@@ -78,6 +136,7 @@ impl DogwoodDialect for ProviderDialect {
                         got.len()
                     ),
                     span,
+                    warning: false,
                 });
                 continue;
             }
@@ -90,9 +149,10 @@ impl DogwoodDialect for ProviderDialect {
                         message: format!(
                             "provider `{key}`: argument of type `{actual}` does not match the \
                              declared `{}`",
-                            param.param_type
+                            display_param(param)
                         ),
                         span,
+                        warning: false,
                     });
                 }
             }
@@ -181,7 +241,9 @@ impl DogwoodDialect for ProviderDialect {
             // types of arguments, and — when `inputType` is declared — must be
             // fed a compatible value by the preceding pipeline stage. The
             // pipeline's running type starts at the provider's `outputType`.
-            let mut pipeline_type = decl.output_type.param_type.clone();
+            // The running type of the pipeline, compared by kind AND (for an
+            // `entity`) by entity type: two different enums are different types.
+            let mut pipeline_type: &ParamType = &decl.output_type;
             for method in &field.methods {
                 let m_span = method.span.rebased(field.body_base);
 
@@ -193,6 +255,7 @@ impl DogwoodDialect for ProviderDialect {
                             method.name
                         ),
                         span: m_span,
+                        warning: false,
                     });
                     continue;
                 }
@@ -212,6 +275,7 @@ impl DogwoodDialect for ProviderDialect {
                             method.name
                         ),
                         span: m_span,
+                        warning: false,
                     });
                     // Unknown method breaks the pipeline type; stop checking
                     // the rest of this chain.
@@ -221,15 +285,20 @@ impl DogwoodDialect for ProviderDialect {
                 // Optional receiver-type check: the previous stage's output
                 // type must match what this method expects to receive.
                 if let Some(input) = mdecl.input_type.as_ref()
-                    && input.param_type != pipeline_type
+                    && (input.param_type != pipeline_type.param_type
+                        || (input.param_type == "entity"
+                            && input.entity_type != pipeline_type.entity_type))
                 {
                     findings.push(ProviderFinding {
                         message: format!(
                             "provider `{key}`: method `{}` expects an input of type `{}` but the \
                              preceding stage produces `{}`",
-                            method.name, input.param_type, pipeline_type
+                            method.name,
+                            display_param(input),
+                            display_param(pipeline_type)
                         ),
                         span: m_span,
+                        warning: false,
                     });
                 }
 
@@ -243,6 +312,7 @@ impl DogwoodDialect for ProviderDialect {
                             method.args.len()
                         ),
                         span: m_span,
+                        warning: false,
                     });
                 } else {
                     for (arg, param) in method.args.iter().zip(&mdecl.argument_types) {
@@ -253,16 +323,18 @@ impl DogwoodDialect for ProviderDialect {
                                 message: format!(
                                     "provider `{key}`: method `{}` argument of type `{actual}` \
                                      does not match the declared `{}`",
-                                    method.name, param.param_type
+                                    method.name,
+                                    display_param(param)
                                 ),
                                 span: m_span,
+                                warning: false,
                             });
                         }
                     }
                 }
 
                 // This method re-types the pipeline for the next stage.
-                pipeline_type = mdecl.output_type.param_type.clone();
+                pipeline_type = &mdecl.output_type;
             }
         }
         findings
@@ -270,6 +342,17 @@ impl DogwoodDialect for ProviderDialect {
 
     fn render(&self, finding: ProviderFinding, src: &std::sync::Arc<str>) -> Rendered {
         let help = derive_provider_help(&finding.message);
+        if finding.warning {
+            return Rendered::Warning(ValidationWarning::Extension {
+                code: self.marker(),
+                message: finding.message,
+                span: finding.span.into(),
+                label: None,
+                help,
+                src: src.clone(),
+                source: None,
+            });
+        }
         Rendered::Error(ValidationError::Extension {
             code: self.marker(),
             message: finding.message,
@@ -284,7 +367,13 @@ impl DogwoodDialect for ProviderDialect {
 
 /// Derive actionable help text from a provider validation finding's message.
 fn derive_provider_help(message: &str) -> Option<String> {
-    if message.contains("is not present in the provider declarations") {
+    if message.contains("falling back to String") {
+        Some(
+            "the known paramTypes are string, integer/long, bool/boolean, decimal, set, \
+             record and entity; fix the declaration in providers.json"
+                .to_string(),
+        )
+    } else if message.contains("is not present in the provider declarations") {
         Some("check the `availableProviders` in your provider declarations JSON".to_string())
     } else if message.contains("expects") && message.contains("argument(s) but got") {
         Some("check the `argumentTypes` array in the provider declaration".to_string())
@@ -447,6 +536,7 @@ fn check_one_field_path(
                             action_display(action),
                         ),
                         span,
+                        warning: false,
                     });
                     return;
                 }
@@ -473,6 +563,7 @@ fn check_one_field_path(
                             action_display(action),
                         ),
                         span,
+                        warning: false,
                     });
                     return;
                 }
@@ -554,9 +645,12 @@ fn check_arg_type(
 /// element-type check, #2). A `record` need only be an object — its FIELDS are
 /// not compared (Cedar records are invariant, but exact field matching needs
 /// structured types and is the deferred boundary #3). A mismatch is reported on
-/// the first scoped action where it occurs ("wrong on any"). An unknown declared
-/// `paramType`, or a resolved type this cannot classify, is left lenient;
-/// missing fields are owned by the existence pass.
+/// the first scoped action where it occurs ("wrong on any"). An `entity`
+/// parameter fed directly from `context` must have the declared qualified
+/// entity type; anywhere else (a set element, a `principal`/`resource`
+/// attribute) only the category is compared, since `RichType` carries only the
+/// basename. An unknown declared `paramType`, or a resolved type this cannot
+/// classify, is left lenient; missing fields are owned by the existence pass.
 #[allow(clippy::too_many_arguments)]
 fn check_field_path_type(
     key: &str,
@@ -619,9 +713,10 @@ fn check_field_path_type(
                                  declared argument type `{}`",
                                 path.join("."),
                                 types.join("`, `"),
-                                declared.param_type,
+                                display_param(declared),
                             ),
                             span,
+                            warning: false,
                         });
                         return;
                     }
@@ -630,22 +725,44 @@ fn check_field_path_type(
             }
             _ => None,
         };
-        if let Some(rich) = resolved_rich
-            && !param_matches_rich(declared, &rich)
-        {
+        let Some(rich) = resolved_rich else {
+            continue;
+        };
+        // For an `entity` parameter fed from `context`, compare the field's
+        // QUALIFIED entity type with the declared one.
+        let wrong_entity = match (declared.param_type.as_str(), root) {
+            ("entity", "context") if matches!(rich, RichType::Entity(Some(_))) => handle
+                .context_entity_type(rest)
+                .filter(|actual| Some(actual.as_str()) != declared.entity_type.as_deref()),
+            _ => None,
+        };
+        if !param_matches_rich(declared, &rich) || wrong_entity.is_some() {
+            let shown = match &wrong_entity {
+                Some(actual) => format!("entity:{actual}"),
+                None => display_rich(&rich),
+            };
             findings.push(ProviderFinding {
                 message: format!(
-                    "provider `{key}`: argument `{}` has type `{}` on action `{}` but the \
+                    "provider `{key}`: argument `{}` has type `{shown}` on action `{}` but the \
                      provider declares argument type `{}`",
                     path.join("."),
-                    display_rich(&rich),
                     action_display(action),
-                    declared.param_type,
+                    display_param(declared),
                 ),
                 span,
+                warning: false,
             });
             return;
         }
+    }
+}
+
+/// A declared type as shown in diagnostics: an `entity` type by its entity
+/// type's name (`Drupe::AlertLevel`), anything else by its `paramType`.
+fn display_param(ty: &ParamType) -> String {
+    match (ty.param_type.as_str(), ty.entity_type.as_deref()) {
+        ("entity", Some(name)) => name.to_string(),
+        (kind, _) => kind.to_string(),
     }
 }
 
@@ -675,6 +792,10 @@ fn param_matches_rich(declared: &ParamType, rich: &RichType) -> bool {
             _ => false,
         },
         "record" => matches!(rich, RichType::Record),
+        // Category only: `RichType` carries an entity's basename, so the
+        // qualified type is compared separately (`check_field_path_type`), and
+        // only for a direct `context` argument. A set element is not compared.
+        "entity" => matches!(rich, RichType::Entity(Some(_))),
         // Unknown declared type: lenient.
         _ => true,
     }
