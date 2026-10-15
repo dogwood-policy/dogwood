@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-fe654853.js";
+            window.path_to_searchindex_js = "../searchindex-43ed227d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-982af72f.js"></script>
+        <script src="../toc-9744742b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -215,8 +215,11 @@ declared implementation, and binds its output record into
 <p>Because providers are hoisted at lowering time, the hoisted field must be typed and
 declared in the schema. A rule that calls a provider may use any action scope —
 <code>action == Ns::Action::"X"</code>, <code>action in [list]</code>, <code>action in Group</code>, or a bare
-unconstrained <code>action</code> — because the hoisted field is grafted onto every action’s
-context and the provider is evaluated for every decision event (see
+unconstrained <code>action</code>. Dogwood declares all hoisted provider fields once in a
+shared generated common type (normally <code>DogwoodProviders</code>; a numeric suffix is
+used if that name is already occupied). Every action reached by at least one
+provider-bearing rule references that type; actions untouched by all provider
+rules omit <code>providers</code>. Provider evaluation itself remains unconditional (see
 <a href="#the-provider-contract">The provider contract</a> below).</p>
 <hr>
 <h2 id="calling-a-provider"><a class="header" href="#calling-a-provider">Calling a provider</a></h2>
@@ -424,6 +427,106 @@ the output record, and the implementation that computes it — is declared in a
 declarations already exist and focuses on calling them from a policy.</p>
 </blockquote>
 <hr>
+<h2 id="enum-typed-values"><a class="header" href="#enum-typed-values">Enum-typed values</a></h2>
+<p>A provider can return a value from a fixed list, such as a severity of <code>LOW</code>, <code>MEDIUM</code>,
+<code>HIGH</code> or <code>CRITICAL</code>, instead of a free-form string. The provider declares the list once,
+as an enum in <code>providers.json</code> (<a href="10-provider-schema.html#enum-typed-values">Enum-typed values</a>),
+and policies compare against its values:</p>
+<pre><code class="language-text">forbid ( principal, action == Drupe::Action::"Read", resource )
+when {
+    Vendor::ThreatScan(context.input.document).severity
+        in [Vendor::Severity::"HIGH", Vendor::Severity::"CRITICAL"]
+};
+</code></pre>
+<p>An enum value is written <code>Enum::"VALUE"</code>, quoted, as in Cedar. Compare it with <code>==</code>,
+<code>!=</code> or <code>in [..]</code>. Compared with a plain string field, two things change:</p>
+<ul>
+<li>
+<p><strong>Typos are caught when the policy is validated.</strong> With a string field,
+<code>.severity == "CRITCAL"</code> validates and silently never matches, so the guardrail does
+nothing. With the enum it’s an error:</p>
+<pre><code class="language-text">error: for policy `policy_1`: entity `Vendor::Severity::"CRITCAL"` is of an enumerated
+entity type, but `"CRITCAL"` is not declared as a valid eid
+</code></pre>
+<p>Comparing the field with a plain string (<code>== "HIGH"</code>), or ordering it (<code>&lt;</code>), is also
+rejected.</p>
+</li>
+<li>
+<p><strong>Unexpected values are denied.</strong> If the provider returns a value outside the list (a
+vendor adds <code>SEVERE</code>), the request is denied, even if another policy in the set would
+permit it. Take a catch-all <code>permit</code> next to the <code>forbid</code> above:</p>
+<pre><code class="language-text">permit ( principal, action == Drupe::Action::"Read", resource );
+</code></pre>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th><code>severity</code> returned</th><th><code>forbid</code> matches?</th><th>Decision</th></tr>
+</thead>
+<tbody>
+<tr><td><code>LOW</code></td><td>no</td><td><strong>Allow</strong>, by the <code>permit</code></td></tr>
+<tr><td><code>HIGH</code></td><td>yes</td><td><strong>Deny</strong>, by the <code>forbid</code></td></tr>
+<tr><td><code>SEVERE</code></td><td>no, it isn’t in <code>[HIGH, CRITICAL]</code></td><td><strong>Deny</strong>: not a member of <code>Vendor::Severity</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>Without this check, <code>SEVERE</code> would match no <code>forbid</code>, the <code>permit</code> would allow it, and
+the most severe content would get through. The response says why:
+<code>provider `Vendor::ThreatScan`.severity: `SEVERE` is not a member of `Vendor::Severity` </code>.</p>
+</li>
+<li>
+<p><strong>A provider enum never equals an enum from your Cedar schema.</strong> They are different
+types, even with the same values. Say the action schema declares its own <code>Severity</code>
+for a request field:</p>
+<pre><code class="language-text">namespace Drupe {
+  entity Severity enum ["LOW", "MEDIUM", "HIGH", "CRITICAL"];
+  type ReadInput = { document: String, level: Severity };
+  …
+}
+</code></pre>
+<p>This <code>forbid</code> compares the provider’s <code>Vendor::Severity</code> with <code>Drupe::Severity</code>, so it
+never fires:</p>
+<pre><code class="language-text">forbid ( principal, action == Drupe::Action::"Read", resource )
+when { Vendor::ThreatScan(context.input.document).severity == context.input.level };
+</code></pre>
+<p><code>dogwood validate</code> only warns, and the policy passes:</p>
+<pre><code class="language-text">warning: for policy `policy_1`, policy is impossible: the policy expression evaluates
+to false for all valid requests
+OK: validation passed (1 warning(s)).
+</code></pre>
+<p>Compare the provider field with the provider enum’s own values
+(<code>Vendor::Severity::"HIGH"</code>) instead. To use a Cedar-schema enum, pass it <em>into</em> the
+provider as an argument (<code>"paramType": "entity", "entityType": "Drupe::Severity"</code>; the
+script receives the bare id) and return a <code>bool</code>:</p>
+<pre><code class="language-text">forbid ( principal, action == Drupe::Action::"Read", resource )
+when { Vendor::IsBlocked(context.input.level).blocked };
+</code></pre>
+<p>Validation checks that the argument has the declared enum type only for a direct
+<code>context</code> field like this one, not for an enum inside a set or record argument
+(<a href="10-provider-schema.html#how-invocations-are-validated-against-declarations">How invocations are validated</a>).</p>
+<p>A provider can’t return a Cedar-schema enum: its output enums must be declared in
+<code>providers.json</code> (<a href="10-provider-schema.html#enum-typed-values">Enum-typed values</a>).</p>
+</li>
+</ul>
+<p>Changing an existing string field to an enum breaks policies that compare it with a
+string (<code>== "HIGH"</code> becomes a type error). To migrate without breaking them, add the enum
+as a new field.</p>
+<p><strong>In the exported Cedar.</strong> Dogwood adds no namespace to the schema. The enum is exported
+into the action schema’s namespace under a generated name (<code>Vendor::Severity</code> becomes
+<code>Drupe::Vendor_Severity</code>), and the lowered policy uses that name:</p>
+<pre><code class="language-text">forbid(principal, action == Drupe::Action::"Read", resource) when {
+  (((context.providers).policy_1_p_0).severity) in
+    [Drupe::Vendor_Severity::"HIGH", Drupe::Vendor_Severity::"CRITICAL"] };
+</code></pre>
+<p>You keep writing <code>Vendor::Severity::"HIGH"</code>, and error messages use that name too. If
+the action schema has several namespaces, the enum is exported once and every namespace
+uses it, so one unscoped guardrail covers all of them.</p>
+<blockquote>
+<p>Runnable: <a href="../examples/provider_enum_severity_forbid.html"><code>examples/provider_enum_severity_forbid/</code></a> — a
+severity enum gating a <code>forbid</code>, with an out-of-list value denied; and
+<a href="../examples/provider_enum_two_namespaces.html"><code>examples/provider_enum_two_namespaces/</code></a> — one unscoped
+guardrail over actions in two namespaces.</p>
+</blockquote>
+<hr>
 <h2 id="how-a-provider-binds-to-contextprovidersid"><a class="header" href="#how-a-provider-binds-to-contextprovidersid">How a provider binds to <code>context.providers.&lt;id&gt;</code></a></h2>
 <p>Putting the pieces together, here is what happens to a provider invocation from the
 caller’s point of view.</p>
@@ -432,7 +535,9 @@ with a reference into <code>context.providers.&lt;id&gt;</code>. The surrounding
 comparison were already ordinary Cedar, so they lower natively — an index <code>["k"]</code>
 becomes <code>.k</code>, and the comparison stays as whatever Cedar op you wrote. (The
 generated field names and the Cedar-schema augmentation this entails are covered in
-<a href="10-provider-schema.html">The provider schema</a>.)</p>
+<a href="10-provider-schema.html">The provider schema</a>.) All provider fields are bundled in
+one common type per touched namespace, and provider-relevant actions reference
+that shared type rather than carrying duplicate inline records.</p>
 <p><strong>Authorize time.</strong> For each decision event Dogwood builds the Cedar request
 context. It passes <code>context.input</code> through from the event, evaluates <strong>every</strong>
 declared provider field (resolving each argument, then running the provider), and
@@ -457,6 +562,11 @@ is evaluated and its output bound into <code>context.providers</code>; <em>Cedar
 policies fire, using its ordinary scope and condition semantics. (Deciding “could
 this rule match this event?” before running its provider would mean re-implementing
 Cedar’s scope semantics inside the provider machinery, so Dogwood does not.)</p>
+<p>The exported schema omits <code>providers</code> from actions untouched by provider rules,
+while Dogwood’s runtime context still contains the unconditional provider-output
+superset. Integrations that perform schema-aware request-context validation must
+account for that distinction, just as they must for action-selective temporal
+fields.</p>
 <p>Three consequences for provider authors:</p>
 <ol>
 <li>
@@ -497,6 +607,12 @@ verdict) or handle it differently. A policy set
 whose safety depends on an erroring provider denying is incorrect on <strong>every</strong>
 implementation, including this one. Defensive scripts (point 2) are the only
 defense.</p>
+<p>An output that doesn’t match its declared shape (a bare string where a record is
+declared, a missing required field) counts as a provider error only when the
+declared type contains an enum. Otherwise the value reaches Cedar as is. Cedar
+fails on the field, reports the error in the response’s diagnostics, and treats
+that policy as not satisfied for that request. For a <code>forbid</code>, the request can
+then be allowed.</p>
 </li>
 </ol>
 <p>The same contract applies to external providers supplied through a

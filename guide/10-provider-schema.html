@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-fe654853.js";
+            window.path_to_searchindex_js = "../searchindex-43ed227d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-982af72f.js"></script>
+        <script src="../toc-9744742b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -229,12 +229,64 @@ records). The <code>paramType</code> values and how they map to Cedar types:</p>
 <tr><td><code>decimal</code></td><td><code>decimal</code></td><td>Cedar decimal extension</td></tr>
 <tr><td><code>set</code></td><td><code>Set&lt;inner&gt;</code></td><td>inner comes from <code>items</code>, defaults to <code>String</code></td></tr>
 <tr><td><code>record</code></td><td><code>{ f?: T, … }</code></td><td>each field required-or-optional per <code>required</code></td></tr>
-<tr><td>any other (unknown)</td><td><code>String</code></td><td>permissive fallback</td></tr>
+<tr><td><code>entity</code></td><td>an enum type</td><td>needs <code>entityType</code>; see <em>Enum-typed values</em> below</td></tr>
+<tr><td>any other (unknown)</td><td><code>String</code></td><td>deprecated fallback; warns (error in next major)</td></tr>
 </tbody>
 </table>
 </div>
 <p>For a <code>record</code>, each field is rendered as <code>name: T</code> if <code>name</code> is listed in <code>required</code>,
 otherwise <code>name?: T</code> (optional). Records and sets nest.</p>
+<h3 id="enum-typed-values"><a class="header" href="#enum-typed-values">Enum-typed values</a></h3>
+<p>A provider can return a value from a fixed list. Declare the list once under the
+top-level <code>entityTypes</code> key, in a namespace of a provider in the same file, and
+reference it with <code>"paramType": "entity"</code>:</p>
+<pre><code class="language-json">{
+  "entityTypes": { "GuardDuty::Severity": { "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"] } },
+  "availableProviders": {
+    "GuardDuty::ThreatDetector": {
+      "argumentTypes": [ { "paramType": "set", "items": { "paramType": "string" } } ],
+      "outputType": { "paramType": "record",
+        "fields": { "threatSeverity": { "paramType": "entity", "entityType": "GuardDuty::Severity" } },
+        "required": ["threatSeverity"] }
+    }
+  }
+}
+</code></pre>
+<p>Policies compare against the declared values, with <code>==</code>, <code>!=</code> or <code>in [..]</code>:</p>
+<pre><code>forbid (principal, action, resource)
+when { GuardDuty::ThreatDetector([context.input.prompt]).threatSeverity == GuardDuty::Severity::"HIGH" };
+</code></pre>
+<ul>
+<li><strong>Checked at validation:</strong> a value outside the list (<code>"HIHG"</code>, <code>"high"</code>), a comparison
+with a plain string, or an ordering comparison is rejected.</li>
+<li><strong>Fail closed at runtime:</strong> the implementation returns the bare id (<code>"HIGH"</code>). An id
+outside the list denies the request, with the diagnostic <code>provider `…`.threatSeverity: `UNKNOWN` is not a member of `GuardDuty::Severity` </code>. So does an output of the wrong
+shape: a bare <code>"HIGH"</code> instead of the declared record (<code>expected a record, got a string</code>), or a record missing a required enum field (<code>missing required field `threatSeverity` </code>). This shape check applies only to types that contain an enum.</li>
+<li><strong>Only what’s used:</strong> an enum is added to the schema only when the policy set calls a
+provider that uses it.</li>
+<li><strong>Not the action schema’s enums:</strong> an output can’t use an enum declared in the action
+schema, and comparing a provider enum with one is never true. An action-schema enum can
+still be an argument (<code>"paramType": "entity"</code> with its name as <code>entityType</code>).
+Validation checks the argument’s enum type only for a direct <code>context</code> field (see
+<a href="#how-invocations-are-validated-against-declarations">How invocations are validated</a>).
+See <a href="05-information-providers.html#enum-typed-values">Enum-typed values</a>.</li>
+</ul>
+<p><strong>Where enums go in the exported schema.</strong> Dogwood never adds a namespace. Each enum is
+exported into the action schema’s <strong>home namespace</strong> (the first namespace, in sorted
+order, that declares actions; the root namespace sorts first) under a fixed name: its
+declared name with each <code>::</code> replaced by <code>_</code>. The exported policies use that name:</p>
+<pre><code class="language-cedar">namespace Drupe {
+  @dogwood_provider_enum("GuardDuty::Severity")
+  entity GuardDuty_Severity enum ["LOW", "MEDIUM", "HIGH", "CRITICAL"];
+  …
+}
+// lowered: … .threatSeverity == Drupe::GuardDuty_Severity::"HIGH"
+</code></pre>
+<p>There is one copy per enum, which actions in other namespaces refer to by its full name,
+so a policy over several namespaces matches on all of them. Validation messages show the
+declared name. Lowering fails if the action schema already declares the exported name or
+the declared name, or if the exported name would shadow a root-namespace name; loading
+fails if two declared enums map to the same exported name (<code>A_B::C</code> and <code>A::B_C</code>).</p>
 <h3 id="choosing-the-implementation-inline-script-vs-scriptfile"><a class="header" href="#choosing-the-implementation-inline-script-vs-scriptfile">Choosing the implementation: inline <code>script</code> vs <code>scriptFile</code></a></h3>
 <p>The <code>implementation</code> object is tagged by <code>kind</code>. The only kind today is <code>"rhai"</code>, and
 it can carry the script two ways:</p>
@@ -375,6 +427,14 @@ admitted entity types is rejected outright — there is no single type to
 check. Record FIELDS are not compared (Cedar records are invariant, but
 exact field matching needs structured record types, which the shared
 resolver collapses to <code>object</code>) — a deliberate deferred boundary.</li>
+<li><strong>Entity types are compared only for a direct <code>context</code> field.</strong> An <code>entity</code>
+argument such as <code>context.input.level</code> must have the declared <code>entityType</code>:
+an <code>App::Bar</code> field is rejected for a declared <code>App::Foo</code>. Anywhere else only
+the category is checked, so validation accepts a <code>Set&lt;App::Bar&gt;</code> for a
+declared <code>Set&lt;App::Foo&gt;</code>, an <code>App::Bar</code> field inside a record argument, and a
+<code>principal</code>/<code>resource</code> attribute of type <code>App::Bar</code>. The script receives the
+bare id (<code>"HIGH"</code>) either way, so nothing catches such a mismatch at runtime
+either: make sure the enum types match.</li>
 </ul>
 </li>
 </ol>
@@ -589,14 +649,21 @@ calling evaluate.”</p>
 <code>context.providers.&lt;field&gt;</code>. The surrounding projection and comparison were already
 ordinary Cedar, so they lower natively — an index <code>["k"]</code> becomes <code>.k</code>, and the
 comparison stays as whatever Cedar op you wrote.</p>
-<p>Dogwood also <strong>augments the Cedar schema</strong>. EVERY action’s <code>context</code> record gains
-a required <code>providers</code> record (matching the unconditional evaluation below — the
-declared schema and the runtime context always agree), and each hoisted field is
-typed from its provider’s declared <code>outputType</code>. (The base <code>schema.cedarschema</code>
-files in the corpus are the un-augmented schemas; the synthetic
-<code>context.providers</code> record is added during compilation. The base action schema is
-described in <a href="02-policy-language.html">The policy language</a> and the event schema in
-<a href="03-event-schema.html">The event schema</a>.)</p>
+<p>Dogwood also <strong>augments the Cedar schema</strong>. It defines one generated common type
+per touched namespace, normally named <code>DogwoodProviders</code> (or a numeric-suffixed
+variant if that name is occupied), containing every hoisted provider field
+typed from its provider’s declared <code>outputType</code>. Each action reached by at
+least one provider-bearing policy gains a required <code>providers</code> reference to
+that type; actions untouched by provider policies omit it. The fields
+themselves therefore appear once rather than once per action. (The base
+<code>schema.cedarschema</code> files in the corpus are un-augmented; the common type and
+references are added during compilation.)</p>
+<p>The generated type carries <code>@dogwood_provider_context("1.1")</code>. This marker
+identifies both Dogwood’s ownership of the type and the provider-schema
+representation introduced for the language’s v1.1 release.</p>
+<p>Provider execution below remains unconditional, so Dogwood’s runtime context is
+a superset of the action-selective schema shape. A consumer performing strict
+schema-aware request-context validation must account for that distinction.</p>
 <p><strong>At authorize time</strong>, for each decision event Dogwood builds the Cedar request
 context. It passes <code>context.input</code> through from the event, evaluates <strong>every</strong>
 declared provider field (resolving each argument, then running the

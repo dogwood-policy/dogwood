@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-fe654853.js";
+            window.path_to_searchindex_js = "../searchindex-43ed227d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-982af72f.js"></script>
+        <script src="../toc-9744742b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -372,9 +372,9 @@ impl ServiceSchemaBuilder {
 <ul>
 <li><code>parse(source, &amp;service)</code> — <strong>phase 1</strong>, schema-free. Parses and macro-expands against the <code>ServiceSchema</code> alone; catches syntax and macro-resolution errors but <strong>not</strong> schema-dependent ones (unknown attributes, type errors) — those need the action schema. Useful to reject a broken policy before the action schema is available. The returned <code>ParsedPolicySet</code> carries its <code>ServiceSchema</code>, so phase 2 needs only the <code>PolicySchema</code>.</li>
 <li><code>lower(&amp;policy_schema)</code> — <strong>phase 2</strong>. Derives the event schema against the action schema, lowers to Cedar, augments the schema with hoisted <code>context.&lt;id&gt;</code> fields, and injects pins. Produces the <code>LoweredPolicySet</code>. Emitted policy ids and hoisted field names use the default <code>policy_&lt;index&gt;</code> namespace.</li>
-<li><code>lower_with_distincter(&amp;policy_schema, distincter)</code> — like <code>lower</code>, but namespaces this call’s policy ids and hoisted field names under <code>distincter</code> (ids become <code>&lt;distincter&gt;_&lt;index&gt;</code>). Supply a <strong>distinct</strong> value per call when combining independently-lowered sets into one Cedar <code>PolicySet</code> / policy store, or when feeding an augmented schema forward. The <code>distincter</code> must be a valid Cedar identifier (<code>[_A-Za-z][_A-Za-z0-9]*</code>) — else <code>Error::InvalidDistincter</code>. It is <strong>not</strong> derived from a source <code>@id</code>; distinctness is the caller’s decision. Note the plain <code>lower</code> path uses the namespace <code>policy</code>, so it is not automatically distinct from a <code>"policy"</code> distincter.</li>
+<li><code>lower_with_distincter(&amp;policy_schema, distincter)</code> — like <code>lower</code>, but namespaces this call’s policy ids and hoisted field names under <code>distincter</code> (ids become <code>&lt;distincter&gt;_&lt;index&gt;</code>). Supply a <strong>distinct</strong> value per call when combining independently-lowered sets into one Cedar <code>PolicySet</code> / policy store, or when feeding an augmented schema forward; <code>lower_many(&amp;[(&amp;parsed, distincter)], &amp;policy_schema)</code>, where each <code>distincter</code> is a <code>Distincter</code>, lowers each entry independently against <code>policy_schema</code> and returns one merged <code>LoweredPolicySet</code> whose schema is <code>policy_schema</code> augmented once with every entry’s hoisted fields (a repeated distincter is <code>Error::DuplicateDistincter</code>). Its entries are parsed sets, so like <code>lower</code> it needs only the <code>PolicySchema</code>. The <code>distincter</code> must be a valid Cedar identifier (<code>[_A-Za-z][_A-Za-z0-9]*</code>) — else <code>Error::InvalidDistincter</code>. A <code>Distincter</code> is a string validated against that rule once, at construction (<code>"tenant_42".parse::&lt;Distincter&gt;()</code> or <code>Distincter::try_from</code>); <code>lower_with_distincter</code> parses its <code>&amp;str</code> into one. It is <strong>not</strong> derived from a source <code>@id</code>; distinctness is the caller’s decision. Note the plain <code>lower</code> path uses the namespace <code>policy</code>, so it is not automatically distinct from a <code>"policy"</code> distincter.</li>
 </ul>
-<p><code>LoweredPolicySet::from_str(src, &amp;service, &amp;policy_schema)</code> (below) is the fused form of <code>parse</code> then <code>lower</code> for when the action schema is already in hand.</p>
+<p><code>LoweredPolicySet::from_str(src, &amp;service, &amp;policy_schema)</code> (below) is the fused form of <code>parse</code> then <code>lower</code> for when the action schema is already in hand; <code>LoweredPolicySet::from_many_str(&amp;[(text, distincter)], &amp;service, &amp;policy_schema)</code> is likewise the fused form of <code>parse</code> on each entry then <code>lower_many</code>.</p>
 <h3 id="loweredpolicyset-and-the-cedar-export-accessors"><a class="header" href="#loweredpolicyset-and-the-cedar-export-accessors">LoweredPolicySet and the Cedar export accessors</a></h3>
 <p><code>LoweredPolicySet</code> is opaque. It is produced by <code>ParsedPolicySet::lower</code> (or the fused <code>from_str</code> shortcut) and consumed by <code>Validator::validate</code> and <code>Authorizer::new</code> / <code>Authorizer::builder</code>. Beyond lowering, its accessors are the bridge to plain Cedar and external policy stores.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -475,7 +475,7 @@ pub enum ValidationWarning {
 <span class="boring">}</span></code></pre>
 <ul>
 <li>Setting a principal <strong>or</strong> resource marks the event as wrapping an authorization request (it gains a principal/resource scope).</li>
-<li><code>timestamp</code> defaults to <code>0</code>; timestamps order events for temporal operators, and the first event of a fresh authorizer can safely stay at <code>0</code>.</li>
+<li><code>timestamp</code> defaults to <code>0</code>; the first event of a fresh authorizer can use that value. The reference interpreter preserves supplied timestamps. Test authors must deliberately choose the observation sequence and supply <strong>strictly increasing timestamps</strong>. Trace positions follow the order events are passed to <code>is_authorized</code>; timestamps measure <code>within</code> windows. The interpreter validates neither the observation sequence nor the timestamp contract. See <a href="04-temporal-expressions.html#evaluation-semantics">Evaluation semantics</a>.</li>
 <li><code>field(group, name, value)</code> accumulates into the logged record’s nested <code>group</code> object (<code>input</code> is one such group, not privileged). It is <strong>not</strong> read by a policy’s <code>context.&lt;group&gt;.&lt;name&gt;</code> clause — that reads the separate request-context bag set via <code>request_context(group, name, value)</code>. A field a policy reads <em>and</em> a temporal predicate correlates on must be supplied to <strong>both</strong>.</li>
 <li>Entity uid strings are parsed as <code>Type::"id"</code> (possibly namespaced); a string that is not of that shape yields no scope value.</li>
 </ul>
@@ -610,7 +610,7 @@ pub trait TemporalEngine: Send {
 <p>The lifecycle has three points:</p>
 <ul>
 <li><code>prepare(leaves, schema, events)</code> — <strong>once</strong>, at authorizer-build time. A custom backend does its one-time setup here (an engine that precomputes queries against a store, say, would build them now); <code>events</code> carries the declared signature of every event kind the policy set can see (each field’s dotted path and type), which such a backend needs to emit type-correct comparisons.</li>
-<li><code>observe(event)</code> — for <strong>every</strong> ingested event (decision or history-only), in timestamp order, before any <code>evaluate</code> that includes it. A backend persists the event (in memory, or in an external store).</li>
+<li><code>observe(event)</code> — for <strong>every</strong> ingested event (decision or history-only), in ingestion order, before any <code>evaluate</code> that includes it. A backend persists the event (in memory, or in an external store).</li>
 <li><code>evaluate()</code> — at each decision point, <strong>after</strong> that point’s event has been observed. It returns each leaf’s boolean keyed by id. The in-memory backend re-runs the interpreter; a custom backend evaluates however it prepared. A failure (an external store being unreachable, say) <strong>fails the decision closed</strong> by returning <code>Err(String)</code>.</li>
 </ul>
 <p>The built-in default is <code>InMemoryTemporalEngine</code> (implements <code>Default</code>, with <code>InMemoryTemporalEngine::new()</code>): it keeps the event history in memory and re-runs the in-process temporal interpreter over the trace so far. <code>prepare</code> stores the leaves (no compilation), <code>observe</code> appends to an in-memory log, and <code>evaluate</code> runs the interpreter at the last timepoint.</p>
@@ -786,6 +786,15 @@ pub enum Error {
 <li>A <strong>history-only event</strong> makes <code>is_authorized</code> return <code>None</code> — it observes the event to update temporal state but yields no verdict, and contributes no line in <code>replay_log</code>.</li>
 <li><strong>Statelessness is just a special case:</strong> a single stateless decision is a fresh <code>Authorizer</code> fed one <code>request</code>-kind event (for example via <code>Event::from_request</code>).</li>
 </ul>
+<p><strong>For an enforcing integration, the caller is the enforcement point.</strong> Verdicts are computed over events in the order you pass them to <code>is_authorized</code>. An integration should:</p>
+<ul>
+<li><strong>run the action only after an <code>Allow</code> verdict</strong> for its decision event;</li>
+<li><strong>report history-only events</strong> (<code>response</code>, <code>error</code> by default) promptly and reliably once the action resolves;</li>
+<li><strong>supply increasing timestamps</strong>, each greater than the previous one, in the order events are passed in.</li>
+</ul>
+<p>See the <a href="04-temporal-expressions.html#evaluation-semantics">observed-sequence example</a>
+for how delayed or missing history-only events can flip a verdict despite
+correctly increasing timestamps.</p>
 <p><strong>Authorization never aborts, and this implementation resolves evaluation failures to <code>Deny</code>.</strong> Any evaluation failure — a provider that errors, the temporal engine erroring, a decision event missing a principal/resource, a policy engine that was never prepared — yields a <code>Deny</code> with the reason recorded in <code>Response::diagnostics().errors()</code>. (For provider errors this deny is a description of this implementation, not a semantic guarantee: an erroring provider is undefined behavior under <a href="05-information-providers.html#the-provider-contract">the provider contract</a>, so a policy set must never rely on deny-on-error.) The temporal seam’s <code>evaluate</code> returning <code>Err</code> and the policy seam’s <code>errors</code> vector both funnel into this same place. So a caller that wants to distinguish “denied by policy” from “denied because something broke” should always inspect <code>diagnostics().errors()</code>, not just <code>decision()</code>.</p>
 <p>Finally, the three policy-clause forms map cleanly onto the seams, which is a useful mental model when reading a policy:</p>
 <ul>

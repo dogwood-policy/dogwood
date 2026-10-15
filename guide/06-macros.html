@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-fe654853.js";
+            window.path_to_searchindex_js = "../searchindex-43ed227d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-982af72f.js"></script>
+        <script src="../toc-9744742b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -219,7 +219,7 @@ macro is always declared at the top level of a file, never inside a policy.</p>
 <em>kind</em>, gives the macro a name and a parameter list, wraps a body in braces, and
 ends with a mandatory semicolon:</p>
 <pre><code class="language-text">def cedar    &lt;name&gt;(?p, ?q, ...) { &lt;cedar expression&gt; } ;
-def temporal &lt;name&gt;(?w, ?s, ...) { &lt;temporal condition or aggregation&gt; } ;
+def temporal &lt;name&gt;(?w, ?s, ...) { &lt;temporal condition or value&gt; } ;
 </code></pre>
 <p>The kind keyword after <code>def</code> — <code>cedar</code> or <code>temporal</code> — chooses the sub-language
 the body is parsed in, and that in turn decides where the macro may be called.
@@ -288,7 +288,7 @@ when { semverGT(semver(2, 1, 1), semver(2, 1, 0)) };
 spliced into the outer macro’s body — nesting one macro call as an argument to
 another is fine. (Nesting a call <em>inside a macro’s declared body</em> is not; see
 <a href="#no-macro-in-macro">No macro-in-macro</a>.)</p>
-<h3 id="def-temporal--a-temporal-condition-or-aggregation"><a class="header" href="#def-temporal--a-temporal-condition-or-aggregation"><code>def temporal</code> — a temporal condition or aggregation</a></h3>
+<h3 id="def-temporal--a-temporal-condition-or-value"><a class="header" href="#def-temporal--a-temporal-condition-or-value"><code>def temporal</code> — a temporal condition or value</a></h3>
 <p>A <code>def temporal</code> macro’s body is written in the temporal sub-language (the same
 one you write inside a <code>when temporal { ... }</code> clause; see
 <a href="04-temporal-expressions.html">Temporal expressions</a>). Depending on what the body
@@ -297,9 +297,10 @@ automatically by the parser:</p>
 <ul>
 <li>a <strong>temporal condition</strong> — for example a <code>formerly within ... ...</code> predicate,
 which is callable wherever a temporal condition is expected; or</li>
-<li>a <strong>temporal aggregation</strong> — a <code>count</code>/<code>sum</code> expression, which is callable
-only as an operand of a comparison (the value side of an aggregation), never
-as a standalone condition.</li>
+<li>a <strong>temporal value</strong> — a <code>count</code>/<code>sum</code> expression, or arithmetic over such
+expressions (<code>(count …) - (count …)</code>), which is callable only as a
+comparison operand, never as a standalone condition. A value body must
+contain at least one aggregation; a bare constant is rejected.</li>
 </ul>
 <p>The distinction matters at call sites, because Dogwood enforces which flavour
 may appear where (see <a href="#kind-checking">Kind checking</a>).</p>
@@ -366,6 +367,24 @@ introduces the <code>n</code> the count is compared against (<code>exists</code>
 sublanguage’s only binder; see
 <a href="04-temporal-expressions.html">Temporal expressions</a>). The macro call fills
 the aggregate slot.</p>
+<p>A value body may also be <strong>arithmetic over aggregations</strong>, which is how a
+derived quantity gets a name of its own. A net-open counter is a difference
+of two counts, and the body splices as a subtree wherever the call sits, so
+an enclosing expression keeps exact precedence (<code>2 * net(…)</code> multiplies the
+whole difference):</p>
+<pre><code class="language-text">def temporal net_open(?w) {
+    (count for ($t: Timepoint). where (formerly within ?w (Repo::Action::"Open"::request{} &amp;&amp; tp($t))))
+    - (count for ($u: Timepoint). where (formerly within ?w (Repo::Action::"Close"::response{} &amp;&amp; tp($u))))
+};
+
+permit (principal, action == Repo::Action::"Open", resource)
+when temporal {
+    net_open(24h) &lt;= 10
+};
+</code></pre>
+<p>A value body must contain at least one <code>count</code>/<code>sum</code> — <code>def temporal cap() { 100 }</code> is rejected — and, like every macro body, may not call other
+macros, so a difference of two <em>named</em> counts is written by inlining the
+counts as above and naming only the difference.</p>
 <p>The <code>$t</code> in that body is a fresh binder the macro introduces itself,
 not a parameter. That is the subject of the next section.</p>
 <h2 id="parameters-two-sigils-two-jobs"><a class="header" href="#parameters-two-sigils-two-jobs">Parameters: two sigils, two jobs</a></h2>
@@ -489,11 +508,11 @@ a silent coercion. The messages are specific about what went wrong:</p>
 temporal macro and cannot be called in a cedar expression position”.</li>
 <li>Calling a Cedar macro in a temporal condition position: “macro <code>&lt;name&gt;</code> is a
 cedar macro and cannot be called in a temporal condition position”.</li>
-<li>Calling an aggregation macro as if it were a condition: rejected — an
-aggregation macro must appear as a comparison operand, not as a standalone
-condition.</li>
-<li>Calling a condition macro in an aggregation-value position: rejected — a
-condition macro cannot be used where an aggregation value is expected.</li>
+<li>Calling a value macro as if it were a condition: rejected — a value macro
+(an aggregation or arithmetic over aggregations) must appear as a
+comparison operand, not as a standalone condition.</li>
+<li>Calling a condition macro in a value position: rejected — a condition
+macro cannot be used where a comparison operand is expected.</li>
 </ul>
 <h3 id="argument-shape-checking"><a class="header" href="#argument-shape-checking">Argument-shape checking</a></h3>
 <p>Even with the right count and kind, each argument’s <em>shape</em> must match how the

@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-fe654853.js";
+            window.path_to_searchindex_js = "../searchindex-43ed227d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-982af72f.js"></script>
+        <script src="../toc-9744742b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -184,25 +184,32 @@
                         <h1 id="access_not_revoked_since_grant"><a class="header" href="#access_not_revoked_since_grant">access_not_revoked_since_grant</a></h1>
 <p>The “open session” idiom: a <strong>negated left operand</strong> on <code>since</code> expresses “has
 not happened since.” Because <code>!</code> binds tighter than <code>since</code>, <code>!A since within W B</code> negates only <code>A</code>, giving “no <code>A</code> has happened since <code>B</code>.” Here: permit an
-<code>Access</code> only if the user has <strong>not</strong> been <code>Revoke</code>d on this resource since they
-were <code>Grant</code>ed it within the last hour (<code>!Revoke since within 1h Grant</code>, with
-both <code>input.user</code> and <code>input.resource</code> pinned).</p>
-<p>The trace shows both outcomes:</p>
+<code>Access</code> only if a completed grant has been observed for this user and resource
+within the last hour, with no completed revocation observed since
+(<code>!Revoke::response since within 1h Grant::response</code>, with both <code>input.user</code>
+and <code>input.resource</code> pinned).</p>
+<p>The trace shows a delayed revocation notice, with timestamps in seconds since
+midnight. Access is revoked at 10:00, but the notice arrives at 10:02:</p>
 <ul>
-<li><code>@0</code> — <code>Grant</code> for <code>doc1</code>/<code>alice</code> (a history-only event here; no <code>Access</code>
-permit applies, so the decision is a deny).</li>
-<li><code>@100</code> — <code>alice</code> accesses <code>doc1</code>, after the grant and with no intervening
-revoke → <strong>allow</strong> (the not-revoked-since-grant chain holds).</li>
-<li><code>@200</code> — <code>Revoke</code> for <code>doc1</code>/<code>alice</code> (history-only; deny).</li>
-<li><code>@300</code> — <code>alice</code> accesses <code>doc1</code> again, but a <code>Revoke</code> now sits between the
-grant and this access → <strong>deny</strong> (the negated-left chain is broken).</li>
+<li><code>@35940</code> (09:59) — <code>Grant::response</code> reports a completed grant for <code>doc1</code>/<code>alice</code>
+(history-only; no verdict).</li>
+<li><code>@36060</code> (10:01) — <code>alice</code> requests access to <code>doc1</code>, with no revocation
+observed since the grant → <strong>allow</strong>.</li>
+<li><code>@36120</code> (10:02) — <code>Revoke::response</code> reports the completed revocation for
+<code>doc1</code>/<code>alice</code> (history-only; no verdict); the notice was delayed.</li>
+<li><code>@36180</code> (10:03) — <code>alice</code> requests access to <code>doc1</code> again, but a revocation
+has now been observed since the grant → <strong>deny</strong>.</li>
 </ul>
+<p>Had the revocation notice arrived before the 10:01 request, that request would
+have been denied. Increasing timestamps cannot compensate for missing history,
+and the late notice does not revise the earlier verdict.</p>
 <p>Referenced by <code>guide/04-temporal-expressions.md</code>.</p>
 <h2 id="policy"><a class="header" href="#policy">Policy</a></h2>
 <pre><code class="language-text">// The "open session" idiom: a negated LEFT operand expresses "has not happened
 // since". Because `!` binds tighter than `since`, `!A since within W B`
-// negates only A. Permit an Access only if the user has NOT been revoked on
-// this resource since they were granted it within the last hour.
+// negates only A. Permit Access only if a completed grant was observed for
+// this user and resource within the last hour, with no completed revocation
+// observed since.
 @id("access_not_revoked_since_grant")
 permit (
     principal,
@@ -210,9 +217,9 @@ permit (
     resource
 )
 when temporal {
-    !Drupe::Action::"Revoke"::request{ input.user: context.input.user, input.resource: context.input.resource }
+    !Drupe::Action::"Revoke"::response{ input.user: context.input.user, input.resource: context.input.resource }
     since within 1h
-    Drupe::Action::"Grant"::request{ input.user: context.input.user, input.resource: context.input.resource }
+    Drupe::Action::"Grant"::response{ input.user: context.input.user, input.resource: context.input.resource }
 };
 </code></pre>
 <h2 id="schema"><a class="header" href="#schema">Schema</a></h2>
@@ -348,16 +355,14 @@ when temporal {
 }
 </code></pre>
 <h2 id="trace"><a class="header" href="#trace">Trace</a></h2>
-<pre><code class="language-text">@0 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { resource: "doc1", user: "alice" }) Drupe::Action::"Grant"::request(input: { resource: "doc1", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u1")
-@100 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { resource: "doc1", user: "alice" }) Drupe::Action::"Access"::request(input: { resource: "doc1", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u2")
-@200 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { resource: "doc1", user: "alice" }) Drupe::Action::"Revoke"::request(input: { resource: "doc1", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u3")
-@300 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { resource: "doc1", user: "alice" }) Drupe::Action::"Access"::request(input: { resource: "doc1", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u4")
+<pre><code class="language-text">@35940 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { resource: "doc1", user: "alice" }) Drupe::Action::"Grant"::response(input: { resource: "doc1", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u1")
+@36060 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { resource: "doc1", user: "alice" }) Drupe::Action::"Access"::request(input: { resource: "doc1", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u2")
+@36120 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { resource: "doc1", user: "alice" }) Drupe::Action::"Revoke"::response(input: { resource: "doc1", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u3")
+@36180 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { resource: "doc1", user: "alice" }) Drupe::Action::"Access"::request(input: { resource: "doc1", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u4")
 </code></pre>
 <h2 id="expected-output"><a class="header" href="#expected-output">Expected Output</a></h2>
-<pre><code class="language-text">@0 (time point 0): DENY
-@100 (time point 1): ALLOW  [rules: 0]
-@200 (time point 2): DENY
-@300 (time point 3): DENY
+<pre><code class="language-text">@36060 (time point 0): ALLOW  [rules: 0]
+@36180 (time point 1): DENY
 </code></pre>
 
                     </main>

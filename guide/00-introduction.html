@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-fe654853.js";
+            window.path_to_searchindex_js = "../searchindex-43ed227d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-982af72f.js"></script>
+        <script src="../toc-9744742b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -242,6 +242,11 @@ something that happened — conventionally <code>response</code>). A history-onl
 updates what the temporal expressions can see but produces no verdict. This is
 why Dogwood’s authorizer is <strong>stateful</strong>: you feed it events one at a time, and
 each is remembered.</p>
+<p>An event records a <strong>single occurrence at one point in time</strong>. A <code>request</code> and a
+tool’s eventual <code>response</code> or <code>error</code> are separate events. The authorizer does
+not record the verdict as an event. Policies read events <strong>in ingestion order</strong>,
+which can differ from their order at the source or an enforcement point. See
+<a href="04-temporal-expressions.html#evaluation-semantics">Evaluation semantics</a>.</p>
 <h3 id="3-schemas"><a class="header" href="#3-schemas">3. Schemas</a></h3>
 <p>A <strong>schema</strong> tells Dogwood about your world. Dogwood composes <em>three</em>
 schemas plus a macro library into one:</p>

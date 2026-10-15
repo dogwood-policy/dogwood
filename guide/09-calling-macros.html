@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-fe654853.js";
+            window.path_to_searchindex_js = "../searchindex-43ed227d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-982af72f.js"></script>
+        <script src="../toc-9744742b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -295,12 +295,12 @@ when temporal {
 <blockquote>
 <p>Runnable: <a href="../examples/call_temporal_aggregation_macro_count.html"><code>examples/call_temporal_aggregation_macro_count/</code></a> — <code>dogwood validate</code> and <code>dogwood replay</code>.</p>
 </blockquote>
-<p>Argument-nesting works for temporal macros too: because an aggregation macro
-expands to a value (a <code>count</code>/<code>sum</code> term), a call to one may be passed as the
-argument to another temporal macro whose parameter sits in a comparison-operand
-position — the argument is expanded first, then spliced into that operand slot.
-Given <code>count_within</code> (an aggregation macro) and <code>bind</code> (which names the
-<code>exists … == …</code> binding scaffold):</p>
+<p>Argument-nesting works for temporal macros too: because a value macro
+expands to a comparison operand (a <code>count</code>/<code>sum</code> term, or arithmetic over
+them), a call to one may be passed as the argument to another temporal macro
+whose parameter sits in a comparison-operand position — the argument is
+expanded first, then spliced into that operand slot. Given <code>count_within</code> (a
+value macro) and <code>bind</code> (which names the <code>exists … == …</code> binding scaffold):</p>
 <pre><code class="language-text">def temporal count_within(?w, ?s) {
     count for ($t: Timepoint). where (formerly within ?w (?s &amp;&amp; tp($t)))
 };

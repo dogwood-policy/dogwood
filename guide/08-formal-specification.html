@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-fe654853.js";
+            window.path_to_searchindex_js = "../searchindex-43ed227d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-982af72f.js"></script>
+        <script src="../toc-9744742b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -248,9 +248,9 @@ over an artifact that <em>did</em> lower.</li>
 <code>x | y</code> is alternation, <code>"lit"</code> is a terminal. It is transcribed from the three
 <code>pest</code> grammars of record:</p>
 <ul>
-<li>core policy — <code>src/parser/grammar.pest</code></li>
-<li>temporal — <code>src/extension/temporal/grammar.pest</code></li>
-<li>event schema — <code>src/event_schema/grammar.pest</code></li>
+<li>core policy — <code>dogwood-syntax/src/grammar.pest</code></li>
+<li>temporal — <code>dogwood-language/src/extension/temporal/grammar.pest</code></li>
+<li>event schema — <code>dogwood-language/src/event_schema/grammar.pest</code></li>
 </ul>
 <p>(There is no provider grammar: an information-provider invocation is ordinary
 Cedar recognized at lowering — see <a href="#25-information-provider-invocations-no-dedicated-grammar">§2.5</a>.)</p>
@@ -362,7 +362,11 @@ named_args  ::= named_arg { "," named_arg }
 named_arg   ::= field_path ":" term
 field_path  ::= ident { "." ident }
 
-comparison  ::= term cmp_op term
+comparison  ::= arith cmp_op arith
+arith       ::= arith_mul { add_op arith_mul }
+arith_mul   ::= term { mul_op term }
+add_op      ::= "+" | "-"
+mul_op      ::= "*"
 cmp_op      ::= "&lt;=" | "&gt;=" | "==" | "&lt;" | "&gt;"
 
 agg_expr    ::= sum_expr | count_expr | call
@@ -379,9 +383,11 @@ call        ::= ident "(" [ call_arg { "," call_arg } ] ")"
 call_arg    ::= interval_lit | condition | term
 interval_lit::= integer time_unit
 
-term        ::= entity | decimal_lit | paren_agg | agg_expr | integer
-              | string | "true" | "false" | array | context_field
+term        ::= entity | decimal_lit | paren_agg | paren_arith | agg_expr
+              | integer | string | "true" | "false" | array | context_field
               | scope_field | wildcard | param_ref | binder_ref | ident
+paren_agg   ::= "(" agg_expr ")"
+paren_arith ::= "(" arith ")"
 entity      ::= ident { "::" ident } "::" string
 decimal_lit ::= "decimal" "(" string ")"
 context_field ::= "context" ("." ident)+           (* the context record  *)
@@ -527,8 +533,12 @@ P  (Predicate)  ::= (ns: name*, action: string, kind: string, args: NamedArg*)
 NamedArg        ::= (name: field_path, value: t)
 t  (Term)       ::= Entity(ty,id) | Int n | Decimal s | Str s | Bool b
                   | ContextField(seg*) | Var x | Wildcard | Array(t*)
-                  | Agg a | ParamRef name | BinderRef name              (* last two transient *)
+                  | Agg a | Arith(⊕, t, t)
+                  | ParamRef name | BinderRef name                      (* last two transient *)
 a  (AggExpr)    ::= Sum(x, (x:T)*, φ) | Count((x:T)*, φ) | Call c
+⊕  (ArithOp)    ::= + | − | ×
+                    (* a zero-operator operand is a bare t, never a
+                       degenerate Arith *)
 ⋈  (CmpOp)      ::= ≤ | &lt; | ≥ | &gt; | =
 W  (WithinSpec) ::= Concrete(n, unit) | ParamRef name                  (* ParamRef transient *)
 T  (Type)       ::= Timepoint | Named(name*)
@@ -664,8 +674,9 @@ both cases lowering collects the base <code>Invocation</code>, its eager output-
 (in source order), and any <em>trailing</em> field/index projection after the last
 method. The rule may use any action scope (<code>==</code>, <code>in [list]</code>, <code>in Group</code>, or a
 bare <code>action</code>); the hoisted field is typed from the declarations, declared on
-<strong>every</strong> action’s context by schema augmentation, and evaluated for every
-decision event (execution is unconditional — see the provider contract in
+one shared all-provider common type, and made available on every action reached
+by at least one provider-bearing rule. It is evaluated for every decision event
+(execution is unconditional — see the provider contract in
 <a href="05-information-providers.html#the-provider-contract">Information providers</a>). It
 hoists to a <strong>two-level</strong> reference <code>context.providers.&lt;id&gt;</code>:</p>
 <pre><code>   name = 𝓀 "_p_" ι      τ = cedarType(D, invocation, methods)      Γ′ = Γ[ι := ι+1, provider_fields ⊕ …]
@@ -702,11 +713,13 @@ meet a real schema. The set of kinds marked <code>decision</code> becomes the
 <li>
 <p><strong>Augmentation.</strong> The action schema is extended with the hoisted context
 fields the lowered policies reference: for each temporal leaf, a required
-<code>Bool</code> attribute <code>context.&lt;name&gt;</code> on its action(s); for provider leaves, a
-<code>providers</code> record grouping the fields, typed from the declarations. The
-augmentation <strong>merges</strong> into an existing <code>providers</code> record rather than
-replacing it, so feeding an augmented schema forward (incremental lowering)
-preserves earlier providers (<code>cedarify/schema_augment.rs</code>).</p>
+<code>Bool</code> attribute <code>context.&lt;name&gt;</code> on its action(s); for provider leaves, one
+annotated generated common type per touched namespace (normally
+<code>DogwoodProviders</code>, with a collision-avoiding numeric suffix) containing
+every provider field, typed from the declarations. Actions reached by any
+provider rule reference that type. Feed-forward augmentation extends every
+previously generated shared definition, preserving earlier providers
+(<code>cedarify/schema_augment.rs</code>).</p>
 </li>
 </ol>
 <p>Finally the temporal leaves’ conditions have schema <strong>pins</strong> injected — a pinned
@@ -800,7 +813,10 @@ plausible-looking policy, so they are given in full. All are <strong>conservativ
 (re-checked post-expansion — <strong>WF-Sigil-Punt</strong>).</p>
 <p>We write <code>x ∈ RR(φ)</code> for “<code>x</code> is range-restricted by a positive atom of <code>φ</code>”,
 where <code>RR</code> collects restrictors from: predicate fields <code>P{f: x}</code>, <code>tp(x)</code>, a
-binding equality <code>(non-var, non-wildcard term) == x</code> or the mirror (<code>x == *</code> restricts nothing — a wildcard resolves to no value), the bodies of
+binding equality <code>(non-var, non-wildcard term) == x</code> or the mirror (<code>x == *</code>
+restricts nothing — a wildcard resolves to no value; a compound arithmetic
+side restricts only when it is wildcard-free, a wildcard atom making the
+whole expression unresolvable), the bodies of
 <code>formerly</code>/<code>previous</code>, and the <strong>right</strong> operand of <code>since</code> — descending through
 <code>&amp;&amp;</code> and nested <code>exists</code> (dropping the inner binder’s own fact). A negation
 contributes <strong>nothing, at any depth</strong>: <code>RR</code> does not descend into <code>!ψ</code> —
@@ -834,13 +850,18 @@ order and walk left to right with an accumulator <code>ρ</code>:</p>
 equality that binds nothing (<code>x == y</code> with both bare vars, both sides
 ground, or a <code>*</code> wildcard side — a wildcard is never a resolvable value),
 or a guarded negation <code>!ψ</code> (<strong>WF-Neg-Guarded</strong>) — demands all its free
-variables and produces none. Otherwise: <em>“variable <code>v</code> is used in a filter
-… that is not range-restricted by a preceding conjunct …”</em>.</li>
-<li>a <strong>binding equality</strong> <code>x == v</code> produces <code>x</code> and demands the value side’s
-<em>outward</em> free variables — for an aggregate operand, <code>fv(body) ∖ for-list</code>
-(a correlated aggregate is only per-<code>u</code> when <code>u</code> is already bound; with
-<code>u</code> unbound the count/sum silently de-correlates). Otherwise: <em>“the
-equality binding <code>n</code> reads <code>u</code> inside its aggregate operand …”</em>.</li>
+variables and produces none. A compound arithmetic operand contributes
+all its variables to the demand (a compound never binds — there is no
+algebraic solving, so <code>m + 1 == 5</code> binds nothing). Otherwise: <em>“variable
+<code>v</code> is used in a filter … that is not range-restricted by a preceding
+conjunct …”</em>.</li>
+<li>a <strong>binding equality</strong> <code>x == v</code> — <code>v</code> a ground term, an aggregate, or a
+wildcard-free compound expression, against a bare unbound <code>x</code> — produces
+<code>x</code> and demands the value side’s <em>outward</em> free variables: for an
+aggregate, <code>fv(body) ∖ for-list</code> (a correlated aggregate is only per-<code>u</code>
+when <code>u</code> is already bound; with <code>u</code> unbound the count/sum silently
+de-correlates), and for a compound, every variable in it. Otherwise:
+<em>“the equality binding <code>n</code> reads <code>u</code> inside its aggregate operand …”</em>.</li>
 <li>a <strong><code>since</code></strong> produces <code>RR(anchor)</code> and demands <code>fv(left) ∖ RR(anchor)</code>
 (the standard <code>free(β) ⊆ free(γ)</code> side condition, relaxed to “or restricted
 earlier”: the left is a per-step condition evaluated under the anchor’s
@@ -965,15 +986,44 @@ firing, so the divergence surfaces as a permit.</li>
 </ul>
 <p>If a policy must not depend on any of this, keep window totals inside the <code>Long</code> range
 — which for the aggregate to be meaningful is normally already true.</p>
-<p><strong>Aggregate position.</strong> An aggregate may appear <strong>only</strong> as the immediate operand
-of a comparison:</p>
+<p><strong>Aggregate and arithmetic position.</strong> An aggregate may appear <strong>only</strong> in
+comparison-operand position — as a direct operand, or as a leaf of a compound
+arithmetic operand; an arithmetic expression is likewise
+comparison-operand-only:</p>
 <pre><code>  ─────────────────────────────────────────────────────── (WF-Agg-Operand)
-   an Agg is well-placed iff it is a direct operand of a Comparison;
+   an Agg is well-placed iff it is a direct operand of a Comparison or a
+   leaf of an Arith in that position;
    an Agg as a predicate-arg value, an array element, or otherwise nested ⟹ reject
+
+  ─────────────────────────────────────────────────────── (WF-Arith-Operand)
+   an Arith is well-placed iff it is a direct operand of a Comparison or
+   nested in another well-placed Arith;
+   an Arith as a predicate-arg value or an array element ⟹ reject
 </code></pre>
-<p><em>(<code>check.rs</code> <code>check_operand</code>.)</em> Violation: <em>“an aggregate (<code>sum</code>/<code>count</code>) may appear only as
-the immediate operand of a comparison …”</em>. This makes the aggregate-binding idiom <code>exists (n: T). ((A) == n &amp;&amp; B)</code> well-formed: <code>(A) == n</code> binds
-<code>n</code> (restrictor), then <code>B</code>’s use of <code>n</code> is an already-restricted filter.</p>
+<p><em>(<code>check.rs</code> <code>check_operand</code> / <code>reject_nested_agg</code>.)</em> Violations: <em>“an aggregate
+(<code>sum</code>/<code>count</code>) may appear only as the immediate operand of a comparison …”</em> /
+<em>“arithmetic (<code>+</code>/<code>-</code>/<code>*</code>) may appear only as the immediate operand of a
+comparison …”</em>. (The grammar already rejects the bare arithmetic form in those
+positions — they take a <code>term</code>, not an <code>arith</code> — so only the parenthesized
+grouping form reaches WF-Arith-Operand.) This makes the aggregate-binding
+idiom <code>exists (n: T). ((A) == n &amp;&amp; B)</code> well-formed: <code>(A) == n</code> binds <code>n</code>
+(restrictor), then <code>B</code>’s use of <code>n</code> is an already-restricted filter.</p>
+<p><strong>Experimental gate.</strong> Compound (<code>Arith</code>) operands are gated behind the
+off-by-default Cargo feature <code>experimental-arithmetic</code>. A build without the
+feature rejects, after the checks above, any condition containing an <code>Arith</code>
+(<em>“arithmetic in comparison operands is not yet supported”</em>); a build with
+the feature accepts it, and validation warns that arithmetic operators are
+experimental and may change in a future release. The arithmetic rules in
+this specification describe builds with the feature on.</p>
+<p><strong>Arithmetic out-of-range results.</strong> A compound operand evaluates over <code>Long</code>.
+A result outside the <code>Long</code> range is <strong>implementation-defined</strong> exactly as an
+out-of-range aggregate total is (above): clamp, wider precision, or an error
+are all conforming. This implementation clamps (saturates) <strong>per operation,
+in tree order</strong>, which is observable against wider-precision evaluation away
+from a single endpoint: <code>0 + MAX + 5 - 10</code> is <code>MAX − 10</code> under per-operation
+clamping but <code>MAX − 5</code> at wider precision. A policy whose verdict depends on
+that difference is not portable; keep intermediate results inside the <code>Long</code>
+range (for cross-multiplied ratio guards, both products).</p>
 <h3 id="55-temporal-dialect-validation-against-the-schema"><a class="header" href="#55-temporal-dialect-validation-against-the-schema">5.5 Temporal dialect validation (against the schema)</a></h3>
 <p>Given an accepted condition, the temporal <em>dialect</em> checks it against the derived
 event schema and the augmented Cedar schema, per leaf, in order: <strong>event-schema
@@ -1001,9 +1051,12 @@ scoped action’s input fields <strong>and every binder’s declared annotation<
 environment: a predicate arg must match its declared field type; a use of a
 bound variable must be consistent with its declared type; an ordering
 comparison requires both operands <strong>numeric</strong> (only <code>int</code> is numeric — an
-aggregate types as <code>int</code>, decimal is <strong>not</strong> numeric here); an equality
-requires compatible types; and a <code>tp(x)</code> binder must be declared
-<code>Timepoint</code> — any other declaration conflates a timepoint index with a
+aggregate and a compound arithmetic operand type as <code>int</code>, decimal is
+<strong>not</strong> numeric here); an equality requires compatible types; every atom
+of a compound arithmetic operand must type <code>int</code> — decimal, string, bool,
+entity, array, and wildcard atoms are rejected, the wildcard by name
+since it would make the guard silently false (<strong>TEMP-Arith-Long</strong>); and a
+<code>tp(x)</code> binder must be declared <code>Timepoint</code> — any other declaration conflates a timepoint index with a
 data value, making the condition permanently false (a validated dead
 guard). A check fires only when both types are known (<strong>TEMP-Type-</strong>*).</li>
 <li><strong>Max window</strong> — every <code>within</code> window in the leaf (on a <code>formerly</code>,
@@ -1057,6 +1110,25 @@ field <strong>group</strong> rather than a leaf (<strong>EVENT-Field-Group</stro
 always grows). A <code>Response ρ = (decision ∈ {Allow, Deny}, reason: DogwoodRuleRef*, errors: String*)</code>. This is <code>Authorizer::is_authorized</code> (<code>authorize/mod.rs</code>,
 <code>api.rs</code>). The <code>None</code> result — “this event decided nothing” — is the essential
 difference from Cedar.</p>
+<p>An event <code>e</code> records a <strong>single occurrence at one point in time</strong>, carrying an
+action, event kind, fields, and timestamp. Under the default event schema, a
+<code>request</code> records an attempt to run an action, and its eventual <code>response</code> or
+<code>error</code> is a separate event recording the operation’s result. The authorization
+verdict <code>ρ</code> is not itself recorded as an event. A <code>response</code>-kind event is
+therefore distinct from the authorization <code>Response ρ</code>.</p>
+<p><code>H</code> is ordered by ingestion: its positions follow the order in which events
+are passed to the authorizer. This can differ from their creation order or
+their arrival order at an enforcement point. Trace positions determine the
+ordering used by the temporal operators, and <code>tp(t)</code> binds a position index.
+Timestamps determine membership in <code>within</code> windows. Evaluation at position
+<code>i</code> reads only positions <code>j &lt;= i</code>, including the current event.</p>
+<p>Event timestamps are assumed to be <strong>increasing</strong> along <code>H</code>:
+<code>ts(i + 1) &gt; ts(i)</code>, so timestamps are also unique. The reference interpreter
+neither sorts events nor checks this assumption. Other authorizer implementations
+can assign strictly increasing timestamps at ingestion; durable Local Engine
+submission does so. Traces with repeated or decreasing
+timestamps are outside the specified semantics. See
+<a href="04-temporal-expressions.html#evaluation-semantics">Evaluation semantics</a>.</p>
 <h3 id="61-observe-then-gate-on-decision-kind"><a class="header" href="#61-observe-then-gate-on-decision-kind">6.1 Observe, then gate on decision kind</a></h3>
 <p>Every event is observed first, unconditionally; then its kind decides whether a
 verdict is produced.</p>

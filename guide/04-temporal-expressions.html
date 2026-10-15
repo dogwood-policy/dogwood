@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-fe654853.js";
+            window.path_to_searchindex_js = "../searchindex-43ed227d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-982af72f.js"></script>
+        <script src="../toc-9744742b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -182,7 +182,7 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="temporal-expressions"><a class="header" href="#temporal-expressions">Temporal Expressions</a></h1>
-<p>This page is the reference and tutorial for Dogwood’s <strong>temporal sublanguage</strong> — the code you write inside a <code>when temporal { … }</code> (or <code>unless temporal { … }</code>) block. Ordinary Cedar authorization decides <em>this</em> request from <em>this</em> request’s attributes. Temporal expressions extend that decision to the <strong>event history</strong>: they let a policy say “allow this only if such-and-such happened (or did not happen) recently.” This document motivates why that matters, then builds the sublanguage up operator by operator — the three past operators (<code>formerly</code>, <code>previous</code>, <code>since</code>) and their mandatory windows, conjunction and negation, the <code>exists</code> and <code>tp</code> binders, aggregations (<code>count</code>, <code>sum</code>), predicates and field patterns, field-injection refinement, and finally the legality rules that decide which expressions are accepted. It closes with the precise evaluation semantics. If you are new to Dogwood policies overall, read <a href="02-policy-language.html">02-policy-language.md</a> first; this page assumes you know what <code>permit</code>/<code>forbid</code>, <code>when</code>, and <code>unless</code> mean. Every policy example below is backed by a runnable bundle under <a href="../examples/"><code>examples/</code></a> that the <code>dogwood</code> CLI validates (and, where a <code>trace.log</code> is present, replays) on each build.</p>
+<p>This page is the reference and tutorial for Dogwood’s <strong>temporal sublanguage</strong> — the code you write inside a <code>when temporal { … }</code> (or <code>unless temporal { … }</code>) block. Ordinary Cedar authorization decides <em>this</em> request from <em>this</em> request’s attributes. Temporal expressions extend that decision to the <strong>event history</strong>: they let a policy say “allow this only if such-and-such happened (or did not happen) recently.” This document motivates why that matters, then builds the sublanguage up operator by operator — the three past operators (<code>formerly</code>, <code>previous</code>, <code>since</code>) and their mandatory windows, conjunction and negation, the <code>exists</code> and <code>tp</code> binders, aggregations (<code>count</code>, <code>sum</code>), comparisons and the arithmetic (<code>+</code>, <code>-</code>, <code>*</code>) their operands admit, predicates and field patterns, field-injection refinement, and finally the legality rules that decide which expressions are accepted. It closes with the precise evaluation semantics. If you are new to Dogwood policies overall, read <a href="02-policy-language.html">02-policy-language.md</a> first; this page assumes you know what <code>permit</code>/<code>forbid</code>, <code>when</code>, and <code>unless</code> mean. Every policy example below is backed by a runnable bundle under <a href="../examples/"><code>examples/</code></a> that the <code>dogwood</code> CLI validates (and, where a <code>trace.log</code> is present, replays) on each build.</p>
 <h2 id="why-temporal-authorization-over-event-history"><a class="header" href="#why-temporal-authorization-over-event-history">Why temporal? Authorization over event history</a></h2>
 <p>Cedar answers a question about a single moment: given this principal, this action, this resource, and this request context, permit or forbid? That is enough for “can Alice read document X” but not for questions whose answer depends on <em>what came before</em>:</p>
 <ul>
@@ -275,6 +275,7 @@ when temporal {
 <tr><td>Wildcard</td><td><code>*</code>, or a bare <code>_</code></td><td>matches anything, binds nothing; each independent</td></tr>
 <tr><td>Array</td><td><code>[a, b, c]</code></td><td></td></tr>
 <tr><td>Aggregate</td><td><code>count …</code> / <code>sum …</code></td><td>comparison-operand-only (see aggregations)</td></tr>
+<tr><td>Arithmetic</td><td><code>a + b</code>, <code>a - b</code>, <code>a * b</code></td><td><strong>experimental</strong> (off-by-default Cargo feature); comparison-operand-only, over <code>Long</code>s; <code>*</code> binds tighter (see comparisons)</td></tr>
 </tbody>
 </table>
 </div>
@@ -352,11 +353,11 @@ when temporal {
 };
 </code></pre>
 <p>A positive left operand is rarely what you actually want: it demands that <code>left</code> match at <strong>every</strong> timepoint since the anchor, with no exceptions — including timepoints that are simply a different event kind (a <code>response</code>, or an unrelated action) and so never match <code>left</code> at all. In a realistic trace this is easy to fail by accident and hard to satisfy on purpose. The robust idiom is almost always a <em>negated</em> left, <code>!P since Q</code> (“<code>P</code> has <strong>not</strong> happened since <code>Q</code>”), which only requires the absence of something at each intervening step rather than an exact match — see the “open session” idiom just below.</p>
-<p><strong>Negated left — the “open session” idiom.</strong> There is no dedicated “hasn’t happened since” operator; you write it with a negated left operand, <code>!left since …</code>. Because negation binds tighter than <code>since</code> (see <a href="#conjunction-negation-and-precedence">Precedence</a>), <code>!A since within W B</code> negates only <code>A</code>. This expresses “no <code>A</code> has happened since <code>B</code>” — e.g. “the user has not been revoked since they were granted” (corpus <code>0156_without_since_access_control</code>; runnable as <a href="../examples/access_not_revoked_since_grant.html"><code>examples/access_not_revoked_since_grant/</code></a>):</p>
+<p><strong>Negated left — the “open session” idiom.</strong> There is no dedicated “hasn’t happened since” operator; you write it with a negated left operand, <code>!left since …</code>. Because negation binds tighter than <code>since</code> (see <a href="#conjunction-negation-and-precedence">Precedence</a>), <code>!A since within W B</code> negates only <code>A</code>. This expresses “no <code>A</code> has happened since <code>B</code>” — e.g. “a completed grant has been observed, with no completed revocation observed since” (corpus <code>0156_without_since_access_control</code>; runnable as <a href="../examples/access_not_revoked_since_grant.html"><code>examples/access_not_revoked_since_grant/</code></a>):</p>
 <pre><code class="language-text">when temporal {
-    !Drupe::Action::"Revoke"::request{ input.user: context.input.user, input.resource: context.input.resource }
+    !Drupe::Action::"Revoke"::response{ input.user: context.input.user, input.resource: context.input.resource }
     since within 1h
-    Drupe::Action::"Grant"::request{ input.user: context.input.user, input.resource: context.input.resource }
+    Drupe::Action::"Grant"::response{ input.user: context.input.user, input.resource: context.input.resource }
 };
 </code></pre>
 <p>A <code>since</code> with a shorter window unit (corpus <code>0184_since_window_anchor_too_old</code>; runnable as <a href="../examples/read_heartbeat_since_login_30s/"><code>examples/read_heartbeat_since_login_30s/</code></a>):</p>
@@ -466,8 +467,8 @@ sum   v for (g1: T1), …, (gn: Tn). where φ
 </ul>
 <p>The <code>for &lt;binders&gt;.</code> clause names the <strong>aggregation domain</strong>: the satisfying assignments of <code>where φ</code> are collected, projected onto the <code>for</code> variables, <strong>deduplicated</strong>, then aggregated. Each <code>for</code> element is a declaration site, so it carries a mandatory type annotation, and the trailing <code>.</code> terminates the list. An aggregate is a numeric term (it yields a <code>Long</code>).</p>
 <h3 id="two-rules-that-shape-how-you-write-aggregations"><a class="header" href="#two-rules-that-shape-how-you-write-aggregations">Two rules that shape how you write aggregations</a></h3>
-<p><strong>1. Aggregates may appear only as an immediate comparison operand.</strong> An aggregate is syntactically a term, but it is legal <em>only</em> directly on one side of a comparison — never as a predicate-argument value, never nested inside an array or another term. <code>P{ f: count … }</code> and <code>[count …] == x</code> are both rejected.</p>
-<p><strong>2. Parenthesize an aggregate on the left of a comparison.</strong> The <code>where</code> body is a greedy full condition, so <code>(count …) == n</code> needs parentheses around the aggregate or the <code>where</code> body will swallow the <code>== n</code>. On the <em>right</em> of a comparison no parentheses are needed, because there is nothing to the right for the greedy body to eat: <code>0 &lt; count for (t: Timepoint). where φ</code> parses fine. The parentheses carry no semantics; they only fence the greedy body.</p>
+<p><strong>1. Aggregates may appear only in comparison-operand position.</strong> An aggregate is syntactically a term, but it is legal <em>only</em> on one side of a comparison — directly, or as a leaf of an arithmetic operand (<code>(count …) - (count …) &lt;= 5</code>) — never as a predicate-argument value, never nested inside an array. <code>P{ f: count … }</code> and <code>[count …] == x</code> are both rejected.</p>
+<p><strong>2. Parenthesize an aggregate that is not in final position.</strong> The <code>where</code> body is a greedy full condition, so <code>(count …) == n</code> needs parentheses around the aggregate or the <code>where</code> body will swallow the <code>== n</code>. In general: an aggregate anywhere but the final position of the final operand must be parenthesized; the rightmost one needs none, because there is nothing left for the greedy body to eat — <code>0 &lt; count for (t: Timepoint). where φ</code> and <code>… &lt;= 85 * count for (t: Timepoint). where φ</code> both parse fine. The parentheses carry no semantics; they only fence the greedy body.</p>
 <h3 id="count-examples"><a class="header" href="#count-examples"><code>count</code> examples</a></h3>
 <p>Exact count — exactly two logins (corpus <code>0062_count_exact</code>):</p>
 <pre><code class="language-text">when temporal {
@@ -527,15 +528,41 @@ sum   v for (g1: T1), …, (gn: Tn). where φ
 <p>The two-binder domain <code>for (a: Long), (t: Timepoint).</code> is what keeps equal amounts made at different timepoints from being deduplicated — <code>a</code> is the summed value, <code>t</code> distinguishes the timepoints. A range filter on the bound value (corpus <code>0301_sum_resolved_range_filter</code>) works the same way, adding <code>a &gt; 100 &amp;&amp; a &lt; 500</code> inside the temporal body.</p>
 <h2 id="comparisons"><a class="header" href="#comparisons">Comparisons</a></h2>
 <p>Comparisons filter or bind. The operators are <code>&lt;</code>, <code>&lt;=</code>, <code>&gt;</code>, <code>&gt;=</code>, <code>==</code>, and <code>!=</code>:</p>
-<pre><code class="language-text">term cmp_op term
+<pre><code class="language-text">arith cmp_op arith
 </code></pre>
-<p>Both operands are terms, and either may be an aggregate (subject to the comparison-operand-only rule above). Semantics:</p>
+<p>Each operand is an <strong>arithmetic expression</strong> over terms: one or more terms combined with <code>+</code>, <code>-</code>, and <code>*</code>. A single term is an expression with zero operators, and either operand may be (or contain) an aggregate, subject to the comparison-operand-only rule above. Semantics:</p>
 <ul>
 <li><code>==</code> and <code>!=</code> use domain equality on the resolved values.</li>
 <li>Ordering comparisons (<code>&lt;</code>, <code>&lt;=</code>, <code>&gt;</code>, <code>&gt;=</code>) require <strong>both</strong> sides to resolve to integers; otherwise the comparison is <code>false</code>. Decimals are kept as text and are effectively equality-only — a <code>decimal(…)</code> in an ordering comparison resolves but fails the integer conversion and yields <code>false</code>.</li>
 <li>If either operand fails to resolve (an unbound variable, a wildcard), the comparison is <code>false</code>.</li>
 </ul>
 <p><strong><code>==</code> doubles as a binder.</strong> In a relational context, an <code>a == x</code> (or <code>x == a</code>) with exactly one <em>unbound</em> variable operand <strong>binds</strong> that variable to the other side’s value. This is the mechanism behind <code>exists (n: Long). ((agg) == n &amp;&amp; …)</code> — the <code>== n</code> binds <code>n</code> to the aggregate’s value so the following <code>n &gt; 2</code> can filter it. An <code>==</code> with no unbound operand, or any ordering comparison, is a plain filter.</p>
+<h3 id="arithmetic-in-comparison-operands"><a class="header" href="#arithmetic-in-comparison-operands">Arithmetic in comparison operands</a></h3>
+<blockquote>
+<p><strong>EXPERIMENTAL.</strong> Arithmetic in comparison operands is gated behind the
+off-by-default Cargo feature <code>experimental-arithmetic</code>. A default build
+rejects a policy that uses it (<code>arithmetic in comparison operands is not yet supported</code>); a build with the feature on accepts it, and validation
+warns that arithmetic operators are experimental and may change in a
+future release. Everything in this section is subject to that caveat.</p>
+</blockquote>
+<p>An operand may combine terms with <code>+</code>, <code>-</code>, and <code>*</code> — left-associative, <code>*</code> binding tighter, with parentheses for grouping (<code>(a + b) * c</code>). This is what expresses backlog caps with slack, tolerance comparisons, budgets that add the current request to a past sum, and cross-multiplied percentage guards:</p>
+<pre><code class="language-text">(count …opens…) - (count …reviews…) &lt;= 2         // backlog slack
+context.input.amount &lt;= po_amount + 50            // tolerance
+(sum …settled…) + context.input.amount &lt;= 100     // budget incl. this request
+100 * (count …touchless…) &lt;= 85 * count …decided… // share-of-total
+</code></pre>
+<blockquote>
+<p>Runnable: <a href="../examples/cap_open_agent_prs_windowed.html"><code>examples/cap_open_agent_prs_windowed/</code></a>, <a href="../examples/touchless_invoice_within_tolerance.html"><code>examples/touchless_invoice_within_tolerance/</code></a>, <a href="../examples/refund_budget_settled_plus_current.html"><code>examples/refund_budget_settled_plus_current/</code></a>, and <a href="../examples/touchless_share_capped.html"><code>examples/touchless_share_capped/</code></a>.</p>
+</blockquote>
+<p>The rules:</p>
+<ul>
+<li><strong>Comparison-operand-only</strong>, exactly like aggregates: arithmetic may not appear as a predicate-argument value, an array element, or a macro-call term argument.</li>
+<li><strong>All atoms must be <code>Long</code>.</strong> Decimals stay equality-only; strings, booleans, entities, arrays, and wildcards are rejected inside a compound expression. A bare <code>*</code> is still the wildcard when it is a whole operand (<code>x == *</code>); after a complete term, <code>*</code> is multiplication.</li>
+<li><strong>There is no <code>/</code> or <code>%</code>.</strong> Percentages cross-multiply (<code>100 * errors &lt;= 5 * total</code>), which stays exact over integers; Cedar has no division either.</li>
+<li><strong>A compound never binds.</strong> The <code>==</code>-binder rule above applies only to a bare-variable side; every variable <em>inside</em> a compound expression must be restricted by a preceding conjunct, and there is no algebraic solving — <code>m + 1 == 5</code> does not bind <code>m</code>. A bare variable <em>against</em> a compound does bind: <code>n1 + n2 == m</code> binds <code>m</code> once <code>n1</code> and <code>n2</code> are restricted.</li>
+<li><strong>Fencing extends to chains.</strong> An aggregate anywhere but the final position of the final operand must be parenthesized, or its greedy <code>where</code> body swallows what follows: <code>(count …) - (count …) &lt;= 5</code>.</li>
+<li><strong>Evaluation clamps.</strong> Results are computed in <code>i64</code>, saturating at the range endpoints per operation in tree order (the same out-of-range posture as <code>sum</code>; see <a href="08-formal-specification.html#54-temporal-acceptance-well-formedness">§5.4 of the formal specification</a>). An operand side that fails to resolve to an integer makes the comparison <code>false</code>.</li>
+</ul>
 <h2 id="field-injection-refinement"><a class="header" href="#field-injection-refinement">Field-injection refinement</a></h2>
 <p>A predicate (or a macro condition-sigil) may carry trailing <code>{ … }</code> blocks that inject <em>extra</em> named arguments onto it:</p>
 <pre><code class="language-text">P::kind{ a: 1 }{ b: 2 }   // equivalent to P::kind{ a: 1, b: 2 }
@@ -580,8 +607,8 @@ sum   v for (g1: T1), …, (gn: Tn). where φ
 <h3 id="order-conjuncts-so-producers-come-before-consumers"><a class="header" href="#order-conjuncts-so-producers-come-before-consumers">Order conjuncts so producers come before consumers</a></h3>
 <p>Within a <code>&amp;&amp;</code> chain, every conjunct may <em>produce</em> bindings (a predicate field, <code>tp</code>, a binding equality) and may <em>consume</em> bindings — variables that must already be bound when it evaluates. A consumer is accepted only when the variables it consumes are restricted by a <strong>preceding</strong> conjunct — in the same chain, or inherited from an enclosing chain (parenthesized sub-chains and nested <code>exists</code>/<code>formerly</code> bodies see everything already established at their position; an enclosing <em>binder</em> alone establishes nothing, and a shadowing binder cuts inherited restrictions of its name). The consumers:</p>
 <ul>
-<li>a <strong>pure filter</strong> — an ordering comparison, a guarded negation <code>!φ</code>, or a non-binding <code>==</code> (including <code>x == *</code>: a wildcard is not a value, so the equality binds nothing) — consumes all its free variables;</li>
-<li>a <strong>binding equality</strong> <code>x == (aggregate)</code> produces <code>x</code> but consumes the aggregate’s <em>correlated</em> variables (free in its <code>where</code> body, not in its <code>for</code> list) — with them unbound, the count/sum would silently de-correlate into a global tally;</li>
+<li>a <strong>pure filter</strong> — an ordering comparison, a guarded negation <code>!φ</code>, or a non-binding <code>==</code> (including <code>x == *</code>: a wildcard is not a value, so the equality binds nothing) — consumes all its free variables; a compound arithmetic operand consumes every variable inside it (a compound never binds);</li>
+<li>a <strong>binding equality</strong> <code>x == (aggregate)</code> — or <code>x</code> against a wildcard-free compound expression — produces <code>x</code> but consumes the value side’s <em>correlated</em> variables (free in an aggregate’s <code>where</code> body and not in its <code>for</code> list, or inside the compound) — with them unbound, the count/sum would silently de-correlate into a global tally;</li>
 <li>a <strong><code>since</code></strong> consumes the left operand’s variables not restricted by its anchor (the left is checked per step and can bind nothing itself).</li>
 </ul>
 <p><strong>❌ Rejected — filter before its restrictor:</strong></p>
@@ -636,10 +663,66 @@ sum   v for (g1: T1), …, (gn: Tn). where φ
 <h3 id="schema-level-checks"><a class="header" href="#schema-level-checks">Schema-level checks</a></h3>
 <p>Beyond the structural rules, the schema-aware validation pass also requires: every entity type and enum eid you reference is declared; every <code>context.input.&lt;field&gt;</code> path resolves in the scoped action’s input record; and comparison operands and predicate arguments type-check against the schema. Ordering comparisons need numeric operands on both sides; <code>==</code> needs compatible types. (Predicate event-kind and field-name validation is owned by a separate event-schema checker.) See <a href="02-policy-language.html">The policy language</a> for the action schema (entity/action declarations, the <code>context</code> shape) and <a href="03-event-schema.html">The event schema</a> for the event-kind and field definitions.</p>
 <h3 id="legality-in-one-sentence"><a class="header" href="#legality-in-one-sentence">Legality in one sentence</a></h3>
-<p>A temporal expression is legal exactly when: it parses under the grammar (only <code>&amp;&amp;</code>, <code>!</code>, <code>since</code>, the three temporal operators, <code>exists</code>, <code>tp</code>, comparisons, <code>count</code>/<code>sum</code>, predicates, refinements, and macro calls); it is closed (every variable bound by an <code>exists</code> or a <code>for</code> list); every aggregation’s <code>for</code> domain binds every free body variable, includes any summed variable, and each <code>for</code> variable occurs in — and is range-restricted by a positive atom of — the body; every <code>exists</code> binder is range-restricted by a positive atom; every aggregate appears only as an immediate comparison operand; every consumer (a pure filter, a binding equality’s aggregate operand, a since-left) is preceded — in its chain or an enclosing one — by a restrictor of the variables it consumes; and, at the schema stage, every entity/enum reference and <code>context.input.X</code> path resolves, every monitoring scope is timepoint-dependent, and all operands type-check.</p>
+<p>A temporal expression is legal exactly when: it parses under the grammar (only <code>&amp;&amp;</code>, <code>!</code>, <code>since</code>, the three temporal operators, <code>exists</code>, <code>tp</code>, comparisons with <code>+</code>/<code>-</code>/<code>*</code> operands, <code>count</code>/<code>sum</code>, predicates, refinements, and macro calls); it is closed (every variable bound by an <code>exists</code> or a <code>for</code> list); every aggregation’s <code>for</code> domain binds every free body variable, includes any summed variable, and each <code>for</code> variable occurs in — and is range-restricted by a positive atom of — the body; every <code>exists</code> binder is range-restricted by a positive atom; every aggregate and every arithmetic expression appears only in comparison-operand position; every consumer (a pure filter, a compound operand, a binding equality’s value side, a since-left) is preceded — in its chain or an enclosing one — by a restrictor of the variables it consumes; and, at the schema stage, every entity/enum reference and <code>context.input.X</code> path resolves, every monitoring scope is timepoint-dependent, and all operands type-check (a compound’s atoms all <code>Long</code>).</p>
 <h2 id="evaluation-semantics"><a class="header" href="#evaluation-semantics">Evaluation semantics</a></h2>
 <p>This section states precisely how a temporal condition is evaluated. Any conforming temporal engine must produce these verdicts.</p>
 <p><strong>Decision timepoint and history.</strong> A condition is evaluated at a single <strong>decision timepoint <code>i</code></strong> against the trace history <code>0..=i</code> — everything up to and including <code>i</code>. The language is <strong>past-only</strong>: nothing at any <code>j &gt; i</code> is ever read. The request’s own fields seed the initial bindings (nested groups flattened to dotted keys), plus the scope aliases <code>@principal</code> and <code>@resource</code>.</p>
+<p><strong>Policies describe the observed sequence.</strong> <code>previous</code> and <code>since</code> refer to
+positions in the sequence Dogwood has observed. This can differ from agent
+invocation order, enforcement-point order, or the order in which underlying
+activities occurred. A decision uses only the history observed so far.
+Timestamps measure temporal windows; they do not establish trace order. They
+may be assigned by the authorizer rather than supplied in the event. In either
+case, timestamps must be strictly increasing in the observed sequence.</p>
+<p>Policy authors should be aware that timestamps and ordering might not correspond
+to events as they occurred at enforcement points. For example, the
+<a href="../examples/access_not_revoked_since_grant.html">access-control bundle</a> contains
+this policy and the trace below. It permits <code>Access</code> only if a completed grant
+for the same user and resource has been observed within the last hour, with no
+completed revocation observed since:</p>
+<pre><code class="language-text">@id("access_not_revoked_since_grant")
+permit (
+    principal,
+    action == Drupe::Action::"Access",
+    resource
+)
+when temporal {
+    !Drupe::Action::"Revoke"::response{ input.user: context.input.user, input.resource: context.input.resource }
+    since within 1h
+    Drupe::Action::"Grant"::response{ input.user: context.input.user, input.resource: context.input.resource }
+};
+</code></pre>
+<p>With this as the only policy, consider this observed log, with timestamps shown
+as seconds since midnight:</p>
+<pre><code class="language-text">@35940 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { resource: "doc1", user: "alice" }) Drupe::Action::"Grant"::response(input: { resource: "doc1", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u1")
+@36060 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { resource: "doc1", user: "alice" }) Drupe::Action::"Access"::request(input: { resource: "doc1", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u2")
+@36120 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { resource: "doc1", user: "alice" }) Drupe::Action::"Revoke"::response(input: { resource: "doc1", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u3")
+@36180 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { resource: "doc1", user: "alice" }) Drupe::Action::"Access"::request(input: { resource: "doc1", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u4")
+</code></pre>
+<p>The <code>Grant::response</code> records an access grant observed at 09:59. At 10:00,
+another service revokes that access, but delivery of its revocation notice is
+delayed. At 10:01, Dogwood receives the access request and returns <code>Allow</code>:
+the log contains the grant but no revocation yet. At 10:02, Dogwood receives the
+<code>Revoke::response</code> notice and assigns it an ingestion timestamp. The next access
+request, at 10:03, returns <code>Deny</code> because the revocation has now been observed.</p>
+<p>If the revocation notice had been reported promptly at 10:00 (<code>@36000</code>), before
+the first access request, that request would instead have returned <code>Deny</code>.
+Delaying or losing the notice changes that verdict to <code>Allow</code>, even though the
+underlying access was already revoked. The timestamps increase correctly, but
+cannot make a decision see a notice that has not arrived. Later receipt does not
+revise the earlier <code>Allow</code>.</p>
+<p>Conversely, with no revocation, delaying the completed grant’s response until
+after the 10:01 access request, or losing it, makes that request return <code>Deny</code>
+instead of the <code>Allow</code> obtained with prompt reporting. For this policy, missing
+history-only events can therefore cause either an unintended allow or an
+unintended deny.</p>
+<p>The reference interpreter is for testing semantics. Test authors must
+deliberately choose the observation sequence and supply strictly increasing
+timestamps. The interpreter preserves supplied timestamps; it neither constructs
+nor validates that sequence, and does not check the timestamp contract. Accepting
+an input does not establish that it satisfies that contract. Durable Local Engine
+submission instead assigns timestamps at ingestion.</p>
+<p><strong>A tool invocation spans separate events.</strong> The authorizer calls the temporal engine’s <code>observe</code> for every ingested event before deciding it. A successfully recorded <code>request</code> remains in history even if subsequent evaluation denies it or fails closed on an error, so it records an attempt. The verdict is returned separately and is not appended to history. An enforcing caller executes the action only after <code>Allow</code>; its eventual <code>response</code> or <code>error</code> is a separate event. Other events can be ingested between request and outcome. Authorization does not make the whole invocation atomic: actions can overlap and complete in a different order from their authorization.</p>
 <p><strong>Key-local semantics under universal pins.</strong> The semantics below are stated over the <em>whole</em> trace. When the event schema declares a <strong>universal symmetric pin</strong> (a field pinned on every event kind to its own request-side path — see <a href="03-event-schema.html">The event schema</a>), every temporal condition is instead evaluated over the <strong>slice</strong> of the trace agreeing with the current request on the pinned field(s): <code>previous</code> means “this key’s previous event,” and the <code>∀</code>-side of <code>since</code> ranges over this key’s positions only. For <code>formerly</code>, aggregations, and the negated-left <code>since</code> idiom the two readings coincide: a pinned predicate cannot match another key’s event, and a body containing no such predicate is guarded so that a foreign position cannot witness it either. The slice reading is what makes per-key storage and evaluation verdict-preserving. <strong>The default event schema declares such a pin</strong>, on <code>callerPrincipal</code>, so the key-local reading is the one that applies unless you replace it. Without a universal symmetric pin — a schema that declares none, or one that is partial or asymmetric — the global reading below applies verbatim.</p>
 <p><strong>Windows are closed (inclusive).</strong> A window of <code>W</code> is the set of past timepoints <code>j</code> with <code>0 &lt;= ts(i) - ts(j) &lt;= W</code>. A witness exactly <code>W</code> seconds back is <em>in</em>; one second further is <em>out</em>. The lower bound <code>&gt;= 0</code> is what makes the language past-only.</p>
 <p><strong>Operator semantics, “holds at timepoint <code>i</code>”:</strong></p>
@@ -652,7 +735,7 @@ sum   v for (g1: T1), …, (gn: Tn). where φ
 <li><strong><code>exists (x: T). φ</code></strong> holds iff <code>φ</code>’s relation is non-empty (≥ 1), not a count; <code>x</code>’s candidate values come only from the atom that binds it, with no enumeration of the type.</li>
 <li><strong><code>tp(t)</code></strong> binds or unifies <code>t</code> with the current timepoint index <code>i</code>.</li>
 <li><strong><code>count</code> / <code>sum</code></strong> project the <code>where</code> body’s satisfying rows onto the <code>for</code> domain, deduplicate, then count the rows or sum the named column. Distinctness is the visible choice you make in the <code>for</code> list. Summation is exact for every total a <code>Long</code> can hold, including totals reached by way of partial sums that a <code>Long</code> cannot, and does not depend on the order rows are visited. What a total OUTSIDE the <code>Long</code> range means is implementation-defined — a conforming implementation may clamp, widen, or report an error, and the shapes that can observe the choice are enumerated in <a href="08-formal-specification.html#54-temporal-acceptance-well-formedness">§5.4 Temporal acceptance</a>. This implementation clamps rather than raising, so a pathological trace cannot overflow into a panic. Only the binder <em>name</em> is used at evaluation time; the type annotation is not consulted.</li>
-<li><strong>Comparisons</strong> — <code>==</code> and <code>!=</code> are domain equality; ordering requires both sides to be integers, else <code>false</code>; an unresolved operand makes the comparison <code>false</code>. An <code>==</code> with exactly one unbound variable operand binds that variable.</li>
+<li><strong>Comparisons</strong> — <code>==</code> and <code>!=</code> are domain equality; ordering requires both sides to be integers, else <code>false</code>; an unresolved operand makes the comparison <code>false</code>. An <code>==</code> with exactly one unbound bare-variable operand binds that variable. A compound arithmetic operand evaluates in <code>i64</code>, saturating at the range endpoints per operation in tree order; a side that fails to resolve to an integer leaves the operand unresolved (comparison <code>false</code>).</li>
 </ul>
 <h2 id="see-also"><a class="header" href="#see-also">See also</a></h2>
 <ul>

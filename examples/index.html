@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-fe654853.js";
+            window.path_to_searchindex_js = "../searchindex-43ed227d.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-982af72f.js"></script>
+        <script src="../toc-9744742b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -208,6 +208,7 @@
 <tr><td><a href="./call_temporal_aggregation_macro_count.html">call_temporal_aggregation_macro_count</a></td><td>Calling a <code>def temporal</code> <strong>aggregation</strong> macro. <code>count_formerly</code> produces a</td></tr>
 <tr><td><a href="./call_temporal_condition_macro_once.html">call_temporal_condition_macro_once</a></td><td>Calling a <code>def temporal</code> <strong>condition</strong> macro inside a <code>when temporal { … }</code></td></tr>
 <tr><td><a href="./call_temporal_condition_macros_composed.html">call_temporal_condition_macros_composed</a></td><td>Two <code>def temporal</code> <strong>condition</strong> macros composed with <code>&amp;&amp;</code> inside a single</td></tr>
+<tr><td><a href="./cap_open_agent_prs_windowed.html">cap_open_agent_prs_windowed</a></td><td>&gt; <strong>EXPERIMENTAL.</strong> This bundle uses arithmetic in temporal comparison</td></tr>
 <tr><td><a href="./cedar_eligible_not_blocked.html">cedar_eligible_not_blocked</a></td><td>Two <code>def cedar</code> macros of different argument types composed with <code>&amp;&amp;</code> inside one</td></tr>
 <tr><td><a href="./cedar_is_small_threshold.html">cedar_is_small_threshold</a></td><td>The simplest <code>def cedar</code> macro: <code>is_small(?n)</code> names the <code>&lt; 100</code> threshold so</td></tr>
 <tr><td><a href="./cedar_macro_plus_temporal_leaf.html">cedar_macro_plus_temporal_leaf</a></td><td>A <code>def cedar</code> boolean macro (<code>level_ok</code>) conjoined <strong>mid-expression</strong> with an</td></tr>
@@ -216,6 +217,7 @@
 <tr><td><a href="./cedar_within_cap_if_else.html">cedar_within_cap_if_else</a></td><td>A <code>def cedar</code> macro whose body is an <code>if/then/else</code> expression, encoding a</td></tr>
 <tr><td><a href="./cond_is_oauth_in_team.html">cond_is_oauth_in_team</a></td><td>The expression-level counterpart of the <code>is</code> / <code>is-in</code> scope constraint: an</td></tr>
 <tr><td><a href="./deny_overrides_sell_not_amzn.html">deny_overrides_sell_not_amzn</a></td><td>A <code>permit</code> + <code>forbid</code> pair showing <strong>deny-overrides</strong> semantics: <code>SellShares</code> is</td></tr>
+<tr><td><a href="./desk_governance.html">desk_governance</a></td><td>A four-policy trading-desk set combining most of the language in one place:</td></tr>
 <tr><td><a href="./forbid_large_except_amzn.html">forbid_large_except_amzn</a></td><td>Mixing <code>when</code> and <code>unless</code> on a <strong><code>forbid</code></strong> rule: block large <code>SellShares</code></td></tr>
 <tr><td><a href="./forbid_read_transfers_over_1000.html">forbid_read_transfers_over_1000</a></td><td>A <code>forbid</code> rule with a <code>sum</code> over a <code>(value, timepoint)</code> domain and a filtered</td></tr>
 <tr><td><a href="./get_amzn_stock_info.html">get_amzn_stock_info</a></td><td>A plain (non-temporal) <code>permit</code> showing that an MCP-manifest input field</td></tr>
@@ -228,6 +230,8 @@
 <tr><td><a href="./provider_allowed_or_short.html">provider_allowed_or_short</a></td><td>Disjunction and parentheses over two information providers: permit <code>Read</code> when</td></tr>
 <tr><td><a href="./provider_digitcount_forbid.html">provider_digitcount_forbid</a></td><td>A provider gating a <strong><code>forbid</code></strong> rule, alongside a catch-all <code>permit</code> – showing</td></tr>
 <tr><td><a href="./provider_digitcount_operator_ge.html">provider_digitcount_operator_ge</a></td><td>The operator-form comparison example (<code>&gt;=</code> on an integer provider output),</td></tr>
+<tr><td><a href="./provider_enum_severity_forbid.html">provider_enum_severity_forbid</a></td><td>A provider that returns a value from a fixed list. <code>Vendor::ThreatScan(text)</code> returns</td></tr>
+<tr><td><a href="./provider_enum_two_namespaces.html">provider_enum_two_namespaces</a></td><td>The same <code>Vendor::ThreatScan</code> provider and <code>Vendor::Severity</code> enum as</td></tr>
 <tr><td><a href="./provider_filter_set_index_decimal.html">provider_filter_set_index_decimal</a></td><td>The guardrail flagship shape in one atom: a <strong>set argument</strong></td></tr>
 <tr><td><a href="./provider_int_arithmetic_trusted.html">provider_int_arithmetic_trusted</a></td><td>A provider’s <strong>integer output used inside arithmetic</strong>, mixed under <code>&amp;&amp;</code> with a</td></tr>
 <tr><td><a href="./provider_matches_and_not_blocked.html">provider_matches_and_not_blocked</a></td><td>Two information providers combined with the boolean spine (<code>&amp;&amp;</code> and <code>!</code>) inside</td></tr>
@@ -243,6 +247,7 @@
 <tr><td><a href="./read_prev_login.html">read_prev_login</a></td><td><code>previous within 1h</code>: permit a <code>Read</code> only if the <strong>immediately preceding</strong></td></tr>
 <tr><td><a href="./read_prev_login_success.html">read_prev_login_success</a></td><td><code>previous</code> with a <strong>response predicate</strong> and an <strong>output-field filter</strong>.</td></tr>
 <tr><td><a href="./read_since_login.html">read_since_login</a></td><td>Positive-left <code>since within 1h</code>: the left operand must have **held</td></tr>
+<tr><td><a href="./refund_budget_settled_plus_current.html">refund_budget_settled_plus_current</a></td><td>&gt; <strong>EXPERIMENTAL.</strong> This bundle uses arithmetic in temporal comparison</td></tr>
 <tr><td><a href="./sell_after_2024_datetime.html">sell_after_2024_datetime</a></td><td>A single <code>datetime</code> literal compared with an ordinary comparison operator</td></tr>
 <tr><td><a href="./sell_after_approval_valid_ticker.html">sell_after_approval_valid_ticker</a></td><td>Two Dogwood clause forms combined on a single rule:</td></tr>
 <tr><td><a href="./sell_comparison_chain.html">sell_comparison_chain</a></td><td>Several comparison operators chained in a single <code>&amp;&amp;</code> conjunction on a <code>Long</code>.</td></tr>
@@ -270,6 +275,8 @@
 <tr><td><a href="./temporal_login_then_read.html">temporal_login_then_read</a></td><td>Two <code>def temporal</code> <strong>condition</strong> macros joined with <code>&amp;&amp;</code> inside a single</td></tr>
 <tr><td><a href="./temporal_once_read_recent.html">temporal_once_read_recent</a></td><td>A condition-flavoured temporal macro. `def temporal once(?w, ?s) { formerly</td></tr>
 <tr><td><a href="./temporal_sum_formerly_transfer.html">temporal_sum_formerly_transfer</a></td><td>A <code>temporal sum</code> aggregation macro defined inline. <code>sum_formerly</code> combines a</td></tr>
+<tr><td><a href="./touchless_invoice_within_tolerance.html">touchless_invoice_within_tolerance</a></td><td>&gt; <strong>EXPERIMENTAL.</strong> This bundle uses arithmetic in temporal comparison</td></tr>
+<tr><td><a href="./touchless_share_capped.html">touchless_share_capped</a></td><td>&gt; <strong>EXPERIMENTAL.</strong> This bundle uses arithmetic in temporal comparison</td></tr>
 <tr><td><a href="./traders_is_in_group_scope.html">traders_is_in_group_scope</a></td><td>The <code>is Type in Group</code> scope constraint: the <code>principal</code> slot both tests the</td></tr>
 <tr><td><a href="./transfer_prev_nested_conj.html">transfer_prev_nested_conj</a></td><td><code>previous</code>’s body must be a single atom, so a conjunction has to be</td></tr>
 <tr><td><a href="./write_after_read.html">write_after_read</a></td><td>The canonical history-dependent policy: permit <code>SellShares</code> only if the **same</td></tr>
