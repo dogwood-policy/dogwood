@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-43ed227d.js";
+            window.path_to_searchindex_js = "../searchindex-e4d2f34b.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9744742b.js"></script>
@@ -335,9 +335,12 @@ record  ::= "{" [ rec_init { "," rec_init } ] "}"
 </code></pre>
 <p><code>=</code> is captured by <code>rel_op</code> deliberately, so the semantic layer can emit a “did
 you mean <code>==</code>?” hint rather than a raw parse error. A run of <code>!</code> or <code>-</code> may not
-be mixed (<code>!-x</code> is rejected), matching Cedar. <code>/</code> and <code>%</code> parse but are rejected
-downstream (Cedar has no division). Surface operators <code>!=</code>, <code>&gt;</code>, <code>&gt;=</code> are
-retained here and desugared during lowering (<a href="#43-expression-translation">§4.3</a>).</p>
+be mixed (<code>!-x</code> is rejected), matching Cedar. The grammar admits a relational
+chain <code>{ rel_op add }</code> of any length, but more than one <code>rel_op</code> is rejected
+after parsing (<code>a == b == c</code> must be parenthesized), matching Cedar. <code>/</code> and <code>%</code>
+parse but are rejected downstream (Cedar has no division). Surface operators
+<code>!=</code>, <code>&gt;</code>, <code>&gt;=</code> are retained here and desugared during lowering
+(<a href="#43-expression-translation">§4.3</a>).</p>
 <h3 id="24-temporal-sub-language"><a class="header" href="#24-temporal-sub-language">2.4 Temporal sub-language</a></h3>
 <p>The body of a <code>temporal { … }</code> block. Past-only; <code>within</code> is mandatory on every
 temporal operator.</p>

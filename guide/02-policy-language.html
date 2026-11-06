@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-43ed227d.js";
+            window.path_to_searchindex_js = "../searchindex-e4d2f34b.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9744742b.js"></script>
@@ -544,8 +544,9 @@ attach.</p>
 body) is a Cedar expression. The expression grammar is a strict precedence tower — from
 loosest to tightest binding: <code>if/then/else</code> → <code>||</code> → <code>&amp;&amp;</code> → relational (<code>&lt;</code>, <code>has</code>,
 <code>like</code>, <code>is</code>, …) → <code>+</code>/<code>-</code> → <code>*</code> → unary <code>!</code>/<code>-</code> → member access → primary. All binary
-operator chains associate to the <strong>left</strong>. The subsections below walk the tower from the
-top.</p>
+operator chains associate to the <strong>left</strong>, except relational ones: as in Cedar, a chain
+such as <code>a == b == c</code> is rejected and must be parenthesized. The subsections below walk
+the tower from the top.</p>
 <h3 id="if--then--else"><a class="header" href="#if--then--else"><code>if / then / else</code></a></h3>
 <p><code>if C then A else B</code> is an expression (not a statement), so it produces a value and can
 appear anywhere a value is expected. Both branches must produce the same type.</p>
@@ -605,14 +606,17 @@ as a full rule at <a href="../examples/sell_logical_grouping.html"><code>example
 </tbody>
 </table>
 </div>
-<p>Comparisons chain and fold left, so you can write several in a single <code>&amp;&amp;</code> conjunction
-(runnable as a full rule at <a href="../examples/sell_comparison_chain.html"><code>examples/sell_comparison_chain/</code></a>):</p>
+<p>Write several comparisons as a <code>&amp;&amp;</code> conjunction (runnable as a full rule at
+<a href="../examples/sell_comparison_chain.html"><code>examples/sell_comparison_chain/</code></a>):</p>
 <pre><code class="language-text">when {
     context.input.shares &gt;= 1
     &amp;&amp; context.input.shares &lt;= 1000
     &amp;&amp; context.input.shares != 777
 };
 </code></pre>
+<p>Comparisons do not chain. As in Cedar, <code>a == b == c</code> or <code>1 &lt; x &lt; 10</code> is rejected with
+<code>multiple relational operators (&gt;, ==, in, etc.) must be used with parentheses to make ordering explicit</code>; write <code>(a == b) == c</code> if that is the grouping you mean, or
+<code>1 &lt; x &amp;&amp; x &lt; 10</code> for a range.</p>
 <p>Note there is <strong>no</strong> <code>=</code> operator — writing <code>=</code> is rejected with
 <code>`=` is not a valid operator in this scope; did you mean `==`?</code>.</p>
 <p><code>in</code> is not only a scope keyword; it is also an expression operator that tests
@@ -695,10 +699,19 @@ after a <code>.method</code> (<a href="#method-calls">method call</a>). A call a
 rejected with <code>unexpected call: only extension functions and methods can be called</code>.</p>
 <h3 id="has--attribute-existence"><a class="header" href="#has--attribute-existence"><code>has</code> — attribute existence</a></h3>
 <p><code>e has attr</code> tests whether an optional attribute is present, returning a boolean. It is the
-guard you use before reading a field that might not exist. The right-hand side may be a
-dotted path (<code>has a.b.c</code>), a string-literal name (<code>has "attr"</code>), or (per Cedar RFC 62) the
-reserved word <code>if</code> used as an attribute name (<code>has if.x</code>). This guard-then-read pattern is
-runnable as a full rule at <a href="../examples/approve_has_output_guard.html"><code>examples/approve_has_output_guard/</code></a>:</p>
+guard you use before reading a field that might not exist. The right-hand side is a name
+(<code>has attr</code>), a dotted path (<code>has a.b.c</code>, per Cedar RFC 62), or a string literal on its own
+(<code>has "attr"</code>). Any other right-hand side is an error. A name that is not an identifier must be
+quoted: <code>has tool-approval</code> is an error, because it reads as <code>tool - approval</code>, and
+<code>has "tool-approval"</code> tests the attribute. A quoted name cannot be followed by <code>.field</code>, and an
+index is not a path (<code>has x["y"]</code> is an error), so test a nested name that is not an identifier
+one level at a time: <code>context has x &amp;&amp; context.x has "security review"</code>.</p>
+<p>Unlike Cedar, Dogwood also accepts a word Cedar reserves as a name in the path (<code>has if.x</code>,
+<code>has then</code>, <code>has x.true</code>, <code>has __cedar</code>) and tests the attribute of that name. <code>true</code> and <code>false</code>
+cannot be written unquoted first, since they read as literals: quote one on its own
+(<code>has "true"</code>), and test a path that starts with one a level at a time
+(<code>context has "true" &amp;&amp; context["true"] has x</code>).</p>
+<p>This guard-then-read pattern is runnable as a full rule at <a href="../examples/approve_has_output_guard.html"><code>examples/approve_has_output_guard/</code></a>:</p>
 <pre><code class="language-text">when {
     context has output &amp;&amp; context.output.approved == true
 };
@@ -708,7 +721,9 @@ right. The <code>if … then … else false</code> variant of this pattern was s
 <a href="#if--then--else">if/then/else</a>.</p>
 <h3 id="like--string-pattern-matching"><a class="header" href="#like--string-pattern-matching"><code>like</code> — string pattern matching</a></h3>
 <p><code>s like "pattern"</code> matches a string against a wildcard pattern. The right-hand side must be
-a string literal. Inside the pattern, <code>*</code> matches any number of characters, <code>\*</code> matches a
+a single string literal, as in Cedar: a concatenation (<code>"a" + "/*"</code>), a literal in
+parentheses, an attribute, or a macro argument is a parse error, so a pattern cannot depend
+on a runtime value. Inside the pattern, <code>*</code> matches any number of characters, <code>\*</code> matches a
 literal star, and the usual escapes (including <code>\u{HEX}</code>) are supported (runnable as a full rule at
 <a href="../examples/sell_like_a_prefix.html"><code>examples/sell_like_a_prefix/</code></a>):</p>
 <pre><code class="language-text">when { context.input.stock like "A*" };

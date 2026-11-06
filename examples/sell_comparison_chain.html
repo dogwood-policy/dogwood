@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-43ed227d.js";
+            window.path_to_searchindex_js = "../searchindex-e4d2f34b.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9744742b.js"></script>
@@ -182,14 +182,14 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="sell_comparison_chain"><a class="header" href="#sell_comparison_chain">sell_comparison_chain</a></h1>
-<p>Several comparison operators chained in a single <code>&amp;&amp;</code> conjunction on a <code>Long</code>.
-Comparisons chain and fold left, so a range check plus an inequality
-(<code>shares &gt;= 1 &amp;&amp; shares &lt;= 1000 &amp;&amp; shares != 777</code>) all live in one <code>when</code> block
-over <code>context.input.shares</code> (a <code>Long</code>, which supports the full ordered set of
-comparison operators).</p>
+<p>Several comparisons combined in a single <code>&amp;&amp;</code> conjunction on a <code>Long</code>. A range
+check plus an inequality (<code>shares &gt;= 1 &amp;&amp; shares &lt;= 1000 &amp;&amp; shares != 777</code>) all
+live in one <code>when</code> block over <code>context.input.shares</code> (a <code>Long</code>, which supports
+the full ordered set of comparison operators). Comparisons themselves do not
+chain: <code>1 &lt;= shares &lt;= 1000</code> is rejected and must be written with <code>&amp;&amp;</code>.</p>
 <p>Referenced by <code>guide/02-policy-language.md</code> — The Policy Language.</p>
 <h2 id="policy"><a class="header" href="#policy">Policy</a></h2>
-<pre><code class="language-text">// Chained comparisons folded into one &amp;&amp; conjunction (range + inequality).
+<pre><code class="language-text">// Several comparisons combined in one &amp;&amp; conjunction (range + inequality).
 @id("sell_range_not_777")
 permit ( principal, action == Drupe::Action::"SellShares", resource )
 when {
