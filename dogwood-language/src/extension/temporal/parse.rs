@@ -37,6 +37,7 @@ pub fn parse_condition(body: &str) -> Result<Condition, String> {
         .find(|p| p.as_rule() == Rule::condition)
         .expect("condition_entry contains a condition");
     validate_string_escapes(&cond)?;
+    validate_integer_literals(&cond)?;
     Ok(build_condition(cond))
 }
 
@@ -56,6 +57,7 @@ pub fn parse_macro_body(body: &str) -> Result<crate::ast::MacroBody, String> {
         .find(|p| matches!(p.as_rule(), Rule::macro_value_body | Rule::condition))
         .expect("temporal_macro_body_entry contains a macro_value_body or condition");
     validate_string_escapes(&inner)?;
+    validate_integer_literals(&inner)?;
     match inner.as_rule() {
         Rule::macro_value_body => {
             let arith = inner
@@ -644,7 +646,7 @@ fn build_within(pair: Pair<'_>) -> WithinSpec {
     let mut sigil: Option<String> = None;
     for p in payload.into_inner() {
         match p.as_rule() {
-            Rule::integer => amount = p.as_str().parse().unwrap_or(0),
+            Rule::integer => amount = parse_integer(&p),
             Rule::time_unit => unit = TimeUnit::from_token(p.as_str()).unwrap_or(TimeUnit::Seconds),
             Rule::param_ref => sigil = Some(p.as_str().trim_start_matches('?').to_string()),
             _ => {}
@@ -666,7 +668,7 @@ fn build_interval_lit(pair: Pair<'_>) -> Interval {
     let mut unit = TimeUnit::Seconds;
     for p in pair.into_inner() {
         match p.as_rule() {
-            Rule::integer => amount = p.as_str().parse().unwrap_or(0),
+            Rule::integer => amount = parse_integer(&p),
             Rule::time_unit => unit = TimeUnit::from_token(p.as_str()).unwrap_or(TimeUnit::Seconds),
             _ => {}
         }
@@ -725,7 +727,7 @@ fn build_term(pair: Pair<'_>) -> Term {
                 .expect("paren_arith wraps an arith");
             build_arith(arith)
         }
-        Some(Rule::integer) => Term::Integer(inner.unwrap().as_str().parse().unwrap_or(0)),
+        Some(Rule::integer) => Term::Integer(parse_integer(&inner.unwrap())),
         Some(Rule::string) => Term::String(unquote(inner.unwrap().as_str())),
         Some(Rule::kw_true) => Term::Bool(true),
         Some(Rule::kw_false) => Term::Bool(false),
@@ -818,6 +820,28 @@ fn validate_string_escapes(pair: &Pair<'_>) -> Result<(), String> {
         validate_string_escapes(&child)?;
     }
     Ok(())
+}
+
+/// Reject any `integer` token in `pair`'s subtree outside the i64 range, as
+/// the Cedar dialect does. The token includes its sign, so
+/// `-9223372036854775808` is in range. Runs at both parse entry points,
+/// before the builders read the tokens via [`parse_integer`].
+fn validate_integer_literals(pair: &Pair<'_>) -> Result<(), String> {
+    let text = pair.as_str();
+    if pair.as_rule() == Rule::integer && text.parse::<i64>().is_err() {
+        return Err(format!("integer literal `{text}` is out of range"));
+    }
+    for child in pair.clone().into_inner() {
+        validate_integer_literals(&child)?;
+    }
+    Ok(())
+}
+
+/// The value of an `integer` token that [`validate_integer_literals`] accepted.
+fn parse_integer(pair: &Pair<'_>) -> i64 {
+    pair.as_str()
+        .parse()
+        .expect("integer literals are range-checked before building")
 }
 
 // ─── Removed-syntax detection ───────────────────────────────────────

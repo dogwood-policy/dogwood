@@ -591,6 +591,15 @@ fn cedar_expr_to_provider_arg(expr: &Expr, span: Span) -> Result<Arg, RawCedarif
                 .map(|e| cedar_expr_to_provider_arg(e, span))
                 .collect::<Result<Vec<_>, _>>()?,
         )),
+        // A directly negated number token is already a `Long` (the parser
+        // folds one `-` into it); any other negation (`--5`, `-(5)`) is not a
+        // literal, as Cedar refuses `--5` in a restricted expression.
+        ExprKind::UnaryApp { op: UnOp::Neg, .. } => Err(RawCedarifyError {
+            message: "a provider argument is not allowed to use `-` except directly \
+                      before a number, e.g. `-5`"
+                .to_string(),
+            span: Some(span),
+        }),
         _ => Err(RawCedarifyError {
             message: "a provider argument must be an attribute path rooted at `context`, \
                       `principal`, or `resource`, a string / integer / bool / `decimal(…)` \

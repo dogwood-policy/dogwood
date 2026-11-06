@@ -137,5 +137,10 @@ OVERWRITE=1 cargo test --test expected_failures -- --ignored generate_expected_e
   The matching verdict cases are `0053`–`0079_enum_*` in
   `passing/provider_only/corpus/`.
 
+- **Temporal integer overflow** (`2196`): a temporal rate-limit threshold
+  above the `i64` range. The temporal parser used to read it as `0`, so
+  `n >= 20000000000000000000` loaded as `n >= 0`; it is now rejected at parse
+  time with the Cedar dialect's message (`2054`).
+
 If a case both parses AND validates cleanly (e.g. a defect is reintroduced as
 valid), the harness panics.

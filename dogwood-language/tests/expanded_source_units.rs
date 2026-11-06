@@ -518,6 +518,26 @@ fn temporal_sum() {
     );
 }
 
+#[test]
+fn temporal_repeated_field_conjoins() {
+    // A temporal field block keeps a repeated field, and both must hold. The
+    // trace has `Login`s by alice, none by two users at once, so neither order
+    // permits (if either field won, one order would).
+    let svc = service();
+    for (a, b) in [("alice", "bob"), ("bob", "alice")] {
+        let fields = format!("input.user: \"{a}\", input.user: \"{b}\"");
+        let policy = temporal_when(&format!(
+            "formerly within 1h T::Action::\"Login\"::request{{ {fields} }}"
+        ));
+        let stream = decisions(&policy, &svc, &temporal_trace());
+        assert!(!stream.contains(&Some(Decision::Allow)), "{fields} permits");
+        assert!(
+            expanded_document(&policy, &svc).contains(&fields),
+            "{fields} not kept"
+        );
+    }
+}
+
 // ══════════════════════════════════════════════════════════════════════════
 // Macro inlining — the expanded form must carry no macro residue
 // ══════════════════════════════════════════════════════════════════════════
@@ -886,6 +906,17 @@ fn has_keyword_attribute_roundtrips() {
     let svc = service();
     let policy = cedar_when("resource has \"true\"");
     assert_roundtrip("has-true", &svc, &svc, &policy, &cedar_trace());
+}
+
+#[test]
+fn has_path_roundtrips() {
+    // A quoted name takes no `.field` access, so a multi-segment path renders
+    // its first segment bare (`has input.tag`, not `has "input".tag`).
+    cedar_case(
+        "has-path",
+        &cedar_when("context has input.tag"),
+        Decision::Allow,
+    );
 }
 
 #[test]
