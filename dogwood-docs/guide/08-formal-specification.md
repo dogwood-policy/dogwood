@@ -175,9 +175,12 @@ record  ::= "{" [ rec_init { "," rec_init } ] "}"
 
 `=` is captured by `rel_op` deliberately, so the semantic layer can emit a "did
 you mean `==`?" hint rather than a raw parse error. A run of `!` or `-` may not
-be mixed (`!-x` is rejected), matching Cedar. `/` and `%` parse but are rejected
-downstream (Cedar has no division). Surface operators `!=`, `>`, `>=` are
-retained here and desugared during lowering ([§4.3](#43-expression-translation)).
+be mixed (`!-x` is rejected), matching Cedar. The grammar admits a relational
+chain `{ rel_op add }` of any length, but more than one `rel_op` is rejected
+after parsing (`a == b == c` must be parenthesized), matching Cedar. `/` and `%`
+parse but are rejected downstream (Cedar has no division). Surface operators
+`!=`, `>`, `>=` are retained here and desugared during lowering
+([§4.3](#43-expression-translation)).
 
 ### 2.4 Temporal sub-language
 

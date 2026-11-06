@@ -192,6 +192,47 @@ fn zero_param_temporal_macro_called_with_args() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
+// Plain identifiers in a temporal macro body (unhygienic)
+// ═══════════════════════════════════════════════════════════════════════
+
+#[test]
+fn plain_binder_that_would_capture_a_call_site_variable() {
+    // Expanded as written, the macro's plain `u` would bind the caller's `u`
+    // in the `?c` argument, and the forbid would correlate the Read with the
+    // Login instead of with the Read request. The load must fail instead.
+    assert_macro_error(
+        r#"
+            def temporal after_login(?c) {
+                exists (u: String). ((formerly within 1h Drupe::Action::"Login"::request{ input.user: u }) && ?c)
+            };
+            permit(principal, action, resource);
+            forbid(principal, action == Drupe::Action::"Read", resource)
+              when temporal {
+                exists (u: String). (Drupe::Action::"Read"::request{ input.x: u }
+                  && after_login(formerly within 1h Drupe::Action::"Login"::request{ input.user: u }))
+              };
+        "#,
+        "plain identifier `u` is not allowed",
+    );
+}
+
+#[test]
+fn sigil_binder_with_a_call_site_variable_of_the_same_name_lowers() {
+    let src = r#"
+        def temporal after_login(?c) {
+            exists ($u: String). ((formerly within 1h Drupe::Action::"Login"::request{ input.user: $u }) && ?c)
+        };
+        permit(principal, action, resource);
+        forbid(principal, action == Drupe::Action::"Read", resource)
+          when temporal {
+            exists (u: String). (Drupe::Action::"Read"::request{ input.x: u }
+              && after_login(formerly within 1h Drupe::Action::"Login"::request{ input.user: u }))
+          };
+    "#;
+    try_lower(src).unwrap_or_else(|e| panic!("the `$u` spelling must lower: {e}"));
+}
+
+// ═══════════════════════════════════════════════════════════════════════
 // Temporal block inside cedar macro (disallowed)
 // ═══════════════════════════════════════════════════════════════════════
 

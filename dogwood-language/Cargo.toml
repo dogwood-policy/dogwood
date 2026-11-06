@@ -1,6 +1,6 @@
 [package]
 name = "dogwood-language"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2024"
 publish.workspace = true
 description = "The Dogwood surface language: parser, validator, interpreter, and the per-request authorizer. The single published front door; implementation modules are crate-private."
@@ -209,6 +209,22 @@ path = "tests/enum_id_escaping.rs"
 [[test]]
 name = "error_message_differential"
 path = "tests/error_message_differential.rs"
+
+[[test]]
+name = "has_operand_differential"
+path = "tests/has_operand_differential.rs"
+
+[[test]]
+name = "like_operand_differential"
+path = "tests/like_operand_differential.rs"
+
+[[test]]
+name = "comment_placement_differential"
+path = "tests/comment_placement_differential.rs"
+
+[[test]]
+name = "record_key_differential"
+path = "tests/record_key_differential.rs"
 
 [[test]]
 name = "decimal_equality_matches_cedar"
