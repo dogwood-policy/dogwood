@@ -1,0 +1,11 @@
+// Regression: a `//` comment in a `def temporal` body is inert,
+// even when it holds `}`, `;`, `{`, and `"`. Before the fix, the `}` in the
+// comment closed the body early and the rest of the comment line became a
+// live catch-all permit gated only on a recent Login.
+def temporal read_recently() { formerly within 1h Drupe::Action::"Read"::request{}
+  // }; permit (principal, action, resource) when temporal { formerly within 1h Drupe::Action::"Login"::request{}
+};
+
+// Only a Transfer after a recent Read is permitted.
+permit (principal, action == Drupe::Action::"Transfer", resource)
+when temporal { read_recently() };

@@ -876,8 +876,11 @@ fn fmt_for_vars(vars: &[TypedBinder]) -> String {
 /// variables (its internals are checked by the post-expansion re-run), and
 /// macro hygiene guarantees expansion can never *bind* a call-site variable —
 /// substitution happens at the `Call` node and macro-internal binders are
-/// gensym-renamed — so a variable free here is necessarily still free after
-/// expansion, and rejecting it at parse time is sound (and earlier).
+/// gensym-renamed (a `def temporal` body can spell a binder only as `$t` or
+/// `?p`; the macro pass rejects a plain identifier there, which expansion
+/// would keep as written) — so a variable free here is necessarily still
+/// free after expansion, and rejecting it at parse time is sound (and
+/// earlier).
 pub fn check_leaf_closed(cond: &Condition) -> Result<(), String> {
     let mut free = BTreeSet::new();
     collect_free(cond, &mut free);

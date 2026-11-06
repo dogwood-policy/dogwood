@@ -454,8 +454,9 @@ Everything inside a `when { … }` / `unless { … }` body (and inside a `def ce
 body) is a Cedar expression. The expression grammar is a strict precedence tower — from
 loosest to tightest binding: `if/then/else` → `||` → `&&` → relational (`<`, `has`,
 `like`, `is`, …) → `+`/`-` → `*` → unary `!`/`-` → member access → primary. All binary
-operator chains associate to the **left**. The subsections below walk the tower from the
-top.
+operator chains associate to the **left**, except relational ones: as in Cedar, a chain
+such as `a == b == c` is rejected and must be parenthesized. The subsections below walk
+the tower from the top.
 
 ### `if / then / else`
 
@@ -527,8 +528,8 @@ The relational level covers ordinary comparison operators plus the keyword opera
 | `!=` | not equal |
 | `in` | entity-hierarchy membership |
 
-Comparisons chain and fold left, so you can write several in a single `&&` conjunction
-(runnable as a full rule at [`examples/sell_comparison_chain/`](../examples/sell_comparison_chain/)):
+Write several comparisons as a `&&` conjunction (runnable as a full rule at
+[`examples/sell_comparison_chain/`](../examples/sell_comparison_chain/)):
 
 ```text
 when {
@@ -537,6 +538,11 @@ when {
     && context.input.shares != 777
 };
 ```
+
+Comparisons do not chain. As in Cedar, `a == b == c` or `1 < x < 10` is rejected with
+`multiple relational operators (>, ==, in, etc.) must be used with parentheses to make
+ordering explicit`; write `(a == b) == c` if that is the grouping you mean, or
+`1 < x && x < 10` for a range.
 
 Note there is **no** `=` operator — writing `=` is rejected with
 `` `=` is not a valid operator in this scope; did you mean `==`? ``.
@@ -634,10 +640,21 @@ rejected with `unexpected call: only extension functions and methods can be call
 ### `has` — attribute existence
 
 `e has attr` tests whether an optional attribute is present, returning a boolean. It is the
-guard you use before reading a field that might not exist. The right-hand side may be a
-dotted path (`has a.b.c`), a string-literal name (`has "attr"`), or (per Cedar RFC 62) the
-reserved word `if` used as an attribute name (`has if.x`). This guard-then-read pattern is
-runnable as a full rule at [`examples/approve_has_output_guard/`](../examples/approve_has_output_guard/):
+guard you use before reading a field that might not exist. The right-hand side is a name
+(`has attr`), a dotted path (`has a.b.c`, per Cedar RFC 62), or a string literal on its own
+(`has "attr"`). Any other right-hand side is an error. A name that is not an identifier must be
+quoted: `has tool-approval` is an error, because it reads as `tool - approval`, and
+`has "tool-approval"` tests the attribute. A quoted name cannot be followed by `.field`, and an
+index is not a path (`has x["y"]` is an error), so test a nested name that is not an identifier
+one level at a time: `context has x && context.x has "security review"`.
+
+Unlike Cedar, Dogwood also accepts a word Cedar reserves as a name in the path (`has if.x`,
+`has then`, `has x.true`, `has __cedar`) and tests the attribute of that name. `true` and `false`
+cannot be written unquoted first, since they read as literals: quote one on its own
+(`has "true"`), and test a path that starts with one a level at a time
+(`context has "true" && context["true"] has x`).
+
+This guard-then-read pattern is runnable as a full rule at [`examples/approve_has_output_guard/`](../examples/approve_has_output_guard/):
 
 ```text
 when {
@@ -652,7 +669,9 @@ right. The `if … then … else false` variant of this pattern was shown under
 ### `like` — string pattern matching
 
 `s like "pattern"` matches a string against a wildcard pattern. The right-hand side must be
-a string literal. Inside the pattern, `*` matches any number of characters, `\*` matches a
+a single string literal, as in Cedar: a concatenation (`"a" + "/*"`), a literal in
+parentheses, an attribute, or a macro argument is a parse error, so a pattern cannot depend
+on a runtime value. Inside the pattern, `*` matches any number of characters, `\*` matches a
 literal star, and the usual escapes (including `\u{HEX}`) are supported (runnable as a full rule at
 [`examples/sell_like_a_prefix/`](../examples/sell_like_a_prefix/)):
 

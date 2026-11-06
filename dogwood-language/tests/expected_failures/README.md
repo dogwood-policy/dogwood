@@ -129,5 +129,10 @@ OVERWRITE=1 cargo test --test expected_failures -- --ignored generate_expected_e
   the pattern `x41`) and `0021_pattern_escape_unicode_underscore_verdict`
   (`\u{4_1}` left as literal text).
 
+- **Temporal integer overflow** (`2196`): a temporal rate-limit threshold
+  above the `i64` range. The temporal parser used to read it as `0`, so
+  `n >= 20000000000000000000` loaded as `n >= 0`; it is now rejected at parse
+  time with the Cedar dialect's message (`2054`).
+
 If a case both parses AND validates cleanly (e.g. a defect is reintroduced as
 valid), the harness panics.

@@ -1,4 +1,4 @@
-// Chained comparisons folded into one && conjunction (range + inequality).
+// Several comparisons combined in one && conjunction (range + inequality).
 @id("sell_range_not_777")
 permit ( principal, action == Drupe::Action::"SellShares", resource )
 when {

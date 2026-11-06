@@ -1,0 +1,11 @@
+// Regression: a `//` comment inside a `when temporal` block is
+// inert, even when it holds `}`, `;`, `{`, and `"`. Before the fix, the `}`
+// in the comment closed the block early: the forbid was cut short and the
+// rest of the comment line became a live catch-all permit.
+permit (principal, action == Drupe::Action::"Login", resource);
+
+// Never fires on the trace: no UnknownTool call happens.
+forbid (principal, action, resource) when temporal { formerly within 1h Drupe::Action::"UnknownTool"::request{}
+  // }; permit (principal, action, resource) when temporal { formerly within 1h Drupe::Action::"Login"::request{}
+  && formerly within 1h Drupe::Action::"Read"::request{}
+};

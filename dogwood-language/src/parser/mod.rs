@@ -132,6 +132,8 @@ fn rule_display(rule: &Rule) -> &'static str {
         Rule::mult_op => "'*'",
         Rule::bang_run => "'!'",
         Rule::dash_run => "'-'",
+        Rule::bang => "'!'",
+        Rule::dash => "'-'",
 
         // Keywords in expressions
         Rule::kw_if => "'if'",
@@ -360,7 +362,18 @@ fn format_pest_error(e: &pest::error::Error<Rule>, src: &str) -> String {
 /// Deduplicate rule descriptions (many rules map to the same display string,
 /// e.g. multiple expression-level rules all display as "expression").
 fn deduplicate_descriptions(rules: &[Rule]) -> Vec<&'static str> {
-    let mut descs: Vec<&str> = rules.iter().map(|r| rule_display(r)).collect();
+    // A `bang` or `dash` is only ever expected as one more `!` or `-` in a
+    // run, which says nothing about what is missing.
+    let informative: Vec<&Rule> = rules
+        .iter()
+        .filter(|r| !matches!(r, Rule::bang | Rule::dash))
+        .collect();
+    let rules: Vec<&Rule> = if informative.is_empty() {
+        rules.iter().collect()
+    } else {
+        informative
+    };
+    let mut descs: Vec<&str> = rules.into_iter().map(rule_display).collect();
     descs.sort_unstable();
     descs.dedup();
     descs
@@ -1170,27 +1183,30 @@ fn build_rel(pair: Pair<'_>) -> Result<Expr, RawParseError> {
     }
 }
 
-/// `rel_op_tail := (rel_op add)+` — a chain of comparisons, folded left.
-/// `span` is the enclosing `rel` chain span (see [`chain_span`]); Cedar
-/// stamps every node of the relation chain with it.
+/// `rel_op_tail := (rel_op add)+` — a comparison. `span` is the enclosing
+/// `rel` chain span (see [`chain_span`]); Cedar stamps the node with it.
+///
+/// The grammar accepts a chain `a == b == c`, but Cedar rejects one, as we
+/// do: folding it would silently read `(a == b) == c`, which for Bool
+/// operands inverts `a == false == false`. A chain must be parenthesized.
 fn build_rel_op_tail(lhs: Expr, pair: Pair<'_>, span: Span) -> Result<Expr, RawParseError> {
-    let mut acc = lhs;
-    let mut iter = pair.into_inner().peekable();
-    while let Some(op_pair) = iter.next() {
-        debug_assert_eq!(op_pair.as_rule(), Rule::rel_op);
-        let op = parse_rel_op(&op_pair)?;
-        let add = iter.next().expect("rel_op is followed by an add");
-        let right = build_add(add)?;
-        acc = Expr::new(
-            ExprKind::BinaryApp {
-                op,
-                left: Box::new(acc),
-                right: Box::new(right),
-            },
+    let mut iter = pair.into_inner();
+    let op = parse_rel_op(&iter.next().expect("rel_op_tail has a rel_op"))?;
+    let right = build_add(iter.next().expect("rel_op is followed by an add"))?;
+    if iter.next().is_some() {
+        return Err(err(
+            "multiple relational operators (>, ==, in, etc.) must be used with parentheses to make ordering explicit",
             span,
-        );
+        ));
     }
-    Ok(acc)
+    Ok(Expr::new(
+        ExprKind::BinaryApp {
+            op,
+            left: Box::new(lhs),
+            right: Box::new(right),
+        },
+        span,
+    ))
 }
 
 fn parse_rel_op(pair: &Pair<'_>) -> Result<BinOp, RawParseError> {
@@ -1288,6 +1304,10 @@ fn build_mult(pair: Pair<'_>) -> Result<Expr, RawParseError> {
 }
 
 /// `unary := { "!" }* member | { "-" }* member`.
+///
+/// As in Cedar, a run of `-` directly before a number token folds its
+/// innermost `-` into the literal (`-5` is `Long(-5)`, `--5` is
+/// `Neg(Long(-5))`), and every other `!` or `-` is a `Not` or `Neg` node.
 fn build_unary(pair: Pair<'_>) -> Result<Expr, RawParseError> {
     // The unary node's span is the whole `unary` production, trivia-trimmed —
     // paren-inclusive on the operand (`!(x)` ends at the `)`), matching Cedar.
@@ -1296,68 +1316,51 @@ fn build_unary(pair: Pair<'_>) -> Result<Expr, RawParseError> {
     let mut member_pair = None;
     for child in pair.into_inner() {
         match child.as_rule() {
-            Rule::bang_run => prefix = Some((UnOp::Not, child.as_str().matches('!').count())),
-            Rule::dash_run => prefix = Some((UnOp::Neg, child.as_str().matches('-').count())),
+            Rule::bang_run => prefix = Some((UnOp::Not, child.into_inner().count())),
+            Rule::dash_run => prefix = Some((UnOp::Neg, child.into_inner().count())),
             Rule::member => member_pair = Some(child),
             _ => {}
         }
     }
     let member_pair = member_pair.expect("unary has a member");
+    let Some((op, mut count)) = prefix else {
+        return build_member(member_pair);
+    };
 
-    // Detect if the member is a bare number literal `9223372036854775808`
-    // (the 2^63 special case). This literal is stored as Long(i64::MIN)
-    // by build_literal; the first negation prefix is its sign. We must
-    // only absorb that negation when it's a direct literal — NOT when the
-    // i64::MIN comes from a parenthesized sub-expression like
-    // `-((-9223372036854775808))`, which must overflow at runtime, and NOT
-    // when 9223372036854775808 appears nested inside a list/record/call.
-    //
-    // We inspect the parse tree (member_pair) rather than the built Expr
-    // because after build_member both cases produce Long(i64::MIN) and
-    // are indistinguishable.
-    let is_bare_2_63 = prefix.as_ref().is_some_and(|(op, _)| *op == UnOp::Neg)
-        && is_member_bare_number(&member_pair, "9223372036854775808");
-    // Only a *directly* negated number token folds (`-5` ⇒ `Long(-5)`); a
-    // parenthesized `-(5)` keeps a `Neg` over the positive literal, matching
-    // Cedar's own constant-folding (and its span attribution).
-    let member_is_bare_number = bare_number_text(&member_pair).is_some();
-
-    let mut expr = build_member(member_pair)?;
-    if let Some((op, mut count)) = prefix {
-        // If the member is the bare 2^63 literal, absorb one negation:
-        // `Long(i64::MIN)` is already the correct value for `-2^63`.
-        if is_bare_2_63 && count > 0 {
-            count -= 1;
-        }
-        for _ in 0..count {
-            // Fold negation on integer literals: `-N` becomes `Long(-N)`
-            // directly rather than `UnaryApp(Neg, Long(N))` — but only for a
-            // *direct* numeric token, so `-(N)` stays a `Neg`. Keep the
-            // literal's own (number-token) span — Cedar spans the digits, not
-            // the leading `-`, so preserving `expr.span` matches Cedar's own
-            // attribution rather than widening to the whole unary span.
-            if op == UnOp::Neg
-                && member_is_bare_number
-                && let ExprKind::Lit(cedar_ast::Literal::Long(n)) = &expr.kind
-            {
-                let n = *n;
-                if n != i64::MIN {
-                    let lit_span = expr.span;
-                    expr = Expr::new(ExprKind::Lit(cedar_ast::Literal::Long(-n)), lit_span);
-                    continue;
-                }
-                // n == i64::MIN: do NOT fold — emit UnaryApp(Neg) so
-                // Cedar's evaluator produces an overflow error at
-                // runtime.
+    // Only a *directly* negated number token folds; a parenthesized `-(5)`
+    // keeps a `Neg` over the positive literal. 2^63 fits i64 only negated,
+    // so build_literal rejects it, as Cedar does; directly negated, it is
+    // `Long(i64::MIN)`. The folded literal keeps the number token's span:
+    // Cedar spans the digits, not the leading `-`.
+    let folded = match bare_number_text(&member_pair) {
+        Some(digits) if op == UnOp::Neg => match digits.parse::<u64>() {
+            Ok(n) if n <= 1 << 63 => {
+                let primary = member_pair.clone().into_inner().next();
+                let digits_span = span_of(&primary.expect("member has a primary"));
+                Some(Expr::new(
+                    ExprKind::Lit(cedar_ast::Literal::Long((n as i64).wrapping_neg())),
+                    digits_span,
+                ))
             }
-            expr = Expr::new(
-                ExprKind::UnaryApp {
-                    op,
-                    expr: Box::new(expr),
-                },
-                unary_span,
-            );
+            _ => None,
+        },
+        _ => None,
+    };
+    let mut expr = match folded {
+        Some(literal) => {
+            count -= 1;
+            literal
         }
+        None => build_member(member_pair)?,
+    };
+    for _ in 0..count {
+        expr = Expr::new(
+            ExprKind::UnaryApp {
+                op,
+                expr: Box::new(expr),
+            },
+            unary_span,
+        );
     }
     Ok(expr)
 }
@@ -1448,7 +1451,7 @@ fn field_name(pair: &Pair<'_>) -> String {
         .into_inner()
         .find(|p| p.as_rule() == Rule::any_ident)
         .map(|p| p.as_str().to_string())
-        .unwrap_or_else(|| pair.as_str().trim_start_matches('.').trim().to_string())
+        .expect("access_field has an any_ident")
 }
 
 /// The string key of an `access_index` (`[ "k" ]`).
@@ -1498,9 +1501,9 @@ fn build_function_call(name_pair: &Pair<'_>, call: Pair<'_>) -> Result<Expr, Raw
     // Span the whole application (`name(...)`), from the function name
     // through the closing paren of the call.
     let span = Span::new(span_of(name_pair).start, span_of(&call).end);
-    let fname = name_pair.as_str().trim();
+    let fname = name_path(name_pair).join("::");
     let mut args = call_args(call)?;
-    let op = match fname {
+    let op = match fname.as_str() {
         "decimal" => Some(UnOp::Decimal),
         "datetime" => Some(UnOp::Datetime),
         "duration" => Some(UnOp::Duration),
@@ -1522,13 +1525,7 @@ fn build_function_call(name_pair: &Pair<'_>, call: Pair<'_>) -> Result<Expr, Raw
             span,
         ));
     }
-    Ok(Expr::new(
-        ExprKind::Call {
-            name: fname.to_string(),
-            args,
-        },
-        span,
-    ))
+    Ok(Expr::new(ExprKind::Call { name: fname, args }, span))
 }
 
 /// Method application: `xs.contains(y)`, `d.lessThan(e)`, `s.isEmpty()`.
@@ -1670,8 +1667,8 @@ fn build_primary(pair: Pair<'_>) -> Result<Expr, RawParseError> {
 /// variables, or an error (bare names are otherwise only valid as entity
 /// types or function names, handled elsewhere).
 fn resolve_name(pair: &Pair<'_>) -> Result<Expr, RawParseError> {
-    let s = pair.as_str().trim();
-    let var = match s {
+    let s = name_path(pair).join("::");
+    let var = match s.as_str() {
         "principal" => pst::Var::Principal,
         "action" => pst::Var::Action,
         "resource" => pst::Var::Resource,
@@ -1736,29 +1733,17 @@ fn build_literal(pair: &Pair<'_>) -> Result<cedar_ast::Literal, RawParseError> {
         Rule::kw_true => Ok(cedar_ast::Literal::from(true)),
         Rule::kw_false => Ok(cedar_ast::Literal::from(false)),
         Rule::number => {
-            // Parse as u64 first (matching Cedar's grammar). Cedar's lexer
-            // treats all numeric literals as unsigned; negation is a unary
-            // operator applied in build_unary. The one u64 value that
-            // doesn't fit i64 is 2^63 — valid only as (-2^63) = i64::MIN.
-            let n = inner.as_str().parse::<u64>().map_err(|_| {
+            // Cedar's lexer treats all numeric literals as unsigned;
+            // negation is a unary operator applied in build_unary. A literal
+            // must fit i64 on its own: the one exception, a directly negated
+            // 2^63, is built by build_unary and never reaches here.
+            let n = inner.as_str().parse::<i64>().map_err(|_| {
                 err(
                     format!("integer literal `{}` is out of range", inner.as_str()),
                     span_of(&inner),
                 )
             })?;
-            match i64::try_from(n) {
-                Ok(i) => Ok(cedar_ast::Literal::Long(i)),
-                Err(_) if n == 9223372036854775808 => {
-                    // 2^63: only valid under negation (becomes i64::MIN).
-                    // Store as i64::MIN directly; build_unary will absorb
-                    // the negation rather than wrapping in UnaryApp(Neg).
-                    Ok(cedar_ast::Literal::Long(i64::MIN))
-                }
-                Err(_) => Err(err(
-                    format!("integer literal `{}` is out of range", inner.as_str()),
-                    span_of(&inner),
-                )),
-            }
+            Ok(cedar_ast::Literal::Long(n))
         }
         Rule::string => {
             let span = span_of(&inner);
@@ -1777,7 +1762,7 @@ fn build_ref(pair: Pair<'_>) -> Result<cedar_ast::Literal, RawParseError> {
     let mut eid = None;
     for child in pair.into_inner() {
         match child.as_rule() {
-            Rule::name => name = Some(child.as_str().to_string()),
+            Rule::name => name = Some(name_path(&child)),
             Rule::string => {
                 let eid_span = span_of(&child);
                 eid = Some(decode_string(child.as_str(), eid_span)?);
@@ -1793,8 +1778,7 @@ fn build_ref(pair: Pair<'_>) -> Result<cedar_ast::Literal, RawParseError> {
     }
     let name = name.ok_or_else(|| err("entity reference is missing a type", span))?;
     let eid = eid.ok_or_else(|| err("entity reference is missing an id", span))?;
-    let segments = name_segments(&name);
-    let ty = make_entity_type(&segments, span)?;
+    let ty = make_entity_type(&name, span)?;
     let uid = cedar_ast::EntityUID::from_components(ty, cedar_ast::Eid::new(eid), None);
     Ok(cedar_ast::Literal::EntityUID(std::sync::Arc::new(uid)))
 }
@@ -1804,48 +1788,74 @@ fn build_record(pair: Pair<'_>, span: Span) -> Result<Expr, RawParseError> {
     let mut map = std::collections::BTreeMap::new();
     for init in pair.into_inner().filter(|p| p.as_rule() == Rule::rec_init) {
         let inner = init.into_inner().next().expect("rec_init has a child");
-        match inner.as_rule() {
+        let (key, value) = match inner.as_rule() {
             Rule::rec_init_if => {
                 let value = inner
                     .into_inner()
                     .find(|p| p.as_rule() == Rule::expr)
                     .expect("rec_init_if has a value");
-                map.insert("if".to_string(), build_expr(value)?);
+                ("if".to_string(), build_expr(value)?)
             }
             Rule::rec_init_expr => {
                 let mut exprs = inner.into_inner().filter(|p| p.as_rule() == Rule::expr);
                 let key_pair = exprs.next().expect("record key");
                 let value_pair = exprs.next().expect("record value");
-                let key = record_key(&key_pair, span)?;
-                map.insert(key, build_expr(value_pair)?);
+                (record_key(&key_pair, span)?, build_expr(value_pair)?)
             }
             other => unreachable!("unexpected rec_init child: {other:?}"),
+        };
+        // As in Cedar, a key may appear once; keys compare after decoding.
+        if map.contains_key(&key) {
+            return Err(err(
+                format!("duplicate key `{key}` in record literal"),
+                span,
+            ));
         }
+        map.insert(key, value);
     }
     Ok(Expr::new(ExprKind::Record(map), span))
 }
 
-/// A record key is a string literal or a bare identifier.
+/// A record key is a string literal or an unqualified name on its own, as in
+/// Cedar, read from its tokens rather than its text.
 fn record_key(expr: &Pair<'_>, span: Span) -> Result<String, RawParseError> {
-    if let Some(s) = string_literal_of(expr) {
-        return s;
+    let invalid = || err("record keys must be identifiers or string literals", span);
+    let primary = [
+        Rule::or,
+        Rule::and,
+        Rule::rel,
+        Rule::add,
+        Rule::mult,
+        Rule::unary,
+        Rule::member,
+        Rule::primary,
+    ]
+    .into_iter()
+    .try_fold(expr.clone(), only_child)
+    .ok_or_else(invalid)?;
+    let leaf = primary.into_inner().next().ok_or_else(invalid)?;
+    match leaf.as_rule() {
+        Rule::name => match name_path(&leaf).as_slice() {
+            [ident] => Ok(ident.clone()),
+            _ => Err(invalid()),
+        },
+        Rule::literal => {
+            let string = only_child(leaf, Rule::string).ok_or_else(invalid)?;
+            decode_string(string.as_str(), span_of(&string))
+        }
+        _ => Err(invalid()),
     }
-    // Otherwise expect a bare identifier (a single-segment name).
-    let text = expr.as_str().trim();
-    if !text.is_empty() && !text.contains(|c: char| c.is_whitespace() || c == ':') {
-        return Ok(text.to_string());
-    }
-    Err(err(
-        "record keys must be identifiers or string literals",
-        span,
-    ))
 }
 
 // ── Name / entity-type helpers ──────────────────────────────────────
 
-/// Split a `::`-qualified name into its segments.
-fn name_segments(name: &str) -> Vec<String> {
-    name.split("::").map(|s| s.trim().to_string()).collect()
+/// The segments of a `name` (`Ns::User` is `["Ns", "User"]`), read from its
+/// identifier tokens rather than its text, which can hold comments.
+fn name_path(name: &Pair<'_>) -> Vec<String> {
+    name.clone()
+        .into_inner()
+        .map(|ident| ident.as_str().to_string())
+        .collect()
 }
 
 /// Build a `cedar_ast::EntityType` from name segments (`["Drupe",
@@ -1871,12 +1881,23 @@ fn make_entity_type(
 
 /// Extract an entity *type* from an `add` subtree (the operand of `is`).
 /// The operand is syntactically an expression but semantically a type
-/// name, so we read its dotted/`::`-qualified name rather than evaluating
-/// it as a value.
+/// name, so, as in Cedar, it must be a `name` on its own, read from its
+/// tokens rather than evaluated as a value.
 fn extract_entity_type(add: Pair<'_>, span: Span) -> Result<cedar_ast::EntityType, RawParseError> {
     let text = add.as_str().trim();
-    let segments = name_segments(text);
-    make_entity_type(&segments, span)
+    let name = only_child(add.clone(), Rule::mult)
+        .and_then(|mult| only_child(mult, Rule::unary))
+        .and_then(|unary| only_child(unary, Rule::member))
+        .and_then(|member| only_child(member, Rule::primary))
+        .and_then(|primary| only_child(primary, Rule::name))
+        .ok_or_else(|| {
+            // For the message only: say why the text is not a type name.
+            let segments: Vec<String> = text.split("::").map(|s| s.trim().to_string()).collect();
+            make_entity_type(&segments, span)
+                .err()
+                .unwrap_or_else(|| err(format!("invalid entity type `{text}`"), span))
+        })?;
+    make_entity_type(&name_path(&name), span)
 }
 
 /// Extract the attribute path of a `has_tail` (`has output`,
@@ -1887,6 +1908,8 @@ fn extract_has_path(tail: Pair<'_>) -> Result<Vec<String>, RawParseError> {
         .into_inner()
         .find(|p| p.as_rule() == Rule::has_rhs)
         .ok_or_else(|| err("`has` is missing an attribute", span))?;
+    let rhs_span = span_of(&rhs);
+    let rhs_text = rhs.as_str().trim();
     let inner = rhs.into_inner().next().expect("has_rhs has a child");
     match inner.as_rule() {
         // `has if` followed by `.x.y` field accesses.
@@ -1896,82 +1919,84 @@ fn extract_has_path(tail: Pair<'_>) -> Result<Vec<String>, RawParseError> {
                 .into_inner()
                 .filter(|p| p.as_rule() == Rule::mem_access)
             {
-                if let Some(field) = acc.into_inner().find(|p| p.as_rule() == Rule::access_field) {
-                    attrs.push(field_name(&field));
-                }
+                attrs.push(has_path_field(acc, rhs_text, rhs_span)?);
             }
             Ok(attrs)
         }
-        // A normal `add`: a member whose primary name is the first attr,
-        // with `.field` accesses for the rest.
-        Rule::add => extract_attr_path(inner, span),
+        Rule::add => extract_attr_path(inner, rhs_text, rhs_span),
         other => unreachable!("unexpected has_rhs child: {other:?}"),
     }
 }
 
-/// Read a dotted attribute path (`a.b.c`) from an `add` subtree.
-/// Also accepts a string literal as the first attribute (`has "attr"`),
-/// matching Cedar's grammar which allows quoted attribute names.
-fn extract_attr_path(add: Pair<'_>, span: Span) -> Result<Vec<String>, RawParseError> {
-    // Drill to the single `member`.
-    let member = find_descendant(add, Rule::member)
-        .ok_or_else(|| err("expected an attribute path", span))?;
-    let mut attrs = Vec::new();
-    for child in member.into_inner() {
-        match child.as_rule() {
-            Rule::primary => {
-                // Try bare identifier first, then fall back to string literal.
-                if let Some(name) = find_descendant(child.clone(), Rule::name) {
-                    attrs.push(name.as_str().trim().to_string());
-                } else if let Some(lit) = find_descendant(child.clone(), Rule::literal) {
-                    if let Some(s) = find_descendant(lit, Rule::string) {
-                        let s_span = span_of(&s);
-                        attrs.push(decode_string(s.as_str(), s_span)?);
-                    } else {
-                        return Err(err("expected an attribute name", span));
-                    }
-                } else {
-                    return Err(err("expected an attribute name", span));
-                }
+/// Read the attribute path of a `has` from an `add` subtree.
+///
+/// The grammar admits any `add` after `has`, but, as in Cedar's `to_has_rhs`,
+/// only three shapes are attribute paths: an unquoted name, an unquoted name
+/// followed by `.field` accesses (`has a.b.c`), and a string literal
+/// (`has "attr"`). An unquoted name is any `common_ident`, which includes words
+/// Cedar reserves (`then`, `in`, `has`); `true` and `false` are literals here.
+/// Everything else is an error: an operator (`a + b`, and so an
+/// unquoted `tool-approval`, which is `tool - approval`), a `!` or `-` prefix,
+/// parentheses, a list, a record, a qualified name, an index, or a call.
+/// Reading only part of such an operand would test a different attribute from
+/// the one written.
+fn extract_attr_path(add: Pair<'_>, text: &str, span: Span) -> Result<Vec<String>, RawParseError> {
+    let invalid = || invalid_has_rhs(text, span);
+    let member = only_child(add, Rule::mult)
+        .and_then(|mult| only_child(mult, Rule::unary))
+        .and_then(|unary| only_child(unary, Rule::member))
+        .ok_or_else(invalid)?;
+    let mut parts = member.into_inner();
+    let primary = parts.next().ok_or_else(invalid)?;
+    let first = primary.into_inner().next().ok_or_else(invalid)?;
+    match first.as_rule() {
+        // An unqualified `name` is a single `common_ident`; a qualified one
+        // (`A::B`) is a path, not an attribute.
+        Rule::name => {
+            let ident = only_child(first, Rule::common_ident).ok_or_else(invalid)?;
+            let mut attrs = vec![ident.as_str().to_string()];
+            for acc in parts {
+                attrs.push(has_path_field(acc, text, span)?);
             }
-            Rule::mem_access => {
-                if let Some(field) = child
-                    .into_inner()
-                    .find(|p| p.as_rule() == Rule::access_field)
-                {
-                    attrs.push(field_name(&field));
-                }
-            }
-            _ => {}
+            Ok(attrs)
         }
+        // A string literal names one attribute and takes no accesses.
+        Rule::literal => {
+            let string = only_child(first, Rule::string).ok_or_else(invalid)?;
+            if parts.next().is_some() {
+                return Err(invalid());
+            }
+            Ok(vec![decode_string(string.as_str(), span_of(&string))?])
+        }
+        _ => Err(invalid()),
     }
-    if attrs.is_empty() {
-        return Err(err("expected an attribute name", span));
-    }
-    Ok(attrs)
 }
 
-/// Find the first descendant pair with the given rule (depth-first),
-/// descending only through single-child chains plus direct children.
-fn find_descendant(pair: Pair<'_>, rule: Rule) -> Option<Pair<'_>> {
-    if pair.as_rule() == rule {
-        return Some(pair);
-    }
-    for child in pair.into_inner() {
-        if let Some(found) = find_descendant(child, rule) {
-            return Some(found);
-        }
-    }
-    None
+/// The attribute named by one `mem_access` of a `has` path, which must be a
+/// `.field` access.
+fn has_path_field(acc: Pair<'_>, text: &str, span: Span) -> Result<String, RawParseError> {
+    only_child(acc, Rule::access_field)
+        .map(|field| field_name(&field))
+        .ok_or_else(|| invalid_has_rhs(text, span))
 }
 
-/// Check if a `member` parse-tree node is exactly a bare numeric literal
-/// with the given text value — no parentheses, no method calls, no
-/// indexing, no nesting inside lists/records. This is used to identify
-/// the raw token `9223372036854775808` that needs one negation absorbed
-/// vs the same value arriving from a sub-expression.
-fn is_member_bare_number(member_pair: &Pair<'_>, expected_text: &str) -> bool {
-    bare_number_text(member_pair).is_some_and(|t| t == expected_text)
+fn invalid_has_rhs(text: &str, span: Span) -> RawParseError {
+    err(
+        format!(
+            "invalid right-hand side of `has`: `{text}`; expected an attribute name, a dotted \
+             path such as `a.b`, or a quoted name such as `\"a b\"` (quote a name that is not \
+             an identifier, or is `true` or `false`)"
+        ),
+        span,
+    )
+}
+
+/// The sole child of `pair`, if it has exactly one child and that child is a
+/// `rule`.
+fn only_child(pair: Pair<'_>, rule: Rule) -> Option<Pair<'_>> {
+    let mut children = pair.into_inner();
+    let child = children.next().filter(|c| c.as_rule() == rule)?;
+    children.next().is_none().then_some(child)
 }
 
 /// If `member_pair` is a *direct* (non-parenthesized) number literal
@@ -2006,18 +2031,29 @@ fn bare_number_text(member_pair: &Pair<'_>) -> Option<String> {
 
 /// Build a `like` pattern from the `add` RHS, which must be a string
 /// literal. `*` is a wildcard; `\*` a literal star.
+///
+/// The grammar admits any `add` after `like`, but, as in Cedar, the pattern is
+/// the literal alone: an operator (`"a" + "/*"`), a prefix, an access,
+/// parentheses, or any other operand is an error. Reading one literal out of
+/// such an operand would match a different pattern from the one written.
 fn extract_pattern(
     add: Pair<'_>,
     span: Span,
 ) -> Result<Vec<cedar_ast::PatternElem>, RawParseError> {
-    // Find the raw string token so we can see the escapes verbatim.
     let add_str = add.as_str().trim();
-    let string = find_descendant(add, Rule::string).ok_or_else(|| {
-        err(
-            format!("`like` requires a string-literal pattern, but got `{add_str}`"),
-            span,
-        )
-    })?;
+    // Take the raw string token so we can see the escapes verbatim.
+    let string = only_child(add, Rule::mult)
+        .and_then(|mult| only_child(mult, Rule::unary))
+        .and_then(|unary| only_child(unary, Rule::member))
+        .and_then(|member| only_child(member, Rule::primary))
+        .and_then(|primary| only_child(primary, Rule::literal))
+        .and_then(|literal| only_child(literal, Rule::string))
+        .ok_or_else(|| {
+            err(
+                format!("`like` requires a string-literal pattern, but got `{add_str}`"),
+                span,
+            )
+        })?;
     let raw = string.as_str();
     // Strip the surrounding quotes.
     let body = &raw[1..raw.len().saturating_sub(1)];
@@ -2454,5 +2490,115 @@ mod pattern_escape_differential {
             !msg.contains("requires a string-literal pattern"),
             "escape error must not surface as the unrelated non-string-pattern error: {msg}"
         );
+    }
+}
+
+#[cfg(test)]
+mod negated_2_pow_63 {
+    use super::cedar_ast;
+    use crate::ast::ExprKind;
+
+    #[test]
+    fn is_i64_min_in_any_spelling_as_in_cedar() {
+        // Cedar reads the digits by value, so leading zeros don't matter.
+        for n in ["-9223372036854775808", "-0009223372036854775808"] {
+            let src = format!("permit(principal, action, resource) when {{ {n} == 0 }};");
+            assert!(
+                cedar_policy_core::parser::parse_policy(None, &src).is_ok(),
+                "Cedar: `{n}`"
+            );
+            let mut set = super::parse_policies(&src).expect("parses");
+            let body = set.policies.remove(0).conditions.remove(0).body;
+            let ExprKind::BinaryApp { left, .. } = body.kind else {
+                panic!("expected `== 0`, got {body:?}");
+            };
+            let is_min = matches!(left.kind, ExprKind::Lit(cedar_ast::Literal::Long(i64::MIN)));
+            assert!(is_min, "for `{n}`, got {left:?}");
+        }
+    }
+}
+
+#[cfg(test)]
+mod block_comments {
+    //! A `//` comment inside a raw-captured block (`temporal { … }`, a `def`
+    //! body) runs to the end of the line, as it does for the sub-parsers
+    //! that read the block. Before, the capture ignored comments, so a `}`
+    //! in a comment closed the block early and the rest of the comment line
+    //! parsed as live policy.
+
+    use super::parse_policies;
+
+    /// (number of policies, number of defs), or the first error message.
+    fn shape(src: &str) -> Result<(usize, usize), String> {
+        parse_policies(src)
+            .map(|set| (set.policies.len(), set.defs.len()))
+            .map_err(|errs| errs.first().map(|e| e.message.clone()).unwrap_or_default())
+    }
+
+    const HIDDEN_PERMIT: &str = r#"// }; permit (principal, action, resource) when temporal { formerly within 1h A::Action::"Read"::request{}"#;
+
+    #[test]
+    fn a_comment_in_a_temporal_block_cannot_end_the_policy() {
+        let src = format!(
+            "permit (principal, action == A::Action::\"Login\", resource);\n\
+             forbid (principal, action, resource) when temporal {{ formerly within 1h A::Action::\"X\"::request{{}}\n\
+             \x20 {HIDDEN_PERMIT}\n\
+             \x20 && formerly within 1h A::Action::\"Write\"::request{{}}\n\
+             }};\n"
+        );
+        assert_eq!(shape(&src), Ok((2, 0)), "the comment must not add a policy");
+    }
+
+    #[test]
+    fn a_comment_in_a_def_body_cannot_end_the_def() {
+        let src = format!(
+            "def temporal m() {{ formerly within 1h A::Action::\"X\"::request{{}}\n\
+             \x20 {HIDDEN_PERMIT}\n\
+             \x20 && formerly within 1h A::Action::\"Write\"::request{{}}\n\
+             }};\n\
+             permit (principal, action == A::Action::\"Login\", resource) when temporal {{ m() }};\n"
+        );
+        assert_eq!(shape(&src), Ok((1, 1)), "the comment must not add a policy");
+    }
+
+    #[test]
+    fn unbalanced_braces_and_quotes_in_a_comment_are_inert() {
+        for comment in [
+            "// closes here }",
+            "// TODO: request{ input.user",
+            "// the \"x",
+            "// }}{{\"\"",
+        ] {
+            for body_first in [true, false] {
+                let atom = r#"formerly within 1h A::Action::"X"::request{}"#;
+                let body = if body_first {
+                    format!("{atom}\n  {comment}\n")
+                } else {
+                    format!("\n  {comment}\n  {atom}\n")
+                };
+                let policy =
+                    format!("forbid (principal, action, resource) when temporal {{{body}}};");
+                assert_eq!(shape(&policy), Ok((1, 0)), "{policy:?}");
+                let def = format!("def temporal m() {{{body}}};\n{policy}");
+                assert_eq!(shape(&def), Ok((1, 1)), "{def:?}");
+            }
+        }
+    }
+
+    #[test]
+    fn a_double_slash_inside_a_string_is_not_a_comment() {
+        let src = r#"forbid (principal, action, resource) when temporal {
+  formerly within 1h A::Action::"Fetch"::request{ input.url: "http://h/}" } // a real comment }
+};"#;
+        assert_eq!(shape(src), Ok((1, 0)));
+    }
+
+    #[test]
+    fn a_comment_runs_to_the_end_of_the_line() {
+        // The closing `}` is inside the comment, so the block never closes on
+        // this line. It used to close the block, turning the rest of a
+        // comment into code.
+        let src = r#"forbid (principal, action, resource) when temporal { formerly within 1h A::Action::"X"::request{} // note };"#;
+        assert!(shape(src).is_err(), "the `}}` is part of the comment");
     }
 }
