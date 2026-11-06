@@ -253,9 +253,16 @@ dialect_tag = @{ "temporal" ~ !ident_cont }
 // It is a clause-level tag only (not a `primary`), mirroring the reference
 // monitor Dogwood descends from, and the parser drops it: the body is plain Cedar.
 guardrails_tag = @{ "guardrails" ~ !ident_cont }
-// `block_inner` is whatever bytes lie between a temporal marker's braces,
-// with balanced inner braces honored.
-block_inner = @{ (string | "{" ~ block_inner ~ "}" | (!"{" ~ !"}" ~ ANY) )* }
+// `block_inner` is whatever bytes lie between a temporal marker's (or a
+// `def` body's) braces, with balanced inner braces honored. The sub-parsers
+// that read these bytes skip `//` line comments, so the capture must skip
+// them too: a rule is atomic, so the implicit `COMMENT` does not apply here
+// and is called explicitly. Without it, a `}` inside a comment closed the
+// block early and the outer parser resumed inside the comment, turning
+// comment text into live policy; a `{` or `"` in a comment likewise shifted
+// the block's end. Strings are matched whole, so a `//` inside one is not a
+// comment.
+block_inner = @{ (COMMENT | string | "{" ~ block_inner ~ "}" | (!"{" ~ !"}" ~ ANY) )* }
 
 // =============================================================================
 // 3. Expressions
@@ -292,8 +299,9 @@ rel = { add ~ (has_tail | like_tail | is_tail | rel_op_tail)? }
 
 rel_op_tail = { (rel_op ~ add)+ }
 
-// `has` accepts either a regular `add` on the right or — per RFC 62 — an
-// identifier-sequence beginning with the otherwise-reserved word `if`.
+// `has` accepts either a regular `add` on the right, which the parser then
+// requires to be an attribute path (`extract_has_path`), or a path beginning
+// with the word `if`, which Cedar reserves and Dogwood accepts as a name.
 has_tail = { kw_has ~ has_rhs }
 has_rhs  = { has_if_rhs | add }
 has_if_rhs = { kw_if ~ mem_access* }
@@ -335,12 +343,15 @@ mult_op = { "*" | "/" | "%" }
 // so inputs like:
 //     !  // inner comment
 //     ! 1
-// must parse. The tree builder counts the actual `!` / `-` characters
-// in the matched span to produce `NegOp::Bang(n)` / `NegOp::Dash(n)`
-// (with overflow variants for runs of 5 or more, matching upstream).
+// must parse. Each `!` and `-` is its own `bang` / `dash` pair, and the
+// tree builder counts those pairs, so a `!` or `-` inside a comment is
+// never counted. Upstream refuses a run of 5 or more; Dogwood accepts any
+// length.
 unary    = { (bang_run | dash_run)? ~ member }
-bang_run = { ("!")+ }
-dash_run = { ("-")+ }
+bang_run = { bang+ }
+dash_run = { dash+ }
+bang     = { "!" }
+dash     = { "-" }
 
 // member := primary { mem_access }
 member = { primary ~ mem_access* }

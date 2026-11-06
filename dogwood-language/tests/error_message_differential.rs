@@ -207,6 +207,22 @@ fn cases() -> Vec<Case> {
             src: r#"permit (principal, action, resource) when { context.x = 5 };"#,
             category: "expression",
         },
+        // A relational chain must be parenthesized, as in Cedar.
+        Case {
+            label: "chained_eq",
+            src: r#"forbid (principal, action, resource) when { context.x == false == false };"#,
+            category: "expression",
+        },
+        Case {
+            label: "chained_mixed_rel_ops",
+            src: r#"permit (principal, action, resource) when { 1 < 2 != false };"#,
+            category: "expression",
+        },
+        Case {
+            label: "chained_in",
+            src: r#"permit (principal, action, resource) when { principal in resource in action };"#,
+            category: "expression",
+        },
         // ─── 4b. Expressions — delimiters ───────────────────────────────
         Case {
             label: "unclosed_paren",
@@ -358,6 +374,17 @@ fn cases() -> Vec<Case> {
         Case {
             label: "number_overflow",
             src: r#"permit (principal, action, resource) when { 99999999999999999999 > 0 };"#,
+            category: "literal",
+        },
+        // 2^63 fits i64 only directly negated (`-9223372036854775808`).
+        Case {
+            label: "number_2_pow_63_unnegated",
+            src: r#"permit (principal, action, resource) when { 9223372036854775808 > 0 };"#,
+            category: "literal",
+        },
+        Case {
+            label: "number_2_pow_63_negated_in_parens",
+            src: r#"permit (principal, action, resource) when { -(9223372036854775808) < 0 };"#,
             category: "literal",
         },
         Case {

@@ -155,18 +155,38 @@ fn render_expr(e: &Expr) -> String {
             }
         }
         ExprKind::HasAttr { expr, attrs } => {
-            // The first path segment sits in expression (`add`) position, where a
-            // bare name must be a non-reserved identifier — a reserved word like
-            // `true`/`false` would parse as a literal, not an attribute. A quoted
-            // string is always accepted there and is decoded, so quote the first
-            // segment unconditionally. Later segments are `.`-access, which
-            // accepts any identifier (keywords included), so they render bare.
-            let mut path = quote(&attrs[0]);
-            for seg in &attrs[1..] {
-                path.push('.');
-                path.push_str(seg);
+            // A lone attribute renders quoted: a quoted string is always
+            // accepted and decoded, and a bare reserved word like `true` would
+            // parse as a literal. A quoted name takes no `.field` access, so a
+            // longer path renders its first segment bare, which the parser reads
+            // back as that name for any identifier but `true` and `false`;
+            // later segments are `.`-access, which accepts any identifier.
+            let target = atom(expr);
+            match attrs.as_slice() {
+                [attr] => format!("{target} has {}", quote(attr)),
+                [first, rest @ ..]
+                    if is_ident(first)
+                        && !matches!(first.as_str(), "true" | "false")
+                        && rest.iter().all(|seg| is_ident(seg)) =>
+                {
+                    format!("{target} has {first}.{}", rest.join("."))
+                }
+                // No `has` path spells these segments, so test them one level at
+                // a time, as Cedar lowers a path. The parser never builds such a
+                // path. This arm is a deliberate exception to failing loud on
+                // the impossible: the expansion means what the path means, so a
+                // future source of paths still renders the policy it describes.
+                // It renders `expr` once per segment.
+                _ => {
+                    let mut tests = Vec::with_capacity(attrs.len());
+                    let mut base = target;
+                    for attr in attrs {
+                        tests.push(format!("{base} has {}", quote(attr)));
+                        base = format!("{base}[{}]", quote(attr));
+                    }
+                    format!("({})", tests.join(" && "))
+                }
             }
-            format!("{} has {path}", atom(expr))
         }
         ExprKind::Like { expr, pattern } => {
             let pat = cedar_ast::Pattern::from(pattern.clone()).to_string();
@@ -335,10 +355,14 @@ fn render_record(entries: &BTreeMap<String, Expr>) -> String {
     format!("{{ {} }}", fields.join(", "))
 }
 
-/// A record key or attribute name: bare when it is a valid identifier, else a
-/// quoted string (both accepted by the parser as a member name).
+/// A record key: bare when it is an identifier Cedar does not reserve, else a
+/// quoted string (both accepted by the parser as a record key).
 fn member(name: &str) -> String {
-    if is_ident(name) {
+    let reserved = matches!(
+        name,
+        "true" | "false" | "if" | "then" | "else" | "in" | "is" | "like" | "has" | "__cedar"
+    );
+    if is_ident(name) && !reserved {
         name.to_string()
     } else {
         quote(name)
@@ -742,4 +766,88 @@ fn is_ident(name: &str) -> bool {
         _ => return false,
     }
     chars.all(|c| c == '_' || c.is_ascii_alphanumeric())
+}
+
+#[cfg(test)]
+mod has_fallback {
+    //! The `HasAttr` arm's fallback renders a path no `has` operand spells. The
+    //! parser never builds one, so these build the node by hand.
+
+    use super::render_expr;
+    use crate::ast::{Expr, ExprKind};
+    use crate::error::Span;
+    use crate::{LoweredPolicySet, PolicySchema, ServiceSchema};
+    use cedar_policy_core::ast as cedar_ast;
+    use cedar_policy_core::parser::parse_policy;
+
+    fn node(kind: ExprKind) -> Expr {
+        Expr::new(kind, Span::new(0, 0))
+    }
+
+    /// `context.input has <attrs>`.
+    fn has(attrs: &[&str]) -> Expr {
+        let input = node(ExprKind::GetAttr {
+            expr: Box::new(node(ExprKind::Var(cedar_ast::Var::Context))),
+            attr: "input".to_string(),
+        });
+        node(ExprKind::HasAttr {
+            expr: Box::new(input),
+            attrs: attrs.iter().map(|a| a.to_string()).collect(),
+        })
+    }
+
+    fn policy(body: &str) -> String {
+        format!("permit(principal, action, resource) when {{ {body} }};")
+    }
+
+    /// The condition Cedar parses `body` to.
+    fn condition(body: &str) -> cedar_ast::Expr {
+        parse_policy(None, &policy(body))
+            .unwrap_or_else(|e| panic!("`{body}`: {e}"))
+            .condition()
+    }
+
+    /// The condition Dogwood lowers `body` to.
+    fn lowered(body: &str) -> cedar_ast::Expr {
+        let schema = PolicySchema::from_cedarschema_str("").expect("empty schema");
+        let set = LoweredPolicySet::from_str(&policy(body), &ServiceSchema::defaults(), &schema)
+            .unwrap_or_else(|e| panic!("`{body}`: {e}"));
+        let cedar: &cedar_ast::PolicySet = set.as_cedar().as_ref();
+        cedar.policies().next().expect("one policy").condition()
+    }
+
+    /// Each rendered expansion is the text expected, and both Cedar and Dogwood
+    /// read it as the path: `e has a.b` is `e has a && e.a has b`.
+    #[test]
+    fn a_path_no_operand_spells_renders_as_its_expansion() {
+        for (attrs, rendered, meaning) in [
+            (
+                &["a b", "c"][..],
+                r#"(context.input has "a b" && context.input["a b"] has "c")"#,
+                r#"context.input has "a b" && context.input["a b"] has c"#,
+            ),
+            (
+                &["true", "x"][..],
+                r#"(context.input has "true" && context.input["true"] has "x")"#,
+                r#"context.input has "true" && context.input["true"] has x"#,
+            ),
+            (
+                &["x", "a b", "y"][..],
+                r#"(context.input has "x" && context.input["x"] has "a b" && context.input["x"]["a b"] has "y")"#,
+                r#"context.input has x && context.input.x has "a b" && context.input.x["a b"] has y"#,
+            ),
+        ] {
+            let text = render_expr(&has(attrs));
+            assert_eq!(text, rendered, "{attrs:?}");
+            let meaning = condition(meaning);
+            assert!(
+                condition(&text).eq_shape(&meaning),
+                "{attrs:?}: Cedar does not read `{text}` as the path"
+            );
+            assert!(
+                lowered(&text).eq_shape(&meaning),
+                "{attrs:?}: Dogwood does not lower `{text}` to the path"
+            );
+        }
+    }
 }

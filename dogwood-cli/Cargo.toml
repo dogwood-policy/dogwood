@@ -21,10 +21,10 @@ path = "src/main.rs"
 # The Dogwood frontend — path for intra-workspace builds, version so the
 # published crate depends on the released sibling. Bump the version with the
 # workspace version each release line.
-dogwood-language = { path = "../dogwood-language", version = "1.1.0" }
+dogwood-language = { path = "../dogwood-language", version = "1.1.1" }
 # The authored-source formatter is deliberately separate from the semantic
 # frontend: it preserves macros, comments, strings, and original token spelling.
-dogwood-formatter = { path = "../dogwood-formatter", version = "1.1.0" }
+dogwood-formatter = { path = "../dogwood-formatter", version = "1.1.1" }
 clap = { version = "4", features = ["derive"] }
 serde = "1"
 serde_json = "1"

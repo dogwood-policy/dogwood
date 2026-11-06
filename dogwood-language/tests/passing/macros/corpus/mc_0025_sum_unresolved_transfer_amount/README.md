@@ -12,17 +12,17 @@ A request and its response share a `requestId`. "In-flight" means a
 `Transfer::response`:
 
 ```
-formerly within ?w Transfer::request{ requestId: $q, input.amount: a }
+formerly within ?w Transfer::request{ requestId: $q, input.amount: $a }
   && !exists ($r: Timepoint).
         formerly within ?w (Transfer::response{ requestId: $q } && tp($r))
 ```
 
 The left conjunct enumerates each request, binding the per-occurrence
-uid `$q` and the summed value `a` (from `input.amount`). The negated
+uid `$q` and the summed value `$a` (from `input.amount`). The negated
 inner `exists` drops any request whose uid already has an in-window
 response. `tp($r)` range-restricts the inner existential (the §7-safe
-negated-exists shape). The `sum a for (a: Long), ($q: String). where …`
-then adds up `a` across the surviving (pending) requests.
+negated-exists shape). The `sum $a for ($a: Long), ($q: String). where …`
+then adds up `$a` across the surviving (pending) requests.
 
 The policy permits the `Alert` when the pending total reaches `50`.
 

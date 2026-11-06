@@ -10,7 +10,9 @@
 //!    into a name-keyed table; reject duplicates and reserved names;
 //!    walk each body to (a) reject macro-in-macro (any unresolved
 //!    `Call` inside a body), (b) reject any `?p`/`$t` reference that
-//!    doesn't name a declared parameter, and (c) tag each parameter
+//!    doesn't name a declared parameter, (c) reject any plain identifier
+//!    variable or binder in a `def temporal` body (see
+//!    [`plain_ident_in_body`]), and (d) tag each parameter
 //!    with whether it is used in a binder position somewhere in the
 //!    body — at call sites such params must receive a single-identifier
 //!    argument.
@@ -420,8 +422,28 @@ fn check_temporal_term(
             check_temporal_term(left, declared, span)?;
             check_temporal_term(right, declared, span)
         }
+        Term::Var(name) => Err(plain_ident_in_body(name, span)),
         _ => Ok(()),
     }
+}
+
+/// A plain identifier in a `def temporal` body is unhygienic either way it
+/// resolves: as a binder, it is kept as written at expansion, so it captures
+/// a same-named variable in a spliced call-site argument; as a free variable,
+/// it binds to whatever same-named variable the call site has in scope. Both
+/// silently change the meaning of the expanded policy, so the body must spell
+/// a macro-internal variable `$x` (gensym-renamed per call) or take it as a
+/// `?x` parameter (named by the caller).
+fn plain_ident_in_body(name: &str, span: Span) -> RawMacroError {
+    err(
+        format!(
+            "in `def temporal` body: plain identifier `{name}` is not allowed, because \
+             expansion does not rename it and it can capture or bind a call-site variable; \
+             write `${name}` for a variable the macro binds itself, or declare a `?{name}` \
+             parameter for a variable the caller names"
+        ),
+        span,
+    )
 }
 
 fn check_binder_slot(
@@ -430,7 +452,7 @@ fn check_binder_slot(
     span: Span,
 ) -> Result<(), RawMacroError> {
     match s {
-        BinderSlot::Name(_) => Ok(()),
+        BinderSlot::Name(name) => Err(plain_ident_in_body(name, span)),
         BinderSlot::ParamRef(name) => {
             if !declared.contains(name.as_str()) {
                 return Err(err(
@@ -2756,17 +2778,17 @@ mod tests {
 
     #[test]
     fn macro_expansion_leaving_a_free_variable_is_rejected() {
-        // A macro body carrying a plain (non-sigil, non-binder) variable:
-        // hygiene renames only the macro's OWN binders, so `leak` survives
-        // expansion verbatim and leaves the leaf unclosed. The parse-time
-        // closedness check cannot see it (the leaf is an opaque `Call`), so
-        // the POST-EXPANSION re-run must reject it with the wrapped message.
-        // (mcagg_0524 pins the range-restriction half of the re-run; this
-        // pins the closedness half.)
+        // A macro body carrying a `$leak` it never binds: hygiene renames
+        // it to a gensym, which leaves the leaf unclosed after expansion.
+        // (A plain `leak` is rejected earlier, by the per-def check.) The
+        // parse-time closedness check cannot see it (the leaf is an opaque
+        // `Call`), so the POST-EXPANSION re-run must reject it with the
+        // wrapped message. (mcagg_0524 pins the range-restriction half of
+        // the re-run; this pins the closedness half.)
         let e = must_fail(
             r#"
                 def temporal leaky(?w) {
-                    formerly within ?w Drupe::Action::"Login"::request{ input.user: leak }
+                    formerly within ?w Drupe::Action::"Login"::request{ input.user: $leak }
                 };
                 permit (principal, action, resource)
                 when temporal {
@@ -2780,8 +2802,162 @@ mod tests {
             "must be the post-expansion re-run: {msg}"
         );
         assert!(
-            msg.contains("variable `leak` is free in this temporal condition"),
+            msg.contains("variable `leak$0` is free in this temporal condition"),
             "must be the closedness rejection: {msg}"
         );
+    }
+
+    // ─── Hygiene: no plain identifiers in a `def temporal` body ─────────
+
+    fn assert_plain_ident_rejected(src: &str, name: &str) {
+        let e = must_fail(src);
+        assert!(
+            e.message
+                .contains(&format!("plain identifier `{name}` is not allowed")),
+            "got: {}",
+            e.message
+        );
+        assert!(
+            e.message.contains(&format!("write `${name}`")),
+            "must point to the `$` spelling: {}",
+            e.message
+        );
+    }
+
+    #[test]
+    fn plain_exists_binder_in_temporal_body_is_rejected() {
+        // The capture shape: the plain `u` binder would capture the `u` in
+        // the spliced call-site argument, so the forbid would correlate on
+        // the macro's `u` instead of the caller's.
+        assert_plain_ident_rejected(
+            r#"
+                def temporal after_login(?c) {
+                    exists (u: String). ((formerly within 1h Drupe::Action::"Login"::request{ input.user: u }) && ?c)
+                };
+                forbid (principal, action, resource)
+                when temporal {
+                    exists (u: String). (Drupe::Action::"Transfer"::request{ input.user: u }
+                        && after_login(formerly within 1h Drupe::Action::"Read"::request{ input.user: u }))
+                };
+            "#,
+            "u",
+        );
+    }
+
+    #[test]
+    fn plain_binder_is_rejected_even_if_no_call_site_shares_its_name() {
+        // The check is on the definition, not on a call: a capture-prone
+        // def is refused before any caller can trip over it.
+        assert_plain_ident_rejected(
+            r#"
+                def temporal after_login(?c) {
+                    exists (v: String). ((formerly within 1h Drupe::Action::"Login"::request{ input.user: v }) && ?c)
+                };
+                permit (principal, action, resource);
+            "#,
+            "v",
+        );
+    }
+
+    #[test]
+    fn plain_for_binder_in_aggregate_body_is_rejected() {
+        assert_plain_ident_rejected(
+            r#"
+                def temporal logins_while(?c) {
+                    count for (u: String). where (formerly within 1h (Drupe::Action::"Login"::request{ input.user: u } && ?c))
+                };
+                permit (principal, action, resource);
+            "#,
+            "u",
+        );
+    }
+
+    #[test]
+    fn plain_sum_bound_variable_is_rejected() {
+        assert_plain_ident_rejected(
+            r#"
+                def temporal total_within(?w) {
+                    sum a for (a: Long), ($t: Timepoint). where (formerly within ?w (Drupe::Action::"Transfer"::request{ input.amount: a } && tp($t)))
+                };
+                permit (principal, action, resource);
+            "#,
+            "a",
+        );
+    }
+
+    #[test]
+    fn plain_tp_variable_is_rejected() {
+        assert_plain_ident_rejected(
+            r#"
+                def temporal logins_within(?w) {
+                    count for ($t: Timepoint). where (formerly within ?w (Drupe::Action::"Login"::request{} && tp(t)))
+                };
+                permit (principal, action, resource);
+            "#,
+            "t",
+        );
+    }
+
+    #[test]
+    fn plain_free_variable_in_temporal_body_is_rejected() {
+        // The reverse direction: an unbound plain `u` would silently bind to
+        // whatever `u` the call site has in scope (dynamic scoping).
+        assert_plain_ident_rejected(
+            r#"
+                def temporal read_by(?c) {
+                    (formerly within 1h Drupe::Action::"Read"::request{ input.user: u }) && ?c
+                };
+                permit (principal, action, resource);
+            "#,
+            "u",
+        );
+    }
+
+    #[test]
+    fn plain_variable_in_value_body_is_rejected() {
+        assert_plain_ident_rejected(
+            r#"
+                def temporal plus_n(?w) {
+                    (count for ($t: Timepoint). where (formerly within ?w (Drupe::Action::"Login"::request{} && tp($t)))) + n
+                };
+                permit (principal, action, resource);
+            "#,
+            "n",
+        );
+    }
+
+    #[test]
+    fn sigil_binder_does_not_capture_a_same_named_call_site_variable() {
+        // The `$u` spelling of the capture shape: the macro's binder is
+        // gensym-renamed, so the `u` spliced from the call-site argument
+        // stays bound by the caller's `exists (u: String)`.
+        let ps = must_expand(
+            r#"
+                def temporal after_login(?c) {
+                    exists ($u: String). ((formerly within 1h Drupe::Action::"Login"::request{ input.user: $u }) && ?c)
+                };
+                forbid (principal, action, resource)
+                when temporal {
+                    exists (u: String). (Drupe::Action::"Transfer"::request{ input.user: u }
+                        && after_login(formerly within 1h Drupe::Action::"Read"::request{ input.user: u }))
+                };
+            "#,
+        );
+        let outer = temporal_cond(&ps);
+        let ConditionKind::Exists { var, body } = &outer.kind else {
+            panic!("expected the caller's exists, got {outer:?}")
+        };
+        assert_eq!(var.slot, BinderSlot::Name("u".to_string()));
+        // `Transfer{u} && <expansion>`: the expansion is the right conjunct.
+        let ConditionKind::And { right, .. } = &body.kind else {
+            panic!("expected a conjunction, got {body:?}")
+        };
+        let ConditionKind::Exists { var: inner, .. } = &right.kind else {
+            panic!("expected the macro's exists, got {right:?}")
+        };
+        match &inner.slot {
+            BinderSlot::Name(n) => assert_ne!(n, "u", "the macro binder must be renamed"),
+            other => panic!("expected a concrete Name slot, got {other:?}"),
+        }
     }
 }

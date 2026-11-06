@@ -5,14 +5,14 @@
 // request/response correlation by shared `requestId`, but aggregating
 // each pending request's amount instead of merely counting them.
 //
-//   sum a for (a: Long), ($q: String).
-//     where ( formerly within ?w Transfer::request{ requestId: $q, input.amount: a }
+//   sum $a for ($a: Long), ($q: String).
+//     where ( formerly within ?w Transfer::request{ requestId: $q, input.amount: $a }
 //             && !exists ($r: Timepoint).
 //                   formerly within ?w (Transfer::response{ requestId: $q } && tp($r)) )
 //
 // The `where` body enumerates each Transfer request, binding both the
 // per-occurrence uid `$q` (uid is unique per request) and the summed value
-// `a` from `input.amount`. The negated inner `exists` keeps a row only when
+// `$a` from `input.amount`. The negated inner `exists` keeps a row only when
 // no past in-window response carries that same uid — the request is still
 // pending. `tp($r)` range-restricts the inner existential (the §7-safe
 // negated-exists shape).
@@ -20,7 +20,7 @@
 // This policy permits the Alert when the pending total is >= 50.
 
 def temporal sum_unresolved_transfer_amount_within(?w) {
-    sum a for (a: Long), ($q: String). where (formerly within ?w Drupe::Action::"Transfer"::request{ requestId: $q, input.amount: a } && !exists ($r: Timepoint). formerly within ?w (Drupe::Action::"Transfer"::response{ requestId: $q } && tp($r)))
+    sum $a for ($a: Long), ($q: String). where (formerly within ?w Drupe::Action::"Transfer"::request{ requestId: $q, input.amount: $a } && !exists ($r: Timepoint). formerly within ?w (Drupe::Action::"Transfer"::response{ requestId: $q } && tp($r)))
 };
 
 permit (

@@ -108,8 +108,8 @@ const NET_TRACE: &str = r#"@0 scope(principal: Ns::User::"u", resource: Ns::Res:
 
 const NET_MACRO: &str = r#"
 def temporal net() {
-    (count for (t: Timepoint). where (formerly within 1h (Ns::Action::"Act"::request{} && tp(t))))
-    - (count for (u: Timepoint). where (formerly within 1h (Ns::Action::"Act"::response{} && tp(u))))
+    (count for ($t: Timepoint). where (formerly within 1h (Ns::Action::"Act"::request{} && tp($t))))
+    - (count for ($u: Timepoint). where (formerly within 1h (Ns::Action::"Act"::response{} && tp($u))))
 };
 "#;
 
