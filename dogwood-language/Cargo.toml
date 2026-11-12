@@ -24,7 +24,7 @@ exclude = [
 name = "dogwood_language"
 
 [dependencies]
-dogwood-syntax = { path = "../dogwood-syntax", version = "1.1.1" }
+dogwood-syntax = { path = "../dogwood-syntax", version = "1.1.2" }
 pest = "2"
 pest_derive = "2"
 thiserror = "1"

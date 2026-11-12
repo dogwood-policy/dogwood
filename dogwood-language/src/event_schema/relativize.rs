@@ -83,6 +83,8 @@
 //! Every synthesized variable is fresh (`__pin_*<n>`), typed at its binder
 //! (`Timepoint` / `Long`), and used only after a restricting atom.
 
+use dogwood_syntax::{BudgetExhausted, NodeBudget};
+
 use super::ast::PinRoot;
 use super::derive::{DerivedEvent, DerivedEventSchema, Pin};
 use crate::error::Span;
@@ -145,28 +147,56 @@ fn is_symmetric(pin: &Pin) -> bool {
     false
 }
 
+/// The error from [`relativize_condition`]: rewriting the leaf would create
+/// more nodes than are left in the budget.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct RelativizeError {
+    /// The limit of the budget the rewrite was charged to.
+    pub max_nodes: usize,
+}
+
 /// Rewrite one temporal leaf condition for the given universal pins.
 /// No-op (returns a clone) when `pins` is empty.
+///
+/// Every node the rewrite creates (`Condition`, `Term`, and aggregation
+/// nodes, cloned subtrees counted node by node) is charged to `budget` before
+/// it is built; the caller shares one budget across all the leaves of one
+/// policy set. The rewrite copies the rewritten body of a `previous` twice and
+/// the anchor of a general `since` three times, so a nested `previous` grows
+/// as 2^n and a right-nested `since` as 3^n; once the next node would pass the
+/// budget it stops, before building it, with [`RelativizeError`]. What a
+/// failed rewrite charged stays spent.
 pub fn relativize_condition(
     cond: &Condition,
     schema: &DerivedEventSchema,
     pins: &[UniversalPin],
-) -> Condition {
-    if pins.is_empty() {
-        return cond.clone();
-    }
+    budget: &mut NodeBudget,
+) -> Result<Condition, RelativizeError> {
+    let max_nodes = budget.limit();
     let mut cx = Cx {
         schema,
         pins,
         next_fresh: 0,
+        budget,
     };
-    cx.rewrite(cond)
+    let rewritten = if pins.is_empty() {
+        cx.clone_cond(cond)
+    } else {
+        cx.rewrite(cond)
+    };
+    rewritten.map_err(|BudgetExhausted| RelativizeError { max_nodes })
 }
+
+/// A rewrite step's result: the node built, or the budget ran out first.
+type Built<T> = Result<T, BudgetExhausted>;
 
 struct Cx<'a> {
     schema: &'a DerivedEventSchema,
     pins: &'a [UniversalPin],
     next_fresh: u64,
+    /// What is left of the policy set's node budget; every node the rewrite
+    /// creates is charged to it before it is built.
+    budget: &'a mut NodeBudget,
 }
 
 impl Cx<'_> {
@@ -176,11 +206,32 @@ impl Cx<'_> {
         format!("__pin_{stem}{n}")
     }
 
+    // ── the node budget ──────────────────────────────────────────────
+
+    /// Charge `n` nodes about to be built.
+    fn charge(&mut self, n: usize) -> Built<()> {
+        self.budget.charge(n)
+    }
+
+    /// A copy of `c`, its nodes charged before the copy is made.
+    fn clone_cond(&mut self, c: &Condition) -> Built<Condition> {
+        self.charge(crate::parser::condition_size(c))?;
+        Ok(c.clone())
+    }
+
+    /// A copy of `t`, its nodes charged before the copy is made.
+    fn clone_term(&mut self, t: &Term) -> Built<Term> {
+        self.charge(crate::parser::term_size(t))?;
+        Ok(t.clone())
+    }
+
     // ── μ ────────────────────────────────────────────────────────────
 
     /// One μ-branch: a predicate for `event` carrying exactly the pinned
     /// correlations (every declared kind has every universal pin's field).
-    fn mu_branch(&self, event: &DerivedEvent, span: Span) -> Condition {
+    fn mu_branch(&mut self, event: &DerivedEvent, span: Span) -> Built<Condition> {
+        // The predicate and one term per pin.
+        self.charge(1 + self.pins.len())?;
         let args = self
             .pins
             .iter()
@@ -198,7 +249,7 @@ impl Cx<'_> {
                 },
             })
             .collect();
-        Condition {
+        Ok(Condition {
             span,
             kind: ConditionKind::Predicate(Predicate {
                 span,
@@ -207,7 +258,7 @@ impl Cx<'_> {
                 kind: event.kind.clone(),
                 args,
             }),
-        }
+        })
     }
 
     /// μ — "an event of any declared kind of mine": the disjunction of one
@@ -215,103 +266,97 @@ impl Cx<'_> {
     /// only terms are current-request references (scope entities or context
     /// fields, per each pin's root), so each branch is range-restricted and
     /// the branches bind no variables.
-    fn mu(&self, span: Span) -> Condition {
-        let mut branches = self.schema.events.iter().map(|ev| self.mu_branch(ev, span));
-        let first = branches
-            .next()
-            .expect("universal_pins is empty for an event-less schema; rewrite not entered");
-        branches.fold(first, |acc, b| Condition {
-            span,
-            kind: ConditionKind::Or {
-                left: Box::new(acc),
-                right: Box::new(b),
-            },
-        })
+    ///
+    /// The disjunction keeps branch order and has depth ⌈log₂ n⌉. μ has one
+    /// branch per derived event, so a left-deep fold would nest as deep as
+    /// the action schema is wide and overflow recursive consumers on wide
+    /// schemas.
+    fn mu(&mut self, span: Span) -> Built<Condition> {
+        let schema = self.schema;
+        let mut level: Vec<Condition> = schema
+            .events
+            .iter()
+            .map(|ev| self.mu_branch(ev, span))
+            .collect::<Built<_>>()?;
+        while level.len() > 1 {
+            let mut next = Vec::with_capacity(level.len().div_ceil(2));
+            let mut it = level.into_iter();
+            while let Some(left) = it.next() {
+                next.push(match it.next() {
+                    Some(right) => self.or(span, left, right)?,
+                    None => left,
+                });
+            }
+            level = next;
+        }
+        Ok(level
+            .pop()
+            .expect("universal_pins is empty for an event-less schema; rewrite not entered"))
     }
 
     // ── structural recursion ─────────────────────────────────────────
 
-    fn rewrite(&mut self, c: &Condition) -> Condition {
+    fn rewrite(&mut self, c: &Condition) -> Built<Condition> {
         let span = c.span;
-        match &c.kind {
-            ConditionKind::And { left, right } => Condition {
-                span,
-                kind: ConditionKind::And {
-                    left: Box::new(self.rewrite(left)),
-                    right: Box::new(self.rewrite(right)),
-                },
-            },
-            ConditionKind::Or { left, right } => Condition {
-                span,
-                kind: ConditionKind::Or {
-                    left: Box::new(self.rewrite(left)),
-                    right: Box::new(self.rewrite(right)),
-                },
-            },
-            ConditionKind::Not { inner } => Condition {
-                span,
-                kind: ConditionKind::Not {
-                    inner: Box::new(self.rewrite(inner)),
-                },
-            },
-            ConditionKind::Exists { var, body } => Condition {
-                span,
-                kind: ConditionKind::Exists {
-                    var: var.clone(),
-                    body: Box::new(self.rewrite(body)),
-                },
-            },
-            ConditionKind::Comparison { op, left, right } => Condition {
-                span,
-                kind: ConditionKind::Comparison {
-                    op: *op,
-                    left: self.rewrite_term(left),
-                    right: self.rewrite_term(right),
-                },
-            },
+        Ok(match &c.kind {
+            ConditionKind::And { left, right } => {
+                let left = self.rewrite(left)?;
+                let right = self.rewrite(right)?;
+                self.and(span, left, right)?
+            }
+            ConditionKind::Or { left, right } => {
+                let left = self.rewrite(left)?;
+                let right = self.rewrite(right)?;
+                self.or(span, left, right)?
+            }
+            ConditionKind::Not { inner } => {
+                let inner = self.rewrite(inner)?;
+                self.not(span, inner)?
+            }
+            ConditionKind::Exists { var, body } => {
+                let body = self.rewrite(body)?;
+                self.exists(span, var.clone(), body)?
+            }
+            ConditionKind::Comparison { op, left, right } => {
+                let left = self.rewrite_term(left)?;
+                let right = self.rewrite_term(right)?;
+                self.comparison(span, *op, left, right)?
+            }
             // `formerly` is existential: recursing + guarding the body is
             // sufficient (a pinned predicate cannot match a foreign event,
             // and the window is anchored at the decision point either way).
             ConditionKind::Formerly { within, body } => {
-                let rewritten = self.rewrite(body);
-                let guarded = self.guard_mine(rewritten);
-                Condition {
-                    span,
-                    kind: ConditionKind::Formerly {
-                        within: within.clone(),
-                        body: Box::new(guarded),
-                    },
-                }
+                let rewritten = self.rewrite(body)?;
+                let guarded = self.guard_mine(rewritten)?;
+                self.formerly(span, within.clone(), guarded)?
             }
-            ConditionKind::Previous { within, body } => self.rewrite_previous(span, within, body),
+            ConditionKind::Previous { within, body } => {
+                self.rewrite_previous(span, within, body)?
+            }
             ConditionKind::Since {
                 left,
                 within,
                 right,
-            } => self.rewrite_since(span, left, within, right),
+            } => self.rewrite_since(span, left, within, right)?,
             // Predicates are already pinned; tp is position-only.
-            ConditionKind::Predicate(_) | ConditionKind::Tp { .. } => c.clone(),
+            ConditionKind::Predicate(_) | ConditionKind::Tp { .. } => self.clone_cond(c)?,
             // Transient macro nodes never survive expansion, which runs
             // before this pass; pass them through untouched (downstream
             // arms treat them as unreachable).
-            ConditionKind::Call(_) | ConditionKind::SigilRef { .. } => c.clone(),
+            ConditionKind::Call(_) | ConditionKind::SigilRef { .. } => self.clone_cond(c)?,
             ConditionKind::Refine {
                 base,
                 fields,
                 span: rspan,
-            } => Condition {
-                span,
-                kind: ConditionKind::Refine {
-                    base: Box::new(self.rewrite(base)),
-                    fields: fields.clone(),
-                    span: *rspan,
-                },
-            },
-        }
+            } => {
+                let base = self.rewrite(base)?;
+                self.refine(span, base, fields, *rspan)?
+            }
+        })
     }
 
-    fn rewrite_term(&mut self, t: &Term) -> Term {
-        match t {
+    fn rewrite_term(&mut self, t: &Term) -> Built<Term> {
+        Ok(match t {
             Term::Agg(agg) => {
                 let kind = match &agg.kind {
                     AggExprKind::Sum {
@@ -321,22 +366,26 @@ impl Cx<'_> {
                     } => AggExprKind::Sum {
                         bound_var: bound_var.clone(),
                         for_vars: for_vars.clone(),
-                        body: Box::new(self.rewrite(body)),
+                        body: Box::new(self.rewrite(body)?),
                     },
                     AggExprKind::Count { for_vars, body } => AggExprKind::Count {
                         for_vars: for_vars.clone(),
-                        body: Box::new(self.rewrite(body)),
+                        body: Box::new(self.rewrite(body)?),
                     },
-                    AggExprKind::Call(c) => AggExprKind::Call(c.clone()),
+                    // Macro residue never survives expansion; copied as is.
+                    AggExprKind::Call(_) => return self.clone_term(t),
                 };
-                Term::Agg(Box::new(AggExpr {
-                    span: agg.span,
-                    kind,
-                }))
+                self.agg(agg.span, kind)?
             }
-            Term::Array(items) => Term::Array(items.iter().map(|i| self.rewrite_term(i)).collect()),
-            other => other.clone(),
-        }
+            Term::Array(items) => {
+                let items = items
+                    .iter()
+                    .map(|i| self.rewrite_term(i))
+                    .collect::<Built<Vec<_>>>()?;
+                self.array(items)?
+            }
+            other => self.clone_term(other)?,
+        })
     }
 
     // ── guards ───────────────────────────────────────────────────────
@@ -344,60 +393,58 @@ impl Cx<'_> {
     /// Conjoin μ onto `body` unless it already implies "mine" (contains a
     /// positive predicate conjunct — pinned, so only a mine event matches).
     /// μ goes on the LEFT so it is the chain's restrictor.
-    fn guard_mine(&mut self, body: Condition) -> Condition {
+    fn guard_mine(&mut self, body: Condition) -> Built<Condition> {
         if implies_mine(&body) {
-            return body;
+            return Ok(body);
         }
         let span = body.span;
-        Condition {
-            span,
-            kind: ConditionKind::And {
-                left: Box::new(self.mu(span)),
-                right: Box::new(body),
-            },
-        }
+        let mu = self.mu(span)?;
+        self.and(span, mu, body)
     }
 
     // ── `previous` ───────────────────────────────────────────────────
 
-    fn rewrite_previous(&mut self, span: Span, within: &WithinSpec, body: &Condition) -> Condition {
-        let b = self.rewrite(body);
-        let b = self.guard_mine(b);
+    fn rewrite_previous(
+        &mut self,
+        span: Span,
+        within: &WithinSpec,
+        body: &Condition,
+    ) -> Built<Condition> {
+        let b = self.rewrite(body)?;
+        let b = self.guard_mine(b)?;
         let ti = self.fresh("ti");
         let tj = self.fresh("tj");
         let tk = self.fresh("tk");
 
         // formerly[0,W](B ∧ tp(tj))
-        let anchor = formerly(span, within.clone(), and(span, b.clone(), tp(span, &tj)));
+        let tp_tj = self.tp(span, &tj)?;
+        let b_at_tj = self.and(span, b, tp_tj)?;
+        let anchor = self.formerly(span, within.clone(), b_at_tj)?;
 
         // ¬(∃tk. formerly[0,W](μ ∧ tp(tk)) ∧ <local tj/ti re-derivation>
         //        ∧ tj < tk ∧ tk < ti)
-        let mine_at_tk = and(span, self.mu(span), tp(span, &tk));
-        let between = exists_tp(
-            span,
-            &tk,
-            ands(
-                span,
-                vec![
-                    formerly(span, within.clone(), mine_at_tk),
-                    anchor.clone(),
-                    tp(span, &ti),
-                    cmp(span, CmpOp::Lt, &tj, &tk),
-                    cmp(span, CmpOp::Lt, &tk, &ti),
-                ],
-            ),
-        );
+        let mu = self.mu(span)?;
+        let tp_tk = self.tp(span, &tk)?;
+        let mine_at_tk = self.and(span, mu, tp_tk)?;
+        let between_parts = vec![
+            self.formerly(span, within.clone(), mine_at_tk)?,
+            self.clone_cond(&anchor)?,
+            self.tp(span, &ti)?,
+            self.cmp(span, CmpOp::Lt, &tj, &tk)?,
+            self.cmp(span, CmpOp::Lt, &tk, &ti)?,
+        ];
+        let between_body = self.ands(span, between_parts)?;
+        let between = self.exists_tp(span, &tk, between_body)?;
 
-        let body = ands(
-            span,
-            vec![
-                tp(span, &ti),
-                anchor,
-                cmp(span, CmpOp::Lt, &tj, &ti),
-                not(span, between),
-            ],
-        );
-        exists_tp(span, &ti, exists_tp_inner(span, &tj, body))
+        let body_parts = vec![
+            self.tp(span, &ti)?,
+            anchor,
+            self.cmp(span, CmpOp::Lt, &tj, &ti)?,
+            self.not(span, between)?,
+        ];
+        let body = self.ands(span, body_parts)?;
+        let inner = self.exists_tp_inner(span, &tj, body)?;
+        self.exists_tp(span, &ti, inner)
     }
 
     // ── `since` ──────────────────────────────────────────────────────
@@ -408,9 +455,9 @@ impl Cx<'_> {
         left: &Condition,
         within: &WithinSpec,
         right: &Condition,
-    ) -> Condition {
-        let anchor_body = self.rewrite(right);
-        let anchor_body = self.guard_mine(anchor_body);
+    ) -> Built<Condition> {
+        let anchor_body = self.rewrite(right)?;
+        let anchor_body = self.guard_mine(anchor_body)?;
 
         // Fast path — the negated-left idiom `!X since A` with a
         // mine-confined X: a foreign position cannot satisfy the pinned X,
@@ -420,15 +467,9 @@ impl Cx<'_> {
         if let ConditionKind::Not { inner } = &left.kind
             && implies_mine(inner)
         {
-            let l = self.rewrite(inner);
-            return Condition {
-                span,
-                kind: ConditionKind::Since {
-                    left: Box::new(not(span, l)),
-                    within: within.clone(),
-                    right: Box::new(anchor_body),
-                },
-            };
+            let l = self.rewrite(inner)?;
+            let not_l = self.not(span, l)?;
+            return self.since(span, not_l, within.clone(), anchor_body);
         }
 
         // General encoding: continuity over mine positions as a count
@@ -436,7 +477,7 @@ impl Cx<'_> {
         // the count encoding those bindings stay internal to the count
         // body (grouped per outer correlation), which matches the ∀-side's
         // non-binding role in MFOTL since.
-        let l = self.rewrite(left);
+        let l = self.rewrite(left)?;
         let ti = self.fresh("ti");
         let tj = self.fresh("tj");
         // Distinct stems for the two count-body timepoint binders. They must
@@ -449,55 +490,275 @@ impl Cx<'_> {
         let n2 = self.fresh("n");
 
         // formerly[0,W](A' ∧ tp(tj)) — the anchor, exact window from now.
-        let anchor = formerly(span, within.clone(), and(span, anchor_body, tp(span, &tj)));
-
-        // The shared local range re-derivation for both count bodies: the
-        // MFOTL `since` range **(tj, ti]** — strictly after the anchor `tj`, up
-        // to and INCLUDING the decision point `ti`. The strict lower / non-
-        // strict upper boundary (`tj < tk ∧ tk ≤ ti`) mirrors the native
-        // interpreter exactly (`eval_since` checks `left` over `(j+1)..=i`);
-        // changing either boundary's strictness silently misclassifies the
-        // anchor position or the decision point, so keep them as written.
-        let range = |tkv: &str| {
-            vec![
-                anchor.clone(),
-                tp(span, &ti),
-                cmp(span, CmpOp::Lt, &tj, tkv),
-                cmp_le(span, tkv, &ti),
-            ]
-        };
+        let tp_tj = self.tp(span, &tj)?;
+        let anchor_at_tj = self.and(span, anchor_body, tp_tj)?;
+        let anchor = self.formerly(span, within.clone(), anchor_at_tj)?;
 
         // n1 = count of ALL μ positions in the range: count tk_all where
         // formerly[0,W](μ ∧ tp(tk_all)) ∧ range.
-        let mine_at = and(span, self.mu(span), tp(span, &tk_all));
-        let mut n1_parts = vec![formerly(span, within.clone(), mine_at)];
-        n1_parts.extend(range(&tk_all));
-        let n1_count = count_agg(span, &tk_all, ands(span, n1_parts));
+        let mu = self.mu(span)?;
+        let tp_tk_all = self.tp(span, &tk_all)?;
+        let mine_at = self.and(span, mu, tp_tk_all)?;
+        let mut n1_parts = vec![self.formerly(span, within.clone(), mine_at)?];
+        n1_parts.extend(self.range(span, &anchor, &ti, &tj, &tk_all)?);
+        let n1_body = self.ands(span, n1_parts)?;
+        let n1_count = self.count_agg(span, &tk_all, n1_body)?;
 
         // n2 = count of μ positions in the range that ALSO satisfy the left:
         // count tk_left where formerly[0,W]((μ ∧ L') ∧ tp(tk_left)) ∧ range.
         // Continuity ("left held at every μ position in (tj, ti]") is then
         // `n1 == n2` below.
-        let mine_l_at = and(span, and(span, self.mu(span), l), tp(span, &tk_left));
-        let mut n2_parts = vec![formerly(span, within.clone(), mine_l_at)];
-        n2_parts.extend(range(&tk_left));
-        let n2_count = count_agg(span, &tk_left, ands(span, n2_parts));
+        let mu = self.mu(span)?;
+        let mine_l = self.and(span, mu, l)?;
+        let tp_tk_left = self.tp(span, &tk_left)?;
+        let mine_l_at = self.and(span, mine_l, tp_tk_left)?;
+        let mut n2_parts = vec![self.formerly(span, within.clone(), mine_l_at)?];
+        n2_parts.extend(self.range(span, &anchor, &ti, &tj, &tk_left)?);
+        let n2_body = self.ands(span, n2_parts)?;
+        let n2_count = self.count_agg(span, &tk_left, n2_body)?;
 
-        let body = ands(
+        let body_parts = vec![
+            self.tp(span, &ti)?,
+            self.clone_cond(&anchor)?,
+            self.cmp_agg_eq(span, n1_count, &n1)?,
+            self.cmp_agg_eq(span, n2_count, &n2)?,
+            self.cmp_vars(span, CmpOp::Eq, &n1, &n2)?,
+        ];
+        let body = self.ands(span, body_parts)?;
+
+        let body = self.exists_long(span, &n2, body)?;
+        let body = self.exists_long(span, &n1, body)?;
+        let body = self.exists_tp_inner(span, &tj, body)?;
+        self.exists_tp(span, &ti, body)
+    }
+
+    /// The shared local range re-derivation for both `since` count bodies:
+    /// the MFOTL `since` range **(tj, ti]** — strictly after the anchor `tj`,
+    /// up to and INCLUDING the decision point `ti`. The strict lower / non-
+    /// strict upper boundary (`tj < tk ∧ tk ≤ ti`) mirrors the native
+    /// interpreter exactly (`eval_since` checks `left` over `(j+1)..=i`);
+    /// changing either boundary's strictness silently misclassifies the
+    /// anchor position or the decision point, so keep them as written.
+    fn range(
+        &mut self,
+        span: Span,
+        anchor: &Condition,
+        ti: &str,
+        tj: &str,
+        tkv: &str,
+    ) -> Built<Vec<Condition>> {
+        Ok(vec![
+            self.clone_cond(anchor)?,
+            self.tp(span, ti)?,
+            self.cmp(span, CmpOp::Lt, tj, tkv)?,
+            self.cmp_le(span, tkv, ti)?,
+        ])
+    }
+}
+
+/// The only place the rewriter builds nodes. Each constructor charges the
+/// budget for the nodes it creates before building them, so a node is paid
+/// for before it exists.
+impl Cx<'_> {
+    fn and(&mut self, span: Span, left: Condition, right: Condition) -> Built<Condition> {
+        self.charge(1)?;
+        Ok(Condition {
             span,
-            vec![
-                tp(span, &ti),
-                anchor.clone(),
-                cmp_agg_eq(span, n1_count, &n1),
-                cmp_agg_eq(span, n2_count, &n2),
-                cmp_vars(span, CmpOp::Eq, &n1, &n2),
-            ],
-        );
+            kind: ConditionKind::And {
+                left: Box::new(left),
+                right: Box::new(right),
+            },
+        })
+    }
 
-        let body = exists_long(span, &n2, body);
-        let body = exists_long(span, &n1, body);
-        let body = exists_tp_inner(span, &tj, body);
-        exists_tp(span, &ti, body)
+    fn or(&mut self, span: Span, left: Condition, right: Condition) -> Built<Condition> {
+        self.charge(1)?;
+        Ok(Condition {
+            span,
+            kind: ConditionKind::Or {
+                left: Box::new(left),
+                right: Box::new(right),
+            },
+        })
+    }
+
+    fn ands(&mut self, span: Span, parts: Vec<Condition>) -> Built<Condition> {
+        let mut it = parts.into_iter();
+        let first = it.next().expect("ands: non-empty");
+        it.try_fold(first, |acc, p| self.and(span, acc, p))
+    }
+
+    fn not(&mut self, span: Span, inner: Condition) -> Built<Condition> {
+        self.charge(1)?;
+        Ok(Condition {
+            span,
+            kind: ConditionKind::Not {
+                inner: Box::new(inner),
+            },
+        })
+    }
+
+    fn exists(&mut self, span: Span, var: TypedBinder, body: Condition) -> Built<Condition> {
+        self.charge(1)?;
+        Ok(Condition {
+            span,
+            kind: ConditionKind::Exists {
+                var,
+                body: Box::new(body),
+            },
+        })
+    }
+
+    fn comparison(&mut self, span: Span, op: CmpOp, left: Term, right: Term) -> Built<Condition> {
+        self.charge(1)?;
+        Ok(Condition {
+            span,
+            kind: ConditionKind::Comparison { op, left, right },
+        })
+    }
+
+    /// `base` refined by copies of `fields`; the field terms are charged with
+    /// the refinement node.
+    fn refine(
+        &mut self,
+        span: Span,
+        base: Condition,
+        fields: &[NamedArg],
+        refine_span: Span,
+    ) -> Built<Condition> {
+        let field_nodes: usize = fields
+            .iter()
+            .map(|f| crate::parser::term_size(&f.value))
+            .sum();
+        self.charge(1 + field_nodes)?;
+        Ok(Condition {
+            span,
+            kind: ConditionKind::Refine {
+                base: Box::new(base),
+                fields: fields.to_vec(),
+                span: refine_span,
+            },
+        })
+    }
+
+    fn since(
+        &mut self,
+        span: Span,
+        left: Condition,
+        within: WithinSpec,
+        right: Condition,
+    ) -> Built<Condition> {
+        self.charge(1)?;
+        Ok(Condition {
+            span,
+            kind: ConditionKind::Since {
+                left: Box::new(left),
+                within,
+                right: Box::new(right),
+            },
+        })
+    }
+
+    fn tp(&mut self, span: Span, var: &str) -> Built<Condition> {
+        self.charge(1)?;
+        Ok(Condition {
+            span,
+            kind: ConditionKind::Tp {
+                var: crate::extension::temporal::ast::BinderSlot::Name(var.to_string()),
+            },
+        })
+    }
+
+    fn formerly(&mut self, span: Span, within: WithinSpec, body: Condition) -> Built<Condition> {
+        self.charge(1)?;
+        Ok(Condition {
+            span,
+            kind: ConditionKind::Formerly {
+                within,
+                body: Box::new(body),
+            },
+        })
+    }
+
+    fn cmp(&mut self, span: Span, op: CmpOp, a: &str, b: &str) -> Built<Condition> {
+        self.cmp_vars(span, op, a, b)
+    }
+
+    fn cmp_le(&mut self, span: Span, a: &str, b: &str) -> Built<Condition> {
+        self.cmp_vars(span, CmpOp::Le, a, b)
+    }
+
+    fn cmp_vars(&mut self, span: Span, op: CmpOp, a: &str, b: &str) -> Built<Condition> {
+        // The comparison and its two variable terms.
+        self.charge(3)?;
+        Ok(Condition {
+            span,
+            kind: ConditionKind::Comparison {
+                op,
+                left: Term::Var(a.to_string()),
+                right: Term::Var(b.to_string()),
+            },
+        })
+    }
+
+    /// `(count …) == n` — the aggregate on the LEFT, the (fresh, exists-bound)
+    /// result variable `n` on the RIGHT. Operand order is load-bearing: the
+    /// evaluator's direct-binding rule (`eval::eq_binding`) binds whichever side
+    /// is an *unbound* `Var` to the other side's value. Here `n` is unbound and
+    /// the aggregate is a `Term::Agg` (never a bare var), so it binds `n` to the
+    /// evaluated count — the effect this rewrite depends on. `n` must not be bound
+    /// before this comparison (it is introduced by the enclosing `exists_long`
+    /// solely for this binding), and the aggregate must stay on the left; swapping
+    /// the operands or pre-binding `n` would turn this into a plain equality
+    /// filter that never binds.
+    fn cmp_agg_eq(&mut self, span: Span, agg: Term, n: &str) -> Built<Condition> {
+        // The comparison and the variable term.
+        self.charge(2)?;
+        Ok(Condition {
+            span,
+            kind: ConditionKind::Comparison {
+                op: CmpOp::Eq,
+                left: agg,
+                right: Term::Var(n.to_string()),
+            },
+        })
+    }
+
+    /// An aggregate term over `kind`.
+    fn agg(&mut self, span: Span, kind: AggExprKind) -> Built<Term> {
+        // The term and its aggregation.
+        self.charge(2)?;
+        Ok(Term::Agg(Box::new(AggExpr { span, kind })))
+    }
+
+    /// `count for (tk: Timepoint). where body` as a comparison operand.
+    fn count_agg(&mut self, span: Span, over: &str, body: Condition) -> Built<Term> {
+        self.agg(
+            span,
+            AggExprKind::Count {
+                for_vars: vec![typed_tp(over)],
+                body: Box::new(body),
+            },
+        )
+    }
+
+    fn array(&mut self, items: Vec<Term>) -> Built<Term> {
+        self.charge(1)?;
+        Ok(Term::Array(items))
+    }
+
+    fn exists_tp(&mut self, span: Span, var: &str, body: Condition) -> Built<Condition> {
+        self.exists(span, typed_tp(var), body)
+    }
+
+    /// Alias of [`exists_tp`](Cx::exists_tp) for the inner (`tj`) binder —
+    /// kept separate for readability at call sites.
+    fn exists_tp_inner(&mut self, span: Span, var: &str, body: Condition) -> Built<Condition> {
+        self.exists_tp(span, var, body)
+    }
+
+    fn exists_long(&mut self, span: Span, var: &str, body: Condition) -> Built<Condition> {
+        self.exists(span, typed_long(var), body)
     }
 }
 
@@ -516,102 +777,7 @@ fn implies_mine(c: &Condition) -> bool {
     }
 }
 
-// ── small constructors ───────────────────────────────────────────────
-
-fn and(span: Span, left: Condition, right: Condition) -> Condition {
-    Condition {
-        span,
-        kind: ConditionKind::And {
-            left: Box::new(left),
-            right: Box::new(right),
-        },
-    }
-}
-
-fn ands(span: Span, parts: Vec<Condition>) -> Condition {
-    let mut it = parts.into_iter();
-    let first = it.next().expect("ands: non-empty");
-    it.fold(first, |acc, p| and(span, acc, p))
-}
-
-fn not(span: Span, inner: Condition) -> Condition {
-    Condition {
-        span,
-        kind: ConditionKind::Not {
-            inner: Box::new(inner),
-        },
-    }
-}
-
-fn tp(span: Span, var: &str) -> Condition {
-    Condition {
-        span,
-        kind: ConditionKind::Tp {
-            var: crate::extension::temporal::ast::BinderSlot::Name(var.to_string()),
-        },
-    }
-}
-
-fn formerly(span: Span, within: WithinSpec, body: Condition) -> Condition {
-    Condition {
-        span,
-        kind: ConditionKind::Formerly {
-            within,
-            body: Box::new(body),
-        },
-    }
-}
-
-fn cmp(span: Span, op: CmpOp, a: &str, b: &str) -> Condition {
-    cmp_vars(span, op, a, b)
-}
-
-fn cmp_le(span: Span, a: &str, b: &str) -> Condition {
-    cmp_vars(span, CmpOp::Le, a, b)
-}
-
-fn cmp_vars(span: Span, op: CmpOp, a: &str, b: &str) -> Condition {
-    Condition {
-        span,
-        kind: ConditionKind::Comparison {
-            op,
-            left: Term::Var(a.to_string()),
-            right: Term::Var(b.to_string()),
-        },
-    }
-}
-
-/// `(count …) == n` — the aggregate on the LEFT, the (fresh, exists-bound)
-/// result variable `n` on the RIGHT. Operand order is load-bearing: the
-/// evaluator's direct-binding rule (`eval::eq_binding`) binds whichever side
-/// is an *unbound* `Var` to the other side's value. Here `n` is unbound and
-/// the aggregate is a `Term::Agg` (never a bare var), so it binds `n` to the
-/// evaluated count — the effect this rewrite depends on. `n` must not be bound
-/// before this comparison (it is introduced by the enclosing `exists_long`
-/// solely for this binding), and the aggregate must stay on the left; swapping
-/// the operands or pre-binding `n` would turn this into a plain equality
-/// filter that never binds.
-fn cmp_agg_eq(span: Span, agg: Term, n: &str) -> Condition {
-    Condition {
-        span,
-        kind: ConditionKind::Comparison {
-            op: CmpOp::Eq,
-            left: agg,
-            right: Term::Var(n.to_string()),
-        },
-    }
-}
-
-/// `count for (tk: Timepoint). where body` as a comparison operand.
-fn count_agg(span: Span, over: &str, body: Condition) -> Term {
-    Term::Agg(Box::new(AggExpr {
-        span,
-        kind: AggExprKind::Count {
-            for_vars: vec![typed_tp(over)],
-            body: Box::new(body),
-        },
-    }))
-}
+// ── binders (not tree nodes; never charged) ──────────────────────────
 
 fn typed_tp(name: &str) -> TypedBinder {
     TypedBinder {
@@ -624,32 +790,6 @@ fn typed_long(name: &str) -> TypedBinder {
     TypedBinder {
         slot: crate::extension::temporal::ast::BinderSlot::Name(name.to_string()),
         ty: Type::Named(vec!["Long".to_string()]),
-    }
-}
-
-fn exists_tp(span: Span, var: &str, body: Condition) -> Condition {
-    Condition {
-        span,
-        kind: ConditionKind::Exists {
-            var: typed_tp(var),
-            body: Box::new(body),
-        },
-    }
-}
-
-/// Alias of [`exists_tp`] for the inner (`tj`) binder — kept separate for
-/// readability at call sites.
-fn exists_tp_inner(span: Span, var: &str, body: Condition) -> Condition {
-    exists_tp(span, var, body)
-}
-
-fn exists_long(span: Span, var: &str, body: Condition) -> Condition {
-    Condition {
-        span,
-        kind: ConditionKind::Exists {
-            var: typed_long(var),
-            body: Box::new(body),
-        },
     }
 }
 
@@ -772,19 +912,11 @@ mod tests {
         assert!(pins.is_empty());
     }
 
-    /// With no universal pins, `relativize_condition` is the identity — the
-    /// authored leaf is returned unchanged. This is the structural counterpart
-    /// to the "slice is the specification" claim the differential suites rely
-    /// on: a schema without a qualifying pin keeps the global-trace semantics
-    /// untouched. A regression that started rewriting
-    /// unconditionally would fail here.
-    #[test]
-    fn empty_pins_relativize_is_identity() {
-        // A non-trivial leaf: `previous within 1h Login{...} since ...` shapes
-        // exercise the arms that DO transform under pins, so an accidental
-        // rewrite would be visible.
+    /// `previous within 1h Login::request{}`: a leaf the rewrite transforms
+    /// under pins, so an accidental rewrite would be visible.
+    fn previous_login() -> Condition {
         let span = Span::new(0, 0);
-        let leaf = Condition {
+        Condition {
             span,
             kind: ConditionKind::Previous {
                 within: WithinSpec::Concrete(Interval {
@@ -802,7 +934,18 @@ mod tests {
                     }),
                 }),
             },
-        };
+        }
+    }
+
+    /// With no universal pins, `relativize_condition` is the identity — the
+    /// authored leaf is returned unchanged. This is the structural counterpart
+    /// to the "slice is the specification" claim the differential suites rely
+    /// on: a schema without a qualifying pin keeps the global-trace semantics
+    /// untouched. A regression that started rewriting
+    /// unconditionally would fail here.
+    #[test]
+    fn empty_pins_relativize_is_identity() {
+        let leaf = previous_login();
 
         // An events-bearing schema (so a bug can't be masked by an empty schema
         // early-return), but with NO pins → `universal_pins` is empty.
@@ -817,7 +960,13 @@ mod tests {
         let pins = universal_pins(&derived);
         assert!(pins.is_empty(), "precondition: no universal pins");
 
-        let out = relativize_condition(&leaf, &derived, &pins);
+        let out = relativize_condition(
+            &leaf,
+            &derived,
+            &pins,
+            &mut NodeBudget::new(dogwood_syntax::DEFAULT_MAX_NODES),
+        )
+        .expect("within budget");
         assert_eq!(out, leaf, "no-pin relativization must be the identity");
     }
 
@@ -971,12 +1120,14 @@ mod tests {
 
         // Build μ directly (the disjunction of one branch per derived event).
         let span = Span::new(0, 0);
-        let cx = Cx {
+        let mut budget = NodeBudget::new(dogwood_syntax::DEFAULT_MAX_NODES);
+        let mut cx = Cx {
             schema: &derived,
             pins: &pins,
             next_fresh: 0,
+            budget: &mut budget,
         };
-        let mu = cx.mu(span);
+        let mu = cx.mu(span).expect("within budget");
 
         let mut preds = Vec::new();
         predicates_in(&mu, &mut preds);
@@ -1007,5 +1158,226 @@ mod tests {
                 "context pin must lower to ContextField at its dotted path"
             );
         }
+    }
+
+    /// Nesting depth of the `Or` spine (non-`Or` nodes count as zero).
+    fn or_depth(c: &Condition) -> usize {
+        match &c.kind {
+            ConditionKind::Or { left, right } => 1 + or_depth(left).max(or_depth(right)),
+            _ => 0,
+        }
+    }
+
+    /// μ over a wide action schema nests logarithmically, not linearly: a
+    /// left-deep μ over 100 actions × 3 kinds would be ~300 `Or`s deep, deep
+    /// enough to overflow recursive consumers. Branch order is preserved.
+    #[test]
+    fn mu_depth_is_logarithmic_in_branch_count() {
+        let actions: String = (0..100)
+            .map(|i| {
+                format!(
+                    r#"action "A{i}" appliesTo {{
+                        principal: [OAuthUser], resource: [Gateway],
+                        context: {{ input: LoginInput }}
+                    }};"#
+                )
+            })
+            .collect();
+        let action_schema = format!(
+            "namespace Drupe {{ entity OAuthUser = {{ id: String }}; entity Gateway; \
+             type LoginInput = {{ user: String }}; {actions} }}"
+        );
+        let parsed = parse_event_schema(crate::DEFAULT_EVENT_SCHEMA).unwrap();
+        let derived = derive(&parsed, &action_schema).unwrap();
+        let pins = universal_pins(&derived);
+        assert!(!pins.is_empty(), "default schema pins callerPrincipal");
+        let mut budget = NodeBudget::new(dogwood_syntax::DEFAULT_MAX_NODES);
+        let mut cx = Cx {
+            schema: &derived,
+            pins: &pins,
+            next_fresh: 0,
+            budget: &mut budget,
+        };
+        let mu = cx.mu(Span::new(0, 0)).expect("within budget");
+
+        // One derived event per action × declared kind; wide enough that a
+        // left-deep μ would be far deeper than the balanced one.
+        let n = derived.events.len();
+        assert_eq!(n, 100 * parsed.decls.len());
+        assert!(n > 64, "too few branches to exercise depth: {n}");
+        assert_eq!(or_depth(&mu), n.next_power_of_two().ilog2() as usize);
+
+        let mut preds = Vec::new();
+        predicates_in(&mu, &mut preds);
+        let got: Vec<_> = preds.iter().map(|p| (&p.action, &p.kind)).collect();
+        let want: Vec<_> = derived
+            .events
+            .iter()
+            .map(|e| (&e.action, &e.kind))
+            .collect();
+        assert_eq!(got, want, "μ branches stay in derived-event order");
+
+        // The balanced builder charges exactly the nodes it builds: a budget
+        // of μ's size suffices and one node less does not.
+        let size = crate::parser::condition_size(&mu);
+        for (limit, fits) in [(size, true), (size - 1, false)] {
+            let mut budget = NodeBudget::new(limit);
+            let mut cx = Cx {
+                schema: &derived,
+                pins: &pins,
+                next_fresh: 0,
+                budget: &mut budget,
+            };
+            assert_eq!(cx.mu(Span::new(0, 0)).is_ok(), fits, "limit {limit}");
+        }
+    }
+
+    /// Every constructor charges exactly the nodes it builds, so a whole
+    /// rewrite charges the size of its output plus the nodes it builds and
+    /// then drops: that budget suffices and one node less does not. The
+    /// shapes between them reach every constructor.
+    #[test]
+    fn rewrite_charges_exactly_the_nodes_it_builds() {
+        use crate::extension::temporal::parse::parse_condition;
+        const LOGIN: &str = r#"Drupe::Action::"Login"::request{}"#;
+        let parse = |src: &str| parse_condition(src).unwrap_or_else(|e| panic!("{src}: {e}"));
+        let derived = derive_kinds(&["request", "response"]);
+        let pins = universal_pins(&derived);
+        assert_eq!(pins.len(), 1, "{pins:?}");
+
+        // (shape, condition, nodes built but not in the output)
+        let cases: Vec<(&str, Condition, usize)> = vec![
+            ("or of predicates", or(parse(LOGIN), parse(LOGIN)), 0),
+            (
+                "exists",
+                parse(&format!(
+                    "exists (t: Timepoint). formerly within 1h ({LOGIN} && tp(t))"
+                )),
+                0,
+            ),
+            (
+                "comparison, arith, array",
+                parse("[(1 + 2 * 3), 4] == [5]"),
+                0,
+            ),
+            ("refine", parse(&format!(r#"{LOGIN}{{ user: "u" }}"#)), 0),
+            ("previous", parse(&format!("previous within 1h {LOGIN}")), 0),
+            // The general `since` encoding builds the anchor
+            // `formerly within 1h (A && tp(tj))` (4 nodes here), places only
+            // three copies of it, and drops the original.
+            (
+                "positive since",
+                parse(&format!("{LOGIN} since within 1h {LOGIN}")),
+                4,
+            ),
+            (
+                "negated-left since",
+                parse(&format!("!{LOGIN} since within 1h {LOGIN}")),
+                0,
+            ),
+            (
+                "count",
+                parse(&format!(
+                    "0 < count for (t: Timepoint). where formerly within 1h ({LOGIN} && tp(t))"
+                )),
+                0,
+            ),
+        ];
+        for (name, cond, dropped) in &cases {
+            let out = relativize_condition(
+                cond,
+                &derived,
+                &pins,
+                &mut NodeBudget::new(dogwood_syntax::DEFAULT_MAX_NODES),
+            )
+            .unwrap_or_else(|e| panic!("{name}: {e:?}"));
+            let built = crate::parser::condition_size(&out) + dropped;
+            for (limit, fits) in [(built, true), (built - 1, false)] {
+                let got = relativize_condition(cond, &derived, &pins, &mut NodeBudget::new(limit));
+                assert_eq!(
+                    got.is_ok(),
+                    fits,
+                    "{name}: limit {limit}, {built} nodes built"
+                );
+            }
+        }
+    }
+
+    /// A pinned event schema with one event kind per name (the first is the
+    /// decision event), derived over the single-action [`ACTION_SCHEMA`].
+    fn derive_kinds(kinds: &[&str]) -> DerivedEventSchema {
+        let decls: String = kinds
+            .iter()
+            .enumerate()
+            .map(|(i, k)| {
+                let decision = if i == 0 { "decision " } else { "" };
+                format!(
+                    "{decision}event <A>::{k} {{ ...inputs(A), \
+                     pin callerPrincipal: principalType(A) = principal }}\n"
+                )
+            })
+            .collect();
+        derive(&parse_event_schema(&decls).unwrap(), ACTION_SCHEMA).unwrap()
+    }
+
+    fn or(left: Condition, right: Condition) -> Condition {
+        Condition {
+            span: Span::new(0, 0),
+            kind: ConditionKind::Or {
+                left: Box::new(left),
+                right: Box::new(right),
+            },
+        }
+    }
+
+    /// Up to three alternatives the balanced μ is the left-nested fold, so
+    /// relativized leaves over such schemas keep their shape (and any
+    /// fingerprint of it).
+    #[test]
+    fn mu_shape_for_up_to_three_alternatives() {
+        let span = Span::new(0, 0);
+        for kinds in [&["a"][..], &["a", "b"], &["a", "b", "c"]] {
+            let derived = derive_kinds(kinds);
+            let pins = universal_pins(&derived);
+            assert_eq!(pins.len(), 1, "{kinds:?}: {pins:?}");
+            let mut budget = NodeBudget::new(dogwood_syntax::DEFAULT_MAX_NODES);
+            let mut cx = Cx {
+                schema: &derived,
+                pins: &pins,
+                next_fresh: 0,
+                budget: &mut budget,
+            };
+            let b: Vec<_> = derived
+                .events
+                .iter()
+                .map(|ev| cx.mu_branch(ev, span).expect("within budget"))
+                .collect();
+            let want = match b.as_slice() {
+                [b0] => b0.clone(),
+                [b0, b1] => or(b0.clone(), b1.clone()),
+                [b0, b1, b2] => or(or(b0.clone(), b1.clone()), b2.clone()),
+                _ => unreachable!("one derived event per kind"),
+            };
+            assert_eq!(cx.mu(span), Ok(want), "{kinds:?}");
+        }
+    }
+
+    /// An event-less schema has no universal pins, so relativization is the
+    /// identity and μ is never built.
+    #[test]
+    fn empty_schema_relativize_is_identity() {
+        let parsed = parse_event_schema(crate::DEFAULT_EVENT_SCHEMA).unwrap();
+        let derived = derive(&parsed, "namespace Drupe { entity Gateway; }").unwrap();
+        assert!(derived.events.is_empty());
+        let pins = universal_pins(&derived);
+        assert!(pins.is_empty());
+        let leaf = previous_login();
+        let out = relativize_condition(
+            &leaf,
+            &derived,
+            &pins,
+            &mut NodeBudget::new(dogwood_syntax::DEFAULT_MAX_NODES),
+        );
+        assert_eq!(out, Ok(leaf));
     }
 }

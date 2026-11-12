@@ -33,6 +33,8 @@ use cedar_policy::{
     Schema,
 };
 
+use dogwood_syntax::NodeBudget;
+
 use crate::authorize::DogwoodRuleRef;
 use crate::cedarify::cedarify_with_providers;
 use crate::error::{
@@ -538,6 +540,14 @@ pub enum Error {
     #[error("MCP schema generation: {0}")]
     McpSchema(String),
 
+    /// The Cedar action schema was refused before Cedar parsed it: it nests
+    /// more than twice [`DEFAULT_MAX_DEPTH`](crate::DEFAULT_MAX_DEPTH)
+    /// levels (a `Set<{ … }>` level is two brackets), which Cedar's recursive-descent schema parser could not read
+    /// without risking a stack overflow. Returned by the
+    /// [`PolicySchema`](crate::PolicySchema) constructors.
+    #[error("action schema: {0}")]
+    ActionSchema(String),
+
     /// A `.log` trace could not be parsed.
     #[error("trace parse: {0}")]
     TraceParse(String),
@@ -639,6 +649,9 @@ pub(crate) struct Parsed {
     /// The original `.dw` source, shared so lowered nodes' `Loc`s and each
     /// fatal error can embed it and self-render.
     dw_src: std::sync::Arc<str>,
+    /// The options this set was parsed under; lowering keeps to the same
+    /// node budget ([`ParseOptions::max_nodes`](dogwood_syntax::ParseOptions::max_nodes)).
+    options: dogwood_syntax::ParseOptions,
 }
 
 impl Parsed {
@@ -668,14 +681,24 @@ impl Parsed {
 /// [`ServiceSchema`] (macros + provider declarations). Catches syntax, macro,
 /// and structural errors. Needs **no** action schema — schema-dependent checks
 /// are deferred to [`lower`] / validation.
-pub(crate) fn parse(source: &str, service_schema: &ServiceSchema) -> Result<Parsed, Error> {
+///
+/// Macro expansion of the whole set shares one node budget of
+/// `options.max_nodes`, and the set keeps `options` for its lowering.
+/// `options` bounds every depth: of the source's nesting, of the trees built,
+/// and of their macro expansions; the service schema's macro library is
+/// parsed under the same options.
+pub(crate) fn parse(
+    source: &str,
+    service_schema: &ServiceSchema,
+    options: &dogwood_syntax::ParseOptions,
+) -> Result<Parsed, Error> {
     // Share the `.dw` source: it both stamps every lowered node's `Loc` (so
     // Cedar validation diagnostics rebase into the original source) and lets
     // each fatal error carry the source for self-rendering.
     let dw_src: std::sync::Arc<str> = std::sync::Arc::from(source);
 
-    let mut surface =
-        crate::parser::parse_policies(source).map_err(|errs| parse_errors(errs, &dw_src))?;
+    let mut surface = crate::parser::parse_policies_with(source, options)
+        .map_err(|errs| parse_errors(errs, &dw_src))?;
 
     // Merge the schema's macro library into the policy set's own `def`s before
     // expansion, so a policy can call a library macro without re-declaring it.
@@ -685,9 +708,9 @@ pub(crate) fn parse(source: &str, service_schema: &ServiceSchema) -> Result<Pars
     // against its *own* source here, so a library-def error self-renders
     // against the library — after which any error `expand` raises over the
     // merged set is necessarily policy-authored (stamped `dw_src` below).
-    merge_macro_library(&mut surface, service_schema.macros())?;
+    merge_macro_library(&mut surface, service_schema.macros(), options)?;
 
-    crate::macros::expand(&mut surface).map_err(|e| {
+    crate::macros::expand(&mut surface, options).map_err(|e| {
         Error::Macro(MacroError::new(
             e.message,
             SourceLoc::new(e.span, dw_src.clone()),
@@ -698,6 +721,7 @@ pub(crate) fn parse(source: &str, service_schema: &ServiceSchema) -> Result<Pars
         surface,
         service_schema: service_schema.clone(),
         dw_src,
+        options: *options,
     })
 }
 
@@ -805,6 +829,42 @@ pub(crate) struct Entry {
     provider_rules: Vec<usize>,
     referenced_enums: BTreeSet<String>,
     enum_names: BTreeMap<String, String>,
+    /// The node budget the entry was parsed under. [`merge`] gives the entry
+    /// one budget of this many nodes, shared by all its leaves'
+    /// relativization.
+    max_nodes: usize,
+    /// The entry's `.dw` source, for a node-budget error in [`merge`].
+    dw_src: std::sync::Arc<str>,
+}
+
+/// The error for a lowering that would create more nodes than `limit` (or a
+/// lowered tree with more), at `span` in `src`.
+fn lowering_budget_exceeded(
+    limit: usize,
+    span: crate::error::Span,
+    src: &std::sync::Arc<str>,
+) -> Error {
+    let message = format!("lowering exceeds the node budget of {limit}");
+    cedarify_error(
+        RawCedarifyError {
+            message,
+            span: Some(span),
+        },
+        src,
+    )
+}
+
+/// Refuse a lowered tree of `nodes` nodes if that is more than `limit`.
+fn check_lowered_size(
+    nodes: usize,
+    limit: usize,
+    span: crate::error::Span,
+    src: &std::sync::Arc<str>,
+) -> Result<(), Error> {
+    if nodes > limit {
+        return Err(lowering_budget_exceeded(limit, span, src));
+    }
+    Ok(())
 }
 
 /// Reject `parsed` if a temporal predicate contains an array constant.
@@ -879,8 +939,21 @@ pub(crate) fn lower_entry(
 ) -> Result<Entry, Error> {
     reject_temporal_arrays(parsed)?;
     let Parsed {
-        surface, dw_src, ..
+        surface,
+        dw_src,
+        options,
+        ..
     } = parsed;
+    let max_nodes = options.max_nodes;
+
+    // The backstop: no expanded Cedar expression may be larger than the
+    // set's node budget, whatever built it.
+    for policy in &surface.policies {
+        for cond in &policy.conditions {
+            let nodes = crate::parser::expr_size(&cond.body);
+            check_lowered_size(nodes, max_nodes, cond.body.span, dw_src)?;
+        }
+    }
 
     let mut lowered = cedarify_with_providers(
         surface,
@@ -905,6 +978,12 @@ pub(crate) fn lower_entry(
     for leaf in context_fields.iter_mut() {
         crate::event_schema::pin::inject_pins(&mut leaf.temporal.condition, &base.event_schema);
     }
+    // The backstop for the pinned leaves (their relativization is charged to
+    // the set's budget, and checked again, in `merge`).
+    for leaf in &context_fields {
+        let nodes = crate::parser::condition_size(&leaf.temporal.condition);
+        check_lowered_size(nodes, max_nodes, leaf.temporal.span, dw_src)?;
+    }
 
     // Convert the loc-bearing `ast::PolicySet` into the public
     // `cedar_policy::PolicySet` for validation/authorization. This uses the
@@ -925,6 +1004,8 @@ pub(crate) fn lower_entry(
         provider_rules: lowered.provider_rules,
         referenced_enums: lowered.referenced_enums,
         enum_names: lowered.enum_names,
+        max_nodes,
+        dw_src: dw_src.clone(),
     })
 }
 
@@ -955,6 +1036,12 @@ pub(crate) fn merge(base: Base<'_>, entries: Vec<Entry>) -> Result<Lowered, Erro
     // action schema), so the union is consistent.
     let mut referenced_enums = BTreeSet::new();
     let mut enum_names = BTreeMap::new();
+    // One node budget per entry (one parsed set), with its source for the
+    // error, shared by all of that entry's temporal leaves; `leaf_entry[j]` is
+    // the entry temporal leaf `j` came from. Entries may have been parsed
+    // under different options, and no budget spans entries.
+    let mut budgets: Vec<(NodeBudget, std::sync::Arc<str>)> = Vec::new();
+    let mut leaf_entry: Vec<usize> = Vec::new();
     for (i, entry) in entries.into_iter().enumerate() {
         if i == 0 {
             policies = entry.policies;
@@ -966,6 +1053,8 @@ pub(crate) fn merge(base: Base<'_>, entries: Vec<Entry>) -> Result<Lowered, Erro
             }
         }
         let offset = rule_ids.len();
+        budgets.push((NodeBudget::new(entry.max_nodes), entry.dw_src));
+        leaf_entry.extend(std::iter::repeat_n(i, entry.context_fields.len()));
         context_fields.extend(entry.context_fields);
         provider_fields.extend(entry.provider_fields);
         temporal_rules.extend(entry.temporal_rules.into_iter().map(|k| k + offset));
@@ -1003,25 +1092,33 @@ pub(crate) fn merge(base: Base<'_>, entries: Vec<Entry>) -> Result<Lowered, Erro
         .collect();
 
     // Relativize each leaf for the schema's universal symmetric pins. A no-op
-    // clone when the schema declares none.
-    let temporal_rewritten: Vec<TemporalField> = temporal
-        .iter()
-        .map(|f| TemporalField {
+    // clone when the schema declares none. Every node the rewrite creates is
+    // charged to the budget of the entry the leaf came from, and the
+    // backstop refuses a rewritten leaf larger than that budget's limit.
+    debug_assert_eq!(temporal.len(), leaf_entry.len());
+    let mut temporal_rewritten: Vec<TemporalField> = Vec::with_capacity(temporal.len());
+    for (f, &entry) in temporal.iter().zip(&leaf_entry) {
+        let (budget, src) = &mut budgets[entry];
+        let span = f.condition.span;
+        let max_nodes = budget.limit();
+        let condition = crate::event_schema::relativize::relativize_condition(
+            &f.condition.condition,
+            &event_schema,
+            &pins,
+            budget,
+        )
+        .map_err(|_| lowering_budget_exceeded(max_nodes, span, src))?;
+        let nodes = crate::parser::condition_size(&condition);
+        check_lowered_size(nodes, max_nodes, span, src)?;
+        temporal_rewritten.push(TemporalField {
             id: f.id.clone(),
             action: f.action.clone(),
             target_actions: f.target_actions.clone(),
             principal: f.principal.clone(),
             resource: f.resource.clone(),
-            condition: crate::extension::temporal::Temporal {
-                condition: crate::event_schema::relativize::relativize_condition(
-                    &f.condition.condition,
-                    &event_schema,
-                    &pins,
-                ),
-                span: f.condition.span,
-            },
-        })
-        .collect();
+            condition: crate::extension::temporal::Temporal { condition, span },
+        });
+    }
 
     // Resolve each hoisted provider field's declaration now (so the engine
     // carries the implementation and need not re-consult the declarations
@@ -1100,7 +1197,11 @@ pub(crate) fn merge(base: Base<'_>, entries: Vec<Entry>) -> Result<Lowered, Erro
 /// not already define a macro of that name. This keeps default-on macro
 /// libraries safe — the library can neither shadow a policy's macro nor cause
 /// a duplicate-definition error against one.
-fn merge_macro_library(surface: &mut crate::ast::PolicySet, macros_src: &str) -> Result<(), Error> {
+fn merge_macro_library(
+    surface: &mut crate::ast::PolicySet,
+    macros_src: &str,
+    options: &dogwood_syntax::ParseOptions,
+) -> Result<(), Error> {
     if macros_src.trim().is_empty() {
         return Ok(());
     }
@@ -1112,8 +1213,8 @@ fn merge_macro_library(surface: &mut crate::ast::PolicySet, macros_src: &str) ->
     // than letting the later `expand` pass fault on the merged set — is what
     // keeps that later error correctly attributable to the policy source.
     let lib_src: std::sync::Arc<str> = std::sync::Arc::from(macros_src);
-    let library =
-        crate::parser::parse_policies(macros_src).map_err(|errs| parse_errors(errs, &lib_src))?;
+    let library = crate::parser::parse_policies_with(macros_src, options)
+        .map_err(|errs| parse_errors(errs, &lib_src))?;
     crate::macros::check_defs(&library.defs).map_err(|e| {
         Error::Macro(MacroError::new(
             e.message,
