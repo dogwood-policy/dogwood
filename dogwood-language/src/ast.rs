@@ -172,6 +172,13 @@ impl Expr {
     pub fn new(kind: ExprKind, span: Span) -> Self {
         Expr { kind, span }
     }
+
+    /// Move the kind out of `self`, leaving a leaf. `Expr` has a manual
+    /// `Drop` (see `deep_drop`), so its fields cannot be moved out by
+    /// destructuring; this is the by-value escape hatch.
+    pub(crate) fn into_kind(mut self) -> ExprKind {
+        std::mem::replace(&mut self.kind, crate::deep_drop::leaf_expr_kind())
+    }
 }
 
 /// The shape of a Cedar condition expression node.

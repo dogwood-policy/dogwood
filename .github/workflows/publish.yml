@@ -65,18 +65,23 @@ jobs:
       - name: Test
         run: cargo test --workspace
 
-      # Verify each publishable crate packages cleanly, in dependency order, from
-      # a clean tarball — catches a file that `exclude` drops but the build needs.
-      # `-p` names the internal crate; the public tree renames it, so the public
-      # workflow runs against the public names. Cannot catch an already-published
+      # Verify each publishable crate packages cleanly from a clean tarball —
+      # catches a file that `exclude` drops but the build needs. One command for
+      # all four: cargo packages them in dependency order and verifies each
+      # against the others' new tarballs. Separate dry runs would resolve
+      # dogwood-language's `dogwood-syntax = "^X.Y.Z"` against crates.io, where
+      # the new version is not yet, and fail on every version bump. `-p` names
+      # the internal crate; the public tree renames it, so the public workflow
+      # runs against the public names. Cannot catch an already-published
       # version (that check is server-side at upload), so the real publish below
       # is the only version check — bump [workspace.package] version and re-run.
       - name: Verify build and packaging
         run: |
-          cargo publish -p dogwood-syntax --dry-run
-          cargo publish -p dogwood-language --dry-run
-          cargo publish -p dogwood-formatter --dry-run
-          cargo publish -p dogwood-cli --dry-run
+          cargo publish --dry-run \
+            -p dogwood-syntax \
+            -p dogwood-language \
+            -p dogwood-formatter \
+            -p dogwood-cli
 
       # Pinned to a commit SHA rather than a mutable tag or branch; the action
       # handles the registry credential and revokes it in a post step.

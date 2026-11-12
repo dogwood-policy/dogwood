@@ -24,9 +24,23 @@ fn span_of(p: &Pair<'_>) -> Span {
     Span::new(s.start(), s.end())
 }
 
-/// Parse event-schema DSL source into an [`EventSchema`].
+/// Parse event-schema DSL source into an [`EventSchema`], at the default
+/// [`ParseOptions`](dogwood_syntax::ParseOptions).
 pub fn parse_event_schema(src: &str) -> Result<EventSchema, String> {
+    parse_event_schema_with(src, &dogwood_syntax::ParseOptions::default())
+}
+
+/// Parse event-schema DSL source into an [`EventSchema`].
+///
+/// Source nested deeper than `options.max_depth` is a parse error.
+pub fn parse_event_schema_with(
+    src: &str,
+    options: &dogwood_syntax::ParseOptions,
+) -> Result<EventSchema, String> {
     let src = src.strip_prefix('\u{FEFF}').unwrap_or(src);
+    if let Some(e) = dogwood_syntax::nesting_depth_error::<Rule>(src, &[], options.max_depth) {
+        return Err(format!("event schema parse error: {e}"));
+    }
     let mut pairs = EventSchemaParser::parse(Rule::schema_entry, src)
         .map_err(|e| format!("event schema parse error: {e}"))?;
     let entry = pairs.next().expect("schema_entry yields one pair");
@@ -298,6 +312,22 @@ mod tests {
 
     fn parse(src: &str) -> EventSchema {
         parse_event_schema(src).unwrap_or_else(|e| panic!("parse `{src}` failed: {e}"))
+    }
+
+    #[test]
+    fn the_depth_limit_is_the_callers() {
+        let schema = |n| {
+            format!(
+                "decision event <A>::request {{ ...inputs(A), f: {}String{} }}",
+                "{ g: ".repeat(n),
+                " }".repeat(n)
+            )
+        };
+        let options = dogwood_syntax::ParseOptions::default().max_depth(8);
+        parse_event_schema_with(&schema(7), &options).expect("at the limit");
+        let error = parse_event_schema_with(&schema(8), &options).expect_err("one past");
+        assert!(error.contains("maximum depth of 8"), "{error}");
+        parse_event_schema(&schema(8)).expect("the default admits it");
     }
 
     fn parse_err(src: &str) -> String {

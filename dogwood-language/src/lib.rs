@@ -32,6 +32,7 @@ pub mod corpus;
 pub(crate) mod api;
 pub(crate) mod ast;
 pub(crate) mod cedarify;
+mod deep_drop;
 pub(crate) mod error;
 pub(crate) mod event_schema;
 pub(crate) mod extension;
@@ -44,6 +45,25 @@ pub(crate) mod schema;
 pub(crate) mod validate;
 
 // ─── The public surface, re-exported at the crate root ───────────────
+
+/// The default depth and node limits, and the options that set others; see
+/// [`dogwood_syntax::DEFAULT_MAX_DEPTH`], [`dogwood_syntax::DEFAULT_MAX_NODES`],
+/// [`ParseOptions::max_depth`], [`ParseOptions::max_nodes`], and
+/// [`ParsedPolicySet::parse_with`] for the entry point that takes them.
+pub use dogwood_syntax::{DEFAULT_MAX_DEPTH, DEFAULT_MAX_NODES, ParseOptions};
+
+/// Test helpers measuring the generated parsers' recursion over a pair tree,
+/// to check that the nesting scan over-approximates it. Exposed for tests
+/// only.
+#[doc(hidden)]
+pub use crate::extension::temporal::parse::reentries as temporal_reentries;
+#[doc(hidden)]
+pub use crate::parser::policy_reentries;
+
+/// The temporal grammar's operand-introducing keywords, which the nesting
+/// scan counts in a temporal block. Exposed for tests only.
+#[doc(hidden)]
+pub use crate::extension::temporal::parse::NESTING_KEYWORDS as TEMPORAL_NESTING_KEYWORDS;
 
 /// The **service-provided** schema half (macros, provider declarations, and
 /// event-schema DSL) and its builder, plus the built-in default event schema

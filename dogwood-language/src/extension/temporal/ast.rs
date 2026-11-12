@@ -22,6 +22,15 @@ pub struct Condition {
     pub kind: ConditionKind,
 }
 
+impl Condition {
+    /// Move the kind out of `self`, leaving a leaf. `Condition` has a manual
+    /// `Drop` (see `deep_drop`), so its fields cannot be moved out by
+    /// destructuring; this is the by-value escape hatch.
+    pub(crate) fn into_kind(mut self) -> ConditionKind {
+        std::mem::replace(&mut self.kind, crate::deep_drop::leaf_cond_kind())
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ConditionKind {
     /// `a && b` — both must hold.

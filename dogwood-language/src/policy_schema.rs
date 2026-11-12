@@ -17,6 +17,61 @@
 
 use crate::api::Error;
 
+/// How many records, `Set<…>` types and other brackets an action schema may
+/// have open at once: twice
+/// [`DEFAULT_MAX_DEPTH`](dogwood_syntax::DEFAULT_MAX_DEPTH), since a
+/// `Set<{ … }>` level is two brackets.
+///
+/// Cedar's schema parser reads by recursive descent, once per level, before
+/// any schema exists, and a Rust stack overflow aborts the process: a few
+/// hundred nested records or `Set<…>`s end a server that loads schemas for
+/// its callers. On a 2 MiB thread a debug build of Cedar's parser survives
+/// about 136 nested records and 246 nested `Set<…>`s. The constructors take no
+/// [`ParseOptions`](dogwood_syntax::ParseOptions), so this follows the default
+/// depth rather than adding a limit of its own.
+const ACTION_SCHEMA_NESTING: usize = 2 * dogwood_syntax::DEFAULT_MAX_DEPTH;
+
+/// Refuse action-schema text that has more than `ACTION_SCHEMA_NESTING`
+/// levels open at once, before Cedar parses it.
+///
+/// A level is a `(`, `[`, `{` or `<` until it closes. The scan is one pass
+/// with no recursion. String literals and `//` comments are skipped, as Cedar
+/// skips them; brackets that don't balance are left to Cedar to report.
+fn check_nesting(src: &str) -> Result<(), Error> {
+    let bytes = src.as_bytes();
+    let mut depth = 0usize;
+    let mut i = 0;
+    while i < bytes.len() {
+        match bytes[i] {
+            b'"' => {
+                i += 1;
+                while i < bytes.len() && bytes[i] != b'"' {
+                    i += if bytes[i] == b'\\' { 2 } else { 1 };
+                }
+            }
+            b'/' if bytes.get(i + 1) == Some(&b'/') => {
+                while i < bytes.len() && bytes[i] != b'\n' && bytes[i] != b'\r' {
+                    i += 1;
+                }
+                continue;
+            }
+            b'(' | b'[' | b'{' | b'<' => {
+                depth += 1;
+                if depth > ACTION_SCHEMA_NESTING {
+                    return Err(Error::ActionSchema(format!(
+                        "nested too deeply at byte {i}: more than {ACTION_SCHEMA_NESTING} \
+                         records, `Set<…>` types or brackets open at once"
+                    )));
+                }
+            }
+            b')' | b']' | b'}' | b'>' => depth = depth.saturating_sub(1),
+            _ => {}
+        }
+        i += 1;
+    }
+    Ok(())
+}
+
 /// The action schema — a Cedar `.cedarschema`, resolved to text at
 /// construction (MCP generation, if any, has already run).
 ///
@@ -35,10 +90,14 @@ impl PolicySchema {
     ///
     /// Named to mirror `cedar_policy::Schema::from_cedarschema_str`. The text
     /// is not typechecked here — that happens during lowering / validation.
+    /// It is refused, as [`Error::ActionSchema`], only when it nests more than
+    /// `ACTION_SCHEMA_NESTING` levels, which Cedar's schema parser could
+    /// not read without risking a stack overflow.
     pub fn from_cedarschema_str(action_schema_src: &str) -> Result<PolicySchema, Error> {
         let action_schema_src = action_schema_src
             .strip_prefix('\u{FEFF}')
             .unwrap_or(action_schema_src);
+        check_nesting(action_schema_src)?;
         Ok(PolicySchema {
             action_schema_src: action_schema_src.to_string(),
         })
@@ -53,6 +112,8 @@ impl PolicySchema {
     pub fn from_mcp_manifest(manifest_json: &str) -> Result<PolicySchema, Error> {
         let action_schema_src = crate::schema::mcp_to_cedar_schema(manifest_json)
             .map_err(|e| Error::McpSchema(e.to_string()))?;
+        // A tool's input schema nests as deeply as its JSON does.
+        check_nesting(&action_schema_src)?;
         Ok(PolicySchema { action_schema_src })
     }
 
@@ -66,6 +127,7 @@ impl PolicySchema {
         let action_schema_src =
             crate::schema::mcp_to_cedar_schema_with_template(manifest_json, template)
                 .map_err(|e| Error::McpSchema(e.to_string()))?;
+        check_nesting(&action_schema_src)?;
         Ok(PolicySchema { action_schema_src })
     }
 

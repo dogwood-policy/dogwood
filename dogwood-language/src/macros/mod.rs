@@ -36,6 +36,8 @@
 
 use std::collections::BTreeMap;
 
+use dogwood_syntax::{NodeBudget, ParseOptions};
+
 use crate::ast::{Expr, ExprKind, MacroBody, MacroDef, MacroParam, PolicySet};
 use crate::error::Span;
 use crate::extension::temporal::ast::{
@@ -57,6 +59,36 @@ impl std::fmt::Display for RawMacroError {
 }
 
 impl std::error::Error for RawMacroError {}
+
+/// The error for an expansion that would create more nodes than `limit`, the
+/// node budget the policy set was parsed under.
+fn budget_exceeded(limit: usize, span: Span) -> RawMacroError {
+    err(
+        format!("macro expansion exceeds the node budget of {limit}"),
+        span,
+    )
+}
+
+/// Charge `n` nodes to `budget`, or fail with [`budget_exceeded`] at `span`.
+fn charge(budget: &mut NodeBudget, n: usize, span: Span) -> Result<(), RawMacroError> {
+    budget
+        .charge(n)
+        .map_err(|_| budget_exceeded(budget.limit(), span))
+}
+
+/// Reject an expansion whose tree is deeper than `limit`, the depth limit the
+/// policies were parsed under. Substituting an argument into a body adds their
+/// depths, so a tree within the limit at parse time can exceed it once
+/// expanded.
+fn check_expanded_depth(depth: usize, limit: usize, span: Span) -> Result<(), RawMacroError> {
+    if depth > limit {
+        return Err(err(
+            format!("macro expansion nested deeper than the limit of {limit}"),
+            span,
+        ));
+    }
+    Ok(())
+}
 
 fn err(message: impl Into<String>, span: Span) -> RawMacroError {
     RawMacroError {
@@ -89,14 +121,36 @@ const RESERVED_MACRO_NAMES: &[&str] = &[
 /// an information-provider invocation (macros are single-segment by grammar) —
 /// so expansion leaves that `Expr::Call` node intact for cedarify to hoist,
 /// rather than rejecting it as an unknown macro.
-pub fn expand(ps: &mut PolicySet) -> Result<(), RawMacroError> {
-    let registry = Registry::build(&ps.defs)?;
+///
+/// Pass the options the set was parsed under. An expansion deeper than
+/// [`max_depth`](dogwood_syntax::ParseOptions::max_depth) is an error, and so
+/// is one that would create more than
+/// [`max_nodes`](dogwood_syntax::ParseOptions::max_nodes) nodes for the whole
+/// set, every condition of every policy together: each macro call charges its
+/// body's nodes, and each paste of an argument charges the argument's nodes,
+/// before the copy is made.
+pub fn expand(ps: &mut PolicySet, options: &ParseOptions) -> Result<(), RawMacroError> {
+    let mut registry = Registry::build(&ps.defs, options)?;
     for def in &ps.defs {
         check_def(def, &registry)?;
     }
     for policy in &mut ps.policies {
         for cond in &mut policy.conditions {
-            expand_cedar_expr(&mut cond.body, &registry)?;
+            expand_cedar_expr(&mut cond.body, &mut registry)?;
+            // The one depth boundary for expansion: measure each finished
+            // condition once. Mid-expansion trees may transiently exceed the
+            // limit, and substitution clones them with the derived, recursive
+            // `Clone`. What bounds that clone is call nesting times body depth:
+            // calls nest only through brackets (at most `max_depth`), and no
+            // body may contain a call (`check_def`), so a transient tree is at
+            // most about `max_depth` squared deep, which fits a 2 MiB stack at
+            // the default. A change that lets a body contain a call breaks
+            // this bound.
+            check_expanded_depth(
+                crate::parser::expr_depth(&cond.body),
+                registry.max_depth,
+                cond.body.span,
+            )?;
         }
     }
     ps.defs.clear();
@@ -115,7 +169,8 @@ pub fn expand(ps: &mut PolicySet) -> Result<(), RawMacroError> {
 /// After that, every error [`expand`] can still raise over the merged set is
 /// necessarily policy-authored.
 pub fn check_defs(defs: &[MacroDef]) -> Result<(), RawMacroError> {
-    let registry = Registry::build(defs)?;
+    // Nothing is expanded, so nothing is charged to the node budget.
+    let registry = Registry::build(defs, &ParseOptions::default())?;
     for def in defs {
         check_def(def, &registry)?;
     }
@@ -126,10 +181,18 @@ pub fn check_defs(defs: &[MacroDef]) -> Result<(), RawMacroError> {
 
 struct Registry<'a> {
     by_name: BTreeMap<String, &'a MacroDef>,
+    /// The number of nodes in each macro's body, by name: what one call
+    /// charges before its body is copied.
+    body_nodes: BTreeMap<&'a str, usize>,
+    /// What is left of the node budget for the policy set being expanded,
+    /// shared by all its conditions.
+    budget: NodeBudget,
+    /// The depth no expansion may exceed.
+    max_depth: usize,
 }
 
 impl<'a> Registry<'a> {
-    fn build(defs: &'a [MacroDef]) -> Result<Self, RawMacroError> {
+    fn build(defs: &'a [MacroDef], options: &ParseOptions) -> Result<Self, RawMacroError> {
         let mut by_name: BTreeMap<String, &MacroDef> = BTreeMap::new();
         for def in defs {
             if RESERVED_MACRO_NAMES.contains(&def.name.as_str()) {
@@ -152,11 +215,45 @@ impl<'a> Registry<'a> {
             }
             by_name.insert(def.name.clone(), def);
         }
-        Ok(Registry { by_name })
+        let body_nodes = defs
+            .iter()
+            .map(|def| (def.name.as_str(), body_size(&def.body)))
+            .collect();
+        Ok(Registry {
+            by_name,
+            body_nodes,
+            budget: NodeBudget::new(options.max_nodes),
+            max_depth: options.max_depth,
+        })
     }
 
     fn get(&self, name: &str) -> Option<&'a MacroDef> {
         self.by_name.get(name).copied()
+    }
+
+    /// Charge one call of `def`: its body's nodes, before the body is copied.
+    fn charge_body(&mut self, def: &MacroDef, span: Span) -> Result<(), RawMacroError> {
+        let nodes = self.body_nodes.get(def.name.as_str()).copied();
+        let nodes = nodes.unwrap_or_else(|| body_size(&def.body));
+        charge(&mut self.budget, nodes, span)
+    }
+}
+
+/// The number of nodes in a macro body.
+fn body_size(body: &MacroBody) -> usize {
+    match body {
+        MacroBody::Cedar(e) => crate::parser::expr_size(e),
+        MacroBody::TemporalCondition(c) => crate::parser::condition_size(c),
+        MacroBody::TemporalValue(t) => crate::parser::term_size(t),
+    }
+}
+
+/// The number of nodes in a call-site argument, charged at each paste.
+fn call_arg_size(arg: &CallArg) -> usize {
+    match arg {
+        CallArg::Condition(c) => crate::parser::condition_size(c),
+        CallArg::Term(t) => crate::parser::term_size(t),
+        CallArg::Within(_) => 0,
     }
 }
 
@@ -530,7 +627,7 @@ fn fmt_params(declared: &std::collections::BTreeSet<&str>) -> String {
 /// Recursively expand calls in a cedar expression. Substituted macro
 /// bodies contain no nested `Call` nodes (the well-formedness check
 /// rejects macro-in-macro), so the walk doesn't need a depth flag.
-fn expand_cedar_expr(e: &mut Expr, registry: &Registry<'_>) -> Result<(), RawMacroError> {
+fn expand_cedar_expr(e: &mut Expr, registry: &mut Registry<'_>) -> Result<(), RawMacroError> {
     let span = e.span;
     match &mut e.kind {
         ExprKind::Call { name, args } => {
@@ -561,7 +658,7 @@ fn expand_cedar_expr(e: &mut Expr, registry: &Registry<'_>) -> Result<(), RawMac
                 )
             })?;
             let body = match &def.body {
-                MacroBody::Cedar(e) => e.clone(),
+                MacroBody::Cedar(e) => e,
                 MacroBody::TemporalCondition(_) | MacroBody::TemporalValue(_) => {
                     return Err(err(
                         format!(
@@ -573,7 +670,9 @@ fn expand_cedar_expr(e: &mut Expr, registry: &Registry<'_>) -> Result<(), RawMac
                 }
             };
             check_arity(def, args.len(), span)?;
-            let substituted = substitute_cedar(body, def, args, span)?;
+            registry.charge_body(def, span)?;
+            let substituted =
+                substitute_cedar(body.clone(), def, args, span, &mut registry.budget)?;
             *e = substituted;
             Ok(())
         }
@@ -641,13 +740,18 @@ fn expand_cedar_expr(e: &mut Expr, registry: &Registry<'_>) -> Result<(), RawMac
 
 fn expand_extension(
     ext: &mut crate::extension::Extension,
-    registry: &Registry<'_>,
+    registry: &mut Registry<'_>,
 ) -> Result<(), RawMacroError> {
     use crate::extension::Extension;
     match ext {
         Extension::Temporal(t) => {
             let span = t.span;
             expand_temporal_condition(&mut t.condition, registry)?;
+            check_expanded_depth(
+                crate::parser::condition_depth(&t.condition),
+                registry.max_depth,
+                span,
+            )?;
             // The structural backstop: no macro residue may survive
             // expansion. Each position-specific check in the walk above
             // should already have replaced or rejected every call and
@@ -838,29 +942,46 @@ fn check_arity(def: &MacroDef, got: usize, span: Span) -> Result<(), RawMacroErr
     Ok(())
 }
 
+/// The substitution for one Cedar macro call: each parameter's argument and
+/// its node count, and the budget each paste is charged to.
+struct CedarSubst<'a> {
+    args: BTreeMap<&'a str, (&'a Expr, usize)>,
+    budget: &'a mut NodeBudget,
+    call_span: Span,
+}
+
 fn substitute_cedar(
     mut body: Expr,
     def: &MacroDef,
     args: &[Expr],
-    _call_span: Span,
+    call_span: Span,
+    budget: &mut NodeBudget,
 ) -> Result<Expr, RawMacroError> {
-    let map: BTreeMap<&str, &Expr> = def
+    let args = def
         .params
         .iter()
         .zip(args.iter())
-        .map(|(p, a)| (p.name.as_str(), a))
+        .map(|(p, a)| (p.name.as_str(), (a, crate::parser::expr_size(a))))
         .collect();
-    subst_cedar_expr(&mut body, &map)?;
+    let mut map = CedarSubst {
+        args,
+        budget,
+        call_span,
+    };
+    subst_cedar_expr(&mut body, &mut map)?;
     Ok(body)
 }
 
-fn subst_cedar_expr(e: &mut Expr, map: &BTreeMap<&str, &Expr>) -> Result<(), RawMacroError> {
+fn subst_cedar_expr(e: &mut Expr, map: &mut CedarSubst<'_>) -> Result<(), RawMacroError> {
     if let ExprKind::ParamRef { name } = &e.kind
-        && let Some(arg) = map.get(name.as_str())
+        && let Some(&(arg, nodes)) = map.args.get(name.as_str())
     {
+        // Charge the copy before making it: a body that mentions a parameter
+        // twice, called on its own result, doubles the tree at every level.
+        charge(map.budget, nodes, map.call_span)?;
         // Splice the call-site argument verbatim — it keeps its own `.dw`
         // span, which is the precise source location for this sub-expression.
-        *e = (*arg).clone();
+        *e = arg.clone();
         return Ok(());
     }
     let span = e.span;
@@ -958,11 +1079,12 @@ fn fold_refine(
     fields: Vec<NamedArg>,
     span: Span,
 ) -> Result<Condition, RawMacroError> {
-    match base.kind {
+    let base_span = base.span;
+    match base.into_kind() {
         ConditionKind::Predicate(mut p) => {
             p.args.extend(fields);
             Ok(Condition {
-                span: base.span,
+                span: base_span,
                 kind: ConditionKind::Predicate(p),
             })
         }
@@ -971,7 +1093,7 @@ fn fold_refine(
                 "a `{{ … }}` field-injection applies only to a single predicate, \
                  but the refined term is {}",
                 condition_shape(&Condition {
-                    span: base.span,
+                    span: base_span,
                     kind: other,
                 })
             ),
@@ -1011,7 +1133,7 @@ fn take_refine(c: &mut Condition) -> Option<(Condition, Vec<NamedArg>, Span)> {
 
 fn expand_temporal_condition(
     c: &mut Condition,
-    registry: &Registry<'_>,
+    registry: &mut Registry<'_>,
 ) -> Result<(), RawMacroError> {
     match &mut c.kind {
         ConditionKind::And { left, right } => {
@@ -1106,7 +1228,7 @@ fn expand_temporal_condition(
     }
 }
 
-fn expand_temporal_agg(a: &mut AggExpr, registry: &Registry<'_>) -> Result<(), RawMacroError> {
+fn expand_temporal_agg(a: &mut AggExpr, registry: &mut Registry<'_>) -> Result<(), RawMacroError> {
     match &mut a.kind {
         AggExprKind::Sum {
             bound_var,
@@ -1146,7 +1268,7 @@ fn expand_temporal_agg(a: &mut AggExpr, registry: &Registry<'_>) -> Result<(), R
 /// an unexpanded operand sigil would survive validation and then panic the
 /// evaluator at authorize time (`resolve_term`) — a validated policy crashing
 /// the authorizer. Any other term carries no macro condition/aggregate.
-fn expand_temporal_operand(t: &mut Term, registry: &Registry<'_>) -> Result<(), RawMacroError> {
+fn expand_temporal_operand(t: &mut Term, registry: &mut Registry<'_>) -> Result<(), RawMacroError> {
     match t {
         // A value-macro call replaces the whole term: its body may be
         // arithmetic (`a() - b()` inlined), which cannot live inside an
@@ -1254,7 +1376,7 @@ fn check_concrete_term(t: &Term, span: Span) -> Result<(), RawMacroError> {
 
 fn expand_temporal_call_to_condition(
     mut call: Call,
-    registry: &Registry<'_>,
+    registry: &mut Registry<'_>,
 ) -> Result<Condition, RawMacroError> {
     // Resolve the macro.
     let def = registry.get(&call.name).ok_or_else(|| {
@@ -1264,7 +1386,7 @@ fn expand_temporal_call_to_condition(
         )
     })?;
     let body = match &def.body {
-        MacroBody::TemporalCondition(c) => c.clone(),
+        MacroBody::TemporalCondition(c) => c,
         MacroBody::Cedar(_) => {
             return Err(err(
                 format!(
@@ -1288,7 +1410,8 @@ fn expand_temporal_call_to_condition(
     };
     check_arity(def, call.args.len(), call.span)?;
     expand_temporal_call_args(&mut call.args, registry)?;
-    let substituted = substitute_temporal_condition(body, def, registry, &call)?;
+    registry.charge_body(def, call.span)?;
+    let substituted = substitute_temporal_condition(body.clone(), def, registry, &call)?;
     Ok(substituted)
 }
 
@@ -1314,7 +1437,7 @@ fn expand_temporal_call_to_condition(
 ///     the operand walker, exactly as in a raw comparison operand.
 fn expand_temporal_call_args(
     args: &mut [CallArg],
-    registry: &Registry<'_>,
+    registry: &mut Registry<'_>,
 ) -> Result<(), RawMacroError> {
     for arg in args.iter_mut() {
         let c = match arg {
@@ -1352,7 +1475,7 @@ fn expand_temporal_call_args(
 
 fn expand_temporal_call_to_value(
     mut call: Call,
-    registry: &Registry<'_>,
+    registry: &mut Registry<'_>,
 ) -> Result<Term, RawMacroError> {
     let def = registry.get(&call.name).ok_or_else(|| {
         err(
@@ -1361,7 +1484,7 @@ fn expand_temporal_call_to_value(
         )
     })?;
     let body = match &def.body {
-        MacroBody::TemporalValue(t) => t.clone(),
+        MacroBody::TemporalValue(t) => t,
         MacroBody::Cedar(_) => {
             return Err(err(
                 format!(
@@ -1384,7 +1507,8 @@ fn expand_temporal_call_to_value(
     };
     check_arity(def, call.args.len(), call.span)?;
     expand_temporal_call_args(&mut call.args, registry)?;
-    let substituted = substitute_temporal_value(body, def, registry, &call)?;
+    registry.charge_body(def, call.span)?;
+    let substituted = substitute_temporal_value(body.clone(), def, registry, &call)?;
     Ok(substituted)
 }
 
@@ -1399,27 +1523,43 @@ fn expand_temporal_call_to_value(
 /// inline at the substitution site (`subst_binder_slot`) rather than
 /// being pre-tagged on the registry — the position is known
 /// syntactically at substitution time, so the check is local.
+///   * `arg_nodes`: maps `?p` name → the argument's node count, charged to
+///     `budget` at each paste before the argument is copied.
 struct SubstMaps<'a> {
     param_to_arg: BTreeMap<&'a str, &'a CallArg>,
+    arg_nodes: BTreeMap<&'a str, usize>,
     binder_gensym: BTreeMap<String, String>,
     call_span: Span,
     macro_name: &'a str,
+    budget: &'a mut NodeBudget,
 }
 
 impl<'a> SubstMaps<'a> {
-    fn build(def: &'a MacroDef, call: &'a Call) -> Self {
+    fn build(def: &'a MacroDef, call: &'a Call, budget: &'a mut NodeBudget) -> Self {
         let param_to_arg: BTreeMap<&str, &CallArg> = def
             .params
             .iter()
             .zip(call.args.iter())
             .map(|(p, a)| (p.name.as_str(), a))
             .collect();
+        let arg_nodes = param_to_arg
+            .iter()
+            .map(|(&name, &arg)| (name, call_arg_size(arg)))
+            .collect();
         SubstMaps {
             param_to_arg,
+            arg_nodes,
             binder_gensym: BTreeMap::new(),
             call_span: call.span,
             macro_name: def.name.as_str(),
+            budget,
         }
+    }
+
+    /// Charge one paste of `?param_name`'s argument, before it is copied.
+    fn charge_paste(&mut self, param_name: &str) -> Result<(), RawMacroError> {
+        let nodes = self.arg_nodes.get(param_name).copied().unwrap_or(0);
+        charge(self.budget, nodes, self.call_span)
     }
 
     /// Gensym (memoized) the concrete name to substitute for `$t`.
@@ -1451,10 +1591,10 @@ impl<'a> SubstMaps<'a> {
 fn substitute_temporal_condition(
     mut body: Condition,
     def: &MacroDef,
-    _registry: &Registry<'_>,
+    registry: &mut Registry<'_>,
     call: &Call,
 ) -> Result<Condition, RawMacroError> {
-    let mut maps = SubstMaps::build(def, call);
+    let mut maps = SubstMaps::build(def, call, &mut registry.budget);
     subst_temporal_condition(&mut body, &mut maps)?;
     Ok(body)
 }
@@ -1462,10 +1602,10 @@ fn substitute_temporal_condition(
 fn substitute_temporal_value(
     mut body: Term,
     def: &MacroDef,
-    _registry: &Registry<'_>,
+    registry: &mut Registry<'_>,
     call: &Call,
 ) -> Result<Term, RawMacroError> {
-    let mut maps = SubstMaps::build(def, call);
+    let mut maps = SubstMaps::build(def, call, &mut registry.budget);
     subst_temporal_term(&mut body, &mut maps, call.span)?;
     Ok(body)
 }
@@ -1482,6 +1622,7 @@ fn subst_temporal_condition(
                 let arg = maps.arg_for(name, c.span)?;
                 match arg {
                     CallArg::Condition(arg_c) => {
+                        maps.charge_paste(name)?;
                         *c = arg_c.clone();
                         return Ok(());
                     }
@@ -1641,6 +1782,7 @@ fn subst_temporal_term(
                 // A term-position `?p` argument: any `Term` (including
                 // a literal, a Var, a wildcard) splices in directly.
                 CallArg::Term(arg_t) => {
+                    maps.charge_paste(name)?;
                     *t = arg_t.clone();
                     Ok(())
                 }
@@ -1735,7 +1877,7 @@ mod tests {
 
     fn parse_and_expand(src: &str) -> Result<PolicySet, RawMacroError> {
         let mut ps = parse_policies(src).expect("parse should succeed");
-        expand(&mut ps)?;
+        expand(&mut ps, &ParseOptions::default())?;
         Ok(ps)
     }
 

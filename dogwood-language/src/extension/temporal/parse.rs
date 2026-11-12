@@ -22,15 +22,68 @@ struct TemporalParser;
 
 type Pair<'i> = pest::iterators::Pair<'i, Rule>;
 
+/// A built node, or the error that the tree would be deeper than its limit.
+type Built<T> = Result<T, String>;
+
+/// The temporal grammar's keywords that introduce an operand, for
+/// [`dogwood_syntax::nesting_depth_error`]: the binders and aggregates
+/// (`exists`, `count`, `sum`, `for`, `where`) and the temporal operators
+/// (`formerly`, `previous`, `since`). Each adds a level that only the
+/// closing bracket enclosing it releases, so siblings in one bracket level
+/// accumulate.
+pub const NESTING_KEYWORDS: &[&str] = &[
+    "exists", "where", "formerly", "previous", "since", "count", "sum", "for",
+];
+
 fn span_of(p: &Pair<'_>) -> Span {
     let s = p.as_span();
     Span::new(s.start(), s.end())
 }
 
-/// Parse a temporal condition body into a [`Condition`].
+/// Reject a finished temporal tree measured deeper than `limit`
+/// ([`ParseOptions::max_depth`](dogwood_syntax::ParseOptions::max_depth)).
+/// The builders construct with loops and do not count; each entry point
+/// measures the tree it is about to return with the explicit-stack walker
+/// and refuses a too-deep one, which is then freed without recursion (see
+/// `deep_drop`).
+fn check_built_depth(depth: usize, limit: usize) -> Built<()> {
+    if depth > limit {
+        return Err(format!(
+            "temporal expression nested deeper than the limit of {limit}"
+        ));
+    }
+    Ok(())
+}
+
+/// Parse `body` with the generated parser, after estimating its recursion
+/// against `max_depth`; see [`NESTING_KEYWORDS`].
+fn parse_rule(
+    rule: Rule,
+    body: &str,
+    max_depth: usize,
+) -> Result<pest::iterators::Pairs<'_, Rule>, String> {
+    if let Some(e) = dogwood_syntax::nesting_depth_error::<Rule>(body, NESTING_KEYWORDS, max_depth)
+    {
+        return Err(format_temporal_pest_error(&e, body));
+    }
+    TemporalParser::parse(rule, body).map_err(|e| enhance_temporal_error(&e, body))
+}
+
+/// Parse a temporal condition body into a [`Condition`], at the default
+/// depth limit.
+#[cfg(test)]
 pub fn parse_condition(body: &str) -> Result<Condition, String> {
-    let mut pairs = TemporalParser::parse(Rule::condition_entry, body)
-        .map_err(|e| enhance_temporal_error(&e, body))?;
+    parse_condition_at(body, dogwood_syntax::DEFAULT_MAX_DEPTH)
+}
+
+/// Parse a temporal condition body under `limit`
+/// ([`ParseOptions::max_depth`](dogwood_syntax::ParseOptions::max_depth)):
+/// the scan bounds the generated parser, and the finished condition is
+/// measured and refused if deeper. A block inside a Cedar expression is
+/// additionally measured as part of the whole tree by the Cedar parser's
+/// root check, which spans both languages in one count.
+pub(crate) fn parse_condition_at(body: &str, limit: usize) -> Result<Condition, String> {
+    let mut pairs = parse_rule(Rule::condition_entry, body, limit)?;
     let entry = pairs.next().expect("condition_entry yields one pair");
     let cond = entry
         .into_inner()
@@ -38,7 +91,75 @@ pub fn parse_condition(body: &str) -> Result<Condition, String> {
         .expect("condition_entry contains a condition");
     validate_string_escapes(&cond)?;
     validate_integer_literals(&cond)?;
-    Ok(build_condition(cond))
+    let condition = build_condition(cond)?;
+    check_built_depth(crate::parser::condition_depth(&condition), limit)?;
+    Ok(condition)
+}
+
+/// The recursion of the generated temporal parser over a block `body`: the
+/// maximum, over every root-to-leaf path of its `condition_entry` pair tree,
+/// of the pairs on the path that re-enter the recursive part of the grammar.
+/// A test helper, for checking that [`dogwood_syntax::nesting_estimate`]
+/// over [`NESTING_KEYWORDS`] over-approximates it; parsed with no depth limit.
+///
+/// Each counted pair is entered through its own bracket or keyword, which
+/// the scan counts and still holds open at every leaf inside the pair. The
+/// counted rules, read from `grammar.pest`:
+///
+/// - binders and aggregates: `exists_op` (`exists`), `count_expr` (`count`),
+///   `sum_expr` (`sum`), `for_binders` (`for`), and the `condition` that is
+///   a `count`/`sum` body (`where`);
+/// - temporal operators: `once_op` (`formerly`), `previous_op`
+///   (`previous`), and the `atom` right of a `since` in `conjunct_or_since`
+///   (`since`; the left operand precedes the keyword, so it is not counted);
+/// - bracketed re-entries: `parenthesized` and an `atom` that is a
+///   parenthesized `condition` (`(`), `call_arg_list` (a call's `(`),
+///   `paren_agg` and `paren_arith` (`(`), `array` (`[`), and
+///   `named_arg_list` (a predicate's or field block's `{`).
+///
+/// Every cycle of the grammar (through `condition`, `term`, `arith`,
+/// `agg_expr`, or `call`) passes through one of these. The root `condition`
+/// is the entry, not a re-entry. The `condition` after `exists (…).` is not
+/// counted apart from its `exists_op`: one keyword opens both.
+#[doc(hidden)]
+pub fn reentries(body: &str) -> Result<usize, String> {
+    let pairs = parse_rule(Rule::condition_entry, body, usize::MAX)?;
+    let mut deepest = 0;
+    let mut stack: Vec<(Pair<'_>, Option<Rule>, usize)> =
+        pairs.map(|pair| (pair, None, 0)).collect();
+    while let Some((pair, parent, above)) = stack.pop() {
+        let rule = pair.as_rule();
+        let counted = match rule {
+            Rule::exists_op
+            | Rule::count_expr
+            | Rule::sum_expr
+            | Rule::for_binders
+            | Rule::once_op
+            | Rule::previous_op
+            | Rule::parenthesized
+            | Rule::call_arg_list
+            | Rule::paren_agg
+            | Rule::paren_arith
+            | Rule::array
+            | Rule::named_arg_list => 1,
+            Rule::condition => {
+                usize::from(matches!(parent, Some(Rule::count_expr | Rule::sum_expr)))
+            }
+            Rule::atom => {
+                let parenthesized = pair
+                    .clone()
+                    .into_inner()
+                    .next()
+                    .is_some_and(|child| child.as_rule() == Rule::condition);
+                usize::from(parenthesized) + usize::from(parent == Some(Rule::conjunct_or_since))
+            }
+            _ => 0,
+        };
+        let here = above + counted;
+        deepest = deepest.max(here);
+        stack.extend(pair.into_inner().map(|child| (child, Some(rule), here)));
+    }
+    Ok(deepest)
 }
 
 /// Parse a `def temporal` macro body. The body is either a VALUE — an
@@ -46,9 +167,10 @@ pub fn parse_condition(body: &str) -> Result<Condition, String> {
 /// operand (`my_value(...) <= n`) — or a temporal condition. A value body
 /// must contain at least one aggregation: a bare constant or variable
 /// expression names nothing over the trace and is rejected.
-pub fn parse_macro_body(body: &str) -> Result<crate::ast::MacroBody, String> {
-    let mut pairs = TemporalParser::parse(Rule::temporal_macro_body_entry, body)
-        .map_err(|e| enhance_temporal_error(&e, body))?;
+///
+/// Every depth is bounded by `max_depth`.
+pub fn parse_macro_body(body: &str, max_depth: usize) -> Result<crate::ast::MacroBody, String> {
+    let mut pairs = parse_rule(Rule::temporal_macro_body_entry, body, max_depth)?;
     let entry = pairs
         .next()
         .expect("temporal_macro_body_entry yields one pair");
@@ -64,7 +186,8 @@ pub fn parse_macro_body(body: &str) -> Result<crate::ast::MacroBody, String> {
                 .into_inner()
                 .find(|p| p.as_rule() == Rule::arith)
                 .expect("macro_value_body wraps an arith");
-            let term = build_arith(arith);
+            let term = build_arith(arith)?;
+            check_built_depth(crate::parser::term_depth(&term), max_depth)?;
             let mut has_agg = false;
             term.for_each_operand_agg(&mut |_| has_agg = true);
             if has_agg {
@@ -75,7 +198,7 @@ pub fn parse_macro_body(body: &str) -> Result<crate::ast::MacroBody, String> {
             // condition-sigil); re-read the body as a condition to keep
             // their meaning, and reject the rest with an error naming both
             // readings.
-            match parse_condition(body) {
+            match parse_condition_at(body, max_depth) {
                 Ok(cond) => Ok(crate::ast::MacroBody::TemporalCondition(cond)),
                 Err(_) => Err("a `def temporal` body must be a temporal condition, an \
                                aggregation, or arithmetic over aggregations (a value \
@@ -83,22 +206,25 @@ pub fn parse_macro_body(body: &str) -> Result<crate::ast::MacroBody, String> {
                     .to_string()),
             }
         }
-        Rule::condition => Ok(crate::ast::MacroBody::TemporalCondition(build_condition(
-            inner,
-        ))),
+        Rule::condition => {
+            let condition = build_condition(inner)?;
+            check_built_depth(crate::parser::condition_depth(&condition), max_depth)?;
+            Ok(crate::ast::MacroBody::TemporalCondition(condition))
+        }
         other => unreachable!("unexpected temporal macro body child: {other:?}"),
     }
 }
 
 /// `condition = conjunct_or_since ("&&" conjunct_or_since)*` —
 /// left-associative And.
-fn build_condition(pair: Pair<'_>) -> Condition {
+fn build_condition(pair: Pair<'_>) -> Built<Condition> {
     let mut iter = pair
         .into_inner()
         .filter(|p| p.as_rule() == Rule::conjunct_or_since);
-    let mut acc = build_conjunct_or_since(iter.next().expect("at least one conjunct_or_since"));
+    let first = iter.next().expect("at least one conjunct_or_since");
+    let mut acc = build_conjunct_or_since(first)?;
     for next in iter {
-        let right = build_conjunct_or_since(next);
+        let right = build_conjunct_or_since(next)?;
         let s = Span::new(acc.span.start, right.span.end);
         acc = Condition {
             span: s,
@@ -108,14 +234,14 @@ fn build_condition(pair: Pair<'_>) -> Condition {
             },
         };
     }
-    acc
+    Ok(acc)
 }
 
 /// `conjunct_or_since = neg_conjunct ("since" within atom)?`.
-fn build_conjunct_or_since(pair: Pair<'_>) -> Condition {
+fn build_conjunct_or_since(pair: Pair<'_>) -> Built<Condition> {
     let span = span_of(&pair);
     let mut inner = pair.into_inner().peekable();
-    let left = build_neg_conjunct(inner.next().expect("neg_conjunct"));
+    let left = build_neg_conjunct(inner.next().expect("neg_conjunct"))?;
 
     // Optional `since within <atom>`.
     let mut within: Option<WithinSpec> = None;
@@ -123,12 +249,12 @@ fn build_conjunct_or_since(pair: Pair<'_>) -> Condition {
     for p in inner {
         match p.as_rule() {
             Rule::within => within = Some(build_within(p)),
-            Rule::atom => right = Some(build_atom(p)),
+            Rule::atom => right = Some(build_atom(p)?),
             _ => {}
         }
     }
 
-    match (within, right) {
+    Ok(match (within, right) {
         (Some(within), Some(right)) => Condition {
             span,
             kind: ConditionKind::Since {
@@ -138,7 +264,7 @@ fn build_conjunct_or_since(pair: Pair<'_>) -> Condition {
             },
         },
         _ => left,
-    }
+    })
 }
 
 /// `neg_conjunct = bang* conjunct` — wrap the conjunct in one `Not` per
@@ -151,7 +277,7 @@ fn build_conjunct_or_since(pair: Pair<'_>) -> Condition {
 /// comment appearing between consecutive `!`s, and a `!` that sits inside
 /// such a comment is consumed by the silent COMMENT rule and never
 /// becomes a `bang` node.
-fn build_neg_conjunct(pair: Pair<'_>) -> Condition {
+fn build_neg_conjunct(pair: Pair<'_>) -> Built<Condition> {
     let span = span_of(&pair);
     let mut bangs = 0usize;
     let mut conjunct = None;
@@ -163,7 +289,8 @@ fn build_neg_conjunct(pair: Pair<'_>) -> Condition {
         }
     }
     let conjunct = conjunct.expect("neg_conjunct has a conjunct child");
-    let mut node = build_conjunct(conjunct);
+    // Each `!` is one level above the conjunct.
+    let mut node = build_conjunct(conjunct)?;
     for _ in 0..bangs {
         node = Condition {
             span,
@@ -172,26 +299,27 @@ fn build_neg_conjunct(pair: Pair<'_>) -> Condition {
             },
         };
     }
-    node
+    Ok(node)
 }
 
 /// `conjunct = comparison | parenthesized | temporal_op | exists_op
 ///            | tp_op | call | refinable`.
-fn build_conjunct(pair: Pair<'_>) -> Condition {
+fn build_conjunct(pair: Pair<'_>) -> Built<Condition> {
     let inner = pair.into_inner().next().expect("conjunct has one child");
     build_node(inner)
 }
 
 /// `atom = "(" condition ")" | tp_op | call | refinable | comparison`.
-fn build_atom(pair: Pair<'_>) -> Condition {
+fn build_atom(pair: Pair<'_>) -> Built<Condition> {
     let inner = pair.into_inner().next().expect("atom has one child");
     build_node(inner)
 }
 
 /// Dispatch a single condition-producing node by rule.
-fn build_node(pair: Pair<'_>) -> Condition {
+fn build_node(pair: Pair<'_>) -> Built<Condition> {
     let span = span_of(&pair);
     match pair.as_rule() {
+        // Parentheses build no node of their own.
         Rule::parenthesized => {
             let cond = pair
                 .into_inner()
@@ -200,21 +328,25 @@ fn build_node(pair: Pair<'_>) -> Condition {
             build_condition(cond)
         }
         Rule::condition => build_condition(pair),
-        Rule::temporal_op => build_temporal_op(pair),
-        Rule::predicate => Condition {
-            span,
-            kind: ConditionKind::Predicate(build_predicate(pair)),
-        },
-        Rule::exists_op => build_exists(pair, span),
-        Rule::tp_op => build_tp(pair, span),
-        Rule::call => Condition {
-            span,
-            kind: ConditionKind::Call(build_call(pair, span)),
-        },
-        Rule::sigil_cond => build_sigil_cond(pair, span),
         Rule::refinable => build_refinable(pair, span),
-        Rule::comparison => build_comparison(pair, span),
-        other => unreachable!("unexpected condition node: {other:?}"),
+        rule => {
+            Ok(match rule {
+                Rule::temporal_op => build_temporal_op(pair)?,
+                Rule::predicate => Condition {
+                    span,
+                    kind: ConditionKind::Predicate(build_predicate(pair)?),
+                },
+                Rule::exists_op => build_exists(pair, span)?,
+                Rule::tp_op => build_tp(pair, span),
+                Rule::call => Condition {
+                    span,
+                    kind: ConditionKind::Call(build_call(pair, span)?),
+                },
+                Rule::sigil_cond => build_sigil_cond(pair, span),
+                Rule::comparison => build_comparison(pair, span)?,
+                other => unreachable!("unexpected condition node: {other:?}"),
+            })
+        }
     }
 }
 
@@ -246,7 +378,7 @@ fn build_sigil_cond(pair: Pair<'_>, span: Span) -> Condition {
 /// concatenated (chaining `{a}{b}` ≡ `{a, b}`) and wrapped in a single
 /// [`ConditionKind::Refine`] over the base; the macro expansion pass folds
 /// that into the base predicate's args.
-fn build_refinable(pair: Pair<'_>, span: Span) -> Condition {
+fn build_refinable(pair: Pair<'_>, span: Span) -> Built<Condition> {
     let mut base: Option<Condition> = None;
     let mut fields: Vec<NamedArg> = Vec::new();
     for p in pair.into_inner() {
@@ -255,7 +387,7 @@ fn build_refinable(pair: Pair<'_>, span: Span) -> Condition {
                 let s = span_of(&p);
                 base = Some(Condition {
                     span: s,
-                    kind: ConditionKind::Predicate(build_predicate(p)),
+                    kind: ConditionKind::Predicate(build_predicate(p)?),
                 });
             }
             Rule::sigil_cond => {
@@ -264,14 +396,14 @@ fn build_refinable(pair: Pair<'_>, span: Span) -> Condition {
             }
             Rule::field_block => {
                 if let Some(list) = p.into_inner().find(|c| c.as_rule() == Rule::named_arg_list) {
-                    fields.extend(build_named_args(list));
+                    fields.extend(build_named_args(list)?);
                 }
             }
             _ => {}
         }
     }
     let base = base.expect("refinable has a predicate or sigil_cond base");
-    if fields.is_empty() {
+    Ok(if fields.is_empty() {
         base
     } else {
         Condition {
@@ -282,11 +414,11 @@ fn build_refinable(pair: Pair<'_>, span: Span) -> Condition {
                 span,
             },
         }
-    }
+    })
 }
 
 /// `temporal_op = once_op | previous_op`.
-fn build_temporal_op(pair: Pair<'_>) -> Condition {
+fn build_temporal_op(pair: Pair<'_>) -> Built<Condition> {
     let op = pair.into_inner().next().expect("temporal_op child");
     let span = span_of(&op);
     let is_previous = op.as_rule() == Rule::previous_op;
@@ -295,24 +427,24 @@ fn build_temporal_op(pair: Pair<'_>) -> Condition {
     for p in op.into_inner() {
         match p.as_rule() {
             Rule::within => within = Some(build_within(p)),
-            Rule::atom => body = Some(build_atom(p)),
+            Rule::atom => body = Some(build_atom(p)?),
             _ => {}
         }
     }
     let within = within.expect("temporal op has within");
     let body = Box::new(body.expect("temporal op has body"));
-    Condition {
+    Ok(Condition {
         span,
         kind: if is_previous {
             ConditionKind::Previous { within, body }
         } else {
             ConditionKind::Formerly { within, body }
         },
-    }
+    })
 }
 
 /// `predicate = qualified_action "::" event_kind "{" named_arg_list? "}"`.
-fn build_predicate(pair: Pair<'_>) -> Predicate {
+fn build_predicate(pair: Pair<'_>) -> Built<Predicate> {
     let span = span_of(&pair);
     let mut namespace = Vec::new();
     let mut action = String::new();
@@ -324,17 +456,17 @@ fn build_predicate(pair: Pair<'_>) -> Predicate {
                 (namespace, action) = build_qualified_action(&p);
             }
             Rule::event_kind => kind = p.as_str().to_string(),
-            Rule::named_arg_list => args = build_named_args(p),
+            Rule::named_arg_list => args = build_named_args(p)?,
             _ => {}
         }
     }
-    Predicate {
+    Ok(Predicate {
         span,
         namespace,
         action,
         kind,
         args,
-    }
+    })
 }
 
 /// Split a `qualified_action` pair `(ident "::")* "::" string` into its
@@ -352,7 +484,8 @@ fn build_qualified_action(qa: &Pair<'_>) -> (Vec<String>, String) {
     (namespace, action)
 }
 
-fn build_named_args(pair: Pair<'_>) -> Vec<NamedArg> {
+/// The named args of a list.
+fn build_named_args(pair: Pair<'_>) -> Built<Vec<NamedArg>> {
     let mut args = Vec::new();
     for na in pair.into_inner().filter(|p| p.as_rule() == Rule::named_arg) {
         let mut name = String::new();
@@ -363,13 +496,13 @@ fn build_named_args(pair: Pair<'_>) -> Vec<NamedArg> {
                 // as the dotted string — `NamedArg::field_path` splits it
                 // for lookup, and matching descends nested records.
                 Rule::field_path => name = build_field_path(&p),
-                Rule::term => value = build_term(p),
+                Rule::term => value = build_term(p)?,
                 _ => {}
             }
         }
         args.push(NamedArg { name, value });
     }
-    args
+    Ok(args)
 }
 
 /// `field_path = ident ("." ident)*` — render back to the dotted string
@@ -386,43 +519,43 @@ fn build_field_path(pair: &Pair<'_>) -> String {
 /// `exists_op = "exists" typed_binder "." condition`. Builds a
 /// [`ConditionKind::Exists`] whose body is the full trailing condition
 /// (greedy-right scope).
-fn build_exists(pair: Pair<'_>, span: Span) -> Condition {
+fn build_exists(pair: Pair<'_>, span: Span) -> Built<Condition> {
     let mut var: Option<TypedBinder> = None;
     let mut body: Option<Condition> = None;
     for p in pair.into_inner() {
         match p.as_rule() {
             Rule::typed_binder => var = Some(build_typed_binder(p)),
-            Rule::condition => body = Some(build_condition(p)),
+            Rule::condition => body = Some(build_condition(p)?),
             _ => {}
         }
     }
-    Condition {
+    Ok(Condition {
         span,
         kind: ConditionKind::Exists {
             var: var.expect("exists has a typed binder"),
             body: Box::new(body.expect("exists has a body")),
         },
-    }
+    })
 }
 
 /// `agg_expr = sum_expr | count_expr | call` — the value half of a `let`.
-pub(super) fn build_agg_expr(pair: Pair<'_>) -> AggExpr {
+pub(super) fn build_agg_expr(pair: Pair<'_>) -> Built<AggExpr> {
     let span = span_of(&pair);
     let inner = pair.into_inner().next().expect("agg_expr has a child");
     let kind = match inner.as_rule() {
-        Rule::sum_expr => build_sum_expr(inner),
-        Rule::count_expr => build_count_expr(inner),
+        Rule::sum_expr => build_sum_expr(inner)?,
+        Rule::count_expr => build_count_expr(inner)?,
         Rule::call => {
             let call_span = span_of(&inner);
-            AggExprKind::Call(build_call(inner, call_span))
+            AggExprKind::Call(build_call(inner, call_span)?)
         }
         other => unreachable!("unexpected agg_expr child: {other:?}"),
     };
-    AggExpr { span, kind }
+    Ok(AggExpr { span, kind })
 }
 
 /// `sum_expr = "sum" binder_slot for_binders "where" condition`.
-fn build_sum_expr(pair: Pair<'_>) -> AggExprKind {
+fn build_sum_expr(pair: Pair<'_>) -> Built<AggExprKind> {
     let mut bound_var: Option<BinderSlot> = None;
     let mut for_vars: Vec<TypedBinder> = Vec::new();
     let mut body: Option<Condition> = None;
@@ -430,32 +563,32 @@ fn build_sum_expr(pair: Pair<'_>) -> AggExprKind {
         match p.as_rule() {
             Rule::binder_slot => bound_var = Some(build_binder_slot(p)),
             Rule::for_binders => for_vars = build_for_binders(p),
-            Rule::condition => body = Some(build_condition(p)),
+            Rule::condition => body = Some(build_condition(p)?),
             _ => {}
         }
     }
-    AggExprKind::Sum {
+    Ok(AggExprKind::Sum {
         bound_var: bound_var.expect("sum_expr has a bound_var binder_slot"),
         for_vars,
         body: Box::new(body.expect("sum_expr has a body")),
-    }
+    })
 }
 
 /// `count_expr = "count" for_binders "where" condition`.
-fn build_count_expr(pair: Pair<'_>) -> AggExprKind {
+fn build_count_expr(pair: Pair<'_>) -> Built<AggExprKind> {
     let mut for_vars: Vec<TypedBinder> = Vec::new();
     let mut body: Option<Condition> = None;
     for p in pair.into_inner() {
         match p.as_rule() {
             Rule::for_binders => for_vars = build_for_binders(p),
-            Rule::condition => body = Some(build_condition(p)),
+            Rule::condition => body = Some(build_condition(p)?),
             _ => {}
         }
     }
-    AggExprKind::Count {
+    Ok(AggExprKind::Count {
         for_vars,
         body: Box::new(body.expect("count_expr has a body")),
-    }
+    })
 }
 
 /// `for_binders = "for" typed_binder ("," typed_binder)* "."` — the
@@ -530,7 +663,7 @@ fn build_tp(pair: Pair<'_>, span: Span) -> Condition {
 }
 
 /// `call = ident "(" call_arg_list? ")"`.
-fn build_call(pair: Pair<'_>, span: Span) -> Call {
+fn build_call(pair: Pair<'_>, span: Span) -> Built<Call> {
     let mut name = String::new();
     let mut args = Vec::new();
     for p in pair.into_inner() {
@@ -538,37 +671,37 @@ fn build_call(pair: Pair<'_>, span: Span) -> Call {
             Rule::ident => name = p.as_str().to_string(),
             Rule::call_arg_list => {
                 for arg in p.into_inner().filter(|p| p.as_rule() == Rule::call_arg) {
-                    args.push(build_call_arg(arg));
+                    args.push(build_call_arg(arg)?);
                 }
             }
             _ => {}
         }
     }
-    Call { span, name, args }
+    Ok(Call { span, name, args })
 }
 
 /// `call_arg = interval_lit | condition | term` — try in grammar order.
 /// A window argument is a bare interval (`1h`), not a `within …` clause.
-fn build_call_arg(pair: Pair<'_>) -> CallArg {
+fn build_call_arg(pair: Pair<'_>) -> Built<CallArg> {
     let inner = pair.into_inner().next().expect("call_arg has a child");
-    match inner.as_rule() {
+    Ok(match inner.as_rule() {
         Rule::interval_lit => CallArg::Within(build_interval_lit(inner)),
-        Rule::condition => CallArg::Condition(build_condition(inner)),
-        Rule::term => CallArg::Term(build_term(inner)),
+        Rule::condition => CallArg::Condition(build_condition(inner)?),
+        Rule::term => CallArg::Term(build_term(inner)?),
         other => unreachable!("unexpected call_arg child: {other:?}"),
-    }
+    })
 }
 
 /// `comparison = arith cmp_op arith`. A zero-operator `arith` collapses
 /// to its bare `Term`, so a pre-arithmetic comparison builds the same
 /// AST as before. Either operand may be (or contain) an aggregate
 /// (`Term::Agg`); the comparison-operand-only rule is checked by `check`.
-fn build_comparison(pair: Pair<'_>, span: Span) -> Condition {
+fn build_comparison(pair: Pair<'_>, span: Span) -> Built<Condition> {
     let mut operands = Vec::new();
     let mut op = CmpOp::Eq;
     for p in pair.into_inner() {
         match p.as_rule() {
-            Rule::arith => operands.push(build_arith(p)),
+            Rule::arith => operands.push(build_arith(p)?),
             Rule::cmp_op => {
                 op = match p.as_str() {
                     "<=" => CmpOp::Le,
@@ -586,18 +719,18 @@ fn build_comparison(pair: Pair<'_>, span: Span) -> Condition {
     let mut it = operands.into_iter();
     let left = it.next().expect("comparison left");
     let right = it.next().expect("comparison right");
-    Condition {
+    Ok(Condition {
         span,
         kind: ConditionKind::Comparison { op, left, right },
-    }
+    })
 }
 
 /// `arith = arith_mul (add_op arith_mul)*` — left-associative `+`/`-`
 /// over multiplicative sub-expressions. A single `arith_mul` with no
 /// operator collapses to its operand (no `Term::Arith` node is built).
-fn build_arith(pair: Pair<'_>) -> Term {
+fn build_arith(pair: Pair<'_>) -> Built<Term> {
     let mut iter = pair.into_inner();
-    let mut acc = build_arith_mul(iter.next().expect("arith has an arith_mul"));
+    let mut acc = build_arith_mul(iter.next().expect("arith has an arith_mul"))?;
     while let Some(op_pair) = iter.next() {
         debug_assert_eq!(op_pair.as_rule(), Rule::add_op);
         let op = match op_pair.as_str().trim() {
@@ -605,31 +738,31 @@ fn build_arith(pair: Pair<'_>) -> Term {
             "-" => ArithOp::Sub,
             other => unreachable!("unexpected add_op `{other}`"),
         };
-        let right = build_arith_mul(iter.next().expect("add_op followed by arith_mul"));
+        let right = build_arith_mul(iter.next().expect("add_op followed by arith_mul"))?;
         acc = Term::Arith {
             op,
             left: Box::new(acc),
             right: Box::new(right),
         };
     }
-    acc
+    Ok(acc)
 }
 
 /// `arith_mul = term (mul_op term)*` — left-associative `*` over terms.
 /// A single `term` with no operator collapses to that term.
-fn build_arith_mul(pair: Pair<'_>) -> Term {
+fn build_arith_mul(pair: Pair<'_>) -> Built<Term> {
     let mut iter = pair.into_inner();
-    let mut acc = build_term(iter.next().expect("arith_mul has a term"));
+    let mut acc = build_term(iter.next().expect("arith_mul has a term"))?;
     while let Some(op_pair) = iter.next() {
         debug_assert_eq!(op_pair.as_rule(), Rule::mul_op);
-        let right = build_term(iter.next().expect("mul_op followed by term"));
+        let right = build_term(iter.next().expect("mul_op followed by term"))?;
         acc = Term::Arith {
             op: ArithOp::Mul,
             left: Box::new(acc),
             right: Box::new(right),
         };
     }
-    acc
+    Ok(acc)
 }
 
 /// `within = "within" within_payload`. The payload is either a
@@ -676,9 +809,10 @@ fn build_interval_lit(pair: Pair<'_>) -> Interval {
     Interval { amount, unit }
 }
 
-fn build_term(pair: Pair<'_>) -> Term {
+/// `term`, by its single alternative.
+fn build_term(pair: Pair<'_>) -> Built<Term> {
     let inner = pair.into_inner().next();
-    match inner.as_ref().map(|p| p.as_rule()) {
+    Ok(match inner.as_ref().map(|p| p.as_rule()) {
         Some(Rule::entity) => {
             let p = inner.unwrap();
             let mut segs = Vec::new();
@@ -707,14 +841,14 @@ fn build_term(pair: Pair<'_>) -> Term {
         // A bare or parenthesized aggregate term (`count …` / `(count …)`).
         // The parens (`paren_agg`) carry no semantics — they only fence the
         // greedy `where` body off a trailing `== n`.
-        Some(Rule::agg_expr) => Term::Agg(Box::new(build_agg_expr(inner.unwrap()))),
+        Some(Rule::agg_expr) => Term::Agg(Box::new(build_agg_expr(inner.unwrap())?)),
         Some(Rule::paren_agg) => {
             let agg = inner
                 .unwrap()
                 .into_inner()
                 .find(|c| c.as_rule() == Rule::agg_expr)
                 .expect("paren_agg wraps an agg_expr");
-            Term::Agg(Box::new(build_agg_expr(agg)))
+            Term::Agg(Box::new(build_agg_expr(agg)?))
         }
         // A parenthesized arithmetic grouping (`(a + b) * c`). The parens
         // carry no semantics: the payload is built directly, so `(a)`
@@ -725,7 +859,7 @@ fn build_term(pair: Pair<'_>) -> Term {
                 .into_inner()
                 .find(|c| c.as_rule() == Rule::arith)
                 .expect("paren_arith wraps an arith");
-            build_arith(arith)
+            build_arith(arith)?
         }
         Some(Rule::integer) => Term::Integer(parse_integer(&inner.unwrap())),
         Some(Rule::string) => Term::String(unquote(inner.unwrap().as_str())),
@@ -736,8 +870,8 @@ fn build_term(pair: Pair<'_>) -> Term {
             Term::Array(
                 p.into_inner()
                     .filter(|c| c.as_rule() == Rule::term)
-                    .map(build_term)
-                    .collect(),
+                    .map(|c| build_term(c))
+                    .collect::<Built<_>>()?,
             )
         }
         Some(Rule::context_field) => {
@@ -784,7 +918,7 @@ fn build_term(pair: Pair<'_>) -> Term {
             }
         }
         _ => Term::Wildcard,
-    }
+    })
 }
 
 /// Decode a quoted string token (`"…"`) into its value, applying Cedar's own
@@ -809,15 +943,12 @@ fn unquote(s: &str) -> String {
 /// entry points, before the (infallible) builders decode via [`unquote`], so an
 /// invalid escape is a parse error rather than a silently mis-decoded value.
 fn validate_string_escapes(pair: &Pair<'_>) -> Result<(), String> {
-    if pair.as_rule() == Rule::string {
-        let raw = pair.as_str();
+    for token in subtree(pair).filter(|p| p.as_rule() == Rule::string) {
+        let raw = token.as_str();
         let body = &raw[1..raw.len().saturating_sub(1)];
         if let Err(errs) = to_unescaped_string(body) {
             return Err(format!("invalid string escape in {raw}: {}", errs.head));
         }
-    }
-    for child in pair.clone().into_inner() {
-        validate_string_escapes(&child)?;
     }
     Ok(())
 }
@@ -827,14 +958,18 @@ fn validate_string_escapes(pair: &Pair<'_>) -> Result<(), String> {
 /// `-9223372036854775808` is in range. Runs at both parse entry points,
 /// before the builders read the tokens via [`parse_integer`].
 fn validate_integer_literals(pair: &Pair<'_>) -> Result<(), String> {
-    let text = pair.as_str();
-    if pair.as_rule() == Rule::integer && text.parse::<i64>().is_err() {
-        return Err(format!("integer literal `{text}` is out of range"));
-    }
-    for child in pair.clone().into_inner() {
-        validate_integer_literals(&child)?;
+    for token in subtree(pair).filter(|p| p.as_rule() == Rule::integer) {
+        let text = token.as_str();
+        if text.parse::<i64>().is_err() {
+            return Err(format!("integer literal `{text}` is out of range"));
+        }
     }
     Ok(())
+}
+
+/// `pair` and all its descendants, visited without recursion.
+fn subtree<'i>(pair: &Pair<'i>) -> impl Iterator<Item = Pair<'i>> {
+    std::iter::once(pair.clone()).chain(pair.clone().into_inner().flatten())
 }
 
 /// The value of an `integer` token that [`validate_integer_literals`] accepted.
@@ -985,6 +1120,15 @@ fn temporal_rule_display(rule: &Rule) -> &'static str {
         Rule::string => "string literal",
         Rule::kw_true => "'true'",
         Rule::kw_false => "'false'",
+        Rule::glued_exists => "'exists'",
+        Rule::glued_formerly => "'formerly'",
+        Rule::glued_previous => "'previous'",
+        Rule::glued_since => "'since'",
+        Rule::glued_count => "'count'",
+        Rule::glued_sum => "'sum'",
+        Rule::glued_for => "'for'",
+        Rule::glued_where => "'where'",
+        Rule::glued_within => "'within'",
 
         // Macro sigils
         Rule::param_ref => "parameter reference",
@@ -994,6 +1138,7 @@ fn temporal_rule_display(rule: &Rule) -> &'static str {
         // Implicit / whitespace (should not appear in errors)
         Rule::WHITESPACE => "whitespace",
         Rule::COMMENT => "comment",
+        Rule::ident_char => "identifier character",
         Rule::EOI => "end of input",
     }
 }
@@ -1140,6 +1285,7 @@ mod tests {
     //! positions).
 
     use super::*;
+    use dogwood_syntax::DEFAULT_MAX_DEPTH;
 
     fn parse(body: &str) -> Condition {
         parse_condition(body).unwrap_or_else(|e| panic!("parse `{body}` failed: {e}"))
@@ -1944,6 +2090,7 @@ mod tests {
         let body = crate::extension::temporal::parse::parse_macro_body(
             r#"(count for (t: Timepoint). where (Drupe::Action::"A"::request{} && tp(t)))
                - (count for (t: Timepoint). where (Drupe::Action::"B"::response{} && tp(t)))"#,
+            DEFAULT_MAX_DEPTH,
         )
         .expect("a difference of two aggregations is a value body");
         assert!(
@@ -1965,6 +2112,7 @@ mod tests {
         // rule for the PEG commit trap).
         let body = crate::extension::temporal::parse::parse_macro_body(
             r#"formerly within 1h Drupe::Action::"Login"::request{}"#,
+            DEFAULT_MAX_DEPTH,
         )
         .expect("a condition body must keep parsing");
         assert!(matches!(&body, crate::ast::MacroBody::TemporalCondition(_)));
@@ -1975,15 +2123,16 @@ mod tests {
         // `?a` fully parses as an arith (a ParamRef term) but has no
         // aggregation; the fallback re-reads it as the condition-sigil
         // body it always was.
-        let body = crate::extension::temporal::parse::parse_macro_body(r#"?a"#)
+        let body = crate::extension::temporal::parse::parse_macro_body(r#"?a"#, DEFAULT_MAX_DEPTH)
             .expect("a bare `?a` body is a condition sigil");
         assert!(matches!(&body, crate::ast::MacroBody::TemporalCondition(_)));
     }
 
     #[test]
     fn aggregation_free_value_body_is_rejected() {
-        let err = crate::extension::temporal::parse::parse_macro_body(r#"1 + 2"#)
-            .expect_err("a value body without an aggregation is rejected");
+        let err =
+            crate::extension::temporal::parse::parse_macro_body(r#"1 + 2"#, DEFAULT_MAX_DEPTH)
+                .expect_err("a value body without an aggregation is rejected");
         assert!(err.contains("at least one `count`/`sum`"), "got: {err}");
     }
 
@@ -1998,5 +2147,106 @@ mod tests {
             .is_err(),
             "`let … in …` should no longer parse"
         );
+    }
+
+    // ── Depth ───────────────────────────────────────────────────────────
+
+    const MAX_DEPTH: usize = DEFAULT_MAX_DEPTH;
+
+    /// The limit admits exactly the measured height (modulo the scan's
+    /// over-approximation), and one level tighter is refused.
+    #[test]
+    fn the_limit_admits_exactly_the_measured_height() {
+        const P: &str = r#"Drupe::Action::"Login"::request"#;
+        for body in [
+            format!("{P}{{}}"),
+            format!("!!!{P}{{}}"),
+            format!("{P}{{}} && {P}{{}} && !{P}{{}}"),
+            format!("{P}{{}} since within 1h ({P}{{}} && {P}{{}})"),
+            format!("previous within 1h (formerly within 1h {P}{{}})"),
+            format!("{P}{{ a: 1 }}{{ b: [1, [2, 3]] }}"),
+            format!("{P}{{ a: (count for (t: Timepoint). where tp(t)) }}"),
+            format!("{P}{{}}{{}}"),
+            "exists (t: Timepoint). tp(t) && tp(t)".to_string(),
+            "1 + 2 * 3 - 4 * 5 * 6 < x".to_string(),
+            "(1 + 2) * (3 + (4 * 5)) == -1".to_string(),
+            format!("(sum ?v for (t: Long). where {P}{{ v: t }}) + 1 > 2"),
+            format!("m(1h, {P}{{}} && {P}{{}}, [1, 2], count for (t: Long). where {P}{{}})"),
+            "(count for (t: Long). where m(t, n(t))) >= 1".to_string(),
+        ] {
+            let height = crate::parser::condition_depth(&parse(&body));
+            // The scan may over-estimate (it counts brackets and keywords,
+            // not the tree), so admit the larger of the two counts.
+            let scan = dogwood_syntax::nesting_estimate(&body, NESTING_KEYWORDS);
+            parse_condition_at(&body, height.max(scan))
+                .unwrap_or_else(|e| panic!("`{body}`: {e}"));
+            // One level tighter than the measured height must be refused,
+            // by the measured check or, where it over-counts, by the scan.
+            let error = parse_condition_at(&body, height - 1).expect_err(&body);
+            assert!(
+                error.starts_with("temporal expression nested deeper")
+                    || error.contains("nesting exceeds the maximum depth"),
+                "{error}"
+            );
+        }
+    }
+
+    #[test]
+    fn binder_keywords_open_a_nesting_level() {
+        let deep = |n| format!("{}tp(t)", "exists (t: Timepoint). ".repeat(n));
+        assert!(parse_rule(Rule::condition_entry, &deep(MAX_DEPTH - 1), MAX_DEPTH).is_ok());
+        let error = parse_condition(&deep(MAX_DEPTH)).expect_err("too deep");
+        assert!(
+            error.contains("nesting exceeds the maximum depth"),
+            "{error}"
+        );
+        // Only the closing bracket enclosing a keyword releases it, so siblings
+        // in one bracket level accumulate. Each aggregate is three keywords;
+        // `m(` is a level and the last `tp(` another, so ten fit.
+        let siblings = |n| {
+            let aggregates = vec!["count for (t: Long). where tp(t)"; n].join(", ");
+            format!("m({aggregates})")
+        };
+        assert!(
+            parse_rule(
+                Rule::condition_entry,
+                &siblings((MAX_DEPTH - 2) / 3),
+                MAX_DEPTH
+            )
+            .is_ok()
+        );
+        let error = parse_rule(
+            Rule::condition_entry,
+            &siblings((MAX_DEPTH - 2) / 3 + 1),
+            MAX_DEPTH,
+        )
+        .expect_err("siblings accumulate");
+        assert!(
+            error.contains("nesting exceeds the maximum depth"),
+            "{error}"
+        );
+        // A `,` in a binder list releases nothing either.
+        let listed = |n| {
+            format!(
+                "{}tp(t){}",
+                "exists (t: Long). count for (a: Long), (b: Long). where ".repeat(n),
+                " >= 1".repeat(n)
+            )
+        };
+        let error =
+            parse_rule(Rule::condition_entry, &listed(MAX_DEPTH), MAX_DEPTH).expect_err("a list");
+        assert!(
+            error.contains("nesting exceeds the maximum depth"),
+            "{error}"
+        );
+        // A field named like a keyword counts too, until its braces close.
+        let fields = |n| {
+            let fields = vec!["exists: 1"; n].join(", ");
+            format!(r#"Drupe::Action::"Login"::request{{ {fields} }}"#)
+        };
+        assert!(parse_rule(Rule::condition_entry, &fields(MAX_DEPTH - 1), MAX_DEPTH).is_ok());
+        assert!(parse_rule(Rule::condition_entry, &fields(MAX_DEPTH), MAX_DEPTH).is_err());
+        let released = vec![fields(MAX_DEPTH - 1); 4].join(" && ");
+        assert!(parse_rule(Rule::condition_entry, &released, MAX_DEPTH).is_ok());
     }
 }

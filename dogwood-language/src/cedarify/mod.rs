@@ -508,8 +508,10 @@ pub fn augment_schema(
 /// The scope constraints are already loc-bearing `cedar_ast` (built by the
 /// parser), so they go straight in. The condition body is
 /// built as loc-bearing `ast::Expr` by [`to_ast`] and the clauses are folded
-/// exactly as Cedar does: a `when` clause contributes its body, an `unless`
-/// clause contributes its negation, and the clauses are conjoined with `&&`.
+/// as Cedar does: a `when` clause contributes its body, an `unless` clause
+/// contributes its negation, and the clauses are conjoined with `&&` — as a
+/// balanced tree in clause order rather than Cedar's left-nested chain (same
+/// evaluation order and short-circuiting; see the fold below).
 fn emit_policy(
     policy: &Policy,
     id: &str,
@@ -543,11 +545,32 @@ fn emit_policy(
             CondKeyword::Unless => builder().not(body),
         });
     }
-    // Conjoin the clauses (left-to-right `&&`); an empty rule body is `true`.
-    let condition = match clause_exprs
-        .into_iter()
-        .reduce(|acc, e| builder().and(acc, e))
-    {
+    // Conjoin the clauses with a balanced `&&` tree; an empty rule body is `true`.
+    //
+    // Adjacent clauses are paired left to right, then the results are paired, until
+    // one remains: `(c0 && c1) && (c2 && c3)` for four clauses, `(c0 && c1) && c2` for
+    // three (an odd trailing operand is carried up a level unchanged), and the clause
+    // itself for one. The tree is ⌈log₂ n⌉ deep instead of n, so a policy with many
+    // clauses no longer overflows Cedar's recursive printer, typechecker, or evaluator.
+    //
+    // Semantics are unchanged: `&&` is associative under Cedar's evaluation, which
+    // evaluates the left operand first and returns at the first `false` or error.
+    // Any `&&` tree over the same operands in the same left-to-right order therefore
+    // visits the clauses in clause order and stops at the same clause, with the same
+    // decision and the same error, as the left-nested chain did.
+    let mut level = clause_exprs;
+    while level.len() > 1 {
+        let mut next = Vec::with_capacity(level.len().div_ceil(2));
+        let mut it = level.into_iter();
+        while let Some(left) = it.next() {
+            next.push(match it.next() {
+                Some(right) => builder().and(left, right),
+                None => left,
+            });
+        }
+        level = next;
+    }
+    let condition = match level.pop() {
         Some(e) => e,
         None => builder().val(true),
     };
