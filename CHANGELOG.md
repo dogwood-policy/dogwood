@@ -2,6 +2,92 @@
 
 All notable changes to the Dogwood policy language are documented here.
 
+## 2026-11-11
+
+### Fixed
+
+- **pins**: the guard μ that relativizes a pinned leaf (a pinned `previous`,
+  a positive `since`) is balanced, ⌈log₂ n⌉ deep over its n alternatives
+  (one per derived event), which keep their order. It was chained one
+  alternative inside the next, so 100 actions gave a guard about 300 levels
+  deep, which overflows recursive consumers on a 2 MiB thread stack. Verdicts
+  are unchanged; a relativized leaf changes shape once the event schema has 4
+  or more derived events (with the default event schema, any action schema
+  with 2 or more actions), so a consumer that persists or fingerprints the
+  relativized leaves must treat those fingerprints as new
+- **parser**, **lowering**: a policy set whose macro expansion or lowering
+  would build an exponentially large tree is an error instead of running out
+  of memory. `def cedar d(?x) { ?x && ?x }` called on its own result 30 deep
+  is 2^30 nodes, and with a universal pin, as the default service schema has,
+  lowering a nested `previous within 1h (…)` copies the body twice per level
+  and a right-nested `READ since within 1h (…)` three times per level. A new
+  limit, `ParseOptions::max_nodes`, by default
+  `dogwood_language::DEFAULT_MAX_NODES` (1,000,000), bounds the tree nodes
+  macro expansion may create for one parsed policy set
+  (`macro expansion exceeds the node budget of 1000000`) and, separately, the
+  nodes lowering may create for that set's temporal leaves
+  (`lowering exceeds the node budget of 1000000`), reported at the macro call
+  or leaf that exhausted it, before the excess is built. Nodes are counted as
+  they are allocated and never credited back. The new entry points
+  `ParsedPolicySet::parse_with` and `LoweredPolicySet::from_str_with` take
+  the options (`ParseOptions`, also new); the existing ones use the default.
+  A parsed set keeps its options, so `lower` and `lower_with_distincter`
+  apply the budget it was parsed with. Real policies need at
+  most 117 nodes to expand one condition and 449 to lower one leaf, so the
+  default covers a set of about 2,000 such worst-case policies; a typical
+  `Read since within 1h Write` leaf is about 105 nodes, so about 9,500 of
+  those fit, and a caller that loads larger sets passes a larger limit.
+  Lowering of every policy within the budget is unchanged. A caller who raises the limit owns the memory and
+  time the larger trees need
+- **parser**: deeply nested or chained policy text is a parse error instead
+  of a stack overflow that aborted the process. One limit, by default
+  `dogwood_language::DEFAULT_MAX_DEPTH` (32) and configurable with
+  `ParseOptions::max_depth` (`ParsedPolicySet::parse_with` and
+  `LoweredPolicySet::from_str_with`), bounds the depth of every finished tree the frontend
+  returns, temporal blocks included. It is enforced in two places. A lexical
+  scan bounds the generated parsers' recursion before each runs
+  (`nesting exceeds the maximum depth of 32`): each bracket and each keyword
+  that introduces an operand counts — `if` in a policy; `exists`, `where`,
+  `formerly`, `previous`, `since`, `count`, `sum`, and `for` in a temporal
+  block — and only a closing bracket subtracts, releasing the keywords
+  counted inside it. And every finished tree is measured with an
+  explicit-stack walker and refused if deeper than the limit: the parsed
+  expression at its root (`expression nested deeper than the limit of 32`,
+  or `temporal expression nested deeper than the limit of 32` for a temporal
+  body), and each macro expansion (`macro expansion nested deeper than the
+  limit of 32`), whose depth is the sum of the body's and the argument's.
+  The builders do not count: chains (`a && b && …`, `x.a.b.…`, `!!!…x`)
+  build flat text into deep trees with loops, and the surface trees free
+  themselves with an explicit worklist instead of recursion, so a tree of
+  any depth is safe to build, measure, reject, and discard. A chain of more
+  than 32 terms is rejected; earlier releases accepted at least fifty, and
+  that guarantee is withdrawn. Real policies in the repository corpus
+  measure at most 9 levels of nesting and 16 of expression depth. The
+  event-schema DSL applies the same limit. At the default, a policy parses
+  the same way on every host, thread, and build profile, and too-deep text is an error rather than a
+  stack overflow on a 2 MiB thread; a caller who raises the limit owns the
+  stack that later passes over the deeper trees need. Error messages name
+  the limit in effect. A policy's `when`/`unless` clauses lower to a balanced
+  `&&` tree, so the clause count no longer adds depth; evaluation order and
+  short-circuiting are unchanged, and the lowered Cedar text and JSON of a
+  rule with four or more clauses change shape, so a consumer that persists
+  or fingerprints lowered policies must treat those as new. Temporal
+  keywords now require a word boundary, as the scan counts them, so
+  run-together keywords such as
+  `countfor(t:Long).where` are a syntax error instead of parsing as
+  `count for (t: Long). where`
+- **parser**: a multi-segment `has` path (`context has a.b.c`) is measured
+  at the depth it lowers to, one level per segment (Cedar 4.11 desugars every
+  such path to a chain of `&&`ed `has` tests), so a long one is a parse error
+  instead of a stack overflow in lowering
+- **api**: a Cedar action schema with more than 64 brackets, records or
+  `Set<…>` types open at once is refused as the new `Error::ActionSchema`
+  by every `PolicySchema` constructor and by `dogwood schema action`,
+  before Cedar's recursive schema parser reads it
+- **parser**: an error inside a `def cedar` body, such as an invalid variable,
+  points at the body. Its location used to be counted from the start of the
+  file
+
 ## 2026-10-29
 
 ### Fixed

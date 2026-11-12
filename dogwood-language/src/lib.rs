@@ -32,6 +32,7 @@ pub mod corpus;
 pub(crate) mod api;
 pub(crate) mod ast;
 pub(crate) mod cedarify;
+mod deep_drop;
 pub(crate) mod error;
 pub(crate) mod event_schema;
 pub(crate) mod extension;
@@ -43,6 +44,20 @@ pub(crate) mod schema;
 pub(crate) mod validate;
 
 // ─── The public surface, re-exported at the crate root ───────────────
+
+/// The default depth and node limits, and the options that set others; see
+/// [`DEFAULT_MAX_DEPTH`], [`DEFAULT_MAX_NODES`],
+/// [`ParseOptions::max_depth`], [`ParseOptions::max_nodes`], and
+/// [`ParsedPolicySet::parse_with`] for the entry point that takes them.
+pub use crate::parser::limits::{DEFAULT_MAX_DEPTH, DEFAULT_MAX_NODES, ParseOptions};
+
+/// The nesting scan, and the temporal grammar's operand-introducing keywords
+/// it counts in a temporal block, so the integration tests can scan a
+/// temporal body directly. Exposed for tests only.
+#[doc(hidden)]
+pub use crate::extension::temporal::parse::NESTING_KEYWORDS as TEMPORAL_NESTING_KEYWORDS;
+#[doc(hidden)]
+pub use crate::parser::limits::nesting_depth_error;
 
 /// The **service-provided** schema half (macros, provider declarations, and
 /// event-schema DSL) and its builder, plus the built-in default event schema

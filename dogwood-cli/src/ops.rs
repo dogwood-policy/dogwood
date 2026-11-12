@@ -310,6 +310,9 @@ pub struct SchemaCheckReport {
 /// `PolicySchema::from_cedarschema_str`, which defers all checking to lowering.
 pub fn check_action_schema(source: &str) -> Result<SchemaCheckReport, OpError> {
     let source = source.strip_prefix('\u{FEFF}').unwrap_or(source);
+    // The bound `dogwood validate` applies, before Cedar's parser can recurse
+    // on a deep schema.
+    PolicySchema::from_cedarschema_str(source).map_err(|e| OpError::message(e.to_string()))?;
     match cedar::Schema::from_cedarschema_str(source) {
         Ok((_schema, warnings)) => Ok(SchemaCheckReport {
             kind: "action".to_string(),

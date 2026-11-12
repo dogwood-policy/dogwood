@@ -34,6 +34,8 @@ use cedar_policy::{
 };
 use cedar_policy_core::ast as cedar_ast;
 
+use crate::parser::limits::NodeBudget;
+
 use crate::authorize::DogwoodRuleRef;
 use crate::cedarify::cedarify_with_providers;
 use crate::error::{
@@ -523,6 +525,14 @@ pub enum Error {
     #[error("MCP schema generation: {0}")]
     McpSchema(String),
 
+    /// The Cedar action schema was refused before Cedar parsed it: it nests
+    /// more than twice [`DEFAULT_MAX_DEPTH`](crate::DEFAULT_MAX_DEPTH)
+    /// levels (a `Set<{ … }>` level is two brackets), which Cedar's recursive-descent schema parser could not read
+    /// without risking a stack overflow. Returned by the
+    /// [`PolicySchema`](crate::PolicySchema) constructors.
+    #[error("action schema: {0}")]
+    ActionSchema(String),
+
     /// A `.log` trace could not be parsed.
     #[error("trace parse: {0}")]
     TraceParse(String),
@@ -598,6 +608,9 @@ pub(crate) struct Parsed {
     /// The original `.dw` source, shared so lowered nodes' `Loc`s and each
     /// fatal error can embed it and self-render.
     dw_src: std::sync::Arc<str>,
+    /// The options this set was parsed under; lowering keeps to the same
+    /// node budget ([`ParseOptions::max_nodes`](crate::ParseOptions::max_nodes)).
+    options: crate::ParseOptions,
 }
 
 impl Parsed {
@@ -627,14 +640,24 @@ impl Parsed {
 /// [`ServiceSchema`] (macros + provider declarations). Catches syntax, macro,
 /// and structural errors. Needs **no** action schema — schema-dependent checks
 /// are deferred to [`lower`] / validation.
-pub(crate) fn parse(source: &str, service_schema: &ServiceSchema) -> Result<Parsed, Error> {
+///
+/// Macro expansion of the whole set shares one node budget of
+/// `options.max_nodes`, and the set keeps `options` for its lowering.
+/// `options` bounds every depth: of the source's nesting, of the trees built,
+/// and of their macro expansions; the service schema's macro library is
+/// parsed under the same options.
+pub(crate) fn parse(
+    source: &str,
+    service_schema: &ServiceSchema,
+    options: &crate::ParseOptions,
+) -> Result<Parsed, Error> {
     // Share the `.dw` source: it both stamps every lowered node's `Loc` (so
     // Cedar validation diagnostics rebase into the original source) and lets
     // each fatal error carry the source for self-rendering.
     let dw_src: std::sync::Arc<str> = std::sync::Arc::from(source);
 
-    let mut surface =
-        crate::parser::parse_policies(source).map_err(|errs| parse_errors(errs, &dw_src))?;
+    let mut surface = crate::parser::parse_policies_with(source, options)
+        .map_err(|errs| parse_errors(errs, &dw_src))?;
 
     // Merge the schema's macro library into the policy set's own `def`s before
     // expansion, so a policy can call a library macro without re-declaring it.
@@ -644,9 +667,9 @@ pub(crate) fn parse(source: &str, service_schema: &ServiceSchema) -> Result<Pars
     // against its *own* source here, so a library-def error self-renders
     // against the library — after which any error `expand` raises over the
     // merged set is necessarily policy-authored (stamped `dw_src` below).
-    merge_macro_library(&mut surface, service_schema.macros())?;
+    merge_macro_library(&mut surface, service_schema.macros(), options)?;
 
-    crate::macros::expand(&mut surface).map_err(|e| {
+    crate::macros::expand(&mut surface, options).map_err(|e| {
         Error::Macro(MacroError::new(
             e.message,
             SourceLoc::new(e.span, dw_src.clone()),
@@ -657,7 +680,38 @@ pub(crate) fn parse(source: &str, service_schema: &ServiceSchema) -> Result<Pars
         surface,
         service_schema: service_schema.clone(),
         dw_src,
+        options: *options,
     })
+}
+
+/// The error for a lowering that would create more nodes than `limit` (or a
+/// lowered tree with more), at `span` in `src`.
+fn lowering_budget_exceeded(
+    limit: usize,
+    span: crate::error::Span,
+    src: &std::sync::Arc<str>,
+) -> Error {
+    let message = format!("lowering exceeds the node budget of {limit}");
+    cedarify_error(
+        RawCedarifyError {
+            message,
+            span: Some(span),
+        },
+        src,
+    )
+}
+
+/// Refuse a lowered tree of `nodes` nodes if that is more than `limit`.
+fn check_lowered_size(
+    nodes: usize,
+    limit: usize,
+    span: crate::error::Span,
+    src: &std::sync::Arc<str>,
+) -> Result<(), Error> {
+    if nodes > limit {
+        return Err(lowering_budget_exceeded(limit, span, src));
+    }
+    Ok(())
 }
 
 /// Phase 2 — lower a [`Parsed`] set to Cedar against the [`PolicySchema`]
@@ -681,7 +735,18 @@ pub(crate) fn lower(
         surface,
         service_schema,
         dw_src,
+        options,
     } = parsed;
+    let max_nodes = options.max_nodes;
+
+    // The backstop: no expanded Cedar expression may be larger than the
+    // set's node budget, whatever built it.
+    for policy in &surface.policies {
+        for cond in &policy.conditions {
+            let nodes = crate::parser::expr_size(&cond.body);
+            check_lowered_size(nodes, max_nodes, cond.body.span, dw_src)?;
+        }
+    }
 
     // The distincter is interpolated into synthesized policy ids and hoisted
     // `context.<id>` attribute names, so it must be a valid Cedar identifier
@@ -727,6 +792,12 @@ pub(crate) fn lower(
     for leaf in context_fields.iter_mut() {
         crate::event_schema::pin::inject_pins(&mut leaf.temporal.condition, &event_schema);
     }
+    // The backstop for the pinned leaves (their relativization is charged to
+    // the set's budget, and checked again, below).
+    for leaf in &context_fields {
+        let nodes = crate::parser::condition_size(&leaf.temporal.condition);
+        check_lowered_size(nodes, max_nodes, leaf.temporal.span, dw_src)?;
+    }
 
     // Convert the loc-bearing `ast::PolicySet` into the public
     // `cedar_policy::PolicySet` for validation/authorization. This uses the
@@ -756,26 +827,32 @@ pub(crate) fn lower(
     // Relativize each leaf for the schema's universal symmetric pins (the
     // "pinned ⇒ safe to partition" encoding). A no-op clone when the schema declares
     // no universal symmetric pin. The default is not such a case — it pins
-    // `callerPrincipal` on every kind, so its leaves are relativized.
+    // `callerPrincipal` on every kind, so its leaves are relativized. Every
+    // node the rewrite creates is charged to one budget for the whole set,
+    // and the backstop refuses a rewritten leaf larger than its limit.
     let pins = crate::event_schema::relativize::universal_pins(&event_schema);
-    let temporal_rewritten: Vec<TemporalField> = temporal
-        .iter()
-        .map(|f| TemporalField {
+    let mut budget = NodeBudget::new(max_nodes);
+    let mut temporal_rewritten: Vec<TemporalField> = Vec::with_capacity(temporal.len());
+    for f in &temporal {
+        let span = f.condition.span;
+        let condition = crate::event_schema::relativize::relativize_condition(
+            &f.condition.condition,
+            &event_schema,
+            &pins,
+            &mut budget,
+        )
+        .map_err(|_| lowering_budget_exceeded(max_nodes, span, dw_src))?;
+        let nodes = crate::parser::condition_size(&condition);
+        check_lowered_size(nodes, max_nodes, span, dw_src)?;
+        temporal_rewritten.push(TemporalField {
             id: f.id.clone(),
             action: f.action.clone(),
             target_actions: f.target_actions.clone(),
             principal: f.principal.clone(),
             resource: f.resource.clone(),
-            condition: crate::extension::temporal::Temporal {
-                condition: crate::event_schema::relativize::relativize_condition(
-                    &f.condition.condition,
-                    &event_schema,
-                    &pins,
-                ),
-                span: f.condition.span,
-            },
-        })
-        .collect();
+            condition: crate::extension::temporal::Temporal { condition, span },
+        });
+    }
 
     // The same universal symmetric pins expressed as engine-facing partition
     // keys. A partitioning temporal engine routes each event to a monitor keyed
@@ -863,7 +940,11 @@ pub(crate) fn lower(
 /// not already define a macro of that name. This keeps default-on macro
 /// libraries safe — the library can neither shadow a policy's macro nor cause
 /// a duplicate-definition error against one.
-fn merge_macro_library(surface: &mut crate::ast::PolicySet, macros_src: &str) -> Result<(), Error> {
+fn merge_macro_library(
+    surface: &mut crate::ast::PolicySet,
+    macros_src: &str,
+    options: &crate::ParseOptions,
+) -> Result<(), Error> {
     if macros_src.trim().is_empty() {
         return Ok(());
     }
@@ -875,8 +956,8 @@ fn merge_macro_library(surface: &mut crate::ast::PolicySet, macros_src: &str) ->
     // than letting the later `expand` pass fault on the merged set — is what
     // keeps that later error correctly attributable to the policy source.
     let lib_src: std::sync::Arc<str> = std::sync::Arc::from(macros_src);
-    let library =
-        crate::parser::parse_policies(macros_src).map_err(|errs| parse_errors(errs, &lib_src))?;
+    let library = crate::parser::parse_policies_with(macros_src, options)
+        .map_err(|errs| parse_errors(errs, &lib_src))?;
     crate::macros::check_defs(&library.defs).map_err(|e| {
         Error::Macro(MacroError::new(
             e.message,
