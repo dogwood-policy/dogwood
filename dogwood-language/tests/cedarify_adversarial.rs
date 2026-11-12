@@ -376,15 +376,23 @@ fn bare_permit_no_conditions_lowers() {
 }
 
 #[test]
-fn fifty_chained_and_conditions_no_stack_overflow() {
-    let clauses: Vec<String> = (0..50)
-        .map(|_| "context.input.x == \"a\"".to_string())
-        .collect();
-    let body = clauses.join(" && ");
-    let src =
-        format!("permit(principal, action == App::Action::\"Read\", resource) when {{ {body} }};",);
-    let result = lower(&src);
-    assert!(result.is_ok(), "50 && chain should lower: {result:?}");
+fn and_chain_at_the_depth_limit_lowers() {
+    // Each clause is four levels deep, and the first sits under one `&&` per
+    // later clause, so 29 clauses reach `DEFAULT_MAX_DEPTH`.
+    let src = |clauses| {
+        let body = vec!["context.input.x == \"a\""; clauses].join(" && ");
+        format!("permit(principal, action == App::Action::\"Read\", resource) when {{ {body} }};")
+    };
+    let result = lower(&src(dogwood_language::DEFAULT_MAX_DEPTH - 3));
+    assert!(
+        result.is_ok(),
+        "a chain at the depth limit should lower: {result:?}"
+    );
+    let result = lower(&src(dogwood_language::DEFAULT_MAX_DEPTH - 2));
+    assert!(
+        matches!(result, Err(dogwood_language::Error::Parse(_))),
+        "a chain past the depth limit is a parse error: {result:?}"
+    );
 }
 
 #[test]

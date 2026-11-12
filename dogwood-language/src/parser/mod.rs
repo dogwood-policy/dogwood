@@ -35,11 +35,35 @@ use crate::extension::{Dialect, Extension};
 
 use std::cell::Cell;
 
+pub(crate) mod limits;
+#[cfg(test)]
+mod nesting_scan_dominates_pest;
+
+use limits::{POLICY_NESTING_KEYWORDS, ParseOptions};
+
 #[derive(Parser)]
 #[grammar = "parser/grammar.pest"]
 struct DogwoodParser;
 
 type Pair<'i> = pest::iterators::Pair<'i, Rule>;
+
+/// Parse `source` starting at a rule from the Dogwood policy grammar.
+///
+/// Source nested deeper than `options.max_depth`, as
+/// [`nesting_depth_error`](limits::nesting_depth_error) counts it, is a parse
+/// error located at the first bracket or `if` beyond the limit.
+fn parse_with<'source>(
+    rule: Rule,
+    source: &'source str,
+    options: &ParseOptions,
+) -> Result<pest::iterators::Pairs<'source, Rule>, pest::error::Error<Rule>> {
+    if let Some(error) =
+        limits::nesting_depth_error(source, POLICY_NESTING_KEYWORDS, options.max_depth)
+    {
+        return Err(error);
+    }
+    DogwoodParser::parse(rule, source)
+}
 
 // Tracks whether expression parsing is currently inside a scope constraint
 // (as opposed to a condition body). Used by `resolve_name` to tailor error
@@ -75,6 +99,225 @@ fn err(message: impl Into<String>, span: Span) -> RawParseError {
         message: message.into(),
         span,
     }
+}
+
+/// Reject a tree measured `depth` deep when that exceeds `limit`
+/// ([`ParseOptions::max_depth`](crate::ParseOptions::max_depth)).
+///
+/// Flat text builds deep trees (`!!!…x`, `a && b && …`, `x.a.b.…`), and
+/// every later pass over a tree, its drop included, may recurse once per
+/// level. The builders construct chains with loops, and a tree of any depth
+/// is freed without recursion (see `deep_drop`), so a too-deep tree exists
+/// only between its construction and this check on the finished root;
+/// nothing recurses over it in between.
+fn check_depth(depth: usize, limit: usize, span: Span) -> Result<(), RawParseError> {
+    if depth > limit {
+        return Err(err(
+            format!("expression nested deeper than the limit of {limit}"),
+            span,
+        ));
+    }
+    Ok(())
+}
+
+/// Build a whole expression (a condition body, a scope operand, or a `def
+/// cedar` body) and reject it if its finished tree, temporal subterms
+/// included, is deeper than `limit`. This measured check on the root is the
+/// depth bound; the builders below do not count.
+fn build_root(pair: Pair<'_>, limit: usize) -> Result<Expr, RawParseError> {
+    let expr = match pair.as_rule() {
+        Rule::extension_marker => build_extension_marker(pair, limit)?,
+        _ => build_expr(pair, limit)?,
+    };
+    check_depth(expr_depth(&expr), limit, expr.span)?;
+    Ok(expr)
+}
+
+/// The depth of `expr`, measured with an explicit stack so that measuring a
+/// deep tree cannot itself overflow.
+pub(crate) fn expr_depth(expr: &Expr) -> usize {
+    tree_measure(DepthNode::Expr(expr)).depth
+}
+
+/// The depth of a temporal condition; see [`expr_depth`].
+pub(crate) fn condition_depth(condition: &temporal::ast::Condition) -> usize {
+    tree_measure(DepthNode::Condition(condition)).depth
+}
+
+/// The depth of a temporal aggregation; see [`expr_depth`].
+pub(crate) fn agg_depth(agg: &temporal::ast::AggExpr) -> usize {
+    tree_measure(DepthNode::Agg(agg)).depth
+}
+
+/// The number of nodes in `expr` (every `Expr`, temporal `Condition`, `Term`,
+/// and aggregation node), the measure [`ParseOptions::max_nodes`] bounds,
+/// counted with an explicit stack like [`expr_depth`].
+pub(crate) fn expr_size(expr: &Expr) -> usize {
+    tree_size(DepthNode::Expr(expr))
+}
+
+/// The number of nodes in a temporal condition; see [`expr_size`].
+pub(crate) fn condition_size(condition: &temporal::ast::Condition) -> usize {
+    tree_size(DepthNode::Condition(condition))
+}
+
+/// The number of nodes in a temporal term; see [`expr_size`].
+pub(crate) fn term_size(term: &temporal::ast::Term) -> usize {
+    tree_size(DepthNode::Term(term))
+}
+
+/// The number of nodes in a temporal aggregation; see [`expr_size`].
+pub(crate) fn agg_size(agg: &temporal::ast::AggExpr) -> usize {
+    tree_size(DepthNode::Agg(agg))
+}
+
+/// A tree's depth and its number of nodes, from one walk.
+#[derive(Debug, Clone, Copy)]
+struct TreeMeasure {
+    depth: usize,
+    size: usize,
+}
+
+fn tree_size(root: DepthNode<'_>) -> usize {
+    tree_measure(root).size
+}
+
+enum DepthNode<'a> {
+    Expr(&'a Expr),
+    Condition(&'a temporal::ast::Condition),
+    Term(&'a temporal::ast::Term),
+    Agg(&'a temporal::ast::AggExpr),
+}
+
+/// The depth and size of the tree under `root`; the walk keeps its own stack,
+/// so a deep tree cannot overflow the thread's.
+fn tree_measure(root: DepthNode<'_>) -> TreeMeasure {
+    use DepthNode as Node;
+    use temporal::ast::{AggExprKind, CallArg, ConditionKind, Term};
+
+    let mut max = 0;
+    let mut size = 0;
+    let mut stack = vec![(root, 1)];
+    while let Some((node, depth)) = stack.pop() {
+        max = max.max(depth);
+        size += 1;
+        let mut push = |child| stack.push((child, depth + 1));
+        match node {
+            Node::Expr(e) => match &e.kind {
+                ExprKind::Lit(_)
+                | ExprKind::Var(_)
+                | ExprKind::Slot(_)
+                | ExprKind::ParamRef { .. } => {}
+                ExprKind::Extension(Extension::Temporal(t)) => push(Node::Condition(&t.condition)),
+                ExprKind::UnaryApp { expr, .. }
+                | ExprKind::GetAttr { expr, .. }
+                | ExprKind::Like { expr, .. } => push(Node::Expr(expr)),
+                // The parser keeps `e has a.b.c` as one node with a flat path,
+                // but lowering (`cedarify::to_ast`, through Cedar 4.11's
+                // `ExprBuilder::extended_has_attr`, which has no flat node and
+                // desugars every path) spells a path of `k` segments as a
+                // left-nested `&&` of `k` `has` tests, the last over a `GetAttr`
+                // chain of `k - 1`: `e` ends up exactly `k + 1` levels below the
+                // root `&&` (one, for a single segment). Measure that, so a long
+                // path is refused here, before anything recurses over the
+                // lowered tree.
+                ExprKind::HasAttr { expr, attrs } => {
+                    let below = attrs.len() + usize::from(attrs.len() > 1);
+                    stack.push((Node::Expr(expr), depth + below.max(1)));
+                }
+                ExprKind::BinaryApp { left, right, .. } => {
+                    push(Node::Expr(left));
+                    push(Node::Expr(right));
+                }
+                ExprKind::Is { expr, in_expr, .. } => {
+                    push(Node::Expr(expr));
+                    if let Some(in_expr) = in_expr {
+                        push(Node::Expr(in_expr));
+                    }
+                }
+                ExprKind::IfThenElse {
+                    cond,
+                    then_expr,
+                    else_expr,
+                } => {
+                    push(Node::Expr(cond));
+                    push(Node::Expr(then_expr));
+                    push(Node::Expr(else_expr));
+                }
+                ExprKind::Set(elems) | ExprKind::Call { args: elems, .. } => {
+                    elems.iter().for_each(|e| push(Node::Expr(e)));
+                }
+                ExprKind::Record(map) => map.values().for_each(|e| push(Node::Expr(e))),
+                ExprKind::MethodCall { receiver, args, .. } => {
+                    push(Node::Expr(receiver));
+                    args.iter().for_each(|e| push(Node::Expr(e)));
+                }
+            },
+            Node::Condition(c) => match &c.kind {
+                ConditionKind::And { left, right }
+                | ConditionKind::Or { left, right }
+                | ConditionKind::Since { left, right, .. } => {
+                    push(Node::Condition(left));
+                    push(Node::Condition(right));
+                }
+                ConditionKind::Not { inner: body }
+                | ConditionKind::Formerly { body, .. }
+                | ConditionKind::Previous { body, .. }
+                | ConditionKind::Exists { body, .. } => push(Node::Condition(body)),
+                ConditionKind::Predicate(p) => {
+                    p.args.iter().for_each(|a| push(Node::Term(&a.value)))
+                }
+                ConditionKind::Comparison { left, right, .. } => {
+                    push(Node::Term(left));
+                    push(Node::Term(right));
+                }
+                ConditionKind::Call(call) => {
+                    for arg in &call.args {
+                        match arg {
+                            CallArg::Condition(c) => push(Node::Condition(c)),
+                            CallArg::Term(t) => push(Node::Term(t)),
+                            CallArg::Within(_) => {}
+                        }
+                    }
+                }
+                ConditionKind::Refine { base, fields, .. } => {
+                    push(Node::Condition(base));
+                    fields.iter().for_each(|a| push(Node::Term(&a.value)));
+                }
+                ConditionKind::Tp { .. } | ConditionKind::SigilRef { .. } => {}
+            },
+            Node::Term(t) => match t {
+                Term::Array(items) => items.iter().for_each(|t| push(Node::Term(t))),
+                Term::Agg(agg) => push(Node::Agg(agg)),
+                Term::Entity { .. }
+                | Term::Integer(_)
+                | Term::Decimal(_)
+                | Term::String(_)
+                | Term::Bool(_)
+                | Term::ContextField(_)
+                | Term::ScopeField(_)
+                | Term::Var(_)
+                | Term::Wildcard
+                | Term::ParamRef(_)
+                | Term::BinderRef(_) => {}
+            },
+            Node::Agg(a) => match &a.kind {
+                AggExprKind::Sum { body, .. } | AggExprKind::Count { body, .. } => {
+                    push(Node::Condition(body));
+                }
+                AggExprKind::Call(call) => {
+                    for arg in &call.args {
+                        match arg {
+                            CallArg::Condition(c) => push(Node::Condition(c)),
+                            CallArg::Term(t) => push(Node::Term(t)),
+                            CallArg::Within(_) => {}
+                        }
+                    }
+                }
+            },
+        }
+    }
+    TreeMeasure { depth: max, size }
 }
 
 /// Translate a pest grammar `Rule` name into a user-facing description.
@@ -445,16 +688,43 @@ fn extract_token(src: &str, pos: usize) -> Option<String> {
     Some(first.to_string())
 }
 
+/// Parse a `.dw` policy set into its policies and macro definitions.
 ///
 /// Returns all policies on success, or the collected parse errors.
+///
+/// [`parse_policies_with`] at the default [`ParseOptions`].
+#[cfg(test)]
 pub fn parse_policies(src: &str) -> Result<PolicySet, Vec<RawParseError>> {
+    parse_policies_with(src, &ParseOptions::default())
+}
+
+/// [`parse_policies`] under `options`.
+///
+/// Every depth is bounded by `options.max_depth`, by default
+/// [`DEFAULT_MAX_DEPTH`](crate::DEFAULT_MAX_DEPTH), 32: source nesting deeper than the
+/// limit and an expression tree deeper than the limit, temporal blocks
+/// included, are each a parse error. Nesting counts each open bracket and
+/// each keyword that introduces an operand (`if`; in a temporal block,
+/// `exists`, `where`, `formerly`, `previous`, `since`, `count`, `sum`, and
+/// `for`); only a closing bracket subtracts, so sibling keywords in one
+/// bracket level accumulate. Real policies measure at most 9 levels of
+/// nesting and 16 of expression depth. At the default limit, parsing, macro
+/// expansion, and lowering fit a 2 MiB thread stack in a debug build, which
+/// a test enforces, so too-deep text is a parse error, never a stack
+/// overflow; a caller who raises the limit owns the stack the deeper trees
+/// need.
+pub fn parse_policies_with(
+    src: &str,
+    options: &ParseOptions,
+) -> Result<PolicySet, Vec<RawParseError>> {
+    let limit = options.max_depth;
     // Strip a leading UTF-8 BOM (U+FEFF) if present — editors and Windows
     // tools sometimes prepend it, and the grammar doesn't expect it.
     let src = src.strip_prefix('\u{FEFF}').unwrap_or(src);
     // Shared `.dw` source for scope entity-UID `Loc`s (so a scope error
     // points at the offending token, not the whole rule).
     let dw_src: std::sync::Arc<str> = std::sync::Arc::from(src);
-    let mut pairs = match DogwoodParser::parse(Rule::policies, src) {
+    let mut pairs = match parse_with(Rule::policies, src, options) {
         Ok(p) => p,
         Err(e) => {
             // Convert the pest syntax error into a single RawParseError
@@ -476,11 +746,11 @@ pub fn parse_policies(src: &str) -> Result<PolicySet, Vec<RawParseError>> {
 
     for pair in policies_pair.into_inner() {
         match pair.as_rule() {
-            Rule::policy => match build_policy(pair, &dw_src) {
+            Rule::policy => match build_policy(pair, &dw_src, limit) {
                 Ok(p) => policies.push(p),
                 Err(e) => errors.push(e),
             },
-            Rule::def_decl => match build_def_decl(pair) {
+            Rule::def_decl => match build_def_decl(pair, limit) {
                 Ok(d) => defs.push(d),
                 Err(e) => errors.push(e),
             },
@@ -496,8 +766,64 @@ pub fn parse_policies(src: &str) -> Result<PolicySet, Vec<RawParseError>> {
     }
 }
 
+/// The recursion of the generated policy parser over `source`: the maximum,
+/// over every root-to-leaf path of its pair tree, of the pairs on the path
+/// that re-enter the expression language. A test helper, for checking that
+/// [`nesting_estimate`](limits::nesting_estimate) over-approximates it; parsed with no
+/// depth limit.
+///
+/// The counted rules, read from `grammar.pest`:
+///
+/// - `expr`, the only rule that appears nested inside itself. Every nested
+///   `expr` is entered through a bracket the scan counts (`paren_expr`,
+///   `list`, `record`'s `rec_init`, `access_call`, `access_index`, a scope's
+///   `variable_def` inside the head's parentheses, a condition's braces) or
+///   through an `if` (`if_expr`, `rec_init_if`). `add`, `member`, and
+///   `primary` re-enter themselves only through `expr`.
+/// - `extension_marker`, one level for the block it opens, as the builder
+///   counts it. Its body is the temporal grammar's, a separate parse that
+///   [`reentries`](crate::extension::temporal::parse::reentries) measures.
+/// - A `def cedar` body, parsed separately with `expr_entry`, under its
+///   definition's braces as the builder parses it; its root `expr` counts.
+///
+/// `block_inner` recurses on nested braces, but it is atomic and has no inner
+/// pairs to count; the scan counts its braces regardless.
+#[cfg(test)]
+pub(crate) fn policy_reentries(source: &str) -> Result<usize, String> {
+    let unlimited = ParseOptions::default().max_depth(usize::MAX);
+    let source = source.strip_prefix('\u{FEFF}').unwrap_or(source);
+    let pairs = parse_with(Rule::policies, source, &unlimited).map_err(|e| e.to_string())?;
+    let mut deepest = 0;
+    let mut stack: Vec<(Pair<'_>, usize)> = pairs.map(|pair| (pair, 0)).collect();
+    while let Some((pair, above)) = stack.pop() {
+        let rule = pair.as_rule();
+        let here = above + usize::from(matches!(rule, Rule::expr | Rule::extension_marker));
+        deepest = deepest.max(here);
+        if rule == Rule::def_decl {
+            let cedar = pair.clone().into_inner().any(|child| {
+                child.as_rule() == Rule::def_kind
+                    && child
+                        .clone()
+                        .into_inner()
+                        .any(|kind| kind.as_rule() == Rule::kw_def_cedar)
+            });
+            let body = pair
+                .clone()
+                .into_inner()
+                .find(|child| child.as_rule() == Rule::block_inner);
+            if let (true, Some(body)) = (cedar, body) {
+                let body = parse_with(Rule::expr_entry, body.as_str(), &unlimited)
+                    .map_err(|e| e.to_string())?;
+                stack.extend(body.map(|pair| (pair, here)));
+            }
+        }
+        stack.extend(pair.into_inner().map(|child| (child, here)));
+    }
+    Ok(deepest)
+}
+
 /// `def_decl = "def" def_kind ident "(" param_list? ")" "{" body "}" ";"`.
-fn build_def_decl(pair: Pair<'_>) -> Result<MacroDef, RawParseError> {
+fn build_def_decl(pair: Pair<'_>, limit: usize) -> Result<MacroDef, RawParseError> {
     let span = span_of(&pair);
     let mut kind: Option<DefKind> = None;
     let mut name = String::new();
@@ -544,10 +870,10 @@ fn build_def_decl(pair: Pair<'_>) -> Result<MacroDef, RawParseError> {
         body_text.ok_or_else(|| err("macro definition missing a body", span))?;
     let body = match kind {
         DefKind::Cedar => {
-            let expr = parse_cedar_macro_body(&body_src, body_span)?;
+            let expr = parse_cedar_macro_body(&body_src, body_span, limit)?;
             MacroBody::Cedar(expr)
         }
-        DefKind::Temporal => temporal::parse_macro_body(&body_src)
+        DefKind::Temporal => temporal::parse_macro_body(&body_src, limit)
             .map_err(|e| err(format!("in `def temporal` body: {e}"), body_span))?,
     };
     Ok(MacroDef {
@@ -567,8 +893,9 @@ enum DefKind {
 /// Parse a `def cedar` body as a cedar expression. The body lives between
 /// the macro definition's `{` and `}` — we run the standard `expr_entry`
 /// rule and rebase any error span back into the original source.
-fn parse_cedar_macro_body(src: &str, body_span: Span) -> Result<Expr, RawParseError> {
-    let mut pairs = DogwoodParser::parse(Rule::expr_entry, src).map_err(|e| {
+fn parse_cedar_macro_body(src: &str, body_span: Span, limit: usize) -> Result<Expr, RawParseError> {
+    let options = ParseOptions::default().max_depth(limit);
+    let mut pairs = parse_with(Rule::expr_entry, src, &options).map_err(|e| {
         let (start, end) = match e.location {
             pest::error::InputLocation::Pos(p) => (p, (p + 1).min(src.len().max(p + 1))),
             pest::error::InputLocation::Span((s, e)) => (s, e),
@@ -583,10 +910,19 @@ fn parse_cedar_macro_body(src: &str, body_span: Span) -> Result<Expr, RawParseEr
         .into_inner()
         .find(|p| p.as_rule() == Rule::expr)
         .ok_or_else(|| err("empty `def cedar` body", body_span))?;
-    build_expr(expr_pair)
+    // `src` is the body alone, so an error's span is relative to the body;
+    // rebase it into the file, as the pest error above is.
+    build_root(expr_pair, limit).map_err(|e| RawParseError {
+        message: e.message,
+        span: Span::new(body_span.start + e.span.start, body_span.start + e.span.end),
+    })
 }
 
-fn build_policy(pair: Pair<'_>, dw_src: &std::sync::Arc<str>) -> Result<Policy, RawParseError> {
+fn build_policy(
+    pair: Pair<'_>,
+    dw_src: &std::sync::Arc<str>,
+    limit: usize,
+) -> Result<Policy, RawParseError> {
     let span = span_of(&pair);
     let mut annotations = Vec::new();
     let mut effect: Option<Effect> = None;
@@ -610,9 +946,9 @@ fn build_policy(pair: Pair<'_>, dw_src: &std::sync::Arc<str>) -> Result<Policy, 
                 });
             }
             Rule::scope => {
-                scope = Some(build_scope(child, dw_src)?);
+                scope = Some(build_scope(child, dw_src, limit)?);
             }
-            Rule::cond => conditions.push(build_cond(child)?),
+            Rule::cond => conditions.push(build_cond(child, limit)?),
             _ => {}
         }
     }
@@ -671,7 +1007,11 @@ enum ScopeTail {
 ///
 /// `dw_src` is the shared `.dw` source, used to stamp each scope entity
 /// UID's `Loc` so scope-error diagnostics point at the token.
-fn build_scope(pair: Pair<'_>, dw_src: &std::sync::Arc<str>) -> Result<Scope, RawParseError> {
+fn build_scope(
+    pair: Pair<'_>,
+    dw_src: &std::sync::Arc<str>,
+    limit: usize,
+) -> Result<Scope, RawParseError> {
     let span = span_of(&pair);
     let mut principal = PrincipalConstraint::any();
     let mut action = ActionConstraint::any();
@@ -685,7 +1025,7 @@ fn build_scope(pair: Pair<'_>, dw_src: &std::sync::Arc<str>) -> Result<Scope, Ra
         .filter(|p| p.as_rule() == Rule::variable_def)
     {
         let vd_span = span_of(&vd);
-        let (role, tail) = build_variable_def(vd)?;
+        let (role, tail) = build_variable_def(vd, limit)?;
         match role.as_str() {
             "principal" => {
                 if seen_principal {
@@ -731,7 +1071,7 @@ fn build_scope(pair: Pair<'_>, dw_src: &std::sync::Arc<str>) -> Result<Scope, Ra
 }
 
 /// Parse one `variable_def` into its role name and role-neutral tail.
-fn build_variable_def(pair: Pair<'_>) -> Result<(String, ScopeTail), RawParseError> {
+fn build_variable_def(pair: Pair<'_>, limit: usize) -> Result<(String, ScopeTail), RawParseError> {
     let span = span_of(&pair);
     let mut children = pair.into_inner().peekable();
 
@@ -768,7 +1108,7 @@ fn build_variable_def(pair: Pair<'_>) -> Result<(String, ScopeTail), RawParseErr
                     .filter(|p| p.as_rule() == Rule::expr)
                     .ok_or_else(|| err("scope operator is missing its operand", span))?;
                 let _guard = ScopeContextGuard::enter();
-                let result = build_expr(expr);
+                let result = build_root(expr, limit);
                 drop(_guard);
                 op = Some((op_str, result?));
             }
@@ -987,7 +1327,7 @@ fn expr_to_action_uid_list(
     }
 }
 
-fn build_cond(pair: Pair<'_>) -> Result<Cond, RawParseError> {
+fn build_cond(pair: Pair<'_>, limit: usize) -> Result<Cond, RawParseError> {
     let span = span_of(&pair);
     let mut keyword: Option<CondKeyword> = None;
     let mut body: Option<Expr> = None;
@@ -1010,10 +1350,10 @@ fn build_cond(pair: Pair<'_>) -> Result<Cond, RawParseError> {
             }
             // The tagged form `when temporal { … }` — the marker sits
             // directly under `cond`; dispatch it to the dialect parser.
-            Rule::extension_marker => body = Some(build_extension_marker(child)?),
+            Rule::extension_marker => body = Some(build_root(child, limit)?),
             // The untagged form `when { <expr> }` — a structured Cedar
             // expression (which may itself contain markers as primaries).
-            Rule::expr => body = Some(build_expr(child)?),
+            Rule::expr => body = Some(build_root(child, limit)?),
             _ => {}
         }
     }
@@ -1032,7 +1372,10 @@ fn build_cond(pair: Pair<'_>) -> Result<Cond, RawParseError> {
 /// (`temporal { … }`): dispatch the braced body to the temporal
 /// sub-parser. (`guardrails { … }` is not an extension marker — it is
 /// transparent sugar for a bare Cedar clause, handled in [`build_cond`].)
-fn build_extension_marker(pair: Pair<'_>) -> Result<Expr, RawParseError> {
+///
+/// The marker is one node, and the temporal tree's root sits one level
+/// below it; the root measure counts both.
+fn build_extension_marker(pair: Pair<'_>, limit: usize) -> Result<Expr, RawParseError> {
     let span = span_of(&pair);
     let mut dialect: Option<Dialect> = None;
     let mut block: Option<(String, Span)> = None;
@@ -1046,9 +1389,11 @@ fn build_extension_marker(pair: Pair<'_>) -> Result<Expr, RawParseError> {
     let (inner, inner_span) =
         block.ok_or_else(|| err("extension marker is missing a body", span))?;
     let extension = match dialect {
-        Some(Dialect::Temporal) => crate::extension::temporal::Temporal::parse(&inner, inner_span)
-            .map(Extension::Temporal)
-            .map_err(|msg| err(msg, inner_span))?,
+        Some(Dialect::Temporal) => {
+            crate::extension::temporal::Temporal::parse_at(&inner, inner_span, limit)
+                .map(Extension::Temporal)
+                .map_err(|msg| err(msg, inner_span))?
+        }
         None => return Err(err("unrecognized extension marker", span)),
     };
     Ok(Expr::new(ExprKind::Extension(extension), span))
@@ -1083,22 +1428,26 @@ fn chain_span(pair: &Pair<'_>) -> Span {
 // `cedarify::to_ast` later lowers this to loc-bearing Cedar `ast::Expr`.
 
 /// Build an [`Expr`] from an `expr` pair.
-fn build_expr(pair: Pair<'_>) -> Result<Expr, RawParseError> {
+///
+/// The builders do not count depth: chains fold through loops, and the
+/// finished tree is measured once at [`build_root`], which `limit` reaches
+/// only for the temporal sub-parse inside an extension marker.
+fn build_expr(pair: Pair<'_>, limit: usize) -> Result<Expr, RawParseError> {
     let inner = pair.into_inner().next().expect("expr has one alternative");
     match inner.as_rule() {
-        Rule::if_expr => build_if(inner),
-        Rule::or => build_or(inner),
+        Rule::if_expr => build_if(inner, limit),
+        Rule::or => build_or(inner, limit),
         other => unreachable!("unexpected expr child: {other:?}"),
     }
 }
 
 /// `if_expr := if expr then expr else expr`.
-fn build_if(pair: Pair<'_>) -> Result<Expr, RawParseError> {
+fn build_if(pair: Pair<'_>, limit: usize) -> Result<Expr, RawParseError> {
     let span = span_of(&pair);
     let mut exprs = pair.into_inner().filter(|p| p.as_rule() == Rule::expr);
-    let cond = build_expr(exprs.next().expect("if condition"))?;
-    let then_expr = build_expr(exprs.next().expect("then branch"))?;
-    let else_expr = build_expr(exprs.next().expect("else branch"))?;
+    let cond = build_expr(exprs.next().expect("if condition"), limit)?;
+    let then_expr = build_expr(exprs.next().expect("then branch"), limit)?;
+    let else_expr = build_expr(exprs.next().expect("else branch"), limit)?;
     Ok(Expr::new(
         ExprKind::IfThenElse {
             cond: Box::new(cond),
@@ -1110,12 +1459,12 @@ fn build_if(pair: Pair<'_>) -> Result<Expr, RawParseError> {
 }
 
 /// `or := and { "||" and }` — left-associative `||`.
-fn build_or(pair: Pair<'_>) -> Result<Expr, RawParseError> {
+fn build_or(pair: Pair<'_>, limit: usize) -> Result<Expr, RawParseError> {
     let span = chain_span(&pair);
     let mut iter = pair.into_inner().filter(|p| p.as_rule() == Rule::and);
-    let mut acc = build_and(iter.next().expect("or has an and"))?;
+    let mut acc = build_and(iter.next().expect("or has an and"), limit)?;
     for next in iter {
-        let right = build_and(next)?;
+        let right = build_and(next, limit)?;
         acc = Expr::new(
             ExprKind::BinaryApp {
                 op: BinOp::Or,
@@ -1129,12 +1478,12 @@ fn build_or(pair: Pair<'_>) -> Result<Expr, RawParseError> {
 }
 
 /// `and := rel { "&&" rel }` — left-associative `&&`.
-fn build_and(pair: Pair<'_>) -> Result<Expr, RawParseError> {
+fn build_and(pair: Pair<'_>, limit: usize) -> Result<Expr, RawParseError> {
     let span = chain_span(&pair);
     let mut iter = pair.into_inner().filter(|p| p.as_rule() == Rule::rel);
-    let mut acc = build_rel(iter.next().expect("and has a rel"))?;
+    let mut acc = build_rel(iter.next().expect("and has a rel"), limit)?;
     for next in iter {
-        let right = build_rel(next)?;
+        let right = build_rel(next, limit)?;
         acc = Expr::new(
             ExprKind::BinaryApp {
                 op: BinOp::And,
@@ -1148,38 +1497,39 @@ fn build_and(pair: Pair<'_>) -> Result<Expr, RawParseError> {
 }
 
 /// `rel := add ( rel_op_tail | has_tail | like_tail | is_tail )?`.
-fn build_rel(pair: Pair<'_>) -> Result<Expr, RawParseError> {
+fn build_rel(pair: Pair<'_>, limit: usize) -> Result<Expr, RawParseError> {
     let span = span_of(&pair);
     let rel_chain_span = chain_span(&pair);
     let mut iter = pair.into_inner();
-    let lhs = build_add(iter.next().expect("rel has an add"))?;
-    match iter.next() {
-        None => Ok(lhs),
-        Some(tail) => match tail.as_rule() {
-            Rule::rel_op_tail => build_rel_op_tail(lhs, tail, rel_chain_span),
-            Rule::has_tail => Ok(Expr::new(
-                ExprKind::HasAttr {
+    let add = iter.next().expect("rel has an add");
+    let Some(tail) = iter.next() else {
+        return build_add(add, limit);
+    };
+    let lhs = build_add(add, limit)?;
+    match tail.as_rule() {
+        Rule::rel_op_tail => build_rel_op_tail(lhs, tail, rel_chain_span, limit),
+        Rule::has_tail => Ok(Expr::new(
+            ExprKind::HasAttr {
+                expr: Box::new(lhs),
+                attrs: extract_has_path(tail)?,
+            },
+            span,
+        )),
+        Rule::like_tail => {
+            let add = tail
+                .into_inner()
+                .find(|p| p.as_rule() == Rule::add)
+                .expect("like has an add");
+            Ok(Expr::new(
+                ExprKind::Like {
                     expr: Box::new(lhs),
-                    attrs: extract_has_path(tail)?,
+                    pattern: extract_pattern(add, span)?,
                 },
                 span,
-            )),
-            Rule::like_tail => {
-                let add = tail
-                    .into_inner()
-                    .find(|p| p.as_rule() == Rule::add)
-                    .expect("like has an add");
-                Ok(Expr::new(
-                    ExprKind::Like {
-                        expr: Box::new(lhs),
-                        pattern: extract_pattern(add, span)?,
-                    },
-                    span,
-                ))
-            }
-            Rule::is_tail => build_is_tail(lhs, tail, span),
-            other => unreachable!("unexpected rel tail: {other:?}"),
-        },
+            ))
+        }
+        Rule::is_tail => build_is_tail(lhs, tail, span, limit),
+        other => unreachable!("unexpected rel tail: {other:?}"),
     }
 }
 
@@ -1189,10 +1539,18 @@ fn build_rel(pair: Pair<'_>) -> Result<Expr, RawParseError> {
 /// The grammar accepts a chain `a == b == c`, but Cedar rejects one, as we
 /// do: folding it would silently read `(a == b) == c`, which for Bool
 /// operands inverts `a == false == false`. A chain must be parenthesized.
-fn build_rel_op_tail(lhs: Expr, pair: Pair<'_>, span: Span) -> Result<Expr, RawParseError> {
+fn build_rel_op_tail(
+    lhs: Expr,
+    pair: Pair<'_>,
+    span: Span,
+    limit: usize,
+) -> Result<Expr, RawParseError> {
     let mut iter = pair.into_inner();
     let op = parse_rel_op(&iter.next().expect("rel_op_tail has a rel_op"))?;
-    let right = build_add(iter.next().expect("rel_op is followed by an add"))?;
+    let right = build_add(
+        iter.next().expect("rel_op is followed by an add"),
+        limit,
+    )?;
     if iter.next().is_some() {
         return Err(err(
             "multiple relational operators (>, ==, in, etc.) must be used with parentheses to make ordering explicit",
@@ -1230,12 +1588,17 @@ fn parse_rel_op(pair: &Pair<'_>) -> Result<BinOp, RawParseError> {
 
 /// `is_tail := is add ( in add )?`. The first `add` is an entity *type*
 /// (not a value expression); the optional second is a value.
-fn build_is_tail(lhs: Expr, pair: Pair<'_>, span: Span) -> Result<Expr, RawParseError> {
+fn build_is_tail(
+    lhs: Expr,
+    pair: Pair<'_>,
+    span: Span,
+    limit: usize,
+) -> Result<Expr, RawParseError> {
     let mut adds = pair.into_inner().filter(|p| p.as_rule() == Rule::add);
     let type_add = adds.next().expect("is has a type operand");
     let entity_type = extract_entity_type(type_add, span)?;
     let in_expr = match adds.next() {
-        Some(add) => Some(Box::new(build_add(add)?)),
+        Some(add) => Some(Box::new(build_add(add, limit)?)),
         None => None,
     };
     Ok(Expr::new(
@@ -1249,10 +1612,10 @@ fn build_is_tail(lhs: Expr, pair: Pair<'_>, span: Span) -> Result<Expr, RawParse
 }
 
 /// `add := mult { add_op mult }` — left-associative `+` / `-`.
-fn build_add(pair: Pair<'_>) -> Result<Expr, RawParseError> {
+fn build_add(pair: Pair<'_>, limit: usize) -> Result<Expr, RawParseError> {
     let span = chain_span(&pair);
     let mut iter = pair.into_inner().peekable();
-    let mut acc = build_mult(iter.next().expect("add has a mult"))?;
+    let mut acc = build_mult(iter.next().expect("add has a mult"), limit)?;
     while let Some(op_pair) = iter.next() {
         debug_assert_eq!(op_pair.as_rule(), Rule::add_op);
         let op = match op_pair.as_str().trim() {
@@ -1260,7 +1623,7 @@ fn build_add(pair: Pair<'_>) -> Result<Expr, RawParseError> {
             "-" => BinOp::Sub,
             other => unreachable!("unexpected add_op `{other}`"),
         };
-        let right = build_mult(iter.next().expect("add_op followed by mult"))?;
+        let right = build_mult(iter.next().expect("add_op followed by mult"), limit)?;
         acc = Expr::new(
             ExprKind::BinaryApp {
                 op,
@@ -1275,10 +1638,10 @@ fn build_add(pair: Pair<'_>) -> Result<Expr, RawParseError> {
 
 /// `mult := unary { mult_op unary }`. Cedar supports only `*`; `/` and
 /// `%` are rejected (they parse but Cedar has no such operators).
-fn build_mult(pair: Pair<'_>) -> Result<Expr, RawParseError> {
+fn build_mult(pair: Pair<'_>, limit: usize) -> Result<Expr, RawParseError> {
     let span = chain_span(&pair);
     let mut iter = pair.into_inner().peekable();
-    let mut acc = build_unary(iter.next().expect("mult has a unary"))?;
+    let mut acc = build_unary(iter.next().expect("mult has a unary"), limit)?;
     while let Some(op_pair) = iter.next() {
         debug_assert_eq!(op_pair.as_rule(), Rule::mult_op);
         let op = match op_pair.as_str().trim() {
@@ -1290,7 +1653,7 @@ fn build_mult(pair: Pair<'_>) -> Result<Expr, RawParseError> {
                 ));
             }
         };
-        let right = build_unary(iter.next().expect("mult_op followed by unary"))?;
+        let right = build_unary(iter.next().expect("mult_op followed by unary"), limit)?;
         acc = Expr::new(
             ExprKind::BinaryApp {
                 op,
@@ -1308,7 +1671,7 @@ fn build_mult(pair: Pair<'_>) -> Result<Expr, RawParseError> {
 /// As in Cedar, a run of `-` directly before a number token folds its
 /// innermost `-` into the literal (`-5` is `Long(-5)`, `--5` is
 /// `Neg(Long(-5))`), and every other `!` or `-` is a `Not` or `Neg` node.
-fn build_unary(pair: Pair<'_>) -> Result<Expr, RawParseError> {
+fn build_unary(pair: Pair<'_>, limit: usize) -> Result<Expr, RawParseError> {
     // The unary node's span is the whole `unary` production, trivia-trimmed —
     // paren-inclusive on the operand (`!(x)` ends at the `)`), matching Cedar.
     let unary_span = chain_span(&pair);
@@ -1324,7 +1687,7 @@ fn build_unary(pair: Pair<'_>) -> Result<Expr, RawParseError> {
     }
     let member_pair = member_pair.expect("unary has a member");
     let Some((op, mut count)) = prefix else {
-        return build_member(member_pair);
+        return build_member(member_pair, limit);
     };
 
     // Only a *directly* negated number token folds; a parenthesized `-(5)`
@@ -1346,12 +1709,12 @@ fn build_unary(pair: Pair<'_>) -> Result<Expr, RawParseError> {
         },
         _ => None,
     };
+    if folded.is_some() {
+        count -= 1;
+    }
     let mut expr = match folded {
-        Some(literal) => {
-            count -= 1;
-            literal
-        }
-        None => build_member(member_pair)?,
+        Some(literal) => literal,
+        None => build_member(member_pair, limit)?,
     };
     for _ in 0..count {
         expr = Expr::new(
@@ -1369,7 +1732,7 @@ fn build_unary(pair: Pair<'_>) -> Result<Expr, RawParseError> {
 /// access, function calls (`decimal(x)`), and method calls
 /// (`xs.contains(y)`) onto the base. Each `mem_access` wraps one of
 /// `access_field` / `access_call` / `access_index`.
-fn build_member(pair: Pair<'_>) -> Result<Expr, RawParseError> {
+fn build_member(pair: Pair<'_>, limit: usize) -> Result<Expr, RawParseError> {
     // Cedar attributes every `GetAttr` in an access chain (`x.a.b.c`,
     // `x["k"]`) with the span of the *whole* member expression — not an
     // incremental sub-span — so we match that for span-compatibility with
@@ -1398,9 +1761,9 @@ fn build_member(pair: Pair<'_>) -> Result<Expr, RawParseError> {
         if primary_inner_is_name && iter.peek().map(|p| p.as_rule()) == Some(Rule::access_call) {
             let name = primary.into_inner().next().expect("primary wraps a name");
             let call = iter.next().expect("peeked call");
-            build_function_call(&name, call)?
+            build_function_call(&name, call, limit)?
         } else {
-            build_primary(primary)?
+            build_primary(primary, limit)?
         };
 
     while let Some(acc) = iter.next() {
@@ -1410,7 +1773,7 @@ fn build_member(pair: Pair<'_>) -> Result<Expr, RawParseError> {
                 // `.method(args)` when a call follows the field access.
                 if iter.peek().map(|p| p.as_rule()) == Some(Rule::access_call) {
                     let call = iter.next().expect("peeked call");
-                    base = build_method_call(base, &field, call, member_span.start)?;
+                    base = build_method_call(base, &field, call, member_span.start, limit)?;
                 } else {
                     base = Expr::new(
                         ExprKind::GetAttr {
@@ -1497,12 +1860,16 @@ fn string_literal_of(expr: &Pair<'_>) -> Option<Result<String, RawParseError>> {
 /// an unresolved macro call. Built-in names become a surface [`UnOp`] / [`BinOp`]
 /// application; any other name is left as [`Expr::Call`] for the macro expansion
 /// pass to resolve (it errors out if the name isn't a declared macro either).
-fn build_function_call(name_pair: &Pair<'_>, call: Pair<'_>) -> Result<Expr, RawParseError> {
+fn build_function_call(
+    name_pair: &Pair<'_>,
+    call: Pair<'_>,
+    limit: usize,
+) -> Result<Expr, RawParseError> {
     // Span the whole application (`name(...)`), from the function name
     // through the closing paren of the call.
     let span = Span::new(span_of(name_pair).start, span_of(&call).end);
     let fname = name_path(name_pair).join("::");
-    let mut args = call_args(call)?;
+    let mut args = call_args(call, limit)?;
     let op = match fname.as_str() {
         "decimal" => Some(UnOp::Decimal),
         "datetime" => Some(UnOp::Datetime),
@@ -1534,12 +1901,13 @@ fn build_method_call(
     method: &str,
     call: Pair<'_>,
     member_start: usize,
+    limit: usize,
 ) -> Result<Expr, RawParseError> {
     // The node spans from the enclosing member's start (so a parenthesized
     // receiver's `(` is included, as Cedar does) through the call's closing
     // paren.
     let node_span = Span::new(member_start, span_of(&call).end);
-    let mut args = call_args(call)?;
+    let mut args = call_args(call, limit)?;
 
     // Zero-argument (receiver-only) methods → unary ops.
     let unary = match method {
@@ -1625,20 +1993,20 @@ fn build_method_call(
 }
 
 /// Build the argument list of an `access_call`.
-fn call_args(call: Pair<'_>) -> Result<Vec<Expr>, RawParseError> {
+fn call_args(call: Pair<'_>, limit: usize) -> Result<Vec<Expr>, RawParseError> {
     call.into_inner()
         .filter(|p| p.as_rule() == Rule::expr)
-        .map(build_expr)
+        .map(|arg| build_expr(arg, limit))
         .collect()
 }
 
 /// `primary := extension_marker | literal | slot | ref_ | name |
 /// paren_expr | list | record`.
-fn build_primary(pair: Pair<'_>) -> Result<Expr, RawParseError> {
+fn build_primary(pair: Pair<'_>, limit: usize) -> Result<Expr, RawParseError> {
     let span = span_of(&pair);
     let inner = pair.into_inner().next().expect("primary has a child");
     match inner.as_rule() {
-        Rule::extension_marker => build_extension_marker(inner),
+        Rule::extension_marker => build_extension_marker(inner, limit),
         Rule::literal => Ok(Expr::new(ExprKind::Lit(build_literal(&inner)?), span)),
         Rule::slot => build_slot(&inner),
         Rule::ref_ => Ok(Expr::new(ExprKind::Lit(build_ref(inner)?), span)),
@@ -1648,17 +2016,17 @@ fn build_primary(pair: Pair<'_>) -> Result<Expr, RawParseError> {
                 .into_inner()
                 .find(|p| p.as_rule() == Rule::expr)
                 .expect("paren has an expr");
-            build_expr(e)
+            build_expr(e, limit)
         }
         Rule::list => {
             let elems = inner
                 .into_inner()
                 .filter(|p| p.as_rule() == Rule::expr)
-                .map(build_expr)
+                .map(|elem| build_expr(elem, limit))
                 .collect::<Result<Vec<_>, _>>()?;
             Ok(Expr::new(ExprKind::Set(elems), span))
         }
-        Rule::record => build_record(inner, span),
+        Rule::record => build_record(inner, span, limit),
         other => unreachable!("unexpected primary child: {other:?}"),
     }
 }
@@ -1784,7 +2152,7 @@ fn build_ref(pair: Pair<'_>) -> Result<cedar_ast::Literal, RawParseError> {
 }
 
 /// `record := "{" [ rec_init { "," rec_init } ] "}"`.
-fn build_record(pair: Pair<'_>, span: Span) -> Result<Expr, RawParseError> {
+fn build_record(pair: Pair<'_>, span: Span, limit: usize) -> Result<Expr, RawParseError> {
     let mut map = std::collections::BTreeMap::new();
     for init in pair.into_inner().filter(|p| p.as_rule() == Rule::rec_init) {
         let inner = init.into_inner().next().expect("rec_init has a child");
@@ -1794,13 +2162,16 @@ fn build_record(pair: Pair<'_>, span: Span) -> Result<Expr, RawParseError> {
                     .into_inner()
                     .find(|p| p.as_rule() == Rule::expr)
                     .expect("rec_init_if has a value");
-                ("if".to_string(), build_expr(value)?)
+                ("if".to_string(), build_expr(value, limit)?)
             }
             Rule::rec_init_expr => {
                 let mut exprs = inner.into_inner().filter(|p| p.as_rule() == Rule::expr);
                 let key_pair = exprs.next().expect("record key");
                 let value_pair = exprs.next().expect("record value");
-                (record_key(&key_pair, span)?, build_expr(value_pair)?)
+                (
+                    record_key(&key_pair, span)?,
+                    build_expr(value_pair, limit)?,
+                )
             }
             other => unreachable!("unexpected rec_init child: {other:?}"),
         };
@@ -2509,7 +2880,7 @@ mod negated_2_pow_63 {
             );
             let mut set = super::parse_policies(&src).expect("parses");
             let body = set.policies.remove(0).conditions.remove(0).body;
-            let ExprKind::BinaryApp { left, .. } = body.kind else {
+            let ExprKind::BinaryApp { left, .. } = &body.kind else {
                 panic!("expected `== 0`, got {body:?}");
             };
             let is_min = matches!(left.kind, ExprKind::Lit(cedar_ast::Literal::Long(i64::MIN)));
@@ -2600,5 +2971,23 @@ mod block_comments {
         // comment into code.
         let src = r#"forbid (principal, action, resource) when temporal { formerly within 1h A::Action::"X"::request{} // note };"#;
         assert!(shape(src).is_err(), "the `}}` is part of the comment");
+    }
+}
+#[cfg(test)]
+mod def_cedar_body_spans {
+    /// An error the builder raises inside a `def cedar` body is located in the
+    /// body, not counted from the start of the file.
+    #[test]
+    fn a_builder_error_in_a_def_cedar_body_points_at_the_body() {
+        let src = "permit (principal, action, resource);\ndef cedar m(?x) { foo };";
+        let errs = super::parse_policies(src).expect_err("`foo` is not a variable");
+        let foo = src.find("foo").expect("foo");
+        assert_eq!(errs.len(), 1, "{errs:?}");
+        assert_eq!(
+            (errs[0].span.start, errs[0].span.end),
+            (foo, foo + 3),
+            "{errs:?}"
+        );
+        assert!(errs[0].message.contains("not a valid variable"), "{errs:?}");
     }
 }

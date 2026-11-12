@@ -30,8 +30,21 @@ impl Temporal {
     /// `body_span` locates that body in the `.dw` source — its start is
     /// the base the condition's (block-relative) inner spans are measured
     /// from, so a consumer rebases an inner span by adding `span.start`.
+    ///
+    /// Depths are bounded by [`DEFAULT_MAX_DEPTH`](crate::DEFAULT_MAX_DEPTH).
     pub fn parse(body: &str, body_span: Span) -> Result<Temporal, String> {
-        let condition = parse::parse_condition(body)?;
+        Self::parse_at(body, body_span, crate::DEFAULT_MAX_DEPTH)
+    }
+
+    /// [`Temporal::parse`] for a block whose condition sits at `depth` in
+    /// the enclosing expression tree, so that the depth limit `depth`
+    /// carries counts the levels of both.
+    pub(crate) fn parse_at(
+        body: &str,
+        body_span: Span,
+        max_depth: usize,
+    ) -> Result<Temporal, String> {
+        let condition = parse::parse_condition_at(body, max_depth)?;
         // Static binding checks: aggregation `for`-domain binding and
         // `exists` range-restriction safety (§7). See `check`.
         check::check_condition(&condition, &std::collections::BTreeSet::new())?;
@@ -55,6 +68,7 @@ impl Temporal {
 /// full temporal condition; the grammar's `temporal_macro_body_entry`
 /// covers both. Returns the body tagged with which it parsed under so the
 /// macro expander knows what call-site slot the macro is callable in.
-pub fn parse_macro_body(body: &str) -> Result<crate::ast::MacroBody, String> {
-    parse::parse_macro_body(body)
+/// Every depth is bounded by `max_depth`.
+pub fn parse_macro_body(body: &str, max_depth: usize) -> Result<crate::ast::MacroBody, String> {
+    parse::parse_macro_body(body, max_depth)
 }

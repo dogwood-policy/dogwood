@@ -63,9 +63,39 @@ impl ParsedPolicySet {
     /// concerns, because they need the action schema.
     ///
     /// Returns [`Error`] on a syntax / macro failure.
+    ///
+    /// Parses at the default [`ParseOptions`](crate::ParseOptions); see
+    /// [`parse_with`](ParsedPolicySet::parse_with).
     pub fn parse(source: &str, service_schema: &ServiceSchema) -> Result<ParsedPolicySet, Error> {
+        Self::parse_with(source, service_schema, &crate::ParseOptions::default())
+    }
+
+    /// [`parse`](ParsedPolicySet::parse) under `options`.
+    ///
+    /// [`ParseOptions::max_nodes`](crate::ParseOptions::max_nodes) bounds the
+    /// nodes macro expansion may create for this whole set (exceeding it is
+    /// [`Error::Macro`]), and, because the set remembers its options, the
+    /// nodes every later lowering of it ([`lower`](ParsedPolicySet::lower),
+    /// [`lower_with_distincter`](ParsedPolicySet::lower_with_distincter))
+    /// may create for this set's temporal leaves (exceeding it
+    /// is [`Error::Cedarify`]). A caller who raises it owns the memory and
+    /// time the larger trees need.
+    /// [`ParseOptions::max_depth`](crate::ParseOptions::max_depth) bounds the
+    /// source's nesting as the generated parsers see it, the measured depth
+    /// of every finished tree, and the measured depth of every macro
+    /// expansion; exceeding it is [`Error::Parse`] or
+    /// [`Error::Macro`]. At the default,
+    /// [`DEFAULT_MAX_DEPTH`](crate::DEFAULT_MAX_DEPTH), that error is
+    /// guaranteed to come before a stack overflow; a caller who raises the
+    /// limit owns the stack that parsing, lowering, and validating the
+    /// deeper trees need.
+    pub fn parse_with(
+        source: &str,
+        service_schema: &ServiceSchema,
+        options: &crate::ParseOptions,
+    ) -> Result<ParsedPolicySet, Error> {
         Ok(ParsedPolicySet {
-            parsed: api::parse(source, service_schema)?,
+            parsed: api::parse(source, service_schema, options)?,
         })
     }
 
@@ -447,7 +477,23 @@ impl LoweredPolicySet {
         service_schema: &ServiceSchema,
         policy_schema: &PolicySchema,
     ) -> Result<LoweredPolicySet, Error> {
-        ParsedPolicySet::parse(source, service_schema)?.lower(policy_schema)
+        Self::from_str_with(
+            source,
+            service_schema,
+            policy_schema,
+            &crate::ParseOptions::default(),
+        )
+    }
+
+    /// [`from_str`](LoweredPolicySet::from_str) parsing under `options`; see
+    /// [`ParsedPolicySet::parse_with`].
+    pub fn from_str_with(
+        source: &str,
+        service_schema: &ServiceSchema,
+        policy_schema: &PolicySchema,
+        options: &crate::ParseOptions,
+    ) -> Result<LoweredPolicySet, Error> {
+        ParsedPolicySet::parse_with(source, service_schema, options)?.lower(policy_schema)
     }
 
     /// Borrow the lowered Cedar policies — a real `cedar_policy::PolicySet`.

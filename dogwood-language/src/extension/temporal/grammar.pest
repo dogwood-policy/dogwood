@@ -18,8 +18,35 @@ ident   = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
 integer = @{ "-"? ~ ASCII_DIGIT+ }
 string  = @{ "\"" ~ ( "\\" ~ ANY | (!"\"" ~ !"\\" ~ ANY) )* ~ "\"" }
 
-kw_true  = @{ "true"  ~ !(ASCII_ALPHANUMERIC | "_") }
-kw_false = @{ "false" ~ !(ASCII_ALPHANUMERIC | "_") }
+// A character that may continue an identifier. A keyword must be followed
+// by a word boundary, so it cannot swallow the prefix of an identifier
+// (`counter`, `former`, `forward`), and run-together keywords (`countfor`,
+// `formerlywithin`) are a syntax error rather than a parse that the
+// pre-parse nesting scan, which counts only whole words, cannot see.
+ident_char = _{ ASCII_ALPHANUMERIC | "_" }
+
+kw_true  = @{ "true"  ~ !ident_char }
+kw_false = @{ "false" ~ !ident_char }
+
+// The operator keywords. A use is spelled `!glued_x ~ "x"`: the guard
+// refuses the word when an identifier character follows it, and the literal
+// consumes it. `glued_x` is atomic so whitespace cannot sit between the
+// word and the character. The guard is a NEGATIVE lookahead on purpose:
+// pest neither builds pairs nor records expected-token attempts for a rule
+// that fails inside one, so the parse tree, the builders' input, and every
+// error message are exactly what the bare literal gave. A visible keyword
+// rule, or a positive-lookahead guard (whose attempts pest still records),
+// adds `'since'` to the expected tokens after every complete conjunct and
+// can move the reported error position.
+glued_exists   = @{ "exists"   ~ ident_char }
+glued_formerly = @{ "formerly" ~ ident_char }
+glued_previous = @{ "previous" ~ ident_char }
+glued_since    = @{ "since"    ~ ident_char }
+glued_count    = @{ "count"    ~ ident_char }
+glued_sum      = @{ "sum"      ~ ident_char }
+glued_for      = @{ "for"      ~ ident_char }
+glued_where    = @{ "where"    ~ ident_char }
+glued_within   = @{ "within"   ~ ident_char }
 
 // Macro sigils.
 //
@@ -62,7 +89,7 @@ temporal_macro_body_entry = { SOI ~ (agg_expr | condition) ~ EOI }
 // `!a since within W b` negates only `a` (the `since` left operand) and
 // `!a && b` negates only `a`.
 condition         = { conjunct_or_since ~ ("&&" ~ conjunct_or_since)* }
-conjunct_or_since = { neg_conjunct ~ ("since" ~ within ~ atom)? }
+conjunct_or_since = { neg_conjunct ~ (!glued_since ~ "since" ~ within ~ atom)? }
 // A conjunct with zero or more leading `!` negations. Each `!` wraps the
 // rest in a `Not`; an even count cancels out (double negation), matching
 // both the boolean and the relational (anti-join) semantics.
@@ -130,12 +157,12 @@ tp_op = { "tp" ~ "(" ~ binder_slot ~ ")" }
 // `condition`, so `exists (x: T). φ && ψ` binds `x` over `φ && ψ`. To stop
 // the scope early, parenthesize (`(exists (x: T). φ) && ψ`). The typed
 // binder reuses the same `(x: T)` construct as a `for`-list element.
-exists_op = { "exists" ~ typed_binder ~ "." ~ condition }
+exists_op = { !glued_exists ~ "exists" ~ typed_binder ~ "." ~ condition }
 
 // Past-only temporal operators; `within` is mandatory.
 temporal_op = { once_op | previous_op }
-once_op     = { "formerly" ~ within ~ atom }
-previous_op = { "previous" ~ within ~ atom }
+once_op     = { !glued_formerly ~ "formerly" ~ within ~ atom }
+previous_op = { !glued_previous ~ "previous" ~ within ~ atom }
 
 atom = {
     "(" ~ condition ~ ")"
@@ -200,8 +227,8 @@ cmp_op     = { "<=" | ">=" | "!=" | "==" | "<" | ">" }
 // fill this slot; the `sum`/`count` keywords come first so they win over a
 // bare-identifier call.
 agg_expr   = { sum_expr | count_expr | call }
-sum_expr   = { "sum" ~ binder_slot ~ for_binders ~ "where" ~ condition }
-count_expr = { "count" ~ for_binders ~ "where" ~ condition }
+sum_expr   = { !glued_sum ~ "sum" ~ binder_slot ~ for_binders ~ !glued_where ~ "where" ~ condition }
+count_expr = { !glued_count ~ "count" ~ for_binders ~ !glued_where ~ "where" ~ condition }
 
 // `for (v1: T1), (v2: T2), ..., (vn: Tn).` — the explicit aggregation
 // domain (typed binders). Each element is a *declaration site*, so it
@@ -209,7 +236,7 @@ count_expr = { "count" ~ for_binders ~ "where" ~ condition }
 // list (and separates it from `where`). The `sum X` bound-var reference
 // and `tp(X)` variable are *uses* of a `for`-declared binder, so they
 // remain bare `binder_slot`s.
-for_binders = { "for" ~ typed_binder ~ ("," ~ typed_binder)* ~ "." }
+for_binders = { !glued_for ~ "for" ~ typed_binder ~ ("," ~ typed_binder)* ~ "." }
 
 // A typed binder `(x: T)` — a binder slot paired with its type. The slot
 // may be a concrete identifier or a macro sigil (`?p` / `$t`); the type
@@ -224,7 +251,7 @@ type_expr    = { ident ~ ("::" ~ ident)* }
 // call-site's `within <n> <unit>` argument. The `within_payload` rule
 // covers both shapes; outside a macro body the sigil form is rejected
 // by the expander.
-within         = { "within" ~ within_payload }
+within         = { !glued_within ~ "within" ~ within_payload }
 within_payload = { param_ref | (integer ~ time_unit) }
 time_unit      = { "s" | "m" | "h" | "d" }
 
@@ -296,9 +323,9 @@ context_field = { "context" ~ ("." ~ ident)+ }
 // A bare root is the entity itself (identity); an attribute tail
 // (`principal.dept`) reads the entity's attribute — the same surface a pure
 // Cedar `when { principal.dept }` and a provider arg `principal.dept` use, so
-// the three agree. `scope_root` is a contextual keyword: the `!(alnum|_)`
+// the three agree. `scope_root` is a contextual keyword: the `!ident_char`
 // lookahead means an identifier merely *starting* with `principal`
 // (`principalId`) is an ordinary variable, not a scope root.
 scope_field   = { scope_root ~ ("." ~ ident)* }
-scope_root    = @{ ("principal" | "resource") ~ !(ASCII_ALPHANUMERIC | "_") }
+scope_root    = @{ ("principal" | "resource") ~ !ident_char }
 wildcard      = { "*" }
