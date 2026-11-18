@@ -53,10 +53,12 @@ CLI. The LSP-specific protocol, project-resolution, and test guidance is in
 cedar-lean. It is a separate Lake project, not part of the Cargo workspace;
 see [`dogwood-lean/README.md`](dogwood-lean/README.md). If a
 change alters the temporal sub-language's syntax, semantics, or acceptance and
-validation rules, run `lake build`, `lake env lean Axioms.lean` and
-`conformance/run.sh` there. Every theorem `Axioms.lean` prints must rest on
-`propext`, `Classical.choice` and `Quot.sound` alone. If the change also
-touches `Dogwood/Frontend/` or the crate code that `Dogwood/Frontend/` ports,
-run `conformance/frontend-run.sh` too. In the code review's description, give
-the revision you ran them on and whether each passed, and paste the report
-`run.sh` prints, unedited, from its first `==` line on.
+validation rules, run `scripts/check.sh` and `conformance/run.sh` there.
+`scripts/check.sh` runs `lake build` and `lake env lean Axioms.lean`, and fails
+on a declaration left `sorry`ed and on a theorem that `Axioms.lean` names and
+that rests on an axiom other than `propext`, `Classical.choice` and
+`Quot.sound`. If the change also touches `Dogwood/Frontend/` or the crate code
+that `Dogwood/Frontend/` ports, run `conformance/frontend-run.sh` too. In the
+code review's description, give the revision you ran them on and whether each
+passed, and paste the report `run.sh` prints, unedited, from its first `==`
+line on.

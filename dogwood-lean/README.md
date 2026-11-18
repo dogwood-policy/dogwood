@@ -137,12 +137,11 @@ With the scope-entity check skipped, the specification decides those four as the
 The specification is a Lake project with its own toolchain (Lean 4.34.0, named in `lean-toolchain`). It is not part of the package's Cargo workspace. From the repository root:
 
 ```bash
-(cd dogwood-lean && lake build)                       # the specification, its theorems, and the examples
-(cd dogwood-lean && lake env lean Axioms.lean)        # the axioms of every theorem
+dogwood-lean/scripts/check.sh                         # the specification, its theorems and examples, and the theorems' axioms
 LEAN_CC=/path/to/cc dogwood-lean/conformance/run.sh   # the comparison with the crate
 ```
 
-`lake build` fails when a module does not parse or a proof does not close. Lean reports a declaration left `sorry`ed as a warning (`declaration uses 'sorry'`), not as an error, so check the build's output for it. The second command prints the axioms of each theorem. Only `propext`, `Classical.choice` and `Quot.sound` may appear, and the axioms of a theorem that rests on a `sorry` include `sorryAx`. The archive the Rust crate links is built from the frontend alone, which reaches neither the theorems nor the examples, so a build of the crate does not check them.
+The script runs `lake build`, which fails when a module does not parse or a proof does not close. Lean reports a declaration left `sorry`ed as a warning (`` declaration uses `sorry` ``), not as an error, so the script fails on that warning. Then it runs `lake env lean Axioms.lean`, which prints the axioms of each theorem that `Axioms.lean` names. Only `propext`, `Classical.choice` and `Quot.sound` may appear, and the script fails on any other axiom (the axioms of a theorem that rests on a `sorry` include `sorryAx`). It also fails when the number of theorems reported is not the number that `Axioms.lean` names. The archive the Rust crate links is built from the frontend alone, which reaches neither the theorems nor the examples, so a build of the crate does not check them.
 
 The first build fetches cedar-spec `v4.14.0` and Batteries from GitHub. Where the C compiler that Lean bundles does not run (on an older glibc), the conformance executable needs `LEAN_CC` set to another C compiler. [`REFERENCE.md`](REFERENCE.md#building) gives the details, including how the Lean side and the Cargo side are kept on the same Cedar release.
 

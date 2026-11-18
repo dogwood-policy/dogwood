@@ -2,12 +2,13 @@
 
 Release notes for the Dogwood policy language reference interpreter.
 
-## [1.2.0] (2026-11-17)
+## [1.2.0] (2026-11-18)
 
 ### Summary
 
 This release adds a formal specification of Dogwood in Lean, the `dogwood-ops`
-crate and the `dogwood-lsp` language server.
+crate, the `dogwood-lsp` language server and Verus proofs about the checks on
+`exists` binders and aggregation `for` lists.
 
 The authorizer and the validator also check each input against its
 declaration. Policies and schemas that 1.1.2 accepted despite a mismatch can
@@ -63,6 +64,20 @@ editor can show as syntax highlighting. It is for policy authors whose editor
 has a Language Server Protocol client, and it ships no editor extension. It is
 in the repository, not on crates.io. To build and configure it, see
 [the `dogwood-lsp` README](dogwood-lsp/README.md).
+
+#### Verus proofs about the `exists` and `for` checks
+
+Dogwood checks the `exists` binders and aggregation `for` lists of a temporal
+condition when it parses a temporal block, and again after macro expansion.
+Verus proofs in `dogwood-language` show that these checks cannot panic on a
+binder that is still a macro parameter (`?p`) or fresh binder (`$t`), index out
+of bounds or cause an arithmetic overflow, and that they end if the helper
+functions they call end. The proofs assume that these helper functions do not
+panic or run forever, and do not cover the parser, macro expansion, stack
+overflow or whether the checks accept the right conditions. To check the proofs,
+run `cargo verus verify` from the root of the repository, with Verus release
+`0.2026.09.20.aef82ed`, which matches the `vstd` version that `dogwood-language`
+requires.
 
 ### Added
 
