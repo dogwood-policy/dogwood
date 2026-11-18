@@ -1,0 +1,8 @@
+// Under `pin uid = principal.id`, a pin to an attribute, which is not symmetric, a Login response
+// logs `uid: "someone"`. Both ingest it: the field need only be logged. It does not match alice's
+// `Read`, whose `principal.id` is "alice", so the `Read` is denied; after a login that logs `uid:
+// "alice"` it is allowed.
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::response{}
+};

@@ -1,0 +1,7 @@
+// A Cedar macro is called in a temporal block. Expansion rejects it, and the error points at the
+// call in the policy.
+def cedar c(?p) { ?p == principal };
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    c(principal)
+};

@@ -15,7 +15,7 @@ dogwood validate policy.dw \
   --event-schema event.dwschema
 ```
 
-See [The event schema § Capping the look-back
-window](../../guide/03-event-schema.md#capping-the-look-back-window-max_window)
+See [The event schema § Capping the
+look-back](../../guide/03-event-schema.md#capping-the-look-back-max_window-and-max_horizon)
 and [Temporal expressions § Intervals and time
 units](../../guide/04-temporal-expressions.md#intervals-and-time-units).

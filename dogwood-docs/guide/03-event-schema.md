@@ -74,6 +74,8 @@ meta: { }                                    // a group with no leaves
 
 Flat fields, depth-2, and depth-3 fields can coexist on one event, and a flat reserved field (like `requestId`) stays flat while a sibling nests. The derived list of a `Login::request` event against the Login/Read action schema from [The policy language](02-policy-language.md) is, for example, `["input.user", "callerPrincipal", "callerResource", "requestId", "sessionId"]`.
 
+A path is a list of names, one per level: `input.user` is the list `["input", "user"]`. A Cedar attribute may have any string as its name, so a field spliced from the action schema can have a name that holds a `.`, such as `"user.id"` in `type LoginInput = { "user.id": String, user: { id: String } }`. That field is one level, the path `["input", "user.id"]`. It is a different field from the nested `id` inside `user`, the path `["input", "user", "id"]`. Where Dogwood writes a path as one string (a predicate argument's name in the temporal syntax tree, a diagnostic, the list of declared fields), it writes each name with every `\` doubled and every `.` preceded by a `\`, and joins the names with `.`. So `["input", "user.id"]` is written `input.user\.id`, and `["input", "user", "id"]` is written `input.user.id`. A path whose names hold neither character, which includes every path a policy or an event schema can spell, is written as plain dotted text. The predicate grammar spells only identifiers, so a policy cannot name a field whose name holds a `.` in a predicate.
+
 ### Pins: `pin name: type = <request-reference>`
 
 A **pin** forces a correlation. On *every* predicate that mentions the event, the pinned field is implicitly conjoined to a request reference — the current request's `principal` / `resource` scope entity (± an attribute) or a `context.<path>` field — whether or not the policy author wrote it. This is how a schema author guarantees an invariant that individual policies cannot forget.
@@ -88,7 +90,21 @@ The rules:
 - **A pin may sit only on a leaf.** Pinning a whole record group is an error; pin a leaf *inside* the group instead.
 - **`pin` is a contextual keyword.** It only acts as the pin prefix when a field declaration (`ident :`) follows. So a field can still be *named* `pin` (`pin: String`), and a field named `pin` can itself be pinned (`pin pin: String = context.pin`).
 
-At derivation time each pinned leaf records its full dotted path plus the context path. The engine's pin-injection pass then runs *after* macro expansion and *before* validation: for every predicate naming an event with pins, it appends the correlation. The pin is appended **unconditionally** — even if the policy already wrote that field. A hand-written copy can only *narrow* a pin, never relax it: if it agrees with the pin the appended correlation is a redundant no-op, and if it disagrees the two constraints on the same field make the predicate unsatisfiable. Because injection happens before validation, the pinned field is validated like any authored field, and because it is never skipped, a pin cannot be bypassed — not by omitting the field, and not by writing it with a weaker value (a wildcard, a different `context.<path>`, or a fresh variable).
+At derivation time each pinned leaf records its full path plus the context path, each as a list of names. The engine's pin-injection pass then runs *after* macro expansion and *before* validation: for every predicate naming an event with pins, it appends the correlation. The pin is appended **unconditionally** — even if the policy already wrote that field. A hand-written copy can only *narrow* a pin, never relax it: if it agrees with the pin the appended correlation is a redundant no-op, and if it disagrees the two constraints on the same field make the predicate unsatisfiable. Because injection happens before validation, the pinned field is validated like any authored field, and because it is never skipped, a pin cannot be bypassed — not by omitting the field, and not by writing it with a weaker value (a wildcard, a different `context.<path>`, or a fresh variable).
+
+### The mirror rule: an event carries the key it reports on
+
+A pin correlates a logged field with the decision's request. For that to isolate a key, the field an event *logs* must be the request-side value the event *carries*, so a logged field that **mirrors** the request is checked when the event arrives:
+
+- the mirrored fields are the fields of the symmetric pins, which are the pins to the request's principal, its resource, or a context attribute (`pin callerPrincipal = principal`, `pin actor = principal`, `pin f = context.<path>`), whatever the field is called;
+- `callerPrincipal` and `callerResource` mirror the request's principal and resource whenever the event schema declares them and no pin names them;
+- when the event has the request-side value (a principal, a resource, the context path), the logged field must hold it;
+- when the event does not, the logged field must be **absent**;
+- every pinned field must be logged.
+
+An event that breaks the rule is not ingested: no later decision sees it, and a decision event fails closed. Without the absence clause, a scope-less event could log `callerPrincipal: alice` and count as alice's history, wherever a pin injects `callerPrincipal: principal` into a predicate.
+
+The consequence for whoever reports events: **an event that reports on a key carries that key's scope.** Under the default schema's universal pin, a `response` reports the principal and resource of its request, and a history event with no principal is rejected. Under a symmetric context pin, a history event carries the pinned context path as well as the logged field. Evidence about another key (an administrator revoking alice) is the administrator's event under a principal pin and is invisible to alice's rules; to share evidence across keys, use an event schema without the universal pin.
 
 ### Universal symmetric pins: key-local semantics and the partition guarantee
 
@@ -99,15 +115,14 @@ and **symmetric**:
   schema derives (`request`, `response`, and `error` in the default
   layout, plus any custom kinds). If a kind is left out the pin is not
   universal, and the partition guarantee does not apply.
-- **Symmetric** — the pin's value is the field's own path on the current
-  request (`pin session_id: String = context.session_id`), or one of the
-  reserved scope-alias pairs (`pin callerPrincipal: principalType(A) =
-  principal`, and likewise `callerResource`/`resource`). The alias uses the
-  bare scope reference (`= principal` / `= resource`), **not** `=
-  context.principal`: as noted below, `context.principal` is a context field
-  literally named `principal`, not the scope entity, so it would *not* be the
-  reserved alias and would not qualify. Symmetry is what makes an event's *own*
-  field value the key under which it is both stored and looked up.
+- **Symmetric** — the pin's value is the current request's principal, its
+  resource, or a context attribute (`pin callerPrincipal: principalType(A) =
+  principal`, `pin actor: principalType(A) = principal`,
+  `pin session_id: String = context.session_id`), whatever the field is
+  called. A pin to an attribute of the principal or resource
+  (`pin dept: String = principal.dept`) is not symmetric. The mirror rule
+  rejects an event whose symmetric-pin field differs from its own request's
+  value, so the event is stored under the same key it is looked up by.
 
 When at least one universal symmetric pin exists, Dogwood switches every
 temporal leaf to **key-local semantics**: the leaf is evaluated *as if the
@@ -131,9 +146,9 @@ with the in-memory interpreter). The default event schema carries such a
 pin, on `callerPrincipal`, so key-local semantics apply unless
 you replace it: every temporal leaf is keyed on the requesting principal,
 and events from other principals are invisible to it. With no universal
-symmetric pin — an event schema that declares none, or declares one that is
-partial or asymmetric — nothing changes: leaves keep the global-trace
-semantics described in
+symmetric pin — an event schema that declares none, or whose pins are each
+partial or pinned to an attribute of the principal or resource — nothing
+changes: leaves keep the global-trace semantics described in
 [Temporal expressions](04-temporal-expressions.md).
 
 **A pin that is not universal silently keeps global semantics — with no
@@ -156,12 +171,24 @@ cross-key policies
 ("more than N logins by *any* user") become inexpressible under it —
 that is the isolation being bought.
 
+Storing per key has one consequence for timestamps. An authorizer that
+assigns them itself, one tick after the last when the clock reading is not
+later, and that keeps one log per key, stamps each key's log on its own.
+That agrees with stamping one log of all events when the clock readings
+strictly increase across keys. When two keys' events arrive at the same
+reading, the single log would stamp the later one a tick after the other key's
+event, while its own key's log stamps it at its reading, and at the edge of a
+window that tick can change a verdict. The formal specification defines
+evaluation per key with stamps per key (`dogwood-lean`,
+`Dogwood.Spec.Partitioned`); see
+[the formal specification](08-formal-specification.md#45-schema-derivation-and-augmentation).
+
 ### How request references resolve in policies
 
 Both a pin's right-hand side and a policy's request references resolve against the **current decision request**, mirroring Cedar's four request variables:
 
-- `principal` / `resource` are the request scope's principal / resource **entities** — regardless of what the schema happens to *name* its injected principal field. A trailing attribute (`principal.dept`) reads that entity's attribute from the request's entity store; a bare `principal` is the entity itself (for identity), and `principal.id` / `principal.type` project the uid.
-- `context.<path>` resolves to a field of the request **context** record at that dotted path (`context.input.user`, `context.__drupe_sessionid`, `context.__drupe.session.id`). This is Cedar's `context` variable — a plain record — so `context.principal` would be a field literally *named* `principal` in that record, **not** the scope entity.
+- `principal` / `resource` are the request scope's principal / resource **entities** — regardless of what the schema happens to *name* its injected principal field. A trailing attribute (`principal.dept`) reads that entity's attribute from the request's entity store; a bare `principal` is the entity itself (for identity). `principal.id` / `principal.type` are attributes like any other, as in Cedar: they read attributes the entity type declares under those names, not the uid.
+- `context.<path>` resolves to a field of the request **context** record at that dotted path (`context.input.user`, `context.__drupe_sessionid`, `context.__drupe.session.id`). This is Cedar's `context` variable — a plain record — so `context.principal` would be a field literally *named* `principal` in that record, **not** the scope entity. Each `.` steps one level into the record: `context.input.user.id` is the `id` inside `user`, never an attribute named `"user.id"` (Cedar's `context.input["user.id"]`). A trailing attribute of `principal` or `resource` reads the same way.
 
 This distinction matters: an injected field can be renamed `actor` and still be correlated against the scope principal with `actor: principal`, while a declared context field like `__drupe_sessionid` is reached by its own name (`context.__drupe_sessionid`).
 
@@ -280,15 +307,16 @@ To make the derivation concrete, here is an event from `1113_nested_reserved_fie
 
 ---
 
-## Capping the look-back window: `max_window`
+## Capping the look-back: `max_window` and `max_horizon`
 
 A temporal policy looks back over event history with a `within <interval>`
 window (see [Temporal expressions](04-temporal-expressions.md)). The event
-schema can put a ceiling on how far back *any* policy may look with an optional
-`max_window` directive at the top of the file:
+schema can put a ceiling on how far back *any* policy may look with two
+optional directives at the top of the file:
 
 ```text
-max_window = 24h
+max_window  = 1h
+max_horizon = 24h
 
 decision event <A>::request {
     ...inputs(A),
@@ -298,27 +326,56 @@ decision event <A>::request {
 }
 ```
 
+- **`max_window`** caps each `within` window on its own.
+- **`max_horizon`** caps how far back a temporal condition looks *in total*: its
+  **horizon**, the largest sum of the windows along one chain of nested
+  `formerly`, `previous` and `since` operators. `formerly within 24h
+  (formerly within 24h Login)` keeps each window at 24h but looks back 48h, so
+  it passes a 24h `max_window` and fails a 24h `max_horizon`. Side-by-side
+  operators do not add up: `(formerly within 20h A) && (formerly within 20h B)`
+  looks back 20h. A `since within w` adds `w` to the longer of its two sides,
+  and an aggregation reaches as far as its `where` body.
+
+`max_horizon` is the number a service needs to size its event retention: when
+the event schema declares it, no event older than `max_horizon` can affect a
+decision of any policy the schema lets validate, however its conditions nest.
+
 The rules:
 
-- **It goes first, at most once.** The directive precedes all event
-  declarations; placing it after one is a parse error.
-- **The interval is a positive `<amount><unit>`** using the same four units as
-  temporal windows (`s`, `m`, `h`, `d`) — e.g. `24h`, `30m`, `7d`. A zero
-  window (`max_window = 0h`) is a parse error, since it would forbid every
-  `within` clause; omit the directive instead if you want no custom cap.
-- **Absent, the cap defaults to `24h`.** Omitting `max_window` — as
-  every schema shown elsewhere in this guide does — uses the 24h default.
-- **The bound is inclusive.** A `within` window *equal* to the cap is allowed;
-  only a window *strictly greater* than the cap is rejected. So under the
-  default, `within 24h` (and the identical `within 1d`) pass, while `within 48h`
-  or `within 7d` are rejected.
+- **They go first, each at most once, in either order.** The directives precede
+  all event declarations; placing one after a declaration, or declaring one
+  twice, is a parse error.
+- **Each interval is a positive `<amount><unit>`** using the same four units as
+  temporal windows (`s`, `m`, `h`, `d`) — e.g. `24h`, `30m`, `7d`. A zero cap
+  (`max_window = 0h`) is a parse error; omit the directive instead.
+- **Defaults.** Without `max_horizon` there is **no horizon cap**: nesting is
+  unrestricted. `max_window` defaults to the declared `max_horizon` when there
+  is one, and to `24h` otherwise:
 
-The validator enforces the cap: any temporal `within` window in a policy that
-exceeds `max_window` is a validation error naming both the offending window and
-the cap, whether the window sits on a top-level `formerly`/`previous`/`since`
-or is nested inside an aggregation. Raise the cap here when a policy genuinely
-needs a longer history (`max_window = 30d`), or lower it to tighten what
-policies may do (`max_window = 1h`).
+  | declared | `max_window` | `max_horizon` |
+  |---|---|---|
+  | neither | 24h | none |
+  | `max_window = W` only | `W` | none |
+  | `max_horizon = H` only | `H` | `H` |
+  | both | `W` | `H` |
+
+- **`max_window` may not exceed `max_horizon`.** No condition can look back
+  further than its horizon, so a longer window cap could never be used: a
+  schema that declares both, with `max_window` longer than `max_horizon`, is an
+  error.
+- **The bounds are inclusive.** A window, or a horizon, *equal* to its cap is
+  allowed; only one *strictly greater* is rejected. So under the default window
+  cap, `within 24h` (and the identical `within 1d`) pass, while `within 48h` is
+  rejected; under `max_horizon = 24h`, two nested `within 13h` are rejected.
+
+The validator enforces both caps: a `within` window longer than `max_window` is
+a validation error naming the window and the cap, wherever it sits (a top-level
+`formerly`/`previous`/`since`, or inside an aggregation), and, when the schema
+declares `max_horizon`, a temporal condition whose horizon exceeds it is a
+validation error naming its horizon and the cap. Raise `max_window` when a
+policy genuinely needs a longer window (`max_window = 30d`), lower it to
+tighten what policies may do (`max_window = 1h`), and declare `max_horizon` to
+bound the history the service must keep (`max_horizon = 24h`).
 
 ---
 

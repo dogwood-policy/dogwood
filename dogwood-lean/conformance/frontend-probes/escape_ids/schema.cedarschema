@@ -1,0 +1,16 @@
+namespace Drupe {
+  entity Mode enum ["a\u{301}", "\u{200b}", "plain"];
+  type LoginInput = { user: String, mode: Mode, count: Long };
+  entity Gateway;
+  entity OAuthUser;
+  action "\u{301}Login" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: { input: LoginInput }
+  };
+  action "Re\u{200b}ad" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: { input: { user: String } }
+  };
+}

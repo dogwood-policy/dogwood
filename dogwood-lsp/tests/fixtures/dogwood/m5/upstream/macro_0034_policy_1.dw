@@ -1,0 +1,21 @@
+// Cedar macros shared across multiple policies in one file.
+//
+// `is_priority_stock(?s)` is defined once at the top of policy_1
+// and called from BOTH policies. The Phase-2 well-formedness pass
+// rejects duplicate definitions, so the single definition must live
+// in one file; the corpus harness concatenates policy_1 and policy_2
+// before parsing so the definition is visible to the call sites in
+// policy_2.
+
+def cedar is_priority_stock(?s) {
+    ?s == "FOO" || ?s == "BAR"
+};
+
+permit (
+    principal,
+    action == Drupe::Action::"SellShares",
+    resource
+)
+when {
+    is_priority_stock(context.input.stock)
+};

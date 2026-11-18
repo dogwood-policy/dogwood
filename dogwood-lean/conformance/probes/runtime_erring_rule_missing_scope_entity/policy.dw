@@ -1,0 +1,14 @@
+// A rule reads `principal.level` in its Cedar part and in its temporal leaf, and alice's `Read`
+// supplies no entity data; another rule allows every request. The specification fails the decision
+// closed (missing scope entity). The crate adds a bare entity: the first rule errs, with an error
+// in the diagnostics, and the second allows. The crate decided, though its diagnostics hold an
+// error, so the conformance harness reports the runtime gap, not a disagreement of verdicts; on
+// the data supplied both allow.
+@id("allow_all")
+permit (principal, action, resource);
+@id("read_level")
+permit (principal, action == Drupe::Action::"Read", resource)
+when { principal.level < 3 }
+when temporal {
+    formerly within 1h (Drupe::Action::"Login"::response{ input.user: context.input.user } && principal.level > 1)
+};

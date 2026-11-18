@@ -14,24 +14,60 @@
 //! into the original `.dw` source when reporting errors.
 
 use crate::error::Span;
+use vstd::prelude::*;
+
+verus! {
+
+// Formatted-`panic!` helpers for the proven-unreachable sigil arms of
+// `WithinSpec::interval` / `BinderSlot::name`. Verus's frontend rejects an inline
+// formatted `panic!` ("Unsupported constant type" on the `format_args!` build), so
+// the `format!` is hidden behind `external_body`; `requires false` keeps the
+// unreachability obligation, which the accessors' `requires` guards discharge.
+#[verifier::external_body]
+fn panic_still_param_ref(p: &str) -> !
+    requires
+        false,
+{
+    panic!("still a ?{p} after expansion (parser bug or pre-expansion call)")
+}
+
+#[verifier::external_body]
+fn panic_still_binder_ref(b: &str) -> !
+    requires
+        false,
+{
+    panic!("still a ${b} after expansion (parser bug or pre-expansion call)")
+}
+
+// `Span` (from `crate::error`) is embedded in several AST nodes
+// (`Condition`, `Predicate`, `AggExpr`, `Call`, `Refine`). Make it visible to
+// Verus as an opaque external type so those AST types can live inside `verus!`;
+// no spec fn inspects a `Span`'s fields, so the opaque view is sufficient.
+// Read only by Verus; never constructed at runtime.
+#[allow(dead_code)]
+#[verifier::external_type_specification]
+pub struct ExSpan(crate::error::Span);
+
+// The AST types derive `Clone`, and cloning any node with a `span` field
+// clones the `Span`; make that external clone visible to Verus (mirrors the
+// `Interval::clone` spec below).
+pub assume_specification [<crate::error::Span as Clone>::clone](s: &crate::error::Span) -> crate::error::Span;
+
+} // verus!
+
+verus! {
 
 /// A temporal condition: top-level conjunction of conjuncts.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[verifier::external_derive(Clone)]
 pub struct Condition {
     pub span: Span,
     pub kind: ConditionKind,
 }
 
-impl Condition {
-    /// Move the kind out of `self`, leaving a leaf. `Condition` has a manual
-    /// `Drop` (see `deep_drop`), so its fields cannot be moved out by
-    /// destructuring; this is the by-value escape hatch.
-    pub(crate) fn into_kind(mut self) -> ConditionKind {
-        std::mem::replace(&mut self.kind, crate::deep_drop::leaf_cond_kind())
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[verifier::external_derive(Clone)]
+#[allow(inconsistent_fields)]
 pub enum ConditionKind {
     /// `a && b` — both must hold.
     And {
@@ -86,9 +122,9 @@ pub enum ConditionKind {
     Predicate(Predicate),
     /// A comparison between two terms: `term <op> term`. Either term may
     /// be an aggregate ([`Term::Agg`]) — the comparison-operand-only rule
-    /// (an aggregate must be the immediate operand of a comparison, not a
-    /// predicate-arg value) is enforced by validation (`check`), not the
-    /// grammar. An `<agg> == x` / `x == <agg>` form range-restricts `x` to
+    /// (an aggregate must be a comparison operand, or a leaf of an
+    /// arithmetic one, never a predicate-arg value) is enforced by validation
+    /// (`check`), not the grammar. An `<agg> == x` / `x == <agg>` form range-restricts `x` to
     /// the aggregate's value (see the evaluator).
     Comparison { op: CmpOp, left: Term, right: Term },
     /// `exists (x: T). φ` — holds iff `φ` has at least one satisfying
@@ -152,12 +188,14 @@ pub enum Sigil {
 /// by validation, not the grammar. A macro whose body *is* an aggregation
 /// is spliced into a `Term::Agg` at its call site.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[verifier::external_derive(Clone)]
 pub struct AggExpr {
     pub span: Span,
     pub kind: AggExprKind,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[verifier::external_derive(Clone)]
 pub enum AggExprKind {
     /// `sum v for (g1: T1), …, (gn: Tn). where <cond>` — the relation of
     /// satisfying assignments of `body` is projected onto `for_vars`,
@@ -189,6 +227,7 @@ pub enum AggExprKind {
 /// A predicate: a qualified action name, an event kind, plus named
 /// arguments.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[verifier::external_derive(Clone)]
 pub struct Predicate {
     pub span: Span,
     /// Qualified action, e.g. `["Drupe", "Action"]` + `"Login"`.
@@ -206,21 +245,47 @@ pub struct Predicate {
 /// path: a bare field (`user`) or a dotted path into a nested group
 /// (`input.user`).
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[verifier::external_derive(Clone)]
 pub struct NamedArg {
+    /// The field path as one string, in the form of
+    /// [`temporal_ast::field_path::join`](crate::temporal_ast::field_path::join):
+    /// each segment escaped (`\` as `\\`, `.` as `\.`) and the segments joined
+    /// by `.`. A segment that holds a `.` (the Cedar attribute
+    /// `input["user.id"]`) stays one segment: `["input", "user.id"]` is
+    /// `input.user\.id`. A path of identifiers, the only kind a policy or an
+    /// event schema can write, is its plain dotted text (`input.user`).
+    /// Read the path with [`field_path`](Self::field_path).
     pub name: String,
     pub value: Term,
 }
 
 impl NamedArg {
-    /// The field name as a path (`"input.user"` → `["input", "user"]`).
+    /// The field name as a path (`"input.user"` → `["input", "user"]`,
+    /// `"input.user\.id"` → `["input", "user.id"]`): the name cut at its
+    /// unescaped dots, with the escapes dropped
+    /// ([`temporal_ast::field_path::split`](crate::temporal_ast::field_path::split)).
     /// A bare name is a single-segment path.
+    #[verifier::external_body]
     pub fn field_path(&self) -> Vec<String> {
-        self.name.split('.').map(str::to_string).collect()
+        crate::field_path::split(&self.name)
     }
 
     /// The field name as written, for diagnostics (`"input.user"`).
+    #[verifier::external_body]
     pub fn field_name(&self) -> &str {
         &self.name
+    }
+}
+
+} // verus!
+
+// Outside `verus!`: Verus does not support `mut self`.
+impl Condition {
+    /// Move the kind out of `self`, leaving a leaf. `Condition` has a manual
+    /// `Drop` (see `deep_drop`), so its fields cannot be moved out by
+    /// destructuring; this is the by-value escape hatch.
+    pub(crate) fn into_kind(mut self) -> ConditionKind {
+        std::mem::replace(&mut self.kind, crate::deep_drop::leaf_cond_kind())
     }
 }
 
@@ -260,11 +325,27 @@ impl Interval {
     }
 }
 
+verus! {
+
+// Make the external `Interval`/`TimeUnit` (and `Interval::clone`) visible to Verus.
+// Read only by Verus; never constructed at runtime.
+#[allow(dead_code)]
+#[verifier::external_type_specification]
+pub struct ExTimeUnit(TimeUnit);
+
+// Read only by Verus; never constructed at runtime.
+#[allow(dead_code)]
+#[verifier::external_type_specification]
+pub struct ExInterval(Interval);
+
+pub assume_specification [<Interval as Clone>::clone](i: &Interval) -> Interval;
+
 /// A `within` window specification — either a concrete interval (after
 /// parsing or after macro expansion) or a macro `?w` parameter
 /// reference (only inside an unexpanded macro body). Post-expansion the
 /// `ParamRef` variant is gone.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[verifier::allow(autoderive_clone_without_spec)]
 pub enum WithinSpec {
     Concrete(Interval),
     ParamRef(String),
@@ -273,15 +354,18 @@ pub enum WithinSpec {
 impl WithinSpec {
     /// The concrete interval, panicking on a still-sigil spec.
     /// Use only on post-expansion AST.
-    pub fn interval(&self) -> Interval {
+    pub fn interval(&self) -> Interval
+        requires
+            !matches!(self, WithinSpec::ParamRef(_)),
+    {
         match self {
             WithinSpec::Concrete(i) => *i,
-            WithinSpec::ParamRef(p) => panic!(
-                "WithinSpec::interval: still a ?{p} after expansion (parser bug or pre-expansion call)"
-            ),
+            WithinSpec::ParamRef(p) => panic_still_param_ref(p.as_str()),
         }
     }
 }
+
+} // verus!
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TimeUnit {
@@ -322,7 +406,10 @@ impl TimeUnit {
     }
 }
 
+verus! {
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[verifier::allow(autoderive_clone_without_spec)]
 pub enum CmpOp {
     Le,
     Lt,
@@ -353,6 +440,7 @@ impl ArithOp {
 /// A term: a literal, a reference to a bound variable / context field,
 /// or a structured value.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[verifier::external_derive(Clone)]
 pub enum Term {
     /// `Type::"id"` entity reference.
     Entity {
@@ -381,8 +469,8 @@ pub enum Term {
     /// This is Cedar's `principal` / `resource` request **variable** — an
     /// entity, distinct from the `context` record. A bare root is the scope
     /// entity itself (an identity comparison); an attribute tail reads that
-    /// entity's attribute from the current request's entity store, with
-    /// `.id` / `.type` projecting the uid — the temporal analog of a Cedar
+    /// entity's attribute from the current request's entity store (`id` and
+    /// `type` are attributes like any other) — the temporal analog of a Cedar
     /// `principal.dept` and of the provider-arg `principal.dept`. It resolves
     /// against the **current request** at every timepoint the enclosing
     /// operator scans (a decision-time reference, never a matched past event).
@@ -394,9 +482,9 @@ pub enum Term {
     Array(Vec<Term>),
     /// An aggregate value: `count for … where φ` / `sum a for … where φ`,
     /// yielding `Long`. A term syntactically, but the
-    /// comparison-operand-only rule — an aggregate must be the
-    /// immediate operand of a comparison, never a predicate-arg value or a
-    /// nested term — is enforced by validation (`check`), not the grammar.
+    /// comparison-operand-only rule — an aggregate must be a comparison
+    /// operand, or a leaf of an arithmetic one, never a predicate-arg value or
+    /// an array element — is enforced by validation (`check`), not the grammar.
     Agg(Box<AggExpr>),
     /// `a + b` / `a - b` / `a * b` — a compound arithmetic expression
     /// over `Long`-valued terms, yielding `Long`. Like [`Term::Agg`], it
@@ -425,6 +513,7 @@ impl Term {
     /// the leaves of a compound arithmetic operand. Does not descend into
     /// arrays or aggregate bodies (an aggregate nested there is not in
     /// operand position).
+    #[verifier::external_body]
     pub fn for_each_operand_agg<'a>(&'a self, f: &mut impl FnMut(&'a AggExpr)) {
         match self {
             Term::Agg(agg) => f(agg),
@@ -447,6 +536,7 @@ impl Term {
 /// validation forbid nonsensical mixes (summing timepoints, comparing a
 /// timepoint to an amount) that a plain `Long` would silently allow.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[verifier::allow(autoderive_clone_without_spec)]
 pub enum Type {
     /// The timepoint-domain type of a `tp`-bound variable. Distinct from
     /// `Long` even though a timepoint index is an `i64` at runtime.
@@ -459,6 +549,7 @@ pub enum Type {
 impl Type {
     /// Render the type back to source syntax (`Timepoint`,
     /// `Drupe::OAuthUser`), for diagnostics and macro expansion.
+    #[verifier::external_body]
     pub fn render(&self) -> String {
         match self {
             Type::Timepoint => "Timepoint".to_string(),
@@ -474,6 +565,7 @@ impl Type {
 /// reference, `tp(t)`, a predicate arg, a comparison operand) stays a bare
 /// [`BinderSlot`] / [`Term::Var`] — it is not re-annotated.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[verifier::allow(autoderive_clone_without_spec)]
 pub struct TypedBinder {
     pub slot: BinderSlot,
     pub ty: Type,
@@ -482,7 +574,9 @@ pub struct TypedBinder {
 impl TypedBinder {
     /// The binder's underlying name, panicking if the slot is still a
     /// macro sigil. Use only on post-expansion AST.
-    pub fn name(&self) -> &str {
+    pub fn name(&self) -> &str 
+    requires matches!(self.slot, BinderSlot::Name(_)),
+    {
         self.slot.name()
     }
 }
@@ -492,6 +586,9 @@ impl TypedBinder {
 /// source it is a concrete identifier ([`BinderSlot::Name`]); inside a
 /// macro body it may be a macro sigil to be substituted by expansion.
 #[derive(Debug, Clone, PartialEq, Eq)]
+/// The `autoderive_clone_without_spec` acknowledges that the derived `Clone` 
+/// carries no Verus spec.
+#[verifier::allow(autoderive_clone_without_spec)]
 pub enum BinderSlot {
     Name(String),
     /// `?p` in binder position — at expansion the call-site argument
@@ -504,24 +601,28 @@ pub enum BinderSlot {
 impl BinderSlot {
     /// The underlying name, panicking if the slot is still a macro
     /// sigil. Use only on post-expansion AST.
-    pub fn name(&self) -> &str {
+    pub fn name(&self) -> (r: &str)
+        requires
+            matches!(self, BinderSlot::Name(_)),
+    {
         match self {
             BinderSlot::Name(s) => s.as_str(),
-            BinderSlot::ParamRef(p) => panic!(
-                "BinderSlot::name: still a ?{p} after expansion (parser bug or pre-expansion call)"
-            ),
-            BinderSlot::BinderRef(b) => panic!(
-                "BinderSlot::name: still a ${b} after expansion (parser bug or pre-expansion call)"
-            ),
+            BinderSlot::ParamRef(p) => panic_still_param_ref(p.as_str()),
+            BinderSlot::BinderRef(b) => panic_still_binder_ref(b.as_str()),
         }
     }
 }
+
+} // verus!
+
+verus! {
 
 /// A macro invocation: a name and a list of arguments. The same shape is
 /// used in condition position and in aggregation-value position; the
 /// surrounding [`ConditionKind::Call`] / [`AggExprKind::Call`] wrapper
 /// indicates which.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[verifier::external_derive(Clone)]
 pub struct Call {
     pub span: Span,
     pub name: String,
@@ -532,6 +633,7 @@ pub struct Call {
 /// as so the expander can check it against the parameter's usage in the
 /// macro body.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[verifier::external_derive(Clone)]
 pub enum CallArg {
     /// A temporal condition argument (`recent_login(1h, Foo{…})`'s
     /// second arg).
@@ -546,3 +648,29 @@ pub enum CallArg {
     /// first arg.
     Term(Term),
 }
+
+} // verus!
+
+verus! {
+
+// ─── `Clone` specs ─────────────────────────────────────────────────────
+//
+// The mutually-recursive AST types derive `Clone` under
+// `#[verifier::external_derive(Clone)]`, so the derived impls are compiled
+// outside Verus (a Verus-visible derive would build a cyclic `clone` spec
+// group that trips the termination checker). These specs make the external
+// impls callable from verified code; nothing needs a postcondition on
+// `clone`. (The `Copy` leaves and the non-recursive `Type` / `TypedBinder`
+// / `BinderSlot` / `WithinSpec` derive `Clone` normally.) This mirrors the
+// `Clone` specs in `crate::ast`.
+pub assume_specification [<Condition as Clone>::clone](_0: &Condition) -> Condition;
+pub assume_specification [<ConditionKind as Clone>::clone](_0: &ConditionKind) -> ConditionKind;
+pub assume_specification [<AggExpr as Clone>::clone](_0: &AggExpr) -> AggExpr;
+pub assume_specification [<AggExprKind as Clone>::clone](_0: &AggExprKind) -> AggExprKind;
+pub assume_specification [<Predicate as Clone>::clone](_0: &Predicate) -> Predicate;
+pub assume_specification [<NamedArg as Clone>::clone](_0: &NamedArg) -> NamedArg;
+pub assume_specification [<Term as Clone>::clone](_0: &Term) -> Term;
+pub assume_specification [<Call as Clone>::clone](_0: &Call) -> Call;
+pub assume_specification [<CallArg as Clone>::clone](_0: &CallArg) -> CallArg;
+
+} // verus!

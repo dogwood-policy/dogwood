@@ -57,9 +57,21 @@ fn replay_cli_format(policies: LoweredPolicySet, log: &str) -> Result<String, St
     let mut lines = Vec::new();
     let mut index = 0usize;
 
-    for event in &events {
+    for (position, event) in events.iter().enumerate() {
         let ts = event.timestamp();
-        if let Some(response) = authorizer.is_authorized(event) {
+        // Like `dogwood replay`: a history event that does not conform is
+        // rejected, and reported at its position in the trace.
+        let response = match authorizer.submit(event) {
+            Ok(response) => response,
+            Err(rejection) => {
+                lines.push(format!(
+                    "@{ts} (event {position} of the trace): REJECTED, not ingested"
+                ));
+                lines.push(format!("    error: {rejection}"));
+                None
+            }
+        };
+        if let Some(response) = response {
             let decision = match response.decision() {
                 Decision::Allow => "ALLOW",
                 Decision::Deny => "DENY",

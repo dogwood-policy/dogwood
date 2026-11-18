@@ -1,0 +1,4 @@
+// A non-ASCII character, escaped in the message.
+@id("café")
+permit (principal, action == Drupe::Action::"Read", resource)
+when { temporal { formerly within 1h Drupe::Action::"Login"::response{ input.user: context.input.user } } };

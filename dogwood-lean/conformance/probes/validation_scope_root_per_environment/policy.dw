@@ -1,0 +1,7 @@
+// On `Ping`, whose principals are `OAuthUser`s and `Bot`s, `principal` is given to a field that
+// holds an `OAuthUser`. In the request environment of a `Bot`, the specification rejects it
+// (predicate arguments).
+permit (principal, action == Drupe::Action::"Ping", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Ping"::request{ input.owner: principal }
+};

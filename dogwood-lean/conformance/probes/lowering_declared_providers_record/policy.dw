@@ -1,0 +1,4 @@
+// The action schema declares a `providers` record in the context of `Read`, the attribute lowering
+// gives the rule's provider leaves. Lowering rejects it.
+permit (principal, action == Drupe::Action::"Read", resource)
+when { Risk::Score().score.greaterThan(decimal("0.5")) };

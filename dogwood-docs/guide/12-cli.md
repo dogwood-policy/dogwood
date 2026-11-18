@@ -32,10 +32,22 @@ See [The policy language](02-policy-language.md) for the action schema, and
 Every policy command takes the policy set as a positional argument (a `.dw`
 file, or `-` to read stdin). Checking commands also accept
 `--format human|json` (human is the default; JSON is the stable machine shape).
-Exit codes are uniform: **0** success, **1** a usage or I/O error (a missing
-file, a bad flag), **2** rejected input (a policy, schema, or trace that does
-not check out). That `0` vs `2` split lets a CI job tell "the tool broke" from
-"the policy was rejected".
+
+Every command uses the same exit codes.
+
+- `0` is success.
+- `1` is an I/O error. An input file or stdin cannot be read (it is missing,
+  is a directory, or is not UTF-8), or an output file cannot be written.
+- `2` is a usage error (an unknown flag or subcommand, or a missing
+  argument), input that the command cannot process (for example, a policy,
+  schema, manifest, or trace that does not parse), or a `validate` run that
+  finds errors.
+
+A build without the `mcp-schema` feature has no `schema mcp` subcommand, so
+`dogwood schema mcp` exits 2 there. `lower`, `explain`, and `replay` do not run
+the validator, so they can exit 0 for a policy that fails `validate`. `replay`
+also exits 0 when it denies a request or rejects an event of the trace.
+`format` exits 0 for any input that it can read.
 
 ### `format` — pretty-print authored policy source
 
@@ -118,22 +130,30 @@ $ dogwood replay examples/write_after_read/policy.dw \
 
 Each line is `@<timestamp> (time point <index>): ALLOW|DENY`, optionally followed
 by `[rules: …]` — the indices of the `.dw` rules that determined the decision.
-History-only events (a non-decision event kind) update the history but produce
-no line. This is the way to catch a policy that validates but does
-not *mean* what you intended — a mis-pinned "same user" correlation, or a window
-that is too narrow. `--format json` emits a structured verdict stream.
+A decision that failed closed is a `DENY` followed by one `    error: …` line
+per error, such as `nonconforming request: …` for a request context that lacks
+an attribute its action's context requires. History-only events (a non-decision
+event kind) update the history but produce no line. A history event that does
+not conform to the event schema is rejected, and not ingested; it is reported
+in trace order as `@<timestamp> (event <position> of the trace): REJECTED, not
+ingested`, followed by its `    error: nonconforming event: …` line. This is the
+way to catch a policy that validates but does not *mean* what you intended — a
+mis-pinned "same user" correlation, or a window that is too narrow — and a trace
+whose data does not match its schemas. `--format json` emits a structured
+verdict stream, with the rejected events under `rejected` when there are any.
 
 A trace is one event per line. The events in `examples/write_after_read/trace.log`
 look like:
 
 ```text
-@0 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { shares: 5, stock: "AMZN" }) Drupe::Action::"ApproveSale"::request(input: { shares: 5, stock: "AMZN" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u1")
+@0 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { shares: 5, stock: "AMZN" }, system: { now: datetime("1970-01-01T00:00:00Z") }) Drupe::Action::"ApproveSale"::request(input: { shares: 5, stock: "AMZN" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u1")
 ```
 
 — a timestamp, optional request envelopes (`scope(...)`, and here
-`request_context(...)` — the context the Cedar request is built from), and the
-fully-qualified action with its explicit `::request` (or other) kind and its logged
-`input` record. See
+`request_context(...)` — the context the Cedar request is built from, with the
+`system` record the Drupe template requires, its `now` written as Cedar writes a
+`datetime`), and the fully-qualified action with its explicit `::request` (or
+other) kind and its logged record. See
 [The event schema](03-event-schema.md) for the event model.
 
 ### `lower` — see the generated Cedar
@@ -235,8 +255,9 @@ dogwood schema providers providers.json
 Each checks one schema artifact in isolation — that it parses and is
 well-formed — so you can tell "my schema is broken" from "my policy is broken"
 before running `validate`. `dogwood schema mcp --manifest tools.json` generates a
-Cedar action schema from an MCP tool manifest (see
-[MCP schema generation](11-mcp-schema-generation.md)).
+Cedar action schema from an MCP tool manifest when the CLI is built with the
+`mcp-schema` feature (`cargo build -p dogwood-cli --features mcp-schema`;
+see [MCP schema generation](11-mcp-schema-generation.md)).
 
 ## Pipelines and stdin
 

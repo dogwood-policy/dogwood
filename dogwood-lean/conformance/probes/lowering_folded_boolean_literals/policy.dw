@@ -1,0 +1,9 @@
+// A rule conjoins two Boolean literals before its temporal leaf, and has two clauses of `true`.
+// Cedar's expression builder folds `&&` of two Boolean literals into one, so the crate lowers
+// `true && true && temporal { … }` to `true && context.<leaf>`, and the clauses to `true`; the
+// Lean port of the frontend folds them the same way. Both allow alice's `Read` after her login.
+@id("read_after_login_folded")
+permit (principal, action == Drupe::Action::"Read", resource)
+when { true && true && temporal { formerly within 1h Drupe::Action::"Login"::response{ input.user: context.input.user } } }
+when { true }
+when { true };

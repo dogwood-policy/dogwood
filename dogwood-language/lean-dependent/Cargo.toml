@@ -1,0 +1,26 @@
+[package]
+name = "dogwood-lean-dependent"
+version = "0.0.0"
+edition = "2024"
+publish = false
+license = "Apache-2.0"
+description = "A test of the dogwood-language crate's Lean frontend as a dependency: a crate that compiles Lean modules of its own against the crate's Lean library and links them with the crate's Lean runtime."
+
+# Off by default, so that a build of the workspace, with or without
+# `--workspace`, never turns on the language crate's Lean frontend. With
+# `--features lean`, the build script compiles `lean/` against the Lean library
+# the language crate's build publishes (`DEP_DOGWOOD_LEAN_*`), and the tests run.
+[features]
+lean = [
+    "dogwood-language/lean-frontend",
+    "dogwood-language/frontend-export",
+    "dep:cc",
+]
+
+[dependencies]
+dogwood-language = { path = ".." }
+cedar-policy = "4.14"
+serde_json = "1"
+
+[build-dependencies]
+cc = { version = "1", optional = true }

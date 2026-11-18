@@ -72,7 +72,7 @@ formerly within 1h Drupe::Action::"Login"::attempt{ input.user: context.input.us
 
 ### Field patterns
 
-Each named argument is `field_path : term`. The field name is a **dotted path** into the event's record — a bare field (`user`), or a path into a nested group (`input.user`, `output.result`). This mirrors how you reference the current request on the right-hand side (`context.input.user`): an event's spliced input/output values nest under the `input` and `output` groups, which stay distinct.
+Each named argument is `field_path : term`. The field name is a **dotted path** into the event's record — a bare field (`user`), or a path into a nested group (`input.user`, `output.result`). This mirrors how you reference the current request on the right-hand side (`context.input.user`): an event's spliced input/output values nest under the `input` and `output` groups, which stay distinct. Each `.` steps one level into the record, and each name is an identifier, so a field whose name holds a `.` (a Cedar attribute such as `"user.id"`) cannot be named here; `input.user.id` is the `id` inside `user` (see [the event schema](03-event-schema.md#nested-records-and-deep-hierarchy)).
 
 The **term** on the right of the colon is the pattern the field must match. The forms you will use:
 
@@ -99,11 +99,11 @@ Beyond field patterns, terms appear on both sides of comparisons and as macro ar
 | Term | Syntax | Notes |
 |---|---|---|
 | Entity | `Drupe::OAuthUser::"alice"` | qualified entity reference |
-| Integer | `42`, `-1` | |
+| Integer | `42`, `-1` | a 64-bit signed integer; a literal outside that range is rejected |
 | Decimal | `decimal("1.5")` | payload kept as text; equality-only at eval time (see semantics) |
 | String | `"hello"` | |
 | Boolean | `true` / `false` | |
-| Context field | `context.input.foo`, `context.system.now` | dotted path into the current request's context record |
+| Context field | `context.input.foo`, `context.input.user` | dotted path into the current request's context record |
 | Scope entity | `principal`, `resource`, `principal.dept` | the request principal / resource entity (± an attribute) |
 | Variable | a bare identifier | a bound-variable name |
 | Wildcard | `*`, or a bare `_` | matches anything, binds nothing; each independent |
@@ -128,7 +128,7 @@ A window is written `within <amount><unit>`. There are exactly **four** time uni
 
 There is no week, month, or year unit. The amount is an integer. A window boundary is a **closed (inclusive)** interval: a witness exactly `W` seconds back is *in* the window; one second further is *out* (see [Evaluation semantics](#evaluation-semantics)).
 
-**Windows are capped.** How far back a window may look is bounded by the event schema's `max_window` — **24h by default**, adjustable with a `max_window = <interval>` directive at the top of the event schema (see [The event schema](03-event-schema.md#capping-the-look-back-window-max_window)). The validator rejects any `within` window that exceeds the cap. So `within 7d` or `within 30d` require a schema that raised the cap accordingly; under the default they are validation errors. The bound is inclusive, so `within 24h` sits exactly at the default cap and is allowed.
+**Windows are capped.** How far back a window may look is bounded by the event schema's `max_window` — **24h by default**, adjustable with a `max_window = <interval>` directive at the top of the event schema (see [The event schema](03-event-schema.md#capping-the-look-back-max_window-and-max_horizon)). The validator rejects any `within` window that exceeds the cap. So `within 7d` or `within 30d` require a schema that raised the cap accordingly; under the default they are validation errors. The bound is inclusive, so `within 24h` sits exactly at the default cap and is allowed. **Nested windows add up**: a condition's *horizon*, the largest sum of the windows along one chain of nested `formerly`/`previous`/`since`, is capped by the event schema's [`max_horizon`](03-event-schema.md#capping-the-look-back-max_window-and-max_horizon) when it declares one (there is no horizon cap otherwise) — so under `max_horizon = 24h`, `formerly within 24h (formerly within 24h …)` is rejected even though each window is within `max_window`.
 
 > The `within ?w` form (a `?`-sigil in place of a literal) is legal only inside a macro body, where the window is a parameter resolved at the call site; see [Macros](#macros-def-temporal). Outside a macro body you always write a literal like `1h`.
 
@@ -288,7 +288,7 @@ Predicates capture field values into variables. To *quantify* over those values 
 
 `exists` introduces a single typed variable `x` and asserts that its body `φ` has at least one satisfying assignment. It is the only binding form in the language. A few important rules:
 
-- **The type annotation is mandatory** on the binder. Types are `Timepoint`, or a qualified concrete/entity type (`Long`, `String`, `Drupe::OAuthUser`). The annotation is **authoritative**: validation seeds the binder's declared type into the type environment and then checks every *use* of the variable against it, rather than inferring the type from the first use. A use that contradicts the declaration is a type error — `exists (x: Long). x == "s"` is rejected because the string literal is inconsistent with the declared `Long`. The annotation is only consulted at *validation* time; at *evaluation* time only the binder name matters (candidate values still come from the binding atom, so there is no enumeration of the type).
+- **The type annotation is mandatory** on the binder. Types are `Timepoint`, or a qualified concrete/entity type (`Long`, `String`, `Bool`, `decimal`, or an entity type such as `Drupe::OAuthUser`). Temporal conditions do not support Cedar's other extension types: a binder declared `datetime`, `duration`, or `ipaddr` is rejected, and so is a temporal term whose type is or holds one — a comparison operand, a predicate argument, or a pin's request-side path, such as `context.input.at` of type `datetime` (``temporal conditions do not support Cedar's `datetime`, `duration`, and `ipaddr` types``). A schema may still declare such attributes and fields: a predicate that leaves the field out, or matches it with a wildcard, is valid, and the Cedar part of a rule reads them as Cedar does. The annotation is **authoritative**: validation seeds the binder's declared type into the type environment and then checks every *use* of the variable against it, rather than inferring the type from the first use. A use that contradicts the declaration is a type error — `exists (x: Long). x == "s"` is rejected because the string literal is inconsistent with the declared `Long`. The annotation is only consulted at *validation* time; at *evaluation* time only the binder name matters (candidate values still come from the binding atom, so there is no enumeration of the type).
 - **The scope is greedy to the right.** The body is a full condition, so `exists (x: T). φ && ψ` binds `x` over *both* `φ` and `ψ`. To stop the scope early, parenthesize: `(exists (x: T). φ) && ψ`.
 - **It is "at least one," not a count.** `exists` is satisfied by one or more witnesses; it does not tell you *how many*. Use `count` for that.
 - **The type is not enumerated.** `x`'s candidate values come only from the atom that binds it — a predicate field, a `tp`, or an `(agg) == x` equality. There is no iteration over "all Longs."
@@ -328,6 +328,10 @@ exists (pr: Drupe::OAuthUser). (
     && formerly within 1h Drupe::Action::"Deny"::request{ callerPrincipal: pr }
 )
 ```
+
+A variable bound by a field must have a type every value of the field has. `callerPrincipal` is declared `principalType(A)`, so on an event of `Login` it holds an entity of any of `Login`'s principal types; `pr: Drupe::OAuthUser` is valid only when `OAuthUser` is the one principal type of `Login` and of `Deny`. Validation rejects the binding otherwise, as for the Drupe template, whose actions admit three principal types. Under the default event schema, the rule's own action must admit only `OAuthUser` principals too: its pin correlates each predicate's `callerPrincipal` with the request's principal, which must be a value the field can hold. (Runnable as an `Alert` permit, with `Login` and `Transfer`, in [`examples/alert_same_principal_login_transfer/`](../examples/alert_same_principal_login_transfer/).)
+
+Likewise, an `==` or `!=` with a bare variable on one side, and on the other a term that is not a variable and holds no wildcard, must compare two values of the same type: that is the operand shape of an `==` that can bind the variable. Since evaluation does not consult a binder's declared type, `exists (g: Drupe::Gateway). … && g == Drupe::OAuthUser::"alice"` would bind `g` to alice and hold, though no `Gateway` equals an `OAuthUser`; validation rejects it (`equality requires both sides to have the same type`). The rule goes by the comparison's shape, so it also rejects `g != principal`, `!(g == principal)`, and `g == principal` where `g` is already bound, though none of them could bind `g`. Any other equality may compare two entities of different types, such as `principal == resource` or two variables; `==` is then false (`!=` true), as in Cedar.
 
 ### `tp` — the timepoint binder
 
@@ -461,8 +465,8 @@ arith cmp_op arith
 Each operand is an **arithmetic expression** over terms: one or more terms combined with `+`, `-`, and `*`. A single term is an expression with zero operators, and either operand may be (or contain) an aggregate, subject to the comparison-operand-only rule above. Semantics:
 
 - `==` and `!=` use domain equality on the resolved values.
-- Ordering comparisons (`<`, `<=`, `>`, `>=`) require **both** sides to resolve to integers; otherwise the comparison is `false`. Decimals are kept as text and are effectively equality-only — a `decimal(…)` in an ordering comparison resolves but fails the integer conversion and yields `false`.
-- If either operand fails to resolve (an unbound variable, a wildcard), the comparison is `false`.
+- Ordering comparisons (`<`, `<=`, `>`, `>=`) apply only to two `Long`s; validation rejects an ordering of any other type (``comparison requires numeric operands on both sides``). Decimals are equality-only.
+- If either operand fails to resolve, the comparison is `false`. Validation rules out most such operands (an unguarded optional attribute, an undeclared path), so what remains is, for instance, an attribute of a scope entity the event supplies no data for. A wildcard resolves to no value outside a predicate argument, so validation rejects it as a comparison operand (``a wildcard (`*` / `_`) cannot be a comparison operand``): `x == *` would be false whatever the trace, and `!(x == *)` true. To mean "any value", leave the comparison out, or put the wildcard in a predicate argument (`input.user: *`).
 
 **`==` doubles as a binder.** In a relational context, an `a == x` (or `x == a`) with exactly one *unbound* variable operand **binds** that variable to the other side's value. This is the mechanism behind `exists (n: Long). ((agg) == n && …)` — the `== n` binds `n` to the aggregate's value so the following `n > 2` can filter it. An `==` with no unbound operand, or any ordering comparison, is a plain filter.
 
@@ -489,7 +493,7 @@ context.input.amount <= po_amount + 50            // tolerance
 The rules:
 
 - **Comparison-operand-only**, exactly like aggregates: arithmetic may not appear as a predicate-argument value, an array element, or a macro-call term argument.
-- **All atoms must be `Long`.** Decimals stay equality-only; strings, booleans, entities, arrays, and wildcards are rejected inside a compound expression. A bare `*` is still the wildcard when it is a whole operand (`x == *`); after a complete term, `*` is multiplication.
+- **All atoms must be `Long`.** Decimals stay equality-only; strings, booleans, entities, arrays, and wildcards are rejected inside a compound expression. A bare `*` is still the wildcard when it is a whole operand (`x == *`), which validation rejects too: a wildcard is a pattern for a predicate argument, and as an operand it resolves to no value, so the comparison is always false. After a complete term, `*` is multiplication.
 - **There is no `/` or `%`.** Percentages cross-multiply (`100 * errors <= 5 * total`), which stays exact over integers; Cedar has no division either.
 - **A compound never binds.** The `==`-binder rule above applies only to a bare-variable side; every variable *inside* a compound expression must be restricted by a preceding conjunct, and there is no algebraic solving — `m + 1 == 5` does not bind `m`. A bare variable *against* a compound does bind: `n1 + n2 == m` binds `m` once `n1` and `n2` are restricted.
 - **Fencing extends to chains.** An aggregate anywhere but the final position of the final operand must be parenthesized, or its greedy `where` body swallows what follows: `(count …) - (count …) <= 5`.
@@ -557,7 +561,7 @@ An `exists (x: T). φ` is accepted only if `x` is range-restricted by a **positi
 
 Within a `&&` chain, every conjunct may *produce* bindings (a predicate field, `tp`, a binding equality) and may *consume* bindings — variables that must already be bound when it evaluates. A consumer is accepted only when the variables it consumes are restricted by a **preceding** conjunct — in the same chain, or inherited from an enclosing chain (parenthesized sub-chains and nested `exists`/`formerly` bodies see everything already established at their position; an enclosing *binder* alone establishes nothing, and a shadowing binder cuts inherited restrictions of its name). The consumers:
 
-- a **pure filter** — an ordering comparison, a guarded negation `!φ`, or a non-binding `==` (including `x == *`: a wildcard is not a value, so the equality binds nothing) — consumes all its free variables; a compound arithmetic operand consumes every variable inside it (a compound never binds);
+- a **pure filter** — an ordering comparison, a guarded negation `!φ`, or a non-binding `==` (a wildcard is never a comparison operand; see [Comparisons](#comparisons)) — consumes all its free variables; a compound arithmetic operand consumes every variable inside it (a compound never binds);
 - a **binding equality** `x == (aggregate)` — or `x` against a wildcard-free compound expression — produces `x` but consumes the value side's *correlated* variables (free in an aggregate's `where` body and not in its `for` list, or inside the compound) — with them unbound, the count/sum would silently de-correlate into a global tally;
 - a **`since`** consumes the left operand's variables not restricted by its anchor (the left is checked per step and can bind nothing itself).
 
@@ -626,11 +630,11 @@ Every free variable of an aggregation body must be bound — either by the `for`
 
 ### Keep aggregates as comparison operands only
 
-As covered above: an aggregate is legal only as the immediate operand of a comparison, never as a predicate argument or nested in another term.
+As covered above, an aggregate is legal only in a comparison operand: either as the whole operand, or as a leaf of an arithmetic operand such as `(count …) - (count …) <= 5` (arithmetic is experimental). It is never a predicate argument or an array element.
 
 ### Every monitoring scope must depend on the timepoint (tp-dependence)
 
-A schema-aware check rejects any **degenerate** monitoring scope — one whose body does not vary with the current timepoint, and therefore "monitors nothing." Only predicate matches and `tp(_)` vary between timepoints that share the same request context; literals, `context.*` references, and entities are timepoint-independent, and an aggregate is *always* timepoint-dependent. Scopes that are individually checked include each top-level `&&` conjunct, a `formerly`/`previous` body, each side of a `since`, an `exists` body, and an aggregation's `where` body. In practice this means every scope must contain at least one real predicate (or `tp`); a conjunct made only of literals and context references is rejected.
+A schema-aware check rejects any **degenerate** monitoring scope — one whose body does not vary with the current timepoint, and therefore "monitors nothing." A condition varies between timepoints that share the same request context when it contains a predicate match, a `tp(_)`, an aggregate, a nested temporal operator, or an `exists`, or compares a variable bound by one of those (an `exists` binder, a `sum`'s summed variable, or a variable a predicate binds outside a negation or an aggregation body). Literals, entities, and `context.*` / `principal.*` / `resource.*` references are timepoint-independent. Scopes that are individually checked include each top-level `&&` conjunct, a `formerly`/`previous` body, each side of a `since`, an `exists` body, and an aggregation's `where` body, including an aggregate inside a compound operand. A conjunct made only of literals and request-side references is rejected.
 
 ### Schema-level checks
 
@@ -644,7 +648,7 @@ A temporal expression is legal exactly when: it parses under the grammar (only `
 
 This section states precisely how a temporal condition is evaluated. Any conforming temporal engine must produce these verdicts.
 
-**Decision timepoint and history.** A condition is evaluated at a single **decision timepoint `i`** against the trace history `0..=i` — everything up to and including `i`. The language is **past-only**: nothing at any `j > i` is ever read. The request's own fields seed the initial bindings (nested groups flattened to dotted keys), plus the scope aliases `@principal` and `@resource`.
+**Decision timepoint and history.** A condition is evaluated at a single **decision timepoint `i`** against the trace history `0..=i` — everything up to and including `i`. The language is **past-only**: nothing at any `j > i` is ever read. The request's own fields seed the initial bindings (nested groups flattened to one key per path, written with each name escaped as in [the event schema](03-event-schema.md#nested-records-and-deep-hierarchy), so a member named `user.id` and the `id` inside a member `user` have different keys), plus the scope aliases `@principal` and `@resource`.
 
 **Policies describe the observed sequence.** `previous` and `since` refer to
 positions in the sequence Dogwood has observed. This can differ from agent
@@ -680,9 +684,9 @@ as seconds since midnight:
 
 ```text
 @35940 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { resource: "doc1", user: "alice" }) Drupe::Action::"Grant"::response(input: { resource: "doc1", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u1")
-@36060 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { resource: "doc1", user: "alice" }) Drupe::Action::"Access"::request(input: { resource: "doc1", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u2")
+@36060 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { resource: "doc1", user: "alice" }, system: { now: datetime("1970-01-01T10:01:00Z") }) Drupe::Action::"Access"::request(input: { resource: "doc1", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u2")
 @36120 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { resource: "doc1", user: "alice" }) Drupe::Action::"Revoke"::response(input: { resource: "doc1", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u3")
-@36180 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { resource: "doc1", user: "alice" }) Drupe::Action::"Access"::request(input: { resource: "doc1", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u4")
+@36180 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { resource: "doc1", user: "alice" }, system: { now: datetime("1970-01-01T10:03:00Z") }) Drupe::Action::"Access"::request(input: { resource: "doc1", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u4")
 ```
 
 The `Grant::response` records an access grant observed at 09:59. At 10:00,
@@ -709,12 +713,12 @@ The reference interpreter is for testing semantics. Test authors must
 deliberately choose the observation sequence and supply strictly increasing
 timestamps. The interpreter preserves supplied timestamps; it neither constructs
 nor validates that sequence, and does not check the timestamp contract. Accepting
-an input does not establish that it satisfies that contract. Durable Local Engine
-submission instead assigns timestamps at ingestion.
+an input does not establish that it satisfies that contract. An authorizer
+that stamps events at ingestion establishes it instead.
 
-**A tool invocation spans separate events.** The authorizer calls the temporal engine's `observe` for every ingested event before deciding it. A successfully recorded `request` remains in history even if subsequent evaluation denies it or fails closed on an error, so it records an attempt. The verdict is returned separately and is not appended to history. An enforcing caller executes the action only after `Allow`; its eventual `response` or `error` is a separate event. Other events can be ingested between request and outcome. Authorization does not make the whole invocation atomic: actions can overlap and complete in a different order from their authorization.
+**A tool invocation spans separate events.** The authorizer calls the temporal engine's `observe` for every ingested event before deciding it. An event that does not conform to the event schema is not ingested, so it never enters the history: a nonconforming history event is rejected, and a nonconforming decision event's decision fails closed. A recorded `request` remains in history even if subsequent evaluation denies it or fails closed on an error, so it records an attempt. The verdict is returned separately and is not appended to history. An enforcing caller executes the action only after `Allow`; its eventual `response` or `error` is a separate event. Other events can be ingested between request and outcome. Authorization does not make the whole invocation atomic: actions can overlap and complete in a different order from their authorization.
 
-**Key-local semantics under universal pins.** The semantics below are stated over the *whole* trace. When the event schema declares a **universal symmetric pin** (a field pinned on every event kind to its own request-side path — see [The event schema](03-event-schema.md)), every temporal condition is instead evaluated over the **slice** of the trace agreeing with the current request on the pinned field(s): `previous` means "this key's previous event," and the `∀`-side of `since` ranges over this key's positions only. For `formerly`, aggregations, and the negated-left `since` idiom the two readings coincide: a pinned predicate cannot match another key's event, and a body containing no such predicate is guarded so that a foreign position cannot witness it either. The slice reading is what makes per-key storage and evaluation verdict-preserving. **The default event schema declares such a pin**, on `callerPrincipal`, so the key-local reading is the one that applies unless you replace it. Without a universal symmetric pin — a schema that declares none, or one that is partial or asymmetric — the global reading below applies verbatim.
+**Key-local semantics under universal pins.** The semantics below are stated over the *whole* trace. When the event schema declares a **universal symmetric pin** (a field pinned on every event kind to the request's principal, its resource, or a context attribute — see [The event schema](03-event-schema.md)), every temporal condition is instead evaluated over the **slice** of the trace agreeing with the current request on the pinned field(s): `previous` means "this key's previous event," and the `∀`-side of `since` ranges over this key's positions only. For `formerly`, aggregations, and the negated-left `since` idiom the two readings coincide: a pinned predicate cannot match another key's event, and a body containing no such predicate is guarded so that a foreign position cannot witness it either. The slice reading is what makes per-key storage and evaluation verdict-preserving. **The default event schema declares such a pin**, on `callerPrincipal`, so the key-local reading is the one that applies unless you replace it. Without a universal symmetric pin — a schema that declares none, or whose pins are each partial or pinned to an attribute of the principal or resource — the global reading below applies verbatim.
 
 **Windows are closed (inclusive).** A window of `W` is the set of past timepoints `j` with `0 <= ts(i) - ts(j) <= W`. A witness exactly `W` seconds back is *in*; one second further is *out*. The lower bound `>= 0` is what makes the language past-only.
 

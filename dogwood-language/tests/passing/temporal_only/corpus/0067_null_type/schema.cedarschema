@@ -1,6 +1,6 @@
 namespace Drupe {
   type ClearInput = {
-    field: String,
+    field?: String,
     user: String
   };
 

@@ -1,0 +1,4 @@
+// A provider method declared to take a `Set<Long>` follows a stage that produces a `Set<String>`.
+// The specification rejects it (providers).
+permit (principal, action == Drupe::Action::"Read", resource)
+when { Risk::Chain().first() > 3 };

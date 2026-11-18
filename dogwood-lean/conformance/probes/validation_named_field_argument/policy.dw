@@ -1,0 +1,6 @@
+// The event schema types `requestId` as a `String`, and a predicate gives it a `Long`. The
+// specification rejects it (predicate arguments).
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ requestId: 5 }
+};

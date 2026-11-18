@@ -19,7 +19,8 @@ event schema declares three kinds — `request` (the only decision kind),
 principal` on every kind), so the default runs under **key-local semantics**:
 every temporal predicate is silently correlated to the current request's
 principal, and other principals' events are invisible to it. The default
-look-back cap is `max_window = 24h`, the default provider set is **empty**, and
+look-back cap is `max_window = 24h` (with no `max_horizon`, so nesting is
+uncapped), the default provider set is **empty**, and
 the default macro library is the small standard one (`count_within`,
 `sum_within`, `count_distinct_within`, `bind`). So the most important decision
 is Step 0: *do you even need one?* If not, the best service schema is no
@@ -55,7 +56,12 @@ from the default request/response/error model in one of these ways:
   event schema's `max_window` directive, **24h when absent**, so a policy with
   `within 7d` is a validation error under the default. Raising the cap is an
   event-schema change: copy the default schema and add `max_window = <interval>`
-  (e.g. `max_window = 30d`) at the top of the file. **A `.dwschema` containing
+  (e.g. `max_window = 30d`) at the top of the file.
+- **A retention bound** — a condition's total look-back (its *horizon*: nested
+  windows add up) is uncapped unless the event schema declares
+  `max_horizon = <interval>`; declare it when the service needs to know how
+  much history to keep. `max_horizon` alone also sets `max_window`, and a
+  declared `max_window` may not exceed it. **A `.dwschema` containing
   only the directive declares zero events** — it passes the isolated
   `schema event` check but every policy predicate then fails the composite
   `validate` (`does not name a declared event`) — so always carry the event
@@ -83,7 +89,8 @@ are relative to this skill directory
   the `[decision] event <A>::kind { … }` shape, the four selectors (`inputs`,
   `outputs`, `principalType`, `resourceType`), spreads vs field-types, nested
   records, **pins** (`pin name: type = <request-reference>`), decision vs
-  history kinds, the **`max_window` directive** (the look-back cap), the
+  history kinds, the **`max_window` and `max_horizon` directives** (the
+  look-back caps), the
   default schema, and worked corpus examples (1110–1122). Read in full
   before writing any `.dwschema`.
 - `../../../dogwood-docs/guide/10-provider-schema.md` — **declaring** a provider:
@@ -147,13 +154,12 @@ predicate for that event (a hand-written field can only *narrow* a pin, never
 relax it). Correlate against the current request with `principal` / `resource`
 (the scope entities) / `context.<path>` (a context field) — note `principal`
 is the bare scope reference, **not** `context.principal` (which would be a
-context field literally named `principal`). A pin declared identically on
-**every** kind with a symmetric path (`pin f = context.f`, or the reserved
-`callerPrincipal = principal` / `callerResource = resource`) additionally
-switches temporal evaluation to
-**key-local semantics** (`previous` / `since` range over the key's own
-events) and guarantees verdicts depend only on that key's events — safe to
-partition storage per key, but cross-key policies ("N logins by *any*
+context field literally named `principal`). A symmetric pin (one pinned to
+`principal`, `resource`, or a `context.<path>`, whatever the field is called)
+declared identically on **every** kind additionally switches temporal
+evaluation to **key-local semantics** (`previous` / `since` range over the
+key's own events) and guarantees verdicts depend only on that key's events —
+safe to partition storage per key, but cross-key policies ("N logins by *any*
 user") become inexpressible; see the event-schema doc's "Universal
 symmetric pins" section before adopting one.
 

@@ -61,10 +61,12 @@ fn providers_json_without_bom_still_works() {
     ProviderDeclarations::from_json(PROVIDERS_JSON).expect("providers parse without BOM");
 }
 
-// ─── mcp_to_cedar_schema ─────────────────────────────────────────────
+// ─── mcp_to_cedar_schema (feature `mcp-schema`) ──────────────────────
 
+#[cfg(feature = "mcp-schema")]
 const MCP_MANIFEST: &str = include_str!("../mcp_tools.json");
 
+#[cfg(feature = "mcp-schema")]
 #[test]
 fn mcp_manifest_with_bom_generates_schema() {
     use dogwood_language::mcp_to_cedar_schema;
@@ -72,6 +74,7 @@ fn mcp_manifest_with_bom_generates_schema() {
     mcp_to_cedar_schema(&bom_manifest).expect("MCP manifest parses with BOM");
 }
 
+#[cfg(feature = "mcp-schema")]
 #[test]
 fn mcp_manifest_without_bom_still_works() {
     use dogwood_language::mcp_to_cedar_schema;

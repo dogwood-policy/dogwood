@@ -16,3 +16,6 @@ pub mod parse;
 pub mod pin;
 pub mod relativize;
 pub mod validate;
+
+#[cfg(test)]
+mod dotted_field_tests;

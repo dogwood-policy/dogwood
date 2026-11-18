@@ -3,8 +3,7 @@ name = "dogwood-docs"
 version.workspace = true
 edition = "2024"
 # The docs + example bundles + their check harness are a reference/verification
-# target, not a library other packages consume. Not published (publish = false),
-# but kept at the workspace version so all crates stay in lockstep.
+# target, not a library other packages consume. Not published.
 publish = false
 description = "The Dogwood documentation: the guide prose plus complete, CLI-checked example bundles. A test harness runs every bundle through the `dogwood` binary, so a doc example that no longer parses/validates/replays is a build failure."
 exclude = ["/build", "/Config", "/build-tools/"]

@@ -1,0 +1,4 @@
+// Truncated adaptation of login_attempt_custom_kind/event.dwschema.
+decision event <A>::attempt {
+    ...inputs(A),
+    actor: principalType(A),

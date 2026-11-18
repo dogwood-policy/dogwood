@@ -1,0 +1,6 @@
+// Two records of different shapes are compared. The specification rejects it (comparison
+// operands).
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h (Drupe::Action::"Login"::request{ input.user: context.input.user } && context.input.profile == context.input.card)
+};

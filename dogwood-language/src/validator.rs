@@ -57,6 +57,12 @@ impl Validator {
     /// not meaningful for the lowered dialects (a hoisted `context.<id>` field
     /// must typecheck), so there is no mode to choose.
     pub fn validate(&self, policies: &LoweredPolicySet) -> ValidationResult {
+        // A set the Lean frontend lowered reports the Lean validator's findings; a
+        // set it was compared with in shadow mode compares the two validators.
+        #[cfg(feature = "lean-frontend")]
+        if let Some(result) = crate::lean_frontend::validate(policies.lowered()) {
+            return result;
+        }
         crate::validate::validate_impl(policies.lowered())
     }
 }

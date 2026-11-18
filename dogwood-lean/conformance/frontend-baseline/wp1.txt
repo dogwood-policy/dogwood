@@ -1,0 +1,5 @@
+# Expected disagreements of the checks WP1 owns, one per line, as `<group> | <bundle> | <check>`
+# (see conformance/frontend-run.sh). Put a comment above each line naming the crate defect,
+# or the known difference, it stands for.
+#
+# None. Every bundle agrees on mergeLibrary, expand and rejectArrays, spans included.

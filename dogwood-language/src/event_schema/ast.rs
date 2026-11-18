@@ -14,14 +14,66 @@ use crate::error::Span;
 use crate::extension::temporal::ast::Interval;
 
 /// A parsed event schema: the ordered list of event-kind declarations, plus
-/// the optional maximum-window cap.
+/// the optional look-back caps.
 #[derive(Debug, Clone)]
 pub struct EventSchema {
     /// The `max_window = <interval>` directive, if the schema declared one.
-    /// `None` means the schema did not set a cap, and derivation supplies the
-    /// [`DEFAULT_MAX_WINDOW`](crate::event_schema::derive::DEFAULT_MAX_WINDOW).
+    /// `None` means the schema did not set a cap, and derivation supplies a
+    /// declared `max_horizon`, else the
+    /// [`DEFAULT_MAX_WINDOW`](crate::event_schema::derive::DEFAULT_MAX_WINDOW)
+    /// (see [`EventSchema::limits`]).
     pub max_window: Option<Interval>,
+    /// The `max_horizon = <interval>` directive, if the schema declared one.
+    /// `None` means the schema did not set one; see [`EventSchema::limits`].
+    pub max_horizon: Option<Interval>,
     pub decls: Vec<EventDecl>,
+}
+
+/// The resolved look-back caps of an event schema.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Limits {
+    /// The cap on each temporal `within` window.
+    pub max_window: Interval,
+    /// The cap on a temporal condition's horizon (the largest sum of the
+    /// windows along one chain of `formerly`, `previous` and `since`), if the
+    /// schema declares one. `None` is no cap.
+    pub max_horizon: Option<Interval>,
+}
+
+impl EventSchema {
+    /// Resolve the `max_window` and `max_horizon` directives:
+    ///
+    /// * `max_horizon` is the directive, if any; without one there is no
+    ///   horizon cap;
+    /// * `max_window` is the directive; without one, it is `max_horizon` when
+    ///   that was declared, and otherwise the
+    ///   [`DEFAULT_MAX_WINDOW`](crate::event_schema::derive::DEFAULT_MAX_WINDOW) (24h).
+    ///
+    /// A declared `max_window` longer than a declared `max_horizon` is an
+    /// error: no window could be used up to its cap.
+    pub fn limits(&self) -> Result<Limits, String> {
+        use crate::event_schema::derive::DEFAULT_MAX_WINDOW;
+        let max_window = self
+            .max_window
+            .or(self.max_horizon)
+            .unwrap_or(DEFAULT_MAX_WINDOW);
+        if let Some(h) = self.max_horizon
+            && max_window.seconds() > h.seconds()
+        {
+            return Err(format!(
+                "`max_window = {}` is longer than `max_horizon = {}`; a temporal condition can \
+                 never look back further than `max_horizon`, so no window could use its full \
+                 cap. Set `max_horizon` to at least `{}`, or lower `max_window`",
+                max_window.render(),
+                h.render(),
+                max_window.render(),
+            ));
+        }
+        Ok(Limits {
+            max_window,
+            max_horizon: self.max_horizon,
+        })
+    }
 }
 
 /// One `[decision] event <A>::kind { fields }` declaration.

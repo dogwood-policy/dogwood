@@ -191,6 +191,25 @@ fn temporal_unknown_entity_type() {
     assert_has_error(&errors, "unknown entity type");
 }
 
+/// The message lists the declared entity types sorted, so that it is the same on
+/// every run (the schema holds them in a hash map).
+#[test]
+fn temporal_unknown_entity_type_lists_the_declared_types_sorted() {
+    let lowered = lower(
+        r#"
+        permit(principal, action == Drupe::Action::"Read", resource)
+          when temporal {
+            formerly within 1h Drupe::Action::"Login"::request{ input.user: Drupe::FakeEntity::"x" }
+          };
+    "#,
+    );
+    let errors = validate_errors(&lowered);
+    assert_has_error(
+        &errors,
+        "unknown entity type `Drupe::FakeEntity`; known entity types: Drupe::Gateway, Drupe::OAuthUser",
+    );
+}
+
 // ═══════════════════════════════════════════════════════════════════════
 // Temporal dialect — context field resolution
 // ═══════════════════════════════════════════════════════════════════════
@@ -641,6 +660,7 @@ const ATTR_SCHEMA: &str = r#"
       entity OAuthUser = { dept: String, quota: Long, profile: { team: String } };
       entity Admin = { dept: Long, quota: Long };
       entity NoDept = { other: Long };
+      entity IdUser = { "id": String, "type": String };
       entity Gateway;
       type ReadInput = { user: String, amount: Long };
       action "Read" appliesTo {
@@ -655,6 +675,11 @@ const ATTR_SCHEMA: &str = r#"
       };
       action "Multi" appliesTo {
         principal: [OAuthUser, Admin],
+        resource: [Gateway],
+        context: { input: ReadInput }
+      };
+      action "IdRead" appliesTo {
+        principal: [IdUser],
         resource: [Gateway],
         context: { input: ReadInput }
       };
@@ -755,18 +780,15 @@ fn an_unresolvable_scope_path_is_rejected() {
     );
 }
 
-/// A scope permitting several entity types must agree on the attribute's type.
-///
-/// The condition is evaluated whichever entity the request carries, so a path that
-/// types differently per entity has no single type to check against — and is a
-/// mismatch for at least one of them. Mirrors the rule context paths already follow
-/// across the actions a hoisted leaf attaches to.
+/// A scope permitting several entity types types an attribute path in each request
+/// environment, as Cedar does: a comparison wrong for one of the entity types is rejected
+/// there (`temporal_request_envs.rs`, section 18, pairs this with Cedar's verdicts).
 #[test]
 fn a_scope_path_typed_differently_per_entity_is_rejected() {
-    // `dept` is String on OAuthUser and Long on Admin.
+    // `dept` is String on OAuthUser and Long on Admin; `a` is a `Long`.
     assert_has_error(
         &validate_errors(&lower_attr(&cap("Multi", "a == principal.dept"))),
-        "different type on each entity",
+        "equality requires both sides to have the same type, got `int` and `string`",
     );
     // Declared on only SOME permitted entities IS rejected: the condition is dead for
     // requests carrying an entity that lacks the attribute, which is Cedar's own
@@ -797,49 +819,43 @@ fn a_scope_path_typed_differently_per_entity_is_rejected() {
     );
 }
 
-/// The entity-reference projections type as STRING, so a mismatch against one is
-/// caught like any other.
+/// `.id` and `.type` are attributes like any other, as in Cedar, so reading one the entity type
+/// does not declare is caught like any other undeclared attribute.
 ///
-/// `.id` and `.type` project the entity uid when no attribute of that name is
-/// declared, and the uid's parts are strings. Exempting them from the check instead
-/// would leave the fail-open shape a second door: a `Long` summand equated to
-/// `principal.id` binds a string, which `sum` skips, so the cap never fires. Verified
-/// that the projection is live rather than theoretical: `principal.id == "alice"`
-/// holds at runtime against a trace whose principal is `App::OAuthUser::"alice"`.
+/// Without the check the fail-open shape would have a second door: a `Long` summand equated to
+/// an unresolvable `principal.id` binds nothing, so the cap never fires.
 #[test]
-fn an_int_compared_against_a_reference_projection_is_rejected() {
-    for path in ["principal.id", "principal.type", "resource.id"] {
+fn an_undeclared_id_or_type_is_rejected() {
+    for path in ["principal.id", "principal.type", "resource.id", "principal.id.foo"] {
         assert_has_error(
             &validate_errors(&lower_attr(&cap("Read", &format!("a == {path}")))),
+            "declares no attribute",
+        );
+    }
+}
+
+/// A declared `id` / `type` attribute has its declared type: a mismatch against it is caught
+/// like any other, and a match validates.
+#[test]
+fn a_declared_id_or_type_attribute_has_its_declared_type() {
+    for path in ["principal.id", "principal.type"] {
+        assert_has_error(
+            &validate_errors(&lower_attr(&cap("IdRead", &format!("a == {path}")))),
             "same type",
         );
     }
-    // The projection is a string, so it has no fields to descend into.
-    assert_has_error(
-        &validate_errors(&lower_attr(&cap("Read", "a == principal.id.foo"))),
-        "non-record type",
-    );
-}
-
-/// Comparing a projection against a STRING must still validate.
-///
-/// Guards the fix against over-rejection: the defect is the type mismatch, not the
-/// act of reading `.id`.
-#[test]
-fn a_string_compared_against_a_reference_projection_is_accepted() {
-    let src = r#"permit (principal, action == Drupe::Action::"Read", resource)
+    let src = r#"permit (principal, action == Drupe::Action::"IdRead", resource)
 when temporal { formerly within 1h
-  (Drupe::Action::"Read"::request{ input.user: context.input.user }
+  (Drupe::Action::"IdRead"::request{ input.user: context.input.user }
    && principal.id == "alice") };"#;
     let errors = validate_errors(&lower_attr(src));
     assert!(
         errors.is_empty(),
-        "a string comparison against `.id` must validate, got:\n{}",
+        "a string comparison against a declared `String` `id` must validate, got:\n{}",
         errors.join("\n")
     );
 }
 
-/// A `forbid` cap whose summand restrictor names a declared `Long` attribute.
 fn cap(action: &str, restrictor: &str) -> String {
     format!(
         r#"forbid (principal, action == Drupe::Action::"{action}", resource)

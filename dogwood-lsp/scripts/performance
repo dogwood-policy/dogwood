@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+crate_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
+workspace_root="$(cd -- "$crate_root/.." && pwd -P)"
+output="$crate_root/target/m8-performance-report.json"
+
+if [[ "${1:-}" == "--output" ]]; then
+    [[ -n "${2:-}" && -z "${3:-}" ]] || {
+        printf 'usage: %s [--output PATH]\n' "$0" >&2
+        exit 2
+    }
+    if [[ "$2" == /* ]]; then
+        output="$2"
+    else
+        output="$crate_root/$2"
+    fi
+elif [[ -n "${1:-}" ]]; then
+    printf 'usage: %s [--output PATH]\n' "$0" >&2
+    exit 2
+fi
+
+mkdir -p -- "$(dirname -- "$output")"
+temporary="$(mktemp "${TMPDIR:-/tmp}/dogwood-lsp-performance.XXXXXX")"
+trap 'rm -f -- "$temporary"' EXIT
+
+cd "$crate_root"
+DOGWOOD_PERFORMANCE_REPORT="$temporary" \
+    cargo test --manifest-path "$workspace_root/Cargo.toml" \
+    -p dogwood-lsp --all-features --test m8_performance -j 2 \
+    report_only_performance_baselines -- --ignored --exact
+[[ -s "$temporary" ]] || {
+    printf 'performance test produced an empty report\n' >&2
+    exit 1
+}
+cp -- "$temporary" "$output"
+printf 'Performance report: %s\n' "$output"

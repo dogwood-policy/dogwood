@@ -1,0 +1,4 @@
+// The second entry's ids cannot be assigned. (entry 1)
+permit (principal is Drupe::OAuthUser, action in [Drupe::Action::"Read", Drupe::Action::"Login"], resource)
+when { temporal { (count for (t: Timepoint). where formerly within 10m (Drupe::Action::"Read"::request{ input.user: context.input.user } && tp(t))) < 5 } }
+unless { principal.level < 1 };

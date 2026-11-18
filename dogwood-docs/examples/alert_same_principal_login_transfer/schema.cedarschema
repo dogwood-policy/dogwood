@@ -55,7 +55,7 @@ namespace Drupe {
   entity UnauthenticatedUser;
 
   action "Alert" in [Action::"CallTool"] appliesTo {
-    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    principal: [OAuthUser],
     resource: [Gateway],
     context: {
       input: AlertInput,
@@ -109,7 +109,7 @@ namespace Drupe {
   };
 
   action "Login" in [Action::"CallTool"] appliesTo {
-    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    principal: [OAuthUser],
     resource: [Gateway],
     context: {
       input: LoginInput,
@@ -127,7 +127,7 @@ namespace Drupe {
   };
 
   action "Transfer" in [Action::"CallTool"] appliesTo {
-    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    principal: [OAuthUser],
     resource: [Gateway],
     context: {
       input: TransferInput,

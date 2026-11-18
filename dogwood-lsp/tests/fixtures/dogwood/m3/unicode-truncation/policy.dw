@@ -1,0 +1,2 @@
+// Locally authored: an unterminated UTF-8 string after BMP and astral text.
+permit (principal, action, resource) when { "cafe雪😀

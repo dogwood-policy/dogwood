@@ -1,0 +1,24 @@
+// Event schema that PINS a NESTED reserved leaf: `__drupe.session_id` is
+// forced to equal `context.__drupe.session_id` on every predicate. This
+// exercises pinning a leaf inside a record group end to end (derive records
+// the full dotted path; the pin pass conjoins `__drupe.session_id: …`).
+//
+// The policy never writes the session id; the pin injects the same-session
+// correlation onto the past Login.
+
+decision event <A>::request {
+    ...inputs(A),
+    callerPrincipal: principalType(A),
+    callerResource:  resourceType(A),
+    requestId:       String,
+    __drupe: { pin session_id: String = context.__drupe.session_id },
+}
+
+event <A>::response {
+    ...inputs(A),
+    ...outputs(A),
+    callerPrincipal: principalType(A),
+    callerResource:  resourceType(A),
+    requestId:       String,
+    __drupe: { pin session_id: String = context.__drupe.session_id },
+}

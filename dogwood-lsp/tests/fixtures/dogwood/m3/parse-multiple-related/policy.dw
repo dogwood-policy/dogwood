@@ -1,0 +1,2 @@
+permit (principal == ?other, action, resource);
+permit (principal, action, resource == ?foo);

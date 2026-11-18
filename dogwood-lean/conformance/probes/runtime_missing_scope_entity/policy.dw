@@ -1,0 +1,11 @@
+// A temporal leaf reads `principal.level` under a negation, and the first `Read` supplies no
+// entity data for alice. The specification fails that decision closed (missing scope entity); the
+// crate adds a bare entity, so the comparison is false, its negation true, and it allows. With
+// alice's data supplied, both decide alike.
+@id("read_after_login_level")
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h (
+        Drupe::Action::"Login"::response{ input.user: context.input.user } && !(principal.level < 3)
+    )
+};

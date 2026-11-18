@@ -33,7 +33,7 @@ before it — **you cannot skip forward**.
    → skill: **authoring-action-schema**
 2. **Service schema** — *only if needed*. Customize the **event schema** (event
    *kinds* beyond the default `request`/`response`/`error`, pins, the
-   `max_window` look-back cap) and/or declare **information providers**
+   `max_window` / `max_horizon` look-back caps) and/or declare **information providers**
    (computed facts / `guardrails`). Both default sensibly, so most setups skip
    this step entirely.
    → skill: **authoring-service-schema**

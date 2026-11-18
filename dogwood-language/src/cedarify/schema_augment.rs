@@ -40,10 +40,54 @@ pub fn add_bool_context_fields(
         return Ok(());
     }
     inline_context_references(fragment)?;
+    reject_declared_leaf_names(fragment, fields)?;
     for field in fields {
         add_one(fragment, field)?;
     }
     Ok(())
+}
+
+/// Refuse a schema in which an action's context declares the name of a
+/// hoisted temporal leaf, whatever its type and whichever actions the leaf
+/// targets: on a target, the leaf's `Bool` would replace the attribute; on
+/// any action, a request could supply a value under the leaf's name. Every
+/// context is an inline record here (see [`inline_context_references`]).
+fn reject_declared_leaf_names(
+    fragment: &Fragment<RawName>,
+    fields: &[ContextField],
+) -> Result<(), String> {
+    for ns in fragment.0.values() {
+        for (action_id, action) in &ns.actions {
+            let Some(record) = inline_context_record(action) else {
+                continue;
+            };
+            if let Some(field) = fields
+                .iter()
+                .find(|f| record.attributes.contains_key(f.field_name.as_str()))
+            {
+                return Err(format!(
+                    "action `{}` declares a context attribute `{}`, a name lowering reserves \
+                     for the value of a temporal leaf; rename the attribute",
+                    escaped_action_id(action_id),
+                    field.field_name
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
+/// An action's context, if it is an inline record.
+fn inline_context_record(
+    action: &cedar_policy_core::validator::json_schema::ActionType<RawName>,
+) -> Option<&RecordType<RawName>> {
+    match &action.applies_to.as_ref()?.context.0 {
+        Type::Type {
+            ty: TypeVariant::Record(record),
+            ..
+        } => Some(record),
+        _ => None,
+    }
 }
 
 /// Replace every action context that is declared as a *type reference*
@@ -240,9 +284,10 @@ fn context_reference_name<N: std::fmt::Display>(ty: &Type<N>) -> Option<String> 
 ///   capture-proof spelling (verified to parse, validate, and compile).
 ///
 /// Cycles among common types are only rejected later (at ValidatorSchema
-/// construction), so the per-chain visited-set check below must not hang;
-/// it reports a cycle if one chase revisits a name. Sibling references to
-/// the same type are NOT a cycle — each attribute's chase is independent.
+/// construction), so the check below must not hang: it reports a cycle if
+/// one chase revisits a name, or reaches a name being inlined around it (a
+/// cycle through a record or a set). Sibling references to the same type
+/// are NOT a cycle — each attribute's chase is independent.
 fn normalize_resolved_type(
     ty: serde_json::Value,
     defs: &BTreeMap<String, serde_json::Value>,
@@ -252,13 +297,17 @@ fn normalize_resolved_type(
             .ext_types()
             .map(|n| n.to_string())
             .collect();
-    normalize_value(ty, defs, &ext_names)
+    normalize_value(ty, defs, &ext_names, &mut Vec::new())
 }
 
+/// `inlining` holds the common types being inlined on the path from the
+/// root to this node: a reference to one of them is a cycle through records
+/// or sets (`type A = { x: A }`), which inlining could not finish.
 fn normalize_value(
     mut ty: serde_json::Value,
     defs: &BTreeMap<String, serde_json::Value>,
     ext_names: &std::collections::BTreeSet<String>,
+    inlining: &mut Vec<String>,
 ) -> Result<serde_json::Value, String> {
     // In attribute position this node is a flattened `TypeOfAttribute`:
     // the type's own keys plus `required` / `annotations`. Substituting a
@@ -287,7 +336,7 @@ fn normalize_value(
         .map(str::to_string)
     {
         if let Some(def) = defs.get(&name) {
-            if !visited.insert(name) {
+            if inlining.contains(&name) || !visited.insert(name) {
                 return Err(
                     "context type reference chain is cyclic and cannot be resolved".to_string(),
                 );
@@ -310,7 +359,20 @@ fn normalize_value(
             obj.insert(k, v);
         }
     }
-    // Recurse into structural children.
+    // Recurse into structural children, with this node's chain on the path.
+    let depth = inlining.len();
+    inlining.extend(visited);
+    let result = normalize_children(&mut ty, defs, ext_names, inlining);
+    inlining.truncate(depth);
+    result.map(|()| ty)
+}
+
+fn normalize_children(
+    ty: &mut serde_json::Value,
+    defs: &BTreeMap<String, serde_json::Value>,
+    ext_names: &std::collections::BTreeSet<String>,
+    inlining: &mut Vec<String>,
+) -> Result<(), String> {
     if let Some(obj) = ty.as_object_mut() {
         if let Some(attrs) = obj
             .get_mut("attributes")
@@ -319,14 +381,14 @@ fn normalize_value(
             let keys: Vec<String> = attrs.keys().cloned().collect();
             for k in keys {
                 let v = attrs.remove(&k).expect("key just listed");
-                attrs.insert(k, normalize_value(v, defs, ext_names)?);
+                attrs.insert(k, normalize_value(v, defs, ext_names, inlining)?);
             }
         }
         if let Some(el) = obj.remove("element") {
-            obj.insert("element".into(), normalize_value(el, defs, ext_names)?);
+            obj.insert("element".into(), normalize_value(el, defs, ext_names, inlining)?);
         }
     }
-    Ok(ty)
+    Ok(())
 }
 
 fn add_one(fragment: &mut Fragment<RawName>, field: &ContextField) -> Result<(), String> {
@@ -396,6 +458,7 @@ fn add_bool_to_action(
     match &mut applies_to.context.0 {
         Type::Type { ty, .. } => match ty {
             TypeVariant::Record(record) => {
+                // No context declares the name (`reject_declared_leaf_names`).
                 record.attributes.insert(
                     SmolStr::from(field_name),
                     TypeOfAttribute {
@@ -545,14 +608,14 @@ pub fn add_provider_entity_types(
     for (declared, exported) in &names {
         let decl = &decls.entity_type_decls[declared];
         // `ProviderDeclarations::check` guarantees a qualified, valid name.
-        if let Some((ns, base)) = declared.rsplit_once("::") {
-            if declares(&ns_key(ns)?, base) {
-                errors.push(format!(
-                    "entity type `{declared}` is also declared by the policy schema, so \
-                     `{declared}::\"…\"` would be ambiguous; rename one of them"
-                ));
-                continue;
-            }
+        if let Some((ns, base)) = declared.rsplit_once("::")
+            && declares(&ns_key(ns)?, base)
+        {
+            errors.push(format!(
+                "entity type `{declared}` is also declared by the policy schema, so \
+                 `{declared}::\"…\"` would be ambiguous; rename one of them"
+            ));
+            continue;
         }
         let base = crate::extension::provider::declarations::exported_enum_basename(declared);
         let reused = fragment
@@ -670,13 +733,31 @@ pub fn add_provider_context_fields(
         .ok_or("internal: synthesized providers type missing")?;
 
     // The fields this pass contributes, as a record's attribute map.
-    let new_attrs = match pr_record {
+    let mut new_attrs = match pr_record {
         Type::Type {
             ty: TypeVariant::Record(record),
             ..
         } => record.attributes,
         _ => return Err("internal: synthesized providers type is not a record".to_string()),
     };
+    // The types were parsed in the root namespace, and are resolved in the
+    // namespace of a shared provider type. A namespace may declare a common
+    // or entity type named like a builtin (`type decimal = …`), which would
+    // capture the bare name: pin each such builtin to its `__cedar::`
+    // spelling, which no declaration captures.
+    let declared: BTreeSet<String> = fragment
+        .0
+        .values()
+        .flat_map(|ns| {
+            ns.common_types
+                .keys()
+                .map(|id| id.as_ref().to_string())
+                .chain(ns.entity_types.keys().map(ToString::to_string))
+        })
+        .collect();
+    for attribute in new_attrs.values_mut() {
+        pin_builtin_names(&mut attribute.ty, &declared)?;
+    }
 
     let target_namespaces: BTreeSet<String> = targets
         .iter()
@@ -716,6 +797,7 @@ pub fn add_provider_context_fields(
             shared_type_ids.insert(namespace, id.clone());
         }
     }
+    reject_declared_providers(fragment, &shared_type_ids)?;
     for namespace in &target_namespaces {
         if !shared_type_ids.contains_key(namespace) {
             let ns = fragment
@@ -726,9 +808,9 @@ pub fn add_provider_context_fields(
         }
     }
 
-    // A targeted action may carry an inline provider record from a schema
-    // produced by the older augmentation strategy, or from a customer schema.
-    // Preserve those fields when migrating that action to the shared type.
+    // A targeted action that already has `providers` refers to Dogwood's
+    // shared provider type (`reject_declared_providers`), which must be this
+    // namespace's.
     for (namespace, action_id) in &targets {
         let ns_key = ns_key(namespace)?;
         let ns = fragment
@@ -745,14 +827,6 @@ pub fn add_provider_context_fields(
             .ok_or_else(|| format!("action `{}` has no appliesTo", escaped_action_id(action_id)))?;
         match provider_attribute(&applies_to.context.0, action_id)? {
             None => {}
-            Some(TypeOfAttribute {
-                ty:
-                    Type::Type {
-                        ty: TypeVariant::Record(existing),
-                        ..
-                    },
-                ..
-            }) => merge_provider_attributes(&mut all_attrs, existing.attributes.clone())?,
             Some(attribute) => {
                 let shared_id = shared_type_ids
                     .get(namespace)
@@ -760,8 +834,8 @@ pub fn add_provider_context_fields(
                 let shared_name = shared_id.as_ref().to_string();
                 if !provider_type_reference_matches(&attribute.ty, namespace, &shared_name) {
                     return Err(format!(
-                        "action `{}` already has a `providers` attribute that is neither an \
-                         inline record nor Dogwood's shared provider type",
+                        "action `{}` already has a `providers` attribute that is not \
+                         Dogwood's shared provider type",
                         escaped_action_id(action_id)
                     ));
                 }
@@ -786,7 +860,7 @@ pub fn add_provider_context_fields(
     // Existing shared definitions must receive fields added by later passes,
     // even when none of that pass's policies target their namespace.
     for (namespace, shared_id) in &shared_type_ids {
-        let ns_key = ns_key(&namespace)?;
+        let ns_key = ns_key(namespace)?;
         let ns = fragment
             .0
             .get_mut(&ns_key)
@@ -836,6 +910,74 @@ pub fn add_provider_context_fields(
         )?;
     }
 
+    Ok(())
+}
+
+/// Rewrite every unqualified reference in `ty` to a builtin type (`String`,
+/// `Long`, `Bool`, an extension type) whose name is in `declared` to its
+/// `__cedar::` spelling.
+fn pin_builtin_names(ty: &mut Type<RawName>, declared: &BTreeSet<String>) -> Result<(), String> {
+    const PRIMITIVES: [&str; 3] = ["String", "Long", "Bool"];
+    let Type::Type { ty, .. } = ty else {
+        return Ok(());
+    };
+    match ty {
+        TypeVariant::EntityOrCommon { type_name } => {
+            let name = type_name.to_string();
+            let builtin = PRIMITIVES.contains(&name.as_str())
+                || cedar_policy_core::extensions::Extensions::all_available()
+                    .ext_types()
+                    .any(|n| n.to_string() == name);
+            if builtin && declared.contains(&name) {
+                *type_name = format!("__cedar::{name}")
+                    .parse()
+                    .map_err(|e| format!("internal: builtin type name `{name}`: {e}"))?;
+            }
+            Ok(())
+        }
+        TypeVariant::Set { element } => pin_builtin_names(element, declared),
+        TypeVariant::Record(record) => {
+            for attribute in record.attributes.values_mut() {
+                pin_builtin_names(&mut attribute.ty, declared)?;
+            }
+            Ok(())
+        }
+        _ => Ok(()),
+    }
+}
+
+/// Refuse a schema in which an action's context declares `providers`, a name
+/// lowering reserves for the values of provider leaves, unless the attribute
+/// refers to its namespace's Dogwood shared provider type (`shared`): that is
+/// the attribute an earlier lowering added, fed forward. Every action is
+/// checked, including one whose context is a common-type reference, which a
+/// copy of the fragment inlines.
+fn reject_declared_providers(
+    fragment: &Fragment<RawName>,
+    shared: &BTreeMap<String, CommonTypeId>,
+) -> Result<(), String> {
+    let mut inlined = fragment.clone();
+    inline_context_references(&mut inlined)?;
+    for (ns_key, ns) in &inlined.0 {
+        let namespace = namespace_string(ns_key);
+        for (action_id, action) in &ns.actions {
+            let Some(attribute) =
+                inline_context_record(action).and_then(|record| record.attributes.get("providers"))
+            else {
+                continue;
+            };
+            let fed_forward = shared.get(&namespace).is_some_and(|id| {
+                provider_type_reference_matches(&attribute.ty, &namespace, id.as_ref().as_ref())
+            });
+            if !fed_forward {
+                return Err(format!(
+                    "action `{}` declares a context attribute `providers`, a name lowering \
+                     reserves for the values of provider leaves; rename the attribute",
+                    escaped_action_id(action_id)
+                ));
+            }
+        }
+    }
     Ok(())
 }
 
@@ -989,18 +1131,6 @@ fn insert_provider_reference(
                 };
                 match record.attributes.get_mut(&SmolStr::from("providers")) {
                     Some(attribute)
-                        if matches!(
-                            attribute.ty,
-                            Type::Type {
-                                ty: TypeVariant::Record(_),
-                                ..
-                            }
-                        ) =>
-                    {
-                        attribute.ty = shared_type;
-                        Ok(())
-                    }
-                    Some(attribute)
                         if provider_type_reference_matches(
                             &attribute.ty,
                             namespace,
@@ -1011,7 +1141,7 @@ fn insert_provider_reference(
                     }
                     Some(_) => Err(format!(
                         "action `{}` already has a `providers` attribute that \
-                         is neither an inline record nor Dogwood's shared provider type",
+                         is not Dogwood's shared provider type",
                         escaped_action_id(action_id)
                     )),
                     None => {
@@ -1449,8 +1579,8 @@ mod tests {
                 )
                 .expect_err("providers is not a record"),
                 format!(
-                    "action `{escaped}` already has a `providers` attribute that is neither an \
-                     inline record nor Dogwood's shared provider type"
+                    "action `{escaped}` already has a `providers` attribute that is not \
+                     Dogwood's shared provider type"
                 ),
                 "non-record providers {action_source:?}"
             );
@@ -1638,32 +1768,41 @@ mod tests {
     }
 
     #[test]
-    fn targeted_inline_provider_record_migrates_to_shared_type() {
-        let mut fragment = parse(
-            r#"
-            namespace App {
-              entity User;
-              entity Doc;
-              action "Read" appliesTo {
-                principal: [User], resource: [Doc],
-                context: { providers: { legacy: String } }
-              };
-            }
-            "#,
-        );
-        add_provider_context_fields(
-            &mut fragment,
-            &[provider_field_for("generated", "App", "Read")],
-        )
-        .unwrap();
-
-        assert_eq!(
-            shared_provider_attr_names(&fragment, "App"),
-            Some(vec!["generated".to_string(), "legacy".to_string()])
-        );
-        assert!(action_references_shared_provider_type(
-            &fragment, "App", "Read"
-        ));
+    fn a_declared_provider_record_is_rejected_on_every_action() {
+        // Targeted or not, inline or behind a common type: lowering reserves
+        // `providers` for the provider leaves' values.
+        for (read, write) in [
+            ("{ providers: { legacy: String } }", "{}"),
+            ("{}", "{ providers: { legacy: String } }"),
+            ("{}", "Ctx"),
+        ] {
+            let mut fragment = parse(&format!(
+                r#"
+                namespace App {{
+                  type Ctx = {{ providers: {{ legacy: String }} }};
+                  entity User;
+                  entity Doc;
+                  action "Read" appliesTo {{
+                    principal: [User], resource: [Doc], context: {read}
+                  }};
+                  action "Write" appliesTo {{
+                    principal: [User], resource: [Doc], context: {write}
+                  }};
+                }}
+                "#
+            ));
+            let before = fragment.to_cedarschema().unwrap();
+            let err = add_provider_context_fields(
+                &mut fragment,
+                &[provider_field_for("generated", "App", "Read")],
+            )
+            .expect_err("a declared `providers` is rejected");
+            assert!(
+                err.contains("declares a context attribute `providers`"),
+                "{read} / {write}: {err}"
+            );
+            assert_eq!(fragment.to_cedarschema().unwrap(), before, "nothing is changed");
+        }
     }
 
     #[test]
@@ -1796,75 +1935,6 @@ mod tests {
         let schema: cedar_policy::SchemaFragment = fragment.try_into().unwrap();
         cedar_policy::Schema::from_schema_fragments([schema])
             .expect("qualified shared provider reference compiles");
-    }
-
-    #[test]
-    fn legacy_inline_provider_records_migrate_across_separate_passes() {
-        let schema = r#"
-            namespace App {
-              entity User;
-              entity Doc;
-              action "Read" appliesTo {
-                principal: [User], resource: [Doc],
-                context: { providers: { read_legacy: String } }
-              };
-              action "Write" appliesTo {
-                principal: [User], resource: [Doc],
-                context: { providers: { write_legacy: Long } }
-              };
-            }
-        "#;
-        let mut fragment = parse(schema);
-        add_provider_context_fields(
-            &mut fragment,
-            &[provider_field_for("read_new", "App", "Read")],
-        )
-        .unwrap();
-        assert!(action_references_shared_provider_type(
-            &fragment, "App", "Read"
-        ));
-        assert!(
-            matches!(
-                provider_attribute(
-                    &fragment.0[&ns_key("App").unwrap()].actions["Write"]
-                        .applies_to
-                        .as_ref()
-                        .unwrap()
-                        .context
-                        .0,
-                    "Write"
-                )
-                .unwrap()
-                .map(|attribute| &attribute.ty),
-                Some(Type::Type {
-                    ty: TypeVariant::Record(_),
-                    ..
-                })
-            ),
-            "an untargeted legacy action should remain inline until it is migrated"
-        );
-
-        let mut fragment = parse(&fragment.to_cedarschema().unwrap());
-        add_provider_context_fields(
-            &mut fragment,
-            &[provider_field_for("write_new", "App", "Write")],
-        )
-        .unwrap();
-
-        assert_eq!(
-            shared_provider_attr_names(&fragment, "App"),
-            Some(vec![
-                "read_legacy".to_string(),
-                "read_new".to_string(),
-                "write_legacy".to_string(),
-                "write_new".to_string(),
-            ])
-        );
-        for action in ["Read", "Write"] {
-            assert!(action_references_shared_provider_type(
-                &fragment, "App", action
-            ));
-        }
     }
 
     #[test]
@@ -2068,9 +2138,9 @@ mod tests {
         write.cedar_type = "String".to_string();
 
         let mut read_then_write = parse(schema);
-        add_provider_context_fields(&mut read_then_write, &[read.clone()]).unwrap();
+        add_provider_context_fields(&mut read_then_write, std::slice::from_ref(&read)).unwrap();
         let mut read_then_write = parse(&read_then_write.to_cedarschema().unwrap());
-        add_provider_context_fields(&mut read_then_write, &[write.clone()]).unwrap();
+        add_provider_context_fields(&mut read_then_write, std::slice::from_ref(&write)).unwrap();
 
         let mut write_then_read = parse(schema);
         add_provider_context_fields(&mut write_then_read, &[write]).unwrap();
@@ -2088,7 +2158,7 @@ mod tests {
     fn reapplying_the_same_provider_field_is_idempotent() {
         let field = provider_field("same_field");
         let mut once = parse(BASE_SCHEMA);
-        add_provider_context_fields(&mut once, &[field.clone()]).unwrap();
+        add_provider_context_fields(&mut once, std::slice::from_ref(&field)).unwrap();
         let once_text = once.to_cedarschema().unwrap();
 
         let mut twice = parse(&once_text);
@@ -2137,7 +2207,7 @@ mod tests {
         )
         .expect_err("an unmarked type must not be treated as Dogwood-owned");
         assert!(
-            err.contains("neither an inline record nor Dogwood's shared provider type"),
+            err.contains("declares a context attribute `providers`"),
             "unexpected error: {err}"
         );
         assert_eq!(
@@ -2443,7 +2513,9 @@ mod tests {
             "should reject non-record providers attribute"
         );
         assert!(
-            result.unwrap_err().contains("neither an inline record"),
+            result
+                .unwrap_err()
+                .contains("a name lowering reserves for the values of provider leaves"),
             "error should mention the reason"
         );
     }

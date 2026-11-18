@@ -1,0 +1,4 @@
+def temporal recent(?window, ?event) { formerly within ?window ?event };
+permit(principal, action, resource) when temporal {
+  recent(1h, Acme::Action::"Read"::request{})
+};

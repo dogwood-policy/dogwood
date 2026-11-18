@@ -20,9 +20,18 @@
 //! envelopes are optional) so logged and request-side data can be set
 //! independently — the builder API mirrors them together and could not express
 //! the divergence.
+//!
+//! **Under the strict mirror rule** (the default since the semantics review's
+//! F1.2 fix) such an event does not conform: a field that mirrors the request
+//! (`callerPrincipal`, a symmetric pin) must be absent when the event has no
+//! request-side value for it, so both engines reject it before it is routed.
+//! The routing property still matters for an authorizer built with
+//! `MirrorRule::Unchecked` (Dogwood_Language 1.1's ingestion), so each case
+//! checks it there, then checks the strict verdicts, and that the event carrying
+//! its scope or context is filed and seen.
 
 use dogwood_language::{
-    Authorizer, Decision, LoweredPolicySet, PolicySchema, ServiceSchema, parse_trace,
+    Authorizer, Decision, LoweredPolicySet, MirrorRule, PolicySchema, ServiceSchema, parse_trace,
 };
 
 const ACTION_SCHEMA: &str = r#"
@@ -43,15 +52,37 @@ namespace Drupe {
 }
 "#;
 
+/// [`ACTION_SCHEMA`] with the session id a context pin correlates on: a pin's
+/// request-side path is a required attribute of every context it is read from.
+const SESSION_ACTION_SCHEMA: &str = r#"
+namespace Drupe {
+  type LoginInput = { user: String };
+  type ReadInput  = { user: String };
+  type Empty = { };
+  entity Gateway;
+  entity OAuthUser = { id: String };
+  action "Login" appliesTo {
+    principal: [OAuthUser], resource: [Gateway],
+    context: { input: LoginInput, output?: Empty, sessionId: String }
+  };
+  action "Read" appliesTo {
+    principal: [OAuthUser], resource: [Gateway],
+    context: { input: ReadInput, output?: Empty, sessionId: String }
+  };
+}
+"#;
+
 /// Run the same policy through a **global** authorizer (relativized leaves) and
 /// a **partitioned** authorizer (non-relativized leaves + per-key routing) built
 /// from `event_schema`, and assert they agree decision-for-decision on `log`.
 /// Returns the partitioned engine's decision stream for verdict pinning.
 fn assert_engines_agree(
+    action_schema: &str,
     event_schema: &str,
     policy: &str,
     log: &str,
     label: &str,
+    rule: MirrorRule,
 ) -> Vec<(String, Decision)> {
     let lower = || {
         let service = ServiceSchema::builder()
@@ -59,7 +90,7 @@ fn assert_engines_agree(
             .build()
             .expect("service schema builds");
         let policy_schema =
-            PolicySchema::from_cedarschema_str(ACTION_SCHEMA).expect("action schema parses");
+            PolicySchema::from_cedarschema_str(action_schema).expect("action schema parses");
         LoweredPolicySet::from_str(policy, &service, &policy_schema).expect("policy lowers")
     };
 
@@ -69,9 +100,13 @@ fn assert_engines_agree(
     );
 
     let events = parse_trace(log).expect("trace parses");
-    let mut global = Authorizer::new(lower());
+    let mut global = Authorizer::builder(lower())
+        .mirror_rule(rule)
+        .build()
+        .expect("global authorizer builds");
     let mut partitioned = Authorizer::builder(lower())
         .partition_temporal()
+        .mirror_rule(rule)
         .build()
         .expect("partitioned authorizer builds");
 
@@ -133,8 +168,14 @@ fn scope_pin_history_event_without_scope_envelope() {
         // read request by alice (well-formed, mirrored).
         r#"@2 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { user: "alice" }) Drupe::Action::"Read"::request(input: { user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u2")"#,
     );
-    let decisions =
-        assert_engines_agree(SCOPE_PINNED_SCHEMA, P_FORMERLY_LOGIN, &log, "scope/history");
+    let decisions = assert_engines_agree(
+        ACTION_SCHEMA,
+        SCOPE_PINNED_SCHEMA,
+        P_FORMERLY_LOGIN,
+        &log,
+        "scope/history",
+        MirrorRule::Unchecked,
+    );
     // The Read (only decision event) must be permitted: alice's own prior Login
     // response is in her partition. Under the OLD request-side routing the
     // response fell into `<none>`, so the partitioned engine would have denied.
@@ -146,6 +187,39 @@ fn scope_pin_history_event_without_scope_envelope() {
         read,
         Some(Decision::Allow),
         "alice's own Login *response* (logged, no scope envelope) must satisfy the formerly"
+    );
+
+    // Strict: the scope-less response logs a caller it has no scope for, so it
+    // is rejected, and the Read is denied; with its scope attached it is filed
+    // under alice and seen.
+    let strict = assert_engines_agree(
+        ACTION_SCHEMA,
+        SCOPE_PINNED_SCHEMA,
+        P_FORMERLY_LOGIN,
+        &log,
+        "scope/strict",
+        MirrorRule::Strict,
+    );
+    assert_eq!(
+        strict,
+        vec![("Drupe::OAuthUser::\"alice\"".to_string(), Decision::Deny)]
+    );
+    let scoped = log.replacen(
+        "@1 Drupe",
+        r#"@1 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") Drupe"#,
+        1,
+    );
+    let strict = assert_engines_agree(
+        ACTION_SCHEMA,
+        SCOPE_PINNED_SCHEMA,
+        P_FORMERLY_LOGIN,
+        &scoped,
+        "scope/scoped",
+        MirrorRule::Strict,
+    );
+    assert_eq!(
+        strict,
+        vec![("Drupe::OAuthUser::\"alice\"".to_string(), Decision::Allow)]
     );
 }
 
@@ -186,17 +260,19 @@ fn context_pin_history_event_correlates_by_session() {
         r#"@1 Drupe::Action::"Login"::response(input: { user: "alice" }, sessionId: "s1", requestId: "u1")"#,
         // Read request in session s1 (its request_context supplies sessionId for
         // the decision event's own μ side; its logged sessionId=s1 routes it).
-        r#"@2 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { user: "alice" }, sessionId: "s1") Drupe::Action::"Read"::request(input: { user: "alice" }, sessionId: "s1", requestId: "u2")"#,
+        r#"@2 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { user: "alice" }, sessionId: "s1") Drupe::Action::"Read"::request(callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", input: { user: "alice" }, sessionId: "s1", requestId: "u2")"#,
         // Read request in a different session s2 — must NOT see the s1 Login.
-        r#"@3 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { user: "alice" }, sessionId: "s2") Drupe::Action::"Read"::request(input: { user: "alice" }, sessionId: "s2", requestId: "u3")"#,
+        r#"@3 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { user: "alice" }, sessionId: "s2") Drupe::Action::"Read"::request(callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", input: { user: "alice" }, sessionId: "s2", requestId: "u3")"#,
     ]
     .join("\n");
 
     let decisions = assert_engines_agree(
+        SESSION_ACTION_SCHEMA,
         CONTEXT_PINNED_SCHEMA,
         P_FORMERLY_SESSION,
         &log,
         "context/session",
+        MirrorRule::Unchecked,
     );
     // Two decision events (the two Reads), in order: s1 → Allow, s2 → Deny.
     let reads: Vec<Decision> = decisions.iter().map(|(_, d)| *d).collect();
@@ -205,4 +281,37 @@ fn context_pin_history_event_correlates_by_session() {
         vec![Decision::Allow, Decision::Deny],
         "same-session Read permitted, cross-session Read denied (context pin routes by logged sessionId)"
     );
+
+    // Strict: a history event that logs `sessionId` must carry the session in
+    // its request context too (the pin is symmetric). Without it the response is
+    // rejected, and neither Read sees a login; with it, s1 sees it and s2 not.
+    let strict: Vec<Decision> = assert_engines_agree(
+        SESSION_ACTION_SCHEMA,
+        CONTEXT_PINNED_SCHEMA,
+        P_FORMERLY_SESSION,
+        &log,
+        "context/strict",
+        MirrorRule::Strict,
+    )
+    .into_iter()
+    .map(|(_, d)| d)
+    .collect();
+    assert_eq!(strict, vec![Decision::Deny, Decision::Deny]);
+    let with_context = log.replacen(
+        "@1 Drupe",
+        r#"@1 request_context(input: { user: "alice" }, sessionId: "s1") Drupe"#,
+        1,
+    );
+    let strict: Vec<Decision> = assert_engines_agree(
+        SESSION_ACTION_SCHEMA,
+        CONTEXT_PINNED_SCHEMA,
+        P_FORMERLY_SESSION,
+        &with_context,
+        "context/with-context",
+        MirrorRule::Strict,
+    )
+    .into_iter()
+    .map(|(_, d)| d)
+    .collect();
+    assert_eq!(strict, vec![Decision::Allow, Decision::Deny]);
 }

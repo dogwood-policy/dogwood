@@ -1,0 +1,3 @@
+// Two entries with one distincter. (entry 2)
+forbid (principal, action == Drupe::Action::"Read", resource)
+when { context.input has level && context.input.level > 3 };

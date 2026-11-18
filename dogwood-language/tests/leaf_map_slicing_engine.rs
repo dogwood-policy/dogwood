@@ -102,8 +102,11 @@ event <A>::response {
 }
 "#;
 
-// Avoid making escaped action-id coverage depend on the trace parser.
+// Avoid making escaped action-id coverage depend on the trace parser. Every
+// action's context requires `input.user`, in the request and in the logged
+// record.
 fn event(ts: i64, who: &str, action: &str) -> Event {
+    let user = || dogwood_language::Value::String(who.into());
     Event::builder_for(&["Drupe", "Action"], action, "request")
         .timestamp(ts)
         .principal_for("Drupe::OAuthUser", who)
@@ -115,6 +118,8 @@ fn event(ts: i64, who: &str, action: &str) -> Event {
                 id: who.into(),
             },
         )
+        .field("input", "user", user())
+        .request_context("input", "user", user())
         .build()
 }
 
@@ -528,49 +533,56 @@ when temporal {{ {AFTER_LOGIN} }};
 
 #[test]
 fn an_undeclared_request_action_computes_every_leaf() {
-    // A second schema that declares `Ghost`, used only to *lower* an event for
-    // it; the policy set under test knows nothing about it.
-    let events = vec![
-        event(0, "u1", "Login"),
-        event(10, "u1", "Ghost"),
-        event(20, "u1", "Read"),
-    ];
+    // The policy set knows nothing about `Ghost`, so its map has no entry for
+    // it, and a slicing engine asked to evaluate at a `Ghost` event computes
+    // every leaf.
     let policy = format!(
         r#"
 permit (principal, action == Drupe::Action::"Read", resource)
 when temporal {{ {AFTER_LOGIN} }};
 "#
     );
-    let (unsliced, unsliced_passes) = run_with(
-        lower(&policy, &unpinned_event_schema()),
-        InMemoryTemporalEngine::new(),
-        false,
-        &events,
-    );
-    let (sliced, sliced_passes) = run_with(
-        lower(&policy, &unpinned_event_schema()),
-        InMemoryTemporalEngine::new().slice_leaves(),
-        false,
-        &events,
-    );
+    let lowered = lower(&policy, &unpinned_event_schema());
+    let leaves: Vec<TemporalField> = lowered.temporal_fields().cloned().collect();
+    let mut engine = InMemoryTemporalEngine::new().slice_leaves();
+    engine
+        .prepare(&leaves, lowered.cedar_schema(), &[])
+        .expect("prepare succeeds");
+    engine.observe(&event(0, "u1", "Login"));
+    engine.observe(&event(10, "u1", "Ghost"));
+    engine.evaluate().expect("evaluates");
     assert_eq!(
-        unsliced, sliced,
-        "an undeclared action must decide the same"
-    );
-    let ghost = sliced_passes
-        .iter()
-        .find(|p| p.action == "Ghost")
-        .expect("the undeclared action still reaches a decision point");
-    assert_eq!(
-        ghost.computed,
+        *engine.computed_leaves(),
         BTreeSet::from(["policy_0__temporal_0".to_string()]),
         "no map entry for an undeclared action, so every leaf is computed"
     );
-    assert_eq!(
-        unsliced_passes.len(),
-        sliced_passes.len(),
-        "same decision points either way"
-    );
+
+    // An authorizer never asks: the event schema declares no `Ghost` event, so
+    // the decision fails closed before the temporal engine is consulted, and
+    // the event does not enter the history.
+    let events = vec![
+        event(0, "u1", "Login"),
+        event(10, "u1", "Ghost"),
+        event(20, "u1", "Read"),
+    ];
+    for slicing in [false, true] {
+        let engine = if slicing {
+            InMemoryTemporalEngine::new().slice_leaves()
+        } else {
+            InMemoryTemporalEngine::new()
+        };
+        let lowered = lower(&policy, &unpinned_event_schema());
+        let (decisions, passes) = run_with(lowered, engine, false, &events);
+        assert_eq!(
+            decisions,
+            vec![Decision::Deny, Decision::Deny, Decision::Allow],
+            "the undeclared action fails closed; the others decide as before"
+        );
+        assert!(
+            passes.iter().all(|p| p.action != "Ghost"),
+            "the temporal engine is not consulted for the undeclared action"
+        );
+    }
 }
 
 #[test]

@@ -1,0 +1,6 @@
+// A `datetime` attribute is compared with a `String`. Temporal conditions do not support
+// `datetime`, so the specification rejects it (extension types).
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h (Drupe::Action::"Login"::request{ input.user: context.input.user } && context.input.when == "2026-01-01")
+};

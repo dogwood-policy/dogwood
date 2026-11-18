@@ -1,0 +1,7 @@
+// A predicate argument names a field the event does not declare, and its term reads a context
+// attribute `Read` does not declare. The crate reports both (event names, paths); so does the
+// specification, whose typing check also checks the term of an argument for an undeclared field.
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::response{ nosuch: context.input.nosuch }
+};

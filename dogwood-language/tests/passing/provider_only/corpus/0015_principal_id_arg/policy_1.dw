@@ -6,13 +6,14 @@
 // `principal.id` — an attribute path rooted at `principal`, not `context`.
 // Provider arguments are resolved pre-Cedar against the request event, and
 // `principal` / `resource` roots resolve to the request scope entity (a
-// trailing `.id` / `.type` projects the entity's id / type). This is the
+// trailing `.id` reads the entity's `id` attribute, as in Cedar). This is
 // the temporal-logic argument rule (context / principal / resource paths + literals +
 // sets); before the provider-path unification only `context.<field>` paths
 // were accepted.
 //
 // `Access::Allowed(principal.id).allowed == true` — the provider returns
-// `{ allowed: bool }`; `alice` is allowlisted, `mallory` is not.
+// `{ allowed: bool }`; `alice` is allowlisted, `mallory` is not. The provider
+// sees the `id` attribute the event supplies, not the uid's id.
 
 permit (
     principal,

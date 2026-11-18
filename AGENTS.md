@@ -21,10 +21,10 @@ The lifecycle and its skills (dependency order):
    → [`.claude/skills/authoring-action-schema/SKILL.md`](.claude/skills/authoring-action-schema/SKILL.md)
    (gate: `dogwood schema action schema.cedarschema`)
 2. **Service schema (only if needed)** — the event schema (`.dwschema`: event
-   kinds, decision vs history points, pins, the `max_window` look-back cap)
+   kinds, decision vs history points, pins, the `max_window` / `max_horizon` look-back caps)
    and/or information providers (`providers.json` + Rhai). Optional; defaults
    sensibly (request/response/error kinds with only `request` deciding, a
-   universal principal pin, a 24h window cap, no providers, standard macros).
+   universal principal pin, a 24h window cap and no horizon cap, no providers, standard macros).
    → [`.claude/skills/authoring-service-schema/SKILL.md`](.claude/skills/authoring-service-schema/SKILL.md)
    (gate: `dogwood schema event`/`providers`, then composite `dogwood validate`)
 3. **Policies** — turn a natural-language authorization requirement ("permit X
@@ -42,8 +42,21 @@ providers → (2); a prose access rule → (3); running the CLI on existing file
 ## Building this package
 
 This is a Cargo workspace of Rust crates (`dogwood-language`, `dogwood-cli`,
-`dogwood-docs`). Build and test with `cargo build` / `cargo test` from the
-workspace root. See the crate READMEs and
+`dogwood-docs`, `dogwood-lsp`). Build and test with `cargo build` /
+`cargo test` from the workspace root. See the crate READMEs and
 [`dogwood-docs/guide/`](dogwood-docs/guide/README.md) for the language, and
 [`dogwood-docs/guide/12-cli.md`](dogwood-docs/guide/12-cli.md) for the `dogwood`
-CLI.
+CLI. The LSP-specific protocol, project-resolution, and test guidance is in
+[`dogwood-lsp/README.md`](dogwood-lsp/README.md).
+
+`dogwood-lean/` is a formal specification of the language in Lean 4, built on
+cedar-lean. It is a separate Lake project, not part of the Cargo workspace;
+see [`dogwood-lean/README.md`](dogwood-lean/README.md). If a
+change alters the temporal sub-language's syntax, semantics, or acceptance and
+validation rules, run `lake build`, `lake env lean Axioms.lean` and
+`conformance/run.sh` there. Every theorem `Axioms.lean` prints must rest on
+`propext`, `Classical.choice` and `Quot.sound` alone. If the change also
+touches `Dogwood/Frontend/` or the crate code that `Dogwood/Frontend/` ports,
+run `conformance/frontend-run.sh` too. In the code review's description, give
+the revision you ran them on and whether each passed, and paste the report
+`run.sh` prints, unedited, from its first `==` line on.

@@ -83,6 +83,7 @@ namespace Drupe {
     principal: [IamEntity, OAuthUser, UnauthenticatedUser],
     resource: [Gateway],
     context: {
+      __drupe_sessionid: String,
       input: LoginInput,
       output?: LoginOutput,
       system: SystemContext
@@ -101,6 +102,7 @@ namespace Drupe {
     principal: [IamEntity, OAuthUser, UnauthenticatedUser],
     resource: [Gateway],
     context: {
+      __drupe_sessionid: String,
       input: ReadInput,
       output?: ReadOutput,
       system: SystemContext

@@ -9,6 +9,9 @@ provider. Permit `Read` only when the document's VIOLENCE severity is below 0.5.
 The `Content::Filter(string, set<string>)` provider returns a per-category
 record `{ VIOLENCE: { severityScore: decimal }, HATE: { severityScore: decimal } }`,
 so the policy can index into `["VIOLENCE"]` and compare `.severityScore`.
+The output type requires both categories, so the script gives a real score to
+each declared category in the set and the score 1.0 to each declared category
+that is not in the set.
 The Rhai implementation is inlined into `providers.json` (the CLI does not
 resolve a `scriptFile` path); `filter.rhai` is kept alongside for reference.
 

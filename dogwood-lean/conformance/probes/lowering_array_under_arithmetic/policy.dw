@@ -1,0 +1,6 @@
+// An array constant in the body of an aggregate that is an operand of `*` (`experimental-
+// arithmetic`). Lowering rejects it, as it rejects every array constant.
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    (count for (t: Timepoint). where (formerly within 1h (Drupe::Action::"Login"::request{ input.user: ["a", "b"] } && tp(t)))) * 2 >= 1
+};

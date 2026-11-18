@@ -1,0 +1,6 @@
+// A wildcard matches the `datetime` field `input.at`. The leaf reads no `datetime` value, so both
+// accept it, and allow every `Read` after the login.
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::response{ input.user: context.input.user, input.at: * }
+};

@@ -1,0 +1,9 @@
+// Two sibling aggregations of one comparison, each with the same ill-typed `for` binder. The
+// crate reports the binder finding once per aggregation, telling the two apart by the
+// aggregation's span, where a finding of the comparison's own node (an unguarded optional
+// read) is reported once however many operands give it.
+forbid (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    (sum a for (a: NotAType). where (Drupe::Action::"Read"::request{ input.level: a }))
+      == (sum a for (a: NotAType). where (Drupe::Action::"Read"::request{ input.level: a }))
+};

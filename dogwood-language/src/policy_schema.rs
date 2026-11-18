@@ -9,11 +9,12 @@
 //! this schema with the hoisted `context.<id>` fields the policies reference,
 //! and derives the event schema against it.
 //!
-//! Construct one with [`PolicySchema::from_cedarschema_str`] (Cedar text) or
-//! [`PolicySchema::from_mcp_manifest`] / [`PolicySchema::from_mcp_manifest_with_template`]
-//! (generated from an MCP `tools/list` manifest). The action-schema text is
-//! resolved eagerly at construction, so MCP-generation failures surface here
-//! rather than at lower time.
+//! Construct one with [`PolicySchema::from_cedarschema_str`] (Cedar text) or,
+//! with the `mcp-schema` feature, `PolicySchema::from_mcp_manifest` /
+//! `PolicySchema::from_mcp_manifest_with_template` (generated from an MCP
+//! `tools/list` manifest). The action-schema text is resolved eagerly at
+//! construction, so MCP-generation failures surface here rather than at lower
+//! time.
 
 use crate::api::Error;
 
@@ -108,7 +109,8 @@ impl PolicySchema {
     ///
     /// The manifest is turned into Cedar `.cedarschema` text eagerly (a Dogwood
     /// action schema *is* an MCP manifest); a generation failure surfaces as
-    /// [`Error::McpSchema`].
+    /// [`Error::McpSchema`]. Requires the `mcp-schema` feature.
+    #[cfg(feature = "mcp-schema")]
     pub fn from_mcp_manifest(manifest_json: &str) -> Result<PolicySchema, Error> {
         let action_schema_src = crate::schema::mcp_to_cedar_schema(manifest_json)
             .map_err(|e| Error::McpSchema(e.to_string()))?;
@@ -119,7 +121,8 @@ impl PolicySchema {
 
     /// Like [`from_mcp_manifest`](PolicySchema::from_mcp_manifest), but against
     /// a caller-supplied Cedar template stub instead of the embedded Drupe
-    /// template.
+    /// template. Requires the `mcp-schema` feature.
+    #[cfg(feature = "mcp-schema")]
     pub fn from_mcp_manifest_with_template(
         manifest_json: &str,
         template: &str,
@@ -129,6 +132,12 @@ impl PolicySchema {
                 .map_err(|e| Error::McpSchema(e.to_string()))?;
         check_nesting(&action_schema_src)?;
         Ok(PolicySchema { action_schema_src })
+    }
+
+    /// The action schema's Cedar `.cedarschema` text, as the schema was built from it (the
+    /// generated text for one built from an MCP manifest), without a leading byte-order mark.
+    pub fn cedarschema_str(&self) -> &str {
+        &self.action_schema_src
     }
 
     // ─── crate-internal accessors (used by lowering) ─────────────────

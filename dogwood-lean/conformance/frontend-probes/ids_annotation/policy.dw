@@ -1,0 +1,12 @@
+// Stable ids from `@id` annotations; the rules keep their positional field names.
+@id("read-after-login")
+permit (principal, action == Drupe::Action::"Read", resource)
+when { temporal { formerly within 1h Drupe::Action::"Login"::response{ input.user: context.input.user } } };
+@id("deny.high_level")
+@note("x")
+forbid (principal, action == Drupe::Action::"Read", resource)
+when { context.input has level && context.input.level > 3 };
+@id("count:5")
+permit (principal is Drupe::OAuthUser, action in [Drupe::Action::"Read", Drupe::Action::"Login"], resource)
+when { temporal { (count for (t: Timepoint). where formerly within 10m (Drupe::Action::"Read"::request{ input.user: context.input.user } && tp(t))) < 5 } }
+unless { principal.level < 1 };

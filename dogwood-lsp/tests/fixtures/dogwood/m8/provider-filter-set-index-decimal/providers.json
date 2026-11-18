@@ -1,0 +1,52 @@
+{
+  "availableProviders": {
+    "Content::Filter": {
+      "argumentTypes": [
+        {
+          "paramType": "string"
+        },
+        {
+          "paramType": "set",
+          "items": {
+            "paramType": "string"
+          }
+        }
+      ],
+      "outputType": {
+        "paramType": "record",
+        "fields": {
+          "VIOLENCE": {
+            "paramType": "record",
+            "fields": {
+              "severityScore": {
+                "paramType": "decimal"
+              }
+            },
+            "required": [
+              "severityScore"
+            ]
+          },
+          "HATE": {
+            "paramType": "record",
+            "fields": {
+              "severityScore": {
+                "paramType": "decimal"
+              }
+            },
+            "required": [
+              "severityScore"
+            ]
+          }
+        },
+        "required": [
+          "VIOLENCE",
+          "HATE"
+        ]
+      },
+      "implementation": {
+        "kind": "rhai",
+        "script": "// `Content::Filter(text, categories) -> { <CATEGORY>: { severityScore } }`.\n//\n// Takes a document and a SET of category names (the second declared\n// argument, `paramType: set`, arrives as a Rhai array). Returns a record\n// keyed by category, each with a decimal `severityScore` \u2014 so the policy\n// can project `[\"VIOLENCE\"].severityScore` and compare it. Scores here are\n// a fixed lookup per keyword; a real provider would call a classifier.\nfn score_for(text, category) {\n    if text == \"violent\" && category == \"VIOLENCE\" {\n        parse_decimal(\"0.90\")\n    } else if text == \"hateful\" && category == \"HATE\" {\n        parse_decimal(\"0.90\")\n    } else {\n        parse_decimal(\"0.10\")\n    }\n}\n\nfn evaluate(text, categories) {\n    // Defensive per the provider contract: a provider may be evaluated\n    // for ANY decision event, so any argument may be absent (unit).\n    // Return a conforming sentinel instead of erroring (errors are UB).\n    if type_of(text) == \"()\" || type_of(categories) == \"()\" {\n        return #{ VIOLENCE: #{ severityScore: parse_decimal(\"-1.0\") }, HATE: #{ severityScore: parse_decimal(\"-1.0\") } };\n    }\n\n    let out = #{};\n    for category in categories {\n        out[category] = #{ severityScore: score_for(text, category) };\n    }\n    out\n}\n"
+      }
+    }
+  }
+}

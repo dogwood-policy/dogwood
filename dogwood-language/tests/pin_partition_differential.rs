@@ -95,7 +95,9 @@ fn ev(ts: i64, who: &'static str, action: &'static str) -> Ev {
         who,
         action,
         user_field: "u",
-        amount: None,
+        // A `Transfer`'s input is an amount, not a user: an event that logs
+        // another input does not conform, and is not ingested.
+        amount: (action == "Transfer").then_some(0),
     }
 }
 

@@ -1,0 +1,8 @@
+// The Cedar part tests `context.input has meta.tag`, a path of identifiers, which Cedar 4.14 keeps
+// as one extended `has`, and reads the attribute it guards. Both allow alice's `Read` that carries
+// the tag after her login, and deny her `Read` without it.
+permit (principal, action == Drupe::Action::"Read", resource)
+when { context.input has meta.tag && context.input.meta.tag == "ok" }
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

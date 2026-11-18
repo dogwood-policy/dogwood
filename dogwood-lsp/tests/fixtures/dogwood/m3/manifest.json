@@ -1,0 +1,721 @@
+{
+  "schema_version": 1,
+  "revision": "c6237c88099b3f492ecc5fcee42df06a19224b97",
+  "cases": [
+    {
+      "name": "all-optional-valid",
+      "directory": "all-optional-valid",
+      "inputs": {
+        "policy": "policy.dw",
+        "policy_schema": "schema.cedarschema",
+        "event_schema": "event.dwschema",
+        "providers": "providers.json",
+        "macros": "macros.dw"
+      },
+      "optional_flags": [
+        "--event-schema",
+        "--providers",
+        "--macros"
+      ],
+      "expected": {
+        "exit_code": 0,
+        "output_channel": "stdout",
+        "stderr": "empty",
+        "json_shape": "validation-report",
+        "passed": true,
+        "error_count": 0,
+        "warning_count": 0
+      },
+      "provenance": {
+        "revision": "c6237c88099b3f492ecc5fcee42df06a19224b97",
+        "artifacts": [
+          {
+            "path": "policy.dw",
+            "origin": "adapted",
+            "upstream_paths": [
+              "dogwood-docs/examples/login_attempt_custom_kind/policy.dw",
+              "dogwood-docs/examples/provider_regex_matches_uppercase/policy.dw",
+              "dogwood-docs/examples/call_cedar_macro_is_small/policy.dw"
+            ],
+            "derivation": "Locally composed to exercise the custom event predicate, provider call, and macro invocation in one policy."
+          },
+          {
+            "path": "schema.cedarschema",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-docs/examples/login_attempt_custom_kind/schema.cedarschema"
+            ],
+            "derivation": "Copied byte-for-byte."
+          },
+          {
+            "path": "event.dwschema",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-docs/examples/login_attempt_custom_kind/event.dwschema"
+            ],
+            "derivation": "Copied byte-for-byte."
+          },
+          {
+            "path": "providers.json",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-docs/examples/provider_regex_matches_uppercase/providers.json"
+            ],
+            "derivation": "Copied byte-for-byte."
+          },
+          {
+            "path": "macros.dw",
+            "origin": "adapted",
+            "upstream_paths": [
+              "dogwood-docs/examples/call_cedar_macro_is_small/macros.dw"
+            ],
+            "derivation": "Adapted from the one-argument Cedar macro to accept a provider-produced Bool."
+          }
+        ]
+      }
+    },
+    {
+      "name": "custom-event-valid",
+      "directory": "custom-event-valid",
+      "inputs": {
+        "policy": "policy.dw",
+        "policy_schema": "schema.cedarschema",
+        "event_schema": "event.dwschema",
+        "providers": null,
+        "macros": null
+      },
+      "optional_flags": [
+        "--event-schema"
+      ],
+      "expected": {
+        "exit_code": 0,
+        "output_channel": "stdout",
+        "stderr": "empty",
+        "json_shape": "validation-report",
+        "passed": true,
+        "error_count": 0,
+        "warning_count": 0
+      },
+      "provenance": {
+        "revision": "c6237c88099b3f492ecc5fcee42df06a19224b97",
+        "artifacts": [
+          {
+            "path": "policy.dw",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-docs/examples/login_attempt_custom_kind/policy.dw"
+            ],
+            "derivation": "Copied byte-for-byte."
+          },
+          {
+            "path": "schema.cedarschema",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-docs/examples/login_attempt_custom_kind/schema.cedarschema"
+            ],
+            "derivation": "Copied byte-for-byte."
+          },
+          {
+            "path": "event.dwschema",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-docs/examples/login_attempt_custom_kind/event.dwschema"
+            ],
+            "derivation": "Copied byte-for-byte."
+          }
+        ]
+      }
+    },
+    {
+      "name": "default-valid",
+      "directory": "default-valid",
+      "inputs": {
+        "policy": "policy.dw",
+        "policy_schema": "schema.cedarschema",
+        "event_schema": null,
+        "providers": null,
+        "macros": null
+      },
+      "optional_flags": [],
+      "expected": {
+        "exit_code": 0,
+        "output_channel": "stdout",
+        "stderr": "empty",
+        "json_shape": "validation-report",
+        "passed": true,
+        "error_count": 0,
+        "warning_count": 0
+      },
+      "provenance": {
+        "revision": "c6237c88099b3f492ecc5fcee42df06a19224b97",
+        "artifacts": [
+          {
+            "path": "policy.dw",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-docs/examples/simplest_permit/policy.dw"
+            ],
+            "derivation": "Copied byte-for-byte."
+          },
+          {
+            "path": "schema.cedarschema",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-docs/examples/simplest_permit/schema.cedarschema"
+            ],
+            "derivation": "Copied byte-for-byte."
+          }
+        ]
+      }
+    },
+    {
+      "name": "event-schema-truncated",
+      "directory": "event-schema-truncated",
+      "inputs": {
+        "policy": "policy.dw",
+        "policy_schema": "schema.cedarschema",
+        "event_schema": "event.dwschema",
+        "providers": null,
+        "macros": null
+      },
+      "optional_flags": [
+        "--event-schema"
+      ],
+      "expected": {
+        "exit_code": 2,
+        "output_channel": "stdout",
+        "stderr": "empty",
+        "json_shape": "fatal-diagnostic",
+        "related_finding_count": 0
+      },
+      "provenance": {
+        "revision": "c6237c88099b3f492ecc5fcee42df06a19224b97",
+        "artifacts": [
+          {
+            "path": "policy.dw",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-docs/examples/login_attempt_custom_kind/policy.dw"
+            ],
+            "derivation": "Copied byte-for-byte."
+          },
+          {
+            "path": "schema.cedarschema",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-docs/examples/login_attempt_custom_kind/schema.cedarschema"
+            ],
+            "derivation": "Copied byte-for-byte."
+          },
+          {
+            "path": "event.dwschema",
+            "origin": "adapted",
+            "upstream_paths": [
+              "dogwood-docs/examples/login_attempt_custom_kind/event.dwschema"
+            ],
+            "derivation": "Locally truncated inside the first event declaration."
+          }
+        ]
+      }
+    },
+    {
+      "name": "macro-invocation-failure",
+      "directory": "macro-invocation-failure",
+      "inputs": {
+        "policy": "policy.dw",
+        "policy_schema": "schema.cedarschema",
+        "event_schema": null,
+        "providers": null,
+        "macros": "macros.dw"
+      },
+      "optional_flags": [
+        "--macros"
+      ],
+      "expected": {
+        "exit_code": 2,
+        "output_channel": "stdout",
+        "stderr": "empty",
+        "json_shape": "fatal-diagnostic",
+        "related_finding_count": 0
+      },
+      "provenance": {
+        "revision": "c6237c88099b3f492ecc5fcee42df06a19224b97",
+        "artifacts": [
+          {
+            "path": "policy.dw",
+            "origin": "adapted",
+            "upstream_paths": [
+              "dogwood-docs/examples/call_cedar_macro_is_small/policy.dw"
+            ],
+            "derivation": "Adapted to pass two arguments to a one-argument macro."
+          },
+          {
+            "path": "schema.cedarschema",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-docs/examples/call_cedar_macro_is_small/schema.cedarschema"
+            ],
+            "derivation": "Copied byte-for-byte."
+          },
+          {
+            "path": "macros.dw",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-docs/examples/call_cedar_macro_is_small/macros.dw"
+            ],
+            "derivation": "Copied byte-for-byte."
+          }
+        ]
+      }
+    },
+    {
+      "name": "macro-source-failure",
+      "directory": "macro-source-failure",
+      "inputs": {
+        "policy": "policy.dw",
+        "policy_schema": "schema.cedarschema",
+        "event_schema": null,
+        "providers": null,
+        "macros": "macros.dw"
+      },
+      "optional_flags": [
+        "--macros"
+      ],
+      "expected": {
+        "exit_code": 2,
+        "output_channel": "stdout",
+        "stderr": "empty",
+        "json_shape": "fatal-diagnostic",
+        "related_finding_count": 0
+      },
+      "provenance": {
+        "revision": "c6237c88099b3f492ecc5fcee42df06a19224b97",
+        "artifacts": [
+          {
+            "path": "policy.dw",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-docs/examples/call_cedar_macro_is_small/policy.dw"
+            ],
+            "derivation": "Copied byte-for-byte."
+          },
+          {
+            "path": "schema.cedarschema",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-docs/examples/call_cedar_macro_is_small/schema.cedarschema"
+            ],
+            "derivation": "Copied byte-for-byte."
+          },
+          {
+            "path": "macros.dw",
+            "origin": "adapted",
+            "upstream_paths": [
+              "dogwood-docs/examples/call_cedar_macro_is_small/macros.dw"
+            ],
+            "derivation": "Locally truncated before the closing brace and semicolon."
+          }
+        ]
+      }
+    },
+    {
+      "name": "macro-valid",
+      "directory": "macro-valid",
+      "inputs": {
+        "policy": "policy.dw",
+        "policy_schema": "schema.cedarschema",
+        "event_schema": null,
+        "providers": null,
+        "macros": "macros.dw"
+      },
+      "optional_flags": [
+        "--macros"
+      ],
+      "expected": {
+        "exit_code": 0,
+        "output_channel": "stdout",
+        "stderr": "empty",
+        "json_shape": "validation-report",
+        "passed": true,
+        "error_count": 0,
+        "warning_count": 0
+      },
+      "provenance": {
+        "revision": "c6237c88099b3f492ecc5fcee42df06a19224b97",
+        "artifacts": [
+          {
+            "path": "policy.dw",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-docs/examples/call_cedar_macro_is_small/policy.dw"
+            ],
+            "derivation": "Copied byte-for-byte."
+          },
+          {
+            "path": "schema.cedarschema",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-docs/examples/call_cedar_macro_is_small/schema.cedarschema"
+            ],
+            "derivation": "Copied byte-for-byte."
+          },
+          {
+            "path": "macros.dw",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-docs/examples/call_cedar_macro_is_small/macros.dw"
+            ],
+            "derivation": "Copied byte-for-byte."
+          }
+        ]
+      }
+    },
+    {
+      "name": "malformed-policy-missing-brace",
+      "directory": "malformed-policy-missing-brace",
+      "inputs": {
+        "policy": "policy.dw",
+        "policy_schema": "schema.cedarschema",
+        "event_schema": null,
+        "providers": null,
+        "macros": null
+      },
+      "optional_flags": [],
+      "expected": {
+        "exit_code": 2,
+        "output_channel": "stdout",
+        "stderr": "empty",
+        "json_shape": "fatal-diagnostic",
+        "related_finding_count": 0
+      },
+      "provenance": {
+        "revision": "c6237c88099b3f492ecc5fcee42df06a19224b97",
+        "artifacts": [
+          {
+            "path": "policy.dw",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-language/tests/expected_failures/corpus/2019_missing_close_brace/policy_1.dw"
+            ],
+            "derivation": "Copied byte-for-byte and renamed to policy.dw."
+          },
+          {
+            "path": "schema.cedarschema",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-language/tests/expected_failures/corpus/2019_missing_close_brace/schema.cedarschema"
+            ],
+            "derivation": "Copied byte-for-byte."
+          }
+        ]
+      }
+    },
+    {
+      "name": "malformed-policy-unclosed-string",
+      "directory": "malformed-policy-unclosed-string",
+      "inputs": {
+        "policy": "policy.dw",
+        "policy_schema": "schema.cedarschema",
+        "event_schema": null,
+        "providers": null,
+        "macros": null
+      },
+      "optional_flags": [],
+      "expected": {
+        "exit_code": 2,
+        "output_channel": "stdout",
+        "stderr": "empty",
+        "json_shape": "fatal-diagnostic",
+        "related_finding_count": 0
+      },
+      "provenance": {
+        "revision": "c6237c88099b3f492ecc5fcee42df06a19224b97",
+        "artifacts": [
+          {
+            "path": "policy.dw",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-language/tests/expected_failures/corpus/2029_unclosed_string/policy_1.dw"
+            ],
+            "derivation": "Copied byte-for-byte and renamed to policy.dw."
+          },
+          {
+            "path": "schema.cedarschema",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-language/tests/expected_failures/corpus/2029_unclosed_string/schema.cedarschema"
+            ],
+            "derivation": "Copied byte-for-byte."
+          }
+        ]
+      }
+    },
+    {
+      "name": "parse-multiple-related",
+      "directory": "parse-multiple-related",
+      "inputs": {
+        "policy": "policy.dw",
+        "policy_schema": "schema.cedarschema",
+        "event_schema": null,
+        "providers": null,
+        "macros": null
+      },
+      "optional_flags": [],
+      "expected": {
+        "exit_code": 2,
+        "output_channel": "stdout",
+        "stderr": "empty",
+        "json_shape": "fatal-diagnostic",
+        "related_finding_count": 1
+      },
+      "provenance": {
+        "revision": "c6237c88099b3f492ecc5fcee42df06a19224b97",
+        "artifacts": [
+          {
+            "path": "policy.dw",
+            "origin": "adapted",
+            "upstream_paths": [
+              "dogwood-language/tests/expected_failures/corpus/2134_unknown_slot_principal/policy_1.dw",
+              "dogwood-language/tests/expected_failures/corpus/2135_unknown_slot_resource/policy_1.dw"
+            ],
+            "derivation": "The two upstream policies are concatenated byte-for-byte, separated by one newline, to preserve a primary and related parse finding."
+          },
+          {
+            "path": "schema.cedarschema",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-language/tests/expected_failures/corpus/2134_unknown_slot_principal/schema.cedarschema"
+            ],
+            "derivation": "Copied byte-for-byte; both upstream cases use an empty schema."
+          }
+        ]
+      }
+    },
+    {
+      "name": "provider-type-failure",
+      "directory": "provider-type-failure",
+      "inputs": {
+        "policy": "policy.dw",
+        "policy_schema": "schema.cedarschema",
+        "event_schema": null,
+        "providers": "providers.json",
+        "macros": null
+      },
+      "optional_flags": [
+        "--providers"
+      ],
+      "expected": {
+        "exit_code": 2,
+        "output_channel": "stdout",
+        "stderr": "empty",
+        "json_shape": "validation-report",
+        "passed": false,
+        "error_count": 1,
+        "warning_count": 0
+      },
+      "provenance": {
+        "revision": "c6237c88099b3f492ecc5fcee42df06a19224b97",
+        "artifacts": [
+          {
+            "path": "policy.dw",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-language/tests/expected_failures/corpus/2087_provider_arg_type_mismatch/policy_1.dw"
+            ],
+            "derivation": "Copied byte-for-byte and renamed to policy.dw."
+          },
+          {
+            "path": "schema.cedarschema",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-language/tests/expected_failures/corpus/2087_provider_arg_type_mismatch/schema.cedarschema"
+            ],
+            "derivation": "Copied byte-for-byte."
+          },
+          {
+            "path": "providers.json",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-language/tests/expected_failures/corpus/2087_provider_arg_type_mismatch/providers.json"
+            ],
+            "derivation": "Copied byte-for-byte."
+          }
+        ]
+      }
+    },
+    {
+      "name": "provider-valid",
+      "directory": "provider-valid",
+      "inputs": {
+        "policy": "policy.dw",
+        "policy_schema": "schema.cedarschema",
+        "event_schema": null,
+        "providers": "providers.json",
+        "macros": null
+      },
+      "optional_flags": [
+        "--providers"
+      ],
+      "expected": {
+        "exit_code": 0,
+        "output_channel": "stdout",
+        "stderr": "empty",
+        "json_shape": "validation-report",
+        "passed": true,
+        "error_count": 0,
+        "warning_count": 0
+      },
+      "provenance": {
+        "revision": "c6237c88099b3f492ecc5fcee42df06a19224b97",
+        "artifacts": [
+          {
+            "path": "policy.dw",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-docs/examples/provider_regex_matches_uppercase/policy.dw"
+            ],
+            "derivation": "Copied byte-for-byte."
+          },
+          {
+            "path": "schema.cedarschema",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-docs/examples/provider_regex_matches_uppercase/schema.cedarschema"
+            ],
+            "derivation": "Copied byte-for-byte."
+          },
+          {
+            "path": "providers.json",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-docs/examples/provider_regex_matches_uppercase/providers.json"
+            ],
+            "derivation": "Copied byte-for-byte; the required Rhai implementation is inline."
+          }
+        ]
+      }
+    },
+    {
+      "name": "schema-aware-validation-failure",
+      "directory": "schema-aware-validation-failure",
+      "inputs": {
+        "policy": "policy.dw",
+        "policy_schema": "schema.cedarschema",
+        "event_schema": null,
+        "providers": null,
+        "macros": null
+      },
+      "optional_flags": [],
+      "expected": {
+        "exit_code": 2,
+        "output_channel": "stdout",
+        "stderr": "empty",
+        "json_shape": "validation-report",
+        "passed": false,
+        "error_count": 1,
+        "warning_count": 0
+      },
+      "provenance": {
+        "revision": "c6237c88099b3f492ecc5fcee42df06a19224b97",
+        "artifacts": [
+          {
+            "path": "policy.dw",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-language/tests/expected_failures/corpus/1033_event_schema_unknown_field/policy_1.dw"
+            ],
+            "derivation": "Copied byte-for-byte and renamed to policy.dw."
+          },
+          {
+            "path": "schema.cedarschema",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-language/tests/expected_failures/corpus/1033_event_schema_unknown_field/schema.cedarschema"
+            ],
+            "derivation": "Copied byte-for-byte."
+          }
+        ]
+      }
+    },
+    {
+      "name": "unicode-truncation",
+      "directory": "unicode-truncation",
+      "inputs": {
+        "policy": "policy.dw",
+        "policy_schema": "schema.cedarschema",
+        "event_schema": null,
+        "providers": null,
+        "macros": null
+      },
+      "optional_flags": [],
+      "expected": {
+        "exit_code": 2,
+        "output_channel": "stdout",
+        "stderr": "empty",
+        "json_shape": "fatal-diagnostic",
+        "related_finding_count": 0
+      },
+      "provenance": {
+        "revision": "c6237c88099b3f492ecc5fcee42df06a19224b97",
+        "artifacts": [
+          {
+            "path": "policy.dw",
+            "origin": "local",
+            "upstream_paths": [],
+            "derivation": "Locally authored unterminated string containing BMP and astral Unicode to pin byte-based fatal spans."
+          },
+          {
+            "path": "schema.cedarschema",
+            "origin": "copied",
+            "upstream_paths": [
+              "dogwood-language/tests/expected_failures/corpus/2029_unclosed_string/schema.cedarschema"
+            ],
+            "derivation": "Copied byte-for-byte; the upstream malformed-string case uses an empty schema."
+          }
+        ]
+      }
+    },
+    {
+      "name": "validation-warning",
+      "directory": "validation-warning",
+      "inputs": {
+        "policy": "policy.dw",
+        "policy_schema": "schema.cedarschema",
+        "event_schema": null,
+        "providers": null,
+        "macros": null
+      },
+      "optional_flags": [],
+      "expected": {
+        "exit_code": 0,
+        "output_channel": "stdout",
+        "stderr": "empty",
+        "json_shape": "validation-report",
+        "passed": true,
+        "error_count": 0,
+        "warning_count": 1
+      },
+      "provenance": {
+        "revision": "c6237c88099b3f492ecc5fcee42df06a19224b97",
+        "artifacts": [
+          {
+            "path": "policy.dw",
+            "origin": "adapted",
+            "upstream_paths": [
+              "dogwood-language/tests/temporal_request_envs.rs"
+            ],
+            "derivation": "Adapted from cedar_witness_manager_field_against_principal_is_flagged: compare an input field with a string literal that mixes Latin and Cyrillic letters, which Cedar reports as a warning; an impossible policy is an error of Dogwood's validation."
+          },
+          {
+            "path": "schema.cedarschema",
+            "origin": "adapted",
+            "upstream_paths": [
+              "dogwood-language/tests/temporal_request_envs.rs"
+            ],
+            "derivation": "Reduced from the SCHEMA constant to the Staff, Gateway, MeterInput, and Meter declarations needed by the warning policy, with a String input field."
+          }
+        ]
+      }
+    }
+  ]
+}

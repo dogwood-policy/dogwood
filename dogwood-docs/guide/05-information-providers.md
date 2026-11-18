@@ -259,10 +259,11 @@ directly. The argument kinds are:
   `resource.owner`. It begins with one of the roots `context` / `principal` /
   `resource`, followed by one or more `.ident` segments. At authorize time
   Dogwood resolves the path against the decision event: a `context` path is
-  looked up on the event's input (leading `context` skipped); `principal` /
-  `resource` resolve to the request scope entity, and a trailing `.id` / `.type`
-  projects that entity's id or type. A path that does not resolve is null **at
-  run time**. Validation (see [How invocations are validated against
+  looked up on the event's request context (leading `context` skipped);
+  `principal` / `resource` resolve to the request scope entity, and an
+  attribute tail is read off the supplied entity data, as in Cedar. `id` and
+  `type` are attributes like any other: `principal.id` reads an attribute the
+  entity type declares as `id`, not the uid's id. A path that does not resolve is null **at run time**. Validation (see [How invocations are validated against
   declarations](10-provider-schema.md#how-invocations-are-validated-against-declarations))
   rejects a field-path argument undeclared on — or typed incompatibly with — an
   action the rule is *scoped to*; but because provider execution is unconditional
@@ -378,12 +379,12 @@ An enum value is written `Enum::"VALUE"`, quoted, as in Cedar. Compare it with `
   when { Vendor::ThreatScan(context.input.document).severity == context.input.level };
   ```
 
-  `dogwood validate` only warns, and the policy passes:
+  `dogwood validate` rejects it as an impossible policy, one whose condition no request
+  satisfies:
 
   ```text
-  warning: for policy `policy_1`, policy is impossible: the policy expression evaluates
+  error: for policy `policy_1`, policy is impossible: the policy expression evaluates
   to false for all valid requests
-  OK: validation passed (1 warning(s)).
   ```
 
   Compare the provider field with the provider enum's own values
@@ -396,9 +397,8 @@ An enum value is written `Enum::"VALUE"`, quoted, as in Cedar. Compare it with `
   when { Vendor::IsBlocked(context.input.level).blocked };
   ```
 
-  Validation checks that the argument has the declared enum type only for a direct
-  `context` field like this one, not for an enum inside a set or record argument
-  ([How invocations are validated](10-provider-schema.md#how-invocations-are-validated-against-declarations)).
+  Validation checks that the argument has the declared enum type, wherever it comes
+  from ([How invocations are validated](10-provider-schema.md#how-invocations-are-validated-against-declarations)).
 
   A provider can't return a Cedar-schema enum: its output enums must be declared in
   `providers.json` ([Enum-typed values](10-provider-schema.md#enum-typed-values)).
@@ -412,9 +412,7 @@ into the action schema's namespace under a generated name (`Vendor::Severity` be
 `Drupe::Vendor_Severity`), and the lowered policy uses that name:
 
 ```text
-forbid(principal, action == Drupe::Action::"Read", resource) when {
-  (((context.providers).policy_1_p_0).severity) in
-    [Drupe::Vendor_Severity::"HIGH", Drupe::Vendor_Severity::"CRITICAL"] };
+forbid(principal, action == Drupe::Action::"Read", resource) when { context.providers.policy_1_p_0.severity in [Drupe::Vendor_Severity::"HIGH", Drupe::Vendor_Severity::"CRITICAL"] };
 ```
 
 You keep writing `Vendor::Severity::"HIGH"`, and error messages use that name too. If
@@ -518,12 +516,14 @@ Three consequences for provider authors:
    implementation, including this one. Defensive scripts (point 2) are the only
    defense.
 
-   An output that doesn't match its declared shape (a bare string where a record is
-   declared, a missing required field) counts as a provider error only when the
-   declared type contains an enum. Otherwise the value reaches Cedar as is. Cedar
-   fails on the field, reports the error in the response's diagnostics, and treats
-   that policy as not satisfied for that request. For a `forbid`, the request can
-   then be allowed.
+   An output that doesn't match its declared type (a bare string where a record is
+   declared, a missing required field, an attribute the declared record does not
+   declare, a value of another type) is a broken provider contract too, and every
+   implementation fails the decision closed for it: the response is a `Deny`
+   whose diagnostics report `nonconforming provider output: …` (or, for an id
+   outside a declared enum, the provider's error). The output never reaches
+   Cedar, where a `forbid` reading it would fail on the field and stop applying.
+   A provider with no declared output type has no conforming output.
 
 The same contract applies to external providers supplied through a
 `ProviderResolver`: pure, tolerant of Null arguments, never relying on error

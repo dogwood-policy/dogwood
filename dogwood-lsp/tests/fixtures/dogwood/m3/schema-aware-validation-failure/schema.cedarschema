@@ -1,0 +1,16 @@
+namespace Drupe {
+    entity OAuthUser;
+    entity Gateway;
+    type LoginInput = { server: String, user: String };
+    type LoginOutput = { result: Bool };
+    action Login appliesTo {
+        principal: [OAuthUser],
+        resource: [Gateway],
+        context: { input: LoginInput, output?: LoginOutput }
+    };
+    action Read appliesTo {
+        principal: [OAuthUser],
+        resource: [Gateway],
+        context: { input: LoginInput }
+    };
+}

@@ -1,0 +1,2 @@
+// Adapted from call_cedar_macro_is_small: accept a provider-produced Bool.
+def cedar is_true(?value) { ?value == true };

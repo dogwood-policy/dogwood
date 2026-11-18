@@ -1,0 +1,10 @@
+// Strings, entity ids, patterns and annotations with characters Rust's escape_debug writes as
+// \u{…} (combining marks, first in a string and later, format characters, controls, an unassigned
+// code point) and printable non-ASCII ones it keeps: Cedar's text of each rule, and so its
+// revision, prints them.
+@reason("caf\u{e9} \u{301}x a\u{301} \u{200b}\u{ad}\u{b2cb2}\u{1}")
+permit (principal == Drupe::OAuthUser::"\u{301}lead\u{200b}", action == Drupe::Action::"Read", resource)
+when { context.input.user == "\u{301}\u{301}x\u{200b}\u{1}\u{7f}\u{85}\u{a0}\u{feff}\u{e0001}\u{b2cb2}犬é😀'\"" }
+when { context.input.user like "*\u{301}\u{200b}*x\u{b2cb2}\u{1}é*" }
+when { context.input.user != "a\u{301}" }
+when { temporal { formerly within 1h Drupe::Action::"Login"::response{ input.user: "\u{301}u\u{200b}" } } };

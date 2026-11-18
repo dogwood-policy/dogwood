@@ -1,0 +1,6 @@
+// The rule's scope admits a `Bot` principal for `Read`, which has none: the policy is impossible.
+// The specification rejects it (cedar), as cedar-lean's validator does.
+permit (principal is Drupe::Bot, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

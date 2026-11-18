@@ -8,11 +8,13 @@
 // home; reach their contents through the crate-root re-exports.
 pub mod authorize;
 pub mod engine;
+pub mod frontend;
 pub mod leaf_map;
 pub mod policy_schema;
 pub mod policy_set;
 pub mod policy_view;
 pub mod service_schema;
+pub mod syntax;
 pub mod trace_api;
 pub mod validator;
 
@@ -33,15 +35,24 @@ pub(crate) mod api;
 pub(crate) mod ast;
 pub(crate) mod cedarify;
 mod deep_drop;
+pub(crate) mod conformance;
 pub(crate) mod error;
 pub(crate) mod event_schema;
 pub(crate) mod extension;
+pub(crate) mod field_path;
+pub(crate) mod identity;
 pub(crate) mod informalize;
 pub(crate) mod interpreter;
+// The Lean frontend's bridge: the FFI, the request encoder, the result decoder
+// and the shadow comparison (feature `lean-frontend`).
+#[cfg(feature = "lean-frontend")]
+pub(crate) mod lean_frontend;
 pub(crate) mod macros;
 pub(crate) mod parser;
 pub(crate) mod render;
+#[cfg(feature = "mcp-schema")]
 pub(crate) mod schema;
+pub(crate) mod typed_fields;
 pub(crate) mod validate;
 
 // ─── The public surface, re-exported at the crate root ───────────────
@@ -74,6 +85,13 @@ pub use crate::service_schema::{
     UNPINNED_EVENT_SCHEMA,
 };
 
+/// Which implementation of the frontend lowers and validates a policy set: the
+/// Rust frontend (the default), the Lean frontend (feature `lean-frontend`), or
+/// both, compared. Selected with [`ServiceSchemaBuilder::frontend`].
+pub use crate::frontend::{
+    FRONTEND_ENV_VAR, Frontend, FrontendError, FrontendErrorKind, OnMismatch,
+};
+
 /// The **action-schema** half (a Cedar `.cedarschema`, or one generated from
 /// an MCP tool manifest) — the per-customer input to lowering. Analog of
 /// `cedar_policy::Schema`.
@@ -89,6 +107,11 @@ pub use crate::policy_schema::PolicySchema;
 pub use crate::policy_set::{
     Distincter, LoweredPolicySet, ParsedPolicy, ParsedPolicySet, lower_many,
 };
+
+/// Stable policy identity (opt-in, additive): where a set's policy ids come
+/// from ([`IdSource`], chosen with
+/// [`ParsedPolicySet::with_ids`](crate::ParsedPolicySet::with_ids)).
+pub use crate::policy_set::IdSource;
 
 /// The semi-English informalization of a parsed policy (set), produced by
 /// [`ParsedPolicy::informalize`](crate::policy_set::ParsedPolicy::informalize)
@@ -106,6 +129,8 @@ pub use crate::informalize::{Informalization, Layout, Phrase};
 pub use crate::policy_view::{
     ActionConstraint, PolicyScope, PrincipalConstraint, ResourceConstraint,
 };
+
+pub use crate::extension::temporal::construct_counts::TemporalConstructCounts;
 
 /// A hoisted information-provider leaf and the types it carries, exposed by
 /// [`LoweredPolicySet::provider_fields`](crate::LoweredPolicySet::provider_fields).
@@ -127,6 +152,12 @@ pub use crate::extension::provider::ast::{Arg, Invocation};
 /// those fields to request-side values (schema-agnostic: no field-naming
 /// convention assumed).
 pub use crate::api::{EventFieldPath, EventFieldType, EventPin, EventPinRoot, EventSignature};
+
+/// A temporal leaf as a caller that lowers the policies elsewhere sends it to an
+/// evaluator of temporal fields, and why a lowered set's leaves for an action
+/// cannot be described
+/// ([`LoweredPolicySet::temporal_slice`](crate::LoweredPolicySet::temporal_slice)).
+pub use crate::api::{SliceError, TemporalLeafDescriptor};
 /// The information-provider declaration types. These make up the full
 /// [`ProviderDeclarations`] tree and all have public fields and no
 /// `#[non_exhaustive]`, so a caller can build declarations **directly** with
@@ -139,6 +170,10 @@ pub use crate::api::{EventFieldPath, EventFieldType, EventPin, EventPinRoot, Eve
 pub use crate::extension::provider::declarations::{
     EntityTypeDecl, Implementation, MethodDecl, ParamType, ProviderDecl,
 };
+/// The specification's typed event signatures and entity schema (additive; see `typed_fields`).
+pub use crate::typed_fields::{
+    SpecCedarType, SpecEntities, SpecEntityType, SpecField, SpecFieldType, spec_entities,
+};
 
 /// Schema-aware validation. Analog of `cedar_policy::Validator` and its
 /// result / finding types.
@@ -149,16 +184,26 @@ pub use crate::authorize::{
     Authorizer, AuthorizerBuilder, Decision, Diagnostics, DogwoodRuleRef, Response,
 };
 
+/// The pin rules an authorizer checks before it ingests an event (the mirror
+/// rule, in its strict form by default), and why it rejects an event.
+pub use crate::conformance::{MirrorRule, Rejection};
+
+/// The position-free identity a decision reports: each supporting policy as a
+/// [`PolicyRef`] (id and revision), each erroring policy as an
+/// [`ErroringPolicy`], and the [`PolicySetVersion`] (generation and hash) the
+/// decision was made under.
+pub use crate::authorize::{ErroringPolicy, PolicyRef, PolicySetVersion};
+
 /// The swappable decision and temporal-evaluation backends: the traits a
 /// caller implements to replace local Cedar evaluation (e.g. with
 /// an external Cedar authorization service) or in-memory temporal evaluation (e.g. with a
 /// compiled, database-backed engine), the built-in defaults, and the
 /// request/decision types the [`PolicyEngine`] exchanges.
 pub use crate::engine::{
-    ActionRef, ActionScope, AuthorizationDecision, AuthorizationRequest, CedarPolicyEngine,
-    ExtensionId, InMemoryTemporalEngine, PartitionKey, PolicyEngine, ProviderRequest,
-    ProviderResolver, Temporal, TemporalBindings, TemporalEngine, TemporalField,
-    partition_value_key,
+    ActionRef, ActionScope, AuthorizationDecision, AuthorizationOutcome, AuthorizationRequest,
+    CedarPolicyEngine, DecisionRequestCache, ExtensionId, InMemoryTemporalEngine, PartitionKey,
+    PolicyEngine, ProviderRequest, ProviderResolver, Temporal, TemporalBindings, TemporalEngine,
+    TemporalField, decision_request, partition_value_key,
 };
 
 /// Precomputed temporal leaves needed by a decision. See
@@ -198,7 +243,48 @@ pub mod temporal_ast {
         AggExpr, AggExprKind, ArithOp, BinderSlot, CmpOp, Condition, ConditionKind, Interval,
         NamedArg, Predicate, Term, TimeUnit, Type, TypedBinder, WithinSpec,
     };
+
+    /// **A lowered temporal leaf as text, and back**, for a caller that lowers
+    /// a policy set in one place and evaluates its temporal leaves in another
+    /// (see [`LoweredPolicySet::temporal_slice`](crate::LoweredPolicySet::temporal_slice)).
+    ///
+    /// [`condition_text`] prints a leaf's condition as lowering produced it
+    /// (after macro expansion, before pin injection) in Dogwood's grammar,
+    /// fully parenthesized; a binder macro expansion generated (`t$372`) is
+    /// spelled `$t$372`, a spelling only [`parse_condition`] reads as that
+    /// binder. [`parse_condition`] reads such a text back. For every condition
+    /// `c` that [`condition_text`] prints, `parse_condition(&condition_text(&c)?)`
+    /// is `c` up to the source spans ([`condition_text`] checks it, and returns
+    /// an error rather than a text that would read back as another leaf), and
+    /// printing that parse gives the same text again. [`parse_condition`] checks
+    /// what it reads as a policy's temporal block is checked (bindings,
+    /// closedness, evaluation order), and rejects what a lowered leaf cannot
+    /// hold (a macro call or parameter, a refinement, a disjunction, an array
+    /// constant).
+    pub use crate::extension::temporal::text::{
+        TextError, condition_text, parse_leaf_condition as parse_condition,
+    };
+
+    /// The text form of a field path, as [`NamedArg::name`] holds it: each
+    /// segment escaped (`\` as `\\`, `.` as `\.`) and the segments joined by
+    /// `.`, so `["input", "user.id"]` is `input.user\.id` and
+    /// `["input", "user", "id"]` is `input.user.id`. A path of segments that
+    /// hold neither `.` nor `\` is its plain dotted text. [`split`](field_path::split)
+    /// inverts [`join`](field_path::join) on every non-empty path. Use these to
+    /// build a [`NamedArg`] from a path, or to key a path by its text, rather
+    /// than joining the segments with a plain `.`.
+    pub mod field_path {
+        pub use crate::field_path::{join, split};
+    }
 }
+
+/// A JSON export of the frontend's parsed inputs and of its observables at
+/// each stage boundary, for differential testing of another implementation of
+/// the frontend. Behind the off-by-default feature `frontend-export`; not part
+/// of the supported API.
+#[cfg(feature = "frontend-export")]
+#[doc(hidden)]
+pub use crate::api::frontend_export;
 
 /// The core event input (Dogwood's generalization of `cedar_policy::Request`)
 /// and its builder, plus the runtime value type used for event fields.
@@ -219,7 +305,9 @@ pub use crate::extension::provider::declarations::ProviderDeclarations;
 /// spanned leaf carries its `.dw` source and renders its own underlined
 /// snippet.
 pub use crate::api::Error;
-pub use crate::error::{CedarifyError, MacroError, ParseError, ParseErrors, SourceLoc};
+pub use crate::error::{
+    CedarifyError, MacroError, ParseError, ParseErrors, PolicyIdError, PolicyIdErrorKind, SourceLoc,
+};
 
 /// A placeholder source span for programmatically-constructed
 /// [`temporal_ast`] nodes (the `span` field's type is crate-private, so this is
@@ -235,10 +323,11 @@ pub use crate::error::dummy_span;
 /// direct dependency on the `cedar-policy` crate (which would also have to be
 /// version-matched to Dogwood's).
 pub mod cedar {
-    pub use cedar_policy::{Entities, EntityUid, PolicySet, Request, Schema};
+    pub use cedar_policy::{Effect, Entities, EntityUid, PolicySet, Request, Schema};
 }
 
 /// MCP schema generation — a Dogwood action schema *is* an MCP tool
 /// manifest; these turn one into the Cedar `.cedarschema` text fed to
-/// [`PolicySchema::from_cedarschema_str`].
+/// [`PolicySchema::from_cedarschema_str`]. Requires the `mcp-schema` feature.
+#[cfg(feature = "mcp-schema")]
 pub use crate::schema::{DRUPE_TEMPLATE, mcp_to_cedar_schema, mcp_to_cedar_schema_with_template};

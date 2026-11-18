@@ -1,0 +1,6 @@
+// `principal.id` is the `id` attribute `OAuthUser` declares, a `Long`, and is compared with a
+// `Long`. Both accept it.
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h (Drupe::Action::"Login"::request{ input.user: context.input.user } && principal.id == 5)
+};

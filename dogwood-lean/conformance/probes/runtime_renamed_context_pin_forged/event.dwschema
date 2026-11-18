@@ -1,0 +1,15 @@
+decision event <A>::request {
+    ...inputs(A),
+    callerPrincipal: principalType(A),
+    callerResource: resourceType(A),
+    requestId: String,
+    pin sid: String = context.input.user,
+}
+
+event <A>::response {
+    ...inputs(A),
+    callerPrincipal: principalType(A),
+    callerResource: resourceType(A),
+    requestId: String,
+    pin sid: String = context.input.user,
+}

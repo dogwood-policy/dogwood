@@ -30,11 +30,17 @@
 // `<A>` are symbolic; binding them to a concrete schema happens in a later
 // derivation pass.
 //
-// A schema may open with an optional `max_window = <interval>` directive that
-// caps how far back any temporal `within` window in a policy may look (the
-// validator enforces it; absent → a 24h default):
+// A schema may open with optional `max_window = <interval>` and
+// `max_horizon = <interval>` directives, each at most once, in either order.
+// `max_window` caps each temporal `within` window in a policy on its own;
+// `max_horizon` caps how far back a temporal condition looks in total (the
+// largest sum of the windows along one chain of operators). The validator
+// enforces both. Without `max_horizon` there is no horizon cap; without
+// `max_window`, the window cap is the declared `max_horizon`, else 24h (see
+// `EventSchema::limits`):
 //
-//   max_window = 24h
+//   max_window  = 1h
+//   max_horizon = 24h
 //
 //   decision event <A>::request { ...inputs(A), __cedar_uid: String }
 
@@ -44,14 +50,22 @@ COMMENT    = _{ "//" ~ (!("\n" | "\r") ~ ANY)* }
 ident = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
 
 // ── Entry ──────────────────────────────────────────────────────────
-// An optional `max_window` directive, then the event declarations.
-schema_entry = { SOI ~ max_window_decl? ~ event_decl* ~ EOI }
+// Optional `max_window` / `max_horizon` directives, then the event declarations.
+// That each appears at most once is checked by the parser.
+schema_entry = { SOI ~ directive* ~ event_decl* ~ EOI }
+directive    = _{ max_window_decl | max_horizon_decl }
 
 // `max_window = <n><unit>` — the maximum temporal look-back window any policy
 // `within` clause may use. At most one, at the top of the file. The interval
 // shape (`integer time_unit`) mirrors the temporal sublanguage's window.
 max_window_decl = { kw_max_window ~ "=" ~ interval }
 kw_max_window   = @{ "max_window" ~ !(ASCII_ALPHANUMERIC | "_") }
+
+// `max_horizon = <n><unit>` — the maximum total look-back of any temporal
+// condition: the largest sum of the windows along one chain of `formerly`,
+// `previous` and `since`. At most one, at the top of the file.
+max_horizon_decl = { kw_max_horizon ~ "=" ~ interval }
+kw_max_horizon   = @{ "max_horizon" ~ !(ASCII_ALPHANUMERIC | "_") }
 interval        = { integer ~ time_unit }
 integer         = @{ ASCII_DIGIT+ }
 time_unit       = { "s" | "m" | "h" | "d" }

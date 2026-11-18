@@ -44,7 +44,7 @@ use std::sync::Arc;
 use cedar_policy_core::ast as cedar_ast;
 use cedar_policy_core::validator::RawName;
 
-use crate::ast::{CondKeyword, Effect, Policy, PolicySet};
+use crate::ast::{CondKeyword, Policy, PolicySet};
 use crate::error::{RawCedarifyError, SourceLoc, Span};
 
 /// A parsed action schema, as schema augmentation mutates it.
@@ -160,6 +160,14 @@ pub struct Cedarified {
     /// `rule_ids`: `rule_locs[k]` is rule `k`'s span and source text. The
     /// validator reports a Cedar diagnostic that carries no label against it.
     pub rule_locs: Vec<SourceLoc>,
+    /// The positional rule key of each rule (`policy_<k>` / `<distincter>_<k>`),
+    /// parallel to `rule_ids`: the prefix of its hoisted field names. Equal to
+    /// `rule_ids[k]` unless the set has stable ids.
+    pub rule_keys: Vec<String>,
+    /// The canonical Cedar text of each rule, parallel to `rule_ids`: the rule
+    /// lowered again under the canonical rule key, with no annotations, printed
+    /// without its id. Position-free; the input to its revision.
+    pub rule_canonical: Vec<String>,
     /// `temporal_rules[j]` is the rule index of the `j`-th hoisted temporal
     /// leaf.
     pub temporal_rules: Vec<usize>,
@@ -173,6 +181,9 @@ pub struct Cedarified {
     /// The exported name of each provider enum the policy set uses, keyed by
     /// its declared name (`GuardDuty::Severity` -> `Drupe::GuardDuty_Severity`).
     pub enum_names: BTreeMap<String, String>,
+    /// The reads of the request context a rule makes that lowering does not
+    /// preserve. Validation reports each.
+    pub(crate) context_reads: Vec<ContextRead>,
 }
 
 /// The **rule key** minted for the `k`-th Dogwood rule: the string used both
@@ -266,6 +277,22 @@ struct Ctx<'a> {
     /// The original `.dw` source, shared into every lowered node's `Loc`
     /// so Cedar diagnostics carry `.dw`-accurate spans.
     dw_src: Arc<str>,
+    /// The reads of the request context the current rule makes that lowering
+    /// does not preserve (see `to_ast::note_context_read`), with rule index 0.
+    context_reads: Vec<ContextRead>,
+}
+
+/// A read of the request context, by the Cedar part of a rule, that lowering
+/// does not preserve: a read of the context whole (`whole`), which also sees the
+/// values lowering adds for the policy set's leaves, or of an attribute with a
+/// name lowering reserves for one. Validation reports it.
+#[derive(Debug, Clone)]
+pub(crate) struct ContextRead {
+    /// The index of the rule that reads it.
+    pub(crate) rule: usize,
+    pub(crate) span: Span,
+    pub(crate) message: String,
+    pub(crate) whole: bool,
 }
 
 /// Lower a Dogwood policy set to Cedar, with information-provider
@@ -275,13 +302,21 @@ struct Ctx<'a> {
 /// Each hoisted field's `target_actions` is resolved against `base`, the
 /// parsed action schema; the schema itself is augmented separately by
 /// [`augment_schema`].
+///
+/// `ids` are the set's stable policy ids, one per rule, when it has them: rule
+/// `k` is then emitted under the Cedar policy id `ids[k]` (or
+/// `<distincter>/<ids[k]>`), while its hoisted field names keep the positional
+/// rule key.
 pub fn cedarify_with_providers(
     policy_set: &PolicySet,
     base: &Fragment,
     provider_declarations: Option<&ProviderDeclarations>,
     distincter: Option<&str>,
+    ids: Option<&[String]>,
     dw_src: &Arc<str>,
 ) -> Result<Cedarified, RawCedarifyError> {
+    #[cfg(test)]
+    crate::api::stage_probe::enter("cedarify");
     let new_ctx = |enum_names: BTreeMap<String, String>| Ctx {
         bool_fields: Vec::new(),
         provider_fields: Vec::new(),
@@ -292,9 +327,10 @@ pub fn cedarify_with_providers(
         provider_declarations,
         enum_names,
         dw_src: Arc::clone(dw_src),
+        context_reads: Vec::new(),
     };
     let mut ctx = new_ctx(BTreeMap::new());
-    let mut rules = lower_policies(policy_set, distincter, dw_src, &mut ctx)?;
+    let mut rules = lower_policies(policy_set, distincter, ids, dw_src, &mut ctx)?;
 
     // The provider enums to inject: those referenced by the providers the
     // policy set calls (and the methods it chains on them). Like the provider
@@ -322,14 +358,17 @@ pub fn cedarify_with_providers(
         .unwrap_or_default();
     if !enum_names.is_empty() {
         ctx = new_ctx(enum_names.clone());
-        rules = lower_policies(policy_set, distincter, dw_src, &mut ctx)?;
+        rules = lower_policies(policy_set, distincter, ids, dw_src, &mut ctx)?;
     }
     let LoweredRules {
         policy_set: ast_policy_set,
         rule_ids,
         rule_locs,
+        rule_keys,
+        rule_canonical,
         temporal_rules,
         provider_rules,
+        context_reads,
     } = rules;
 
     // Resolve each temporal leaf's action scope to the concrete actions its
@@ -371,10 +410,13 @@ pub fn cedarify_with_providers(
         hoisted,
         rule_ids,
         rule_locs,
+        rule_keys,
+        rule_canonical,
         temporal_rules,
         provider_rules,
         referenced_enums,
         enum_names,
+        context_reads,
     })
 }
 
@@ -384,8 +426,11 @@ struct LoweredRules {
     policy_set: cedar_ast::PolicySet,
     rule_ids: Vec<String>,
     rule_locs: Vec<SourceLoc>,
+    rule_keys: Vec<String>,
+    rule_canonical: Vec<String>,
     temporal_rules: Vec<usize>,
     provider_rules: Vec<usize>,
+    context_reads: Vec<ContextRead>,
 }
 
 /// Lower every rule of `policy_set` into a Cedar policy set, accumulating the
@@ -393,28 +438,59 @@ struct LoweredRules {
 fn lower_policies(
     policy_set: &PolicySet,
     distincter: Option<&str>,
+    ids: Option<&[String]>,
     dw_src: &Arc<str>,
     ctx: &mut Ctx,
 ) -> Result<LoweredRules, RawCedarifyError> {
     let mut ast_policy_set = cedar_ast::PolicySet::new();
     let mut rule_ids = Vec::with_capacity(policy_set.policies.len());
     let mut rule_locs = Vec::with_capacity(policy_set.policies.len());
+    let mut rule_keys = Vec::with_capacity(policy_set.policies.len());
+    let mut rule_canonical = Vec::with_capacity(policy_set.policies.len());
     let mut temporal_rules = Vec::new();
     let mut provider_rules = Vec::new();
+    let mut context_reads = Vec::new();
     for (i, policy) in policy_set.policies.iter().enumerate() {
-        let id = rule_key(distincter, i);
+        let key = rule_key(distincter, i);
+        // The emitted Cedar policy id: the stable id when the set has one, else
+        // the positional rule key (today's behavior).
+        let id = match ids {
+            Some(ids) => crate::identity::prefixed_policy_id(distincter, &ids[i]),
+            None => key.clone(),
+        };
         // Each rule opens a fresh field-ordinal namespace under its own key, so
         // hoisted names are `<rule_key>__temporal_0`, `…__temporal_1`, ….
-        ctx.rule_key = id.clone();
+        ctx.rule_key = key.clone();
         ctx.field_ordinal = 0;
-        let static_policy = emit_policy(policy, &id, ctx)?;
+        ctx.context_reads.clear();
+        let static_policy = emit_policy(policy, &id, true, ctx)?;
+        context_reads.extend(
+            ctx.context_reads
+                .drain(..)
+                .map(|read| ContextRead { rule: i, ..read }),
+        );
         ast_policy_set
             .add_static(static_policy)
             .map_err(|e| RawCedarifyError {
                 message: format!("duplicate policy id `{id}`: {e}"),
                 span: None,
             })?;
+        let (bool_len, provider_len) = (ctx.bool_fields.len(), ctx.provider_fields.len());
+
+        // The canonical form: the same rule lowered again under the canonical
+        // rule key with no annotations, printed without its id. Lowering is
+        // deterministic, so it hoists the same leaves in the same order under
+        // position-free names; those duplicate leaves are dropped again.
+        ctx.rule_key = crate::identity::CANONICAL_RULE_KEY.to_string();
+        ctx.field_ordinal = 0;
+        let canonical = emit_policy(policy, "_", false, ctx)?;
+        ctx.bool_fields.truncate(bool_len);
+        ctx.provider_fields.truncate(provider_len);
+        ctx.context_reads.clear();
+        rule_canonical.push(canonical.to_string());
+
         rule_ids.push(id);
+        rule_keys.push(key);
         rule_locs.push(SourceLoc::new(policy.span, Arc::clone(dw_src)));
         temporal_rules.resize(ctx.bool_fields.len(), i);
         provider_rules.resize(ctx.provider_fields.len(), i);
@@ -423,8 +499,11 @@ fn lower_policies(
         policy_set: ast_policy_set,
         rule_ids,
         rule_locs,
+        rule_keys,
+        rule_canonical,
         temporal_rules,
         provider_rules,
+        context_reads,
     })
 }
 
@@ -512,17 +591,16 @@ pub fn augment_schema(
 /// contributes its negation, and the clauses are conjoined with `&&` — as a
 /// balanced tree in clause order rather than Cedar's left-nested chain (same
 /// evaluation order and short-circuiting; see the fold below).
+///
+/// `with_annotations` is `false` only for the canonical (revision) form, which
+/// excludes annotations.
 fn emit_policy(
     policy: &Policy,
     id: &str,
+    with_annotations: bool,
     ctx: &mut Ctx,
 ) -> Result<cedar_ast::StaticPolicy, RawCedarifyError> {
     use cedar_policy_core::expr_builder::ExprBuilder as _;
-
-    let effect = match policy.effect {
-        Effect::Permit => cedar_ast::Effect::Permit,
-        Effect::Forbid => cedar_ast::Effect::Forbid,
-    };
 
     // The scoped action types any hoisted extension field.
     let action = scope_action(&policy.scope.action);
@@ -579,6 +657,7 @@ fn emit_policy(
     let annotations: cedar_ast::Annotations = policy
         .annotations
         .iter()
+        .filter(|_| with_annotations)
         .filter_map(|a| {
             let key = a.key.parse::<cedar_ast::AnyId>().ok()?;
             let value = a.value.clone().map(smol_str::SmolStr::from);
@@ -590,7 +669,7 @@ fn emit_policy(
         cedar_ast::PolicyID::from_string(id),
         Some(rule_loc.clone()),
         annotations,
-        effect,
+        cedar_ast::Effect::from(policy.effect),
         policy.scope.principal.clone(),
         policy.scope.action.clone(),
         policy.scope.resource.clone(),
@@ -690,7 +769,7 @@ mod tests {
     //! upgrade removes or changes either impl, the corresponding test stops
     //! compiling — a loud signal before the change silently breaks lowering:
     //!
-    //! 1. `cedar_policy::PolicySet: TryFrom<cedar_policy_core::ast::PolicySet>`
+    //! 1. `cedar_policy::PolicySet: From<cedar_policy_core::ast::PolicySet>`
     //!    — hands the loc-bearing `ast::PolicySet` to validation/authorization.
     //! 2. `cedar_policy::SchemaFragment: TryFrom<json_schema::Fragment<RawName>>`
     //!    — turns the mutated (augmented) core schema fragment into the public
@@ -803,9 +882,9 @@ mod tests {
         set.add_static(policy).expect("add_static");
 
         // The load-bearing conversion. If this line fails to compile, the
-        // `#[doc(hidden)] TryFrom<ast::PolicySet>` is gone.
-        let public = cedar_policy::PolicySet::try_from(set)
-            .expect("ast::PolicySet -> cedar_policy::PolicySet");
+        // `#[doc(hidden)] From<ast::PolicySet>` is gone. (It was `TryFrom`
+        // before Cedar 4.14 made it infallible.)
+        let public = cedar_policy::PolicySet::from(set);
         assert_eq!(public.policies().count(), 1);
     }
 

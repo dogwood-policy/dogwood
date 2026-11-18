@@ -1,0 +1,10 @@
+// The action schema writes an attribute name with a JSON-style escape, `"\u00c4"`, which Cedar's
+// schema syntax does not have, and the policy puts an array in a temporal predicate argument. The
+// public pipeline fails first at the derivation of the event signatures, which parses the action
+// schema; the export's stages that need the schema do not run, and the array check, which does
+// not, fails. The frontend harness's `export` check counts the schema's rejection where the
+// pipeline meets it.
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::response{ input.user: ["a", "b"] }
+};

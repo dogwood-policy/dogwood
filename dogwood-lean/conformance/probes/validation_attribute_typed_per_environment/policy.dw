@@ -1,0 +1,7 @@
+// `principal.rank` is a `Long` on an `OAuthUser` and a `String` on a `Bot`, and compared with
+// itself. It is well typed in each request environment, as Cedar types it, so both accept it. The
+// crate used to reject it as ambiguous.
+permit (principal, action == Drupe::Action::"Ping", resource)
+when temporal {
+    formerly within 1h (Drupe::Action::"Login"::request{ input.user: context.input.user } && principal.rank == principal.rank)
+};

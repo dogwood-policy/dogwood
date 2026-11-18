@@ -110,7 +110,8 @@ schema.
 ### 2a. Generate from an MCP manifest (preferred when you have one)
 
 Save the manifest (an MCP `tools/list` payload, or a JSON array of tools with
-`inputSchema` / `outputSchema`) to `tools.json`, then run:
+`inputSchema` / `outputSchema`) to `tools.json`, then run (the CLI must be
+built with `cargo build -p dogwood-cli --features mcp-schema`):
 
 ```bash
 dogwood schema mcp --manifest tools.json -o schema.cedarschema

@@ -71,6 +71,10 @@ fn parse_rule(
 
 /// Parse a temporal condition body into a [`Condition`], at the default
 /// depth limit.
+///
+/// A binder reference that names a generated binder (`$t$372`, the canonical
+/// text's spelling of one macro expansion introduced) is rejected: a policy
+/// cannot write it.
 #[cfg(test)]
 pub fn parse_condition(body: &str) -> Result<Condition, String> {
     parse_condition_at(body, dogwood_syntax::DEFAULT_MAX_DEPTH)
@@ -81,8 +85,26 @@ pub fn parse_condition(body: &str) -> Result<Condition, String> {
 /// the scan bounds the generated parser, and the finished condition is
 /// measured and refused if deeper. A block inside a Cedar expression is
 /// additionally measured as part of the whole tree by the Cedar parser's
-/// root check, which spans both languages in one count.
+/// root check, which spans both languages in one count. A generated binder
+/// reference is rejected, as by [`parse_condition`].
 pub(crate) fn parse_condition_at(body: &str, limit: usize) -> Result<Condition, String> {
+    let cond = parse_condition_unchecked_at(body, limit)?;
+    match super::text::first_generated_ref(&cond) {
+        Some(name) => Err(super::text::generated_ref_message(&name)),
+        None => Ok(cond),
+    }
+}
+
+/// [`parse_condition`], with generated binder references kept as they parse
+/// (`BinderRef("t$372")`): the grammar alone, with its string and integer
+/// checks, at the default depth limit. The leaf parser
+/// (`text::parse_leaf_condition`) reads those as the binders themselves.
+pub(crate) fn parse_condition_unchecked(body: &str) -> Result<Condition, String> {
+    parse_condition_unchecked_at(body, dogwood_syntax::DEFAULT_MAX_DEPTH)
+}
+
+/// [`parse_condition_unchecked`] under `limit`.
+fn parse_condition_unchecked_at(body: &str, limit: usize) -> Result<Condition, String> {
     let mut pairs = parse_rule(Rule::condition_entry, body, limit)?;
     let entry = pairs.next().expect("condition_entry yields one pair");
     let cond = entry
@@ -191,6 +213,9 @@ pub fn parse_macro_body(body: &str, max_depth: usize) -> Result<crate::ast::Macr
             let mut has_agg = false;
             term.for_each_operand_agg(&mut |_| has_agg = true);
             if has_agg {
+                if let Some(name) = super::text::first_generated_ref_term(&term) {
+                    return Err(super::text::generated_ref_message(&name));
+                }
                 return Ok(crate::ast::MacroBody::TemporalValue(term));
             }
             // Aggregation-free, so not a value body. Some such shapes are
@@ -209,7 +234,10 @@ pub fn parse_macro_body(body: &str, max_depth: usize) -> Result<crate::ast::Macr
         Rule::condition => {
             let condition = build_condition(inner)?;
             check_built_depth(crate::parser::condition_depth(&condition), max_depth)?;
-            Ok(crate::ast::MacroBody::TemporalCondition(condition))
+            match super::text::first_generated_ref(&condition) {
+                Some(name) => Err(super::text::generated_ref_message(&name)),
+                None => Ok(crate::ast::MacroBody::TemporalCondition(condition)),
+            }
         }
         other => unreachable!("unexpected temporal macro body child: {other:?}"),
     }
@@ -493,8 +521,9 @@ fn build_named_args(pair: Pair<'_>) -> Built<Vec<NamedArg>> {
         for p in na.into_inner() {
             match p.as_rule() {
                 // The field name is a dotted path (`input.user`); keep it
-                // as the dotted string — `NamedArg::field_path` splits it
-                // for lookup, and matching descends nested records.
+                // as its text (`crate::field_path::join`) —
+                // `NamedArg::field_path` splits it for lookup, and matching
+                // descends nested records.
                 Rule::field_path => name = build_field_path(&p),
                 Rule::term => value = build_term(p)?,
                 _ => {}
@@ -505,15 +534,18 @@ fn build_named_args(pair: Pair<'_>) -> Built<Vec<NamedArg>> {
     Ok(args)
 }
 
-/// `field_path = ident ("." ident)*` — render back to the dotted string
-/// stored on [`NamedArg::name`].
+/// `field_path = ident ("." ident)*` — render back to the text stored on
+/// [`NamedArg::name`]. An identifier holds neither `.` nor `\`, so the text is
+/// the plain dotted path; it goes through [`crate::field_path::join`] all the
+/// same, the one writer of that text.
 fn build_field_path(pair: &Pair<'_>) -> String {
-    pair.clone()
+    let segments: Vec<&str> = pair
+        .clone()
         .into_inner()
         .filter(|p| p.as_rule() == Rule::ident)
-        .map(|p| p.as_str().to_string())
-        .collect::<Vec<_>>()
-        .join(".")
+        .map(|p| p.as_str())
+        .collect();
+    crate::field_path::join(&segments)
 }
 
 /// `exists_op = "exists" typed_binder "." condition`. Builds a

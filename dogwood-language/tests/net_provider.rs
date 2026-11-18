@@ -186,9 +186,9 @@ fn trace() -> String {
     // "BLOCKED" → deny). The request never names the lookup service's origin —
     // the policy's literal base does.
     r#"
-@0 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { key: "allowed" }) Drupe::Action::"Read"::request(input: { key: "allowed" })
-@10 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { key: "page.html" }) Drupe::Action::"Read"::request(input: { key: "page.html" })
-@20 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { key: "blocked" }) Drupe::Action::"Read"::request(input: { key: "blocked" })
+@0 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { key: "allowed" }) Drupe::Action::"Read"::request(input: { key: "allowed" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "r0")
+@10 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { key: "page.html" }) Drupe::Action::"Read"::request(input: { key: "page.html" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "r1")
+@20 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { key: "blocked" }) Drupe::Action::"Read"::request(input: { key: "blocked" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "r2")
 "#
     .to_string()
 }
@@ -271,7 +271,7 @@ fn malicious_key_is_rejected_before_fetch() {
         let policies =
             LoweredPolicySet::from_str(&policy, &service, &policy_schema).expect("policy lowers");
         let tr = format!(
-            r#"@0 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: {{ key: "{key}" }}) Drupe::Action::"Read"::request(input: {{ key: "{key}" }})"#,
+            r#"@0 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: {{ key: "{key}" }}) Drupe::Action::"Read"::request(input: {{ key: "{key}" }}, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "r0")"#,
         );
         let _ = replay_log(policies, &tr).expect("authorizes");
     }

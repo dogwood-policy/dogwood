@@ -1,0 +1,16 @@
+namespace Drupe {
+  type LoginInput = { user: String };
+  entity Gateway;
+  entity OAuthUser = { rank: Long };
+  entity Bot = { rank: String };
+  action "Login" appliesTo {
+    principal: [OAuthUser, Bot],
+    resource: [Gateway],
+    context: { input: LoginInput }
+  };
+  action "Ping" appliesTo {
+    principal: [OAuthUser, Bot],
+    resource: [Gateway],
+    context: { input: LoginInput }
+  };
+}

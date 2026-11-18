@@ -1,0 +1,5 @@
+// The namespace declares a common type named `decimal`, and a provider's output has a field of
+// type `decimal`, the extension type. The shared provider type writes it `__cedar::decimal`, which
+// the namespace's type does not capture. Both allow the `Read`.
+permit (principal, action == Drupe::Action::"Read", resource)
+when { Risk::Score().score.greaterThan(decimal("0.5")) };

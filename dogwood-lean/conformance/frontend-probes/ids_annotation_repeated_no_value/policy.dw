@@ -1,0 +1,5 @@
+// An `@id` without a value, then one with: two `@id`s, an error under IdSource::Annotation.
+@id
+@id("y")
+permit (principal, action == Drupe::Action::"Read", resource)
+when { temporal { formerly within 1h Drupe::Action::"Login"::response{ input.user: context.input.user } } };

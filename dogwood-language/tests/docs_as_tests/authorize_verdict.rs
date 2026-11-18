@@ -57,8 +57,8 @@ fn authorize_returns_verdict_with_determining_rule() {
     // ApproveSale(AMZN)@0, then SellShares(AMZN)@100 (within 1h -> guard
     // holds -> allow at tp1).
     let trace_text = r#"
-@0 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { shares: 5, stock: "AMZN" }) Drupe::Action::"ApproveSale"::request(input: { shares: 5, stock: "AMZN" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u1")
-@100 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { shares: 5, stock: "AMZN" }) Drupe::Action::"SellShares"::request(input: { shares: 5, stock: "AMZN" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u2")
+@0 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { shares: 5, stock: "AMZN" }, system: { now: datetime("2024-01-01T00:00:00Z") }) Drupe::Action::"ApproveSale"::request(input: { shares: 5, stock: "AMZN" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u1")
+@100 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { shares: 5, stock: "AMZN" }, system: { now: datetime("2024-01-01T00:00:00Z") }) Drupe::Action::"SellShares"::request(input: { shares: 5, stock: "AMZN" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u2")
 "#;
 
     let verdicts = run(policy, &schema_src(), trace_text);
@@ -87,7 +87,7 @@ fn authorize_denies_when_guard_fails() {
 
     // SellShares with NO prior ApproveSale -> guard fails -> Deny.
     let trace_text = r#"
-@0 scope(principal: Drupe::OAuthUser::"bob", resource: Drupe::Gateway::"gw1") request_context(input: { shares: 5, stock: "MSFT" }) Drupe::Action::"SellShares"::request(input: { shares: 5, stock: "MSFT" }, callerPrincipal: Drupe::OAuthUser::"bob", callerResource: Drupe::Gateway::"gw1", requestId: "u1")
+@0 scope(principal: Drupe::OAuthUser::"bob", resource: Drupe::Gateway::"gw1") request_context(input: { shares: 5, stock: "MSFT" }, system: { now: datetime("2024-01-01T00:00:00Z") }) Drupe::Action::"SellShares"::request(input: { shares: 5, stock: "MSFT" }, callerPrincipal: Drupe::OAuthUser::"bob", callerResource: Drupe::Gateway::"gw1", requestId: "u1")
 "#;
 
     let verdicts = run(policy, &schema_src(), trace_text);

@@ -35,9 +35,51 @@ use cedar_policy_core::ast as cedar_ast;
 
 use crate::error::Span;
 use crate::extension::Extension;
+use vstd::prelude::*;
+
+verus! {
+
+// The Cedar leaf types embedded in the AST (`ExprKind` literals / vars /
+// slots / patterns / entity types, and the `Scope` constraints). Make them
+// visible to Verus as opaque external types so the AST can live inside
+// `verus!`; no spec fn inspects their contents, and the macro pass only
+// matches past them, so the opaque view is sufficient.
+#[verifier::external_type_specification]
+#[verifier::external_body]
+pub struct ExCedarLiteral(cedar_ast::Literal);
+
+#[verifier::external_type_specification]
+#[verifier::external_body]
+pub struct ExCedarVar(cedar_ast::Var);
+
+#[verifier::external_type_specification]
+#[verifier::external_body]
+pub struct ExCedarSlotId(cedar_ast::SlotId);
+
+#[verifier::external_type_specification]
+#[verifier::external_body]
+pub struct ExCedarPatternElem(cedar_ast::PatternElem);
+
+#[verifier::external_type_specification]
+#[verifier::external_body]
+pub struct ExCedarEntityType(cedar_ast::EntityType);
+
+#[verifier::external_type_specification]
+#[verifier::external_body]
+pub struct ExCedarPrincipalConstraint(cedar_ast::PrincipalConstraint);
+
+#[verifier::external_type_specification]
+#[verifier::external_body]
+pub struct ExCedarActionConstraint(cedar_ast::ActionConstraint);
+
+#[verifier::external_type_specification]
+#[verifier::external_body]
+pub struct ExCedarResourceConstraint(cedar_ast::ResourceConstraint);
+
 
 /// A parsed Dogwood policy set: the whole `.dw` source.
 #[derive(Debug, Clone)]
+#[verifier::external_derive(Clone)]
 pub struct PolicySet {
     pub policies: Vec<Policy>,
     /// Top-level `def cedar` / `def temporal` macro declarations.
@@ -50,6 +92,7 @@ pub struct PolicySet {
 /// `kind` selects the body parser (cedar vs. temporal); the body shape
 /// records which language it parsed under.
 #[derive(Debug, Clone)]
+#[verifier::external_derive(Clone)]
 pub struct MacroDef {
     pub span: Span,
     pub name: String,
@@ -61,6 +104,7 @@ pub struct MacroDef {
 /// always `?`-style (value parameters); a body's local fresh binders
 /// (`$t`) are introduced inline and not declared in the param list.
 #[derive(Debug, Clone)]
+#[verifier::external_derive(Clone)]
 pub struct MacroParam {
     pub span: Span,
     pub name: String,
@@ -73,6 +117,7 @@ pub struct MacroParam {
 /// temporal-condition macro only in condition slot; a value macro only
 /// in comparison-operand position).
 #[derive(Debug, Clone)]
+#[verifier::external_derive(Clone)]
 pub enum MacroBody {
     Cedar(Expr),
     TemporalCondition(crate::extension::temporal::ast::Condition),
@@ -92,6 +137,7 @@ pub enum Effect {
 
 /// A single Dogwood rule.
 #[derive(Debug, Clone)]
+#[verifier::external_derive(Clone)]
 pub struct Policy {
     pub span: Span,
     /// `@id("...")`-style annotations, as `(key, value)` pairs.
@@ -106,6 +152,7 @@ pub struct Policy {
 
 /// One `@key("value")` annotation.
 #[derive(Debug, Clone)]
+#[verifier::external_derive(Clone)]
 pub struct Annotation {
     pub key: String,
     pub value: Option<String>,
@@ -127,6 +174,7 @@ pub struct Annotation {
 /// mistyped scope action/type points at that token in the `.dw` source
 /// rather than the whole rule.
 #[derive(Debug, Clone)]
+#[verifier::external_derive(Clone)]
 pub struct Scope {
     pub span: Span,
     pub principal: cedar_ast::PrincipalConstraint,
@@ -136,6 +184,7 @@ pub struct Scope {
 
 /// A `when`/`unless` condition clause: a keyword and a structured body.
 #[derive(Debug, Clone)]
+#[verifier::external_derive(Clone)]
 pub struct Cond {
     pub span: Span,
     pub keyword: CondKeyword,
@@ -161,10 +210,23 @@ pub enum CondKeyword {
 /// in the `.dw` source (not merely the enclosing rule). This wrapper shape
 /// mirrors the temporal sub-language's `Condition { span, kind }`.
 #[derive(Debug, Clone)]
+#[verifier::external_derive(Clone)]
 pub struct Expr {
     pub kind: ExprKind,
     /// Byte range into the original `.dw` source that this node spans.
     pub span: Span,
+}
+
+} // verus!
+
+// Outside `verus!`: Verus has no specification of `cedar_ast::Effect`.
+impl From<Effect> for cedar_ast::Effect {
+    fn from(effect: Effect) -> Self {
+        match effect {
+            Effect::Permit => Self::Permit,
+            Effect::Forbid => Self::Forbid,
+        }
+    }
 }
 
 impl Expr {
@@ -180,6 +242,8 @@ impl Expr {
         std::mem::replace(&mut self.kind, crate::deep_drop::leaf_expr_kind())
     }
 }
+
+verus! {
 
 /// The shape of a Cedar condition expression node.
 ///
@@ -200,6 +264,7 @@ impl Expr {
 /// carries a parsed `temporal`/`provider` marker, which `cedarify` hoists to
 /// a `context.<name>` reference before lowering.
 #[derive(Debug, Clone)]
+#[verifier::external_derive(Clone)]
 pub enum ExprKind {
     /// A literal: `true`, `42`, `"hi"`, `User::"alice"`.
     Lit(cedar_ast::Literal),
@@ -350,6 +415,89 @@ pub enum UnOp {
     ToHours,
     ToDays,
 }
+
+// ─── `Clone` specs ─────────────────────────────────────────────────────
+//
+// The non-`Copy` AST types derive `Clone` under
+// `#[verifier::external_derive(Clone)]`, so the derived impls are compiled
+// outside Verus (a Verus-visible derive over the mutually-recursive `Expr` /
+// `ExprKind` would build a cyclic `clone` spec group). These specs make the
+// external impls callable from verified code (the macro pass clones bodies
+// and arguments); nothing needs a postcondition on `clone`.
+pub assume_specification [<PolicySet as Clone>::clone](_0: &PolicySet) -> PolicySet;
+pub assume_specification [<MacroDef as Clone>::clone](_0: &MacroDef) -> MacroDef;
+pub assume_specification [<MacroParam as Clone>::clone](_0: &MacroParam) -> MacroParam;
+pub assume_specification [<MacroBody as Clone>::clone](_0: &MacroBody) -> MacroBody;
+pub assume_specification [<Policy as Clone>::clone](_0: &Policy) -> Policy;
+pub assume_specification [<Annotation as Clone>::clone](_0: &Annotation) -> Annotation;
+pub assume_specification [<Scope as Clone>::clone](_0: &Scope) -> Scope;
+pub assume_specification [<Cond as Clone>::clone](_0: &Cond) -> Cond;
+pub assume_specification [<Expr as Clone>::clone](_0: &Expr) -> Expr;
+pub assume_specification [<ExprKind as Clone>::clone](_0: &ExprKind) -> ExprKind;
+
+// ─── Termination measure for the Cedar expression walks ────────────────
+//
+// `expr_height` is the Cedar analogue of `cond_height` in
+// `extension/temporal/check.rs`: a strictly-decreasing measure for the
+// recursive walks over `Expr` (macro well-formedness check, expansion,
+// substitution). A `Record` is a leaf: its `BTreeMap` values have no
+// vstd element lemma, so the walks handle records in trusted
+// `external_body` helpers and never recurse into them from verified code.
+
+pub open spec fn expr_height(e: Expr) -> nat
+    decreases e,
+{
+    match e.kind {
+        ExprKind::UnaryApp { expr, .. }
+        | ExprKind::GetAttr { expr, .. }
+        | ExprKind::HasAttr { expr, .. }
+        | ExprKind::Like { expr, .. } => 1 + expr_height(*expr),
+        ExprKind::BinaryApp { left, right, .. } =>
+            1 + if expr_height(*left) >= expr_height(*right) { expr_height(*left) } else { expr_height(*right) },
+        ExprKind::Is { expr, in_expr, .. } => match in_expr {
+            Some(b) =>
+                1 + if expr_height(*expr) >= expr_height(*b) { expr_height(*expr) } else { expr_height(*b) },
+            None => 1 + expr_height(*expr),
+        },
+        ExprKind::IfThenElse { cond, then_expr, else_expr } => {
+            let m = if expr_height(*cond) >= expr_height(*then_expr) { expr_height(*cond) } else { expr_height(*then_expr) };
+            1 + if m >= expr_height(*else_expr) { m } else { expr_height(*else_expr) }
+        },
+        ExprKind::Set(elems) => 1 + exprs_max_height(elems@),
+        ExprKind::Call { args, .. } => 1 + exprs_max_height(args@),
+        ExprKind::MethodCall { receiver, args, .. } =>
+            1 + if expr_height(*receiver) >= exprs_max_height(args@) { expr_height(*receiver) } else { exprs_max_height(args@) },
+        _ => 1,
+    }
+}
+
+/// Max `expr_height` over a `Seq<Expr>` (for `Set` elements and call args).
+pub open spec fn exprs_max_height(items: Seq<Expr>) -> nat
+    decreases items,
+{
+    if items.len() == 0 {
+        0
+    } else {
+        let h0 = expr_height(items[0]);
+        let hr = exprs_max_height(items.drop_first());
+        if h0 >= hr { h0 } else { hr }
+    }
+}
+
+/// `expr_height(items[k]) <= exprs_max_height(items)`.
+pub proof fn lemma_expr_elem_le(items: Seq<Expr>, k: int)
+    requires 0 <= k < items.len(),
+    ensures expr_height(items[k]) <= exprs_max_height(items),
+    decreases items,
+{
+    if k == 0 {
+    } else {
+        assert(items.drop_first()[k - 1] == items[k]);
+        lemma_expr_elem_le(items.drop_first(), k - 1);
+    }
+}
+
+} // verus!
 
 // ─── Pre-lowering diagnostic walks ───────────────────────────────────
 //

@@ -1128,6 +1128,7 @@ fn authorization_supplies_provider_outputs_to_targeted_and_untouched_actions() {
         .principal("Drupe::OAuthUser::\"alice\"")
         .resource("Drupe::Gateway::\"gw1\"")
         .field("input", "key", Value::String("document".to_string()))
+        .request_context("input", "key", Value::String("document".to_string()))
         .build();
     let read_response = authorizer
         .is_authorized(&read)
@@ -1136,6 +1137,7 @@ fn authorization_supplies_provider_outputs_to_targeted_and_untouched_actions() {
         .principal("Drupe::OAuthUser::\"alice\"")
         .resource("Drupe::Gateway::\"gw1\"")
         .field("input", "key", Value::String("document".to_string()))
+        .request_context("input", "key", Value::String("document".to_string()))
         .build();
     let delete_response = authorizer
         .is_authorized(&delete)
@@ -1405,7 +1407,12 @@ fn root_namespace_provider_type_survives_end_to_end_json_feed_forward() {
 }
 
 #[test]
-fn legacy_inline_provider_records_migrate_through_json_feed_forward() {
+fn an_inline_provider_record_of_the_older_augmentation_is_refused() {
+    // The older augmentation wrote each targeted action's provider fields as an
+    // inline `providers` record. Lowering reserves the name for the provider
+    // leaves' values (the formal specification's `namesFresh`), so such a
+    // schema, or one whose author declared `providers`, is refused, on every
+    // action; re-augment from the action schema instead.
     const LEGACY_SCHEMA: &str = r#"
         namespace App {
           entity User;
@@ -1430,88 +1437,18 @@ fn legacy_inline_provider_records_migrate_through_json_feed_forward() {
         permit (principal, action == App::Action::"Read", resource)
         when { Http::Fetch("http://example.com", context.input.key).body == "SAFE" };
     "#;
-    const WRITE_POLICY: &str = r#"
-        permit (principal, action == App::Action::"Write", resource)
-        when { Http::Fetch("http://example.com", context.input.key).body == "SAFE" };
-    "#;
 
     let service = provider_service();
     let base = PolicySchema::from_cedarschema_str(LEGACY_SCHEMA).expect("legacy schema parses");
-    let read = lower_with_distincter(READ_POLICY, &service, &base, "legacy_read");
-    let read_field = read
-        .provider_fields()
-        .next()
-        .expect("Read provider field")
-        .id
-        .clone();
-    let read_json: serde_json::Value =
-        serde_json::from_str(&read.cedar_schema_json().expect("Read schema exports"))
-            .expect("Read schema JSON parses");
-    let read_attrs = read_json["App"]["commonTypes"]["DogwoodProviders"]["attributes"]
-        .as_object()
-        .expect("Read shared provider attributes");
-    assert!(read_attrs.contains_key("readLegacy"));
-    assert!(read_attrs.contains_key(&read_field));
+    let err = ParsedPolicySet::parse(READ_POLICY, &service)
+        .expect("policy parses")
+        .lower_with_distincter(&base, "legacy_read")
+        .expect_err("a declared `providers` record is refused");
     assert!(
-        read_json["App"]["actions"]["Write"]["appliesTo"]["context"]["attributes"]["providers"]
-            ["attributes"]
-            .as_object()
-            .expect("untargeted Write retains its inline provider record")
-            .contains_key("writeLegacy")
+        err.to_string()
+            .contains("declares a context attribute `providers`"),
+        "{err}"
     );
-
-    let carried = reingest_json_schema(&read);
-    let write = lower_with_distincter(WRITE_POLICY, &service, &carried, "legacy_write");
-    let write_field = write
-        .provider_fields()
-        .next()
-        .expect("Write provider field")
-        .id
-        .clone();
-    assert!(Validator::new().validate(&write).validation_passed());
-    assert!(
-        cedar_validates_against(read.as_cedar(), write.cedar_schema()),
-        "the earlier Read policy must validate after the second legacy migration"
-    );
-
-    let json = write.cedar_schema_json().expect("final schema exports");
-    let schema: serde_json::Value = serde_json::from_str(&json).expect("final JSON parses");
-    let common_types = schema["App"]["commonTypes"]
-        .as_object()
-        .expect("App common types");
-    let generated: Vec<_> = common_types
-        .iter()
-        .filter(|(_, ty)| {
-            ty["annotations"]["dogwood_provider_context"] == serde_json::Value::String("1.1".into())
-        })
-        .collect();
-    assert_eq!(
-        generated.len(),
-        1,
-        "migration should use one generated type"
-    );
-    let attributes = generated[0].1["attributes"]
-        .as_object()
-        .expect("migrated shared provider attributes");
-    for field in ["readLegacy", "writeLegacy", &read_field, &write_field] {
-        assert!(
-            attributes.contains_key(field),
-            "migrated shared type is missing `{field}`"
-        );
-    }
-    for action in ["Read", "Write"] {
-        assert_eq!(
-            provider_reference_name(
-                &schema["App"]["actions"][action]["appliesTo"]["context"]["attributes"]["providers"]
-            ),
-            Some("DogwoodProviders"),
-            "{action} must reference the migrated shared provider type"
-        );
-    }
-    let fragment =
-        cedar_policy::SchemaFragment::from_json_str(&json).expect("migrated JSON re-parses");
-    cedar_policy::Schema::from_schema_fragments([fragment])
-        .expect("migrated JSON-fed schema compiles");
 }
 
 #[test]

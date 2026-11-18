@@ -1,0 +1,9 @@
+// The same records under a `forbid`. The first `Read` shares the `Logout`'s nested id and not its
+// "user.id": the forbid blocks it. The second has bob's nested id and alice's in its "user.id":
+// allowed. A request environment that gave the two paths one key would allow the first and deny
+// the second.
+permit (principal, action == Drupe::Action::"Read", resource);
+forbid (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Logout"::response{ input.user.id: context.input.user.id }
+};

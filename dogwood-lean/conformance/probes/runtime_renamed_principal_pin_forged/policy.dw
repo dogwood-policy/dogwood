@@ -1,0 +1,8 @@
+// Under `pin actor = principal` on every kind, mallory's Login response logs `actor: alice`. The
+// pin is symmetric whatever its field is called, so both reject the response at ingestion, and
+// alice's `Read` is denied; after her own login it is allowed. Before 89d3e3c0, the crate ingested
+// the forged response, and allowed the first `Read`.
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::response{}
+};

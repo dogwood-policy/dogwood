@@ -1,0 +1,18 @@
+{
+  "availableProviders": {
+    "Risk::Score": {
+      "argumentTypes": [ { "paramType": "string" } ],
+      "outputType": { "paramType": "long" }
+    },
+    "Risk::Chain": {
+      "argumentTypes": [],
+      "outputType": { "paramType": "set", "items": { "paramType": "string" } },
+      "availableMethods": {
+        "first": {
+          "inputType": { "paramType": "set", "items": { "paramType": "long" } },
+          "outputType": { "paramType": "long" }
+        }
+      }
+    }
+  }
+}
