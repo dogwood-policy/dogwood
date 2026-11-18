@@ -1,0 +1,51 @@
+# The tests that fail when the whole suite runs with the Lean frontend
+# (`DOGWOOD_FRONTEND=lean`, feature `lean-frontend`), and why: each reads a result
+# that the Lean frontend gives in another form. `scripts/test-lean-mode.sh` runs the
+# suite in Lean mode and fails unless exactly these tests fail. In `shadow` mode
+# the whole suite passes.
+#
+# One test per line: the test binary's source, the test's name, the reason.
+#
+# Reasons:
+#   cedar-wording    the test reads the text of Cedar's own diagnostics (Cedar's
+#                    Rust validator's message for an error Cedar reports); Cedar's
+#                    part of validation in Lean mode is cedar-lean's validator,
+#                    which reports one error per rule, the first it finds, worded
+#                    as Cedar words its kind but without all of Cedar's detail
+#                    (an expected type, an attribute's access path, the action of
+#                    a context)
+#   cedar-span       the test reads the span of the subexpression Cedar's
+#                    diagnostic labels; cedar-lean's findings carry no position,
+#                    and the Lean frontend places them at their rule
+#   temporal-span    the test reads the span of the offending node inside a
+#                    temporal leaf; the Lean frontend places a temporal finding at
+#                    its leaf (the specification form of the leaf, which its checks
+#                    read, has no positions)
+#   cedar-locations  the test reads the source locations of the lowered Cedar
+#                    policies; the policies the Lean frontend's result is rebuilt
+#                    into carry none
+
+tests/boundary_validator_catches.rs span_points_at_type_mismatch_expression                                     cedar-span
+tests/dogwood_validation.rs cedar_action_in_group_scope_field_absent_from_member_rejected                       cedar-wording
+tests/dogwood_validation.rs cedar_error_span_points_at_the_offending_subexpression                              cedar-span
+tests/dogwood_validation.rs cedar_feasible_env_missing_context_field_rejected                                   cedar-wording
+tests/dogwood_validation.rs cedar_resource_narrowing_nonexcluding_missing_field_rejected                        cedar-wording
+tests/dogwood_validation.rs cedar_unnarrowed_multi_action_missing_field_rejected                                cedar-wording
+tests/dogwood_validation.rs scope_error_span_points_at_the_scope_token                                          cedar-span
+tests/dogwood_validation.rs when_cedar_clause_field_absent_from_eq_scoped_action_then_cedar_error               cedar-wording
+tests/dogwood_validation.rs when_cedar_clause_field_absent_under_wildcard_action_then_cedar_error               cedar-wording
+tests/dogwood_validation.rs when_cedar_clause_field_present_on_some_listed_actions_not_others_then_cedar_error  cedar-wording
+tests/dogwood_validation.rs when_cedar_clause_mixed_optionality_unguarded_then_cedar_error                      cedar-wording
+tests/dogwood_validation.rs when_cedar_clause_optional_field_in_list_scope_reports_each_failing_env             cedar-wording
+tests/dogwood_validation.rs when_cedar_clause_optional_field_under_wildcard_reports_each_failing_env            cedar-wording
+tests/dogwood_validation.rs when_cedar_clause_reads_optional_field_unguarded_then_cedar_error                   cedar-wording
+tests/dogwood_validation.rs when_cedar_principal_attr_wrong_type_then_error                                     cedar-wording
+tests/dogwood_validation.rs when_cedar_scalar_used_as_set_then_error                                            cedar-wording
+tests/dogwood_validation.rs when_cedar_wrong_type_in_list_then_error                                            cedar-wording
+tests/dogwood_validation.rs when_cedar_wrong_type_on_scoped_action_then_error                                   cedar-wording
+tests/dogwood_validation.rs when_cedar_wrong_type_under_wildcard_then_error                                     cedar-wording
+tests/dogwood_validation.rs when_temporal_error_then_span_points_at_token_in_full_source                        temporal-span
+tests/expected_failures/harness.rs error_messages_match_expected                                                cedar-wording
+tests/passing/cedar_only/harness.rs corpus_fuzz_parse_and_span                                                  cedar-locations
+tests/passing/cedar_only/harness.rs hand_written_leaves_match_cedar_exactly                                     cedar-locations
+tests/temporal_action_groups.rs cedar_witness_group_scope_ordering_comparison                                   cedar-wording

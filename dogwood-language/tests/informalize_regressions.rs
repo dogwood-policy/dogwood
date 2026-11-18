@@ -29,10 +29,10 @@ when { { "{0}": 42 } == { foo: 1 } && context has "{0}" };
         r#"@id("rule {0}")"#,
         r#"Svc::User::"{1}""#,
         r#"(@doc: "hello {0} world }} {{")"#,
-        r#"the request's {0} == "{0}""#,
+        r#"the request's "{0}" == "{0}""#,
         r#"matches the pattern "{0}*""#,
-        "{ {0}: 42 } == { foo: 1 }",
-        "the request context has {0}",
+        r#"{ "{0}": 42 } == { foo: 1 }"#,
+        r#"the request context has "{0}""#,
     ] {
         assert!(text.contains(expected), "missing {expected:?} in:\n{text}");
     }
@@ -1080,5 +1080,111 @@ when temporal {{ seen(Svc::Action::"A"::request{{ }}){extra} }};
     assert!(
         rendered.contains(&format!("({gensym}_1: Timepoint)")),
         "{rendered}"
+    );
+}
+
+/// The whole explanation of a single-rule policy over `cond`.
+fn explain_cond(cond: &str) -> String {
+    let src = format!(
+        "permit (principal, action == Svc::Action::\"Sell\", resource)\nwhen {{ {cond} }};"
+    );
+    explain(&src, &ServiceSchema::defaults())
+}
+
+/// An attribute name that is not an identifier is quoted, so a dotted path
+/// and a single dotted name (`a.b` vs `"a.b"`) never read the same: they
+/// test or read different attributes (issue #26).
+#[test]
+fn non_identifier_attribute_names_are_quoted() {
+    for (path, quoted, path_text, quoted_text) in [
+        (
+            "context has input.user",
+            "context has \"input.user\"",
+            "the request context has input.user",
+            "the request context has \"input.user\"",
+        ),
+        (
+            "principal has a.b",
+            "principal has \"a.b\"",
+            "the principal has a.b",
+            "the principal has \"a.b\"",
+        ),
+        (
+            "principal.a.b == \"x\"",
+            "principal[\"a.b\"] == \"x\"",
+            "the principal's a.b == \"x\"",
+            "the principal's \"a.b\" == \"x\"",
+        ),
+        (
+            "context.input.x.y == \"q\"",
+            "context.input[\"x.y\"] == \"q\"",
+            "the request's x.y == \"q\"",
+            "the request's \"x.y\" == \"q\"",
+        ),
+        (
+            "context.output.a.b == 1",
+            "context.output[\"a.b\"] == 1",
+            "the request's output a.b == 1",
+            "the request's output \"a.b\" == 1",
+        ),
+        (
+            "context[\"output balance\"] == 1",
+            "context.output.balance == 1",
+            "the request's \"output balance\" == 1",
+            "the request's output balance == 1",
+        ),
+        (
+            "{a: {b: 1}}.a.b == 1",
+            "{\"a.b\": {b: 1}}[\"a.b\"].b == 1",
+            "the b field of the a field of { a: { b: 1 } } == 1",
+            "the b field of the \"a.b\" field of { \"a.b\": { b: 1 } } == 1",
+        ),
+    ] {
+        let (p, q) = (when_row(path), when_row(quoted));
+        assert_ne!(p, q, "`{path}` and `{quoted}` read the same: {p}");
+        assert_eq!(p, path_text, "for `{path}`");
+        assert_eq!(q, quoted_text, "for `{quoted}`");
+    }
+    // An identifier spelled as a string is the same attribute: same prose.
+    assert_eq!(
+        when_row("context.input has user"),
+        when_row("context.input has \"user\"")
+    );
+    assert_eq!(
+        when_row("principal.dept == \"x\""),
+        when_row("principal[\"dept\"] == \"x\"")
+    );
+}
+
+/// An `if` directly under `&&` / `||` is parenthesized: its ", otherwise"
+/// branch runs to the end of the phrase, so without the fence a row after
+/// the `if` reads the same as one inside its else-branch (issue #27).
+#[test]
+fn if_operand_of_a_connective_is_fenced() {
+    for (outside, inside) in [
+        (
+            "((if context.input.n == 0 then false else false) || true) && true",
+            "if context.input.n == 0 then false else ((false || true) && true)",
+        ),
+        (
+            "!((if context.input.n == 0 then true else false) && false)",
+            "!(if context.input.n == 0 then true else (true && false))",
+        ),
+        (
+            "(if context.input.n == 0 then true else false) && false",
+            "if context.input.n == 0 then true else (true && false)",
+        ),
+        (
+            "true || (if context.input.n == 0 then true else false) || false",
+            "true || (if context.input.n == 0 then true else (false || false))",
+        ),
+    ] {
+        let (o, i) = (explain_cond(outside), explain_cond(inside));
+        assert_ne!(o, i, "`{outside}` and `{inside}` read the same:\n{o}");
+    }
+    let text = explain_cond("((if context.input.n == 0 then false else false) || true) && true");
+    assert!(
+        text.contains("(if the request's n == 0 then false, otherwise false)"),
+        "the `if` operand is not fenced in:\n{text}"
     );
 }

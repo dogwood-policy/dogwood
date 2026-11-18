@@ -1,0 +1,7 @@
+// Under `pin sid = context.input.user` on every kind, a Login response whose `input.user` is
+// mallory logs `sid: "alice"`. The pin is symmetric, so both reject it, and alice's `Read` is
+// denied; after a login in her own `sid` it is allowed.
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::response{}
+};

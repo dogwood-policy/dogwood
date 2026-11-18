@@ -1,0 +1,7 @@
+// References field "input.usre" (typo of input.user) which is not declared
+// on Login::request. Expected: rejected by event schema validation.
+
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.usre: context.input.user }
+};

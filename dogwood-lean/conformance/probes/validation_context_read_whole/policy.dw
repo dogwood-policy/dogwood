@@ -1,0 +1,7 @@
+// The Cedar part of a rule with a temporal leaf reads the request context whole, which lowering
+// extends with the leaves' values. The specification rejects it (context reads).
+permit (principal, action == Drupe::Action::"Read", resource)
+when { context == context }
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

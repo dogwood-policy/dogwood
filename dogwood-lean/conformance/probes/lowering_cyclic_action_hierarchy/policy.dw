@@ -1,0 +1,8 @@
+// The actions `Login` and `Read` are each in the other. Cedar rejects the schema when it compiles
+// the augmented one; the message is Cedar's, which the frontend harness compares by category, in
+// its `pipeline` check too.
+@id("read_after_login")
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::response{ input.user: context.input.user }
+};

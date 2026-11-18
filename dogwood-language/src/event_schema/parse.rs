@@ -45,26 +45,89 @@ pub fn parse_event_schema_with(
         .map_err(|e| format!("event schema parse error: {e}"))?;
     let entry = pairs.next().expect("schema_entry yields one pair");
     let mut max_window = None;
+    let mut max_horizon = None;
     let mut decls = Vec::new();
     for p in entry.into_inner() {
         match p.as_rule() {
-            Rule::max_window_decl => max_window = Some(build_max_window(&p)?),
+            Rule::max_window_decl => set_once(
+                &mut max_window,
+                build_interval_directive(&p, "max_window")?,
+                "max_window",
+            )?,
+            Rule::max_horizon_decl => set_once(
+                &mut max_horizon,
+                build_interval_directive(&p, "max_horizon")?,
+                "max_horizon",
+            )?,
             Rule::event_decl => decls.push(build_event_decl(p)?),
             _ => {}
         }
     }
-    Ok(EventSchema { max_window, decls })
+    check_kinds_distinct(&decls)?;
+    let schema = EventSchema {
+        max_window,
+        max_horizon,
+        decls,
+    };
+    schema.limits()?;
+    Ok(schema)
 }
 
-/// Build the `max_window = <interval>` directive's [`Interval`]. A zero window
-/// is rejected: it would forbid every temporal `within` clause, which is never
-/// what an author intends (omit the directive to use the default cap instead).
-fn build_max_window(pair: &Pair<'_>) -> Result<Interval, String> {
+/// Record a directive's value, rejecting a second occurrence.
+fn set_once(slot: &mut Option<Interval>, value: Interval, name: &str) -> Result<(), String> {
+    if slot.is_some() {
+        return Err(format!(
+            "`{name}` is declared more than once; declare it at most once, at the top of the \
+             event schema"
+        ));
+    }
+    *slot = Some(value);
+    Ok(())
+}
+
+/// Reject an event kind declared more than once. Every declaration applies to every action, so
+/// a kind declared twice gives each action two signatures of one `(namespace, action, kind)`,
+/// which an event's conformance would have to choose between (the specification takes the
+/// first, a later-wins map the last): there is no one meaning to give it.
+fn check_kinds_distinct(decls: &[EventDecl]) -> Result<(), String> {
+    let mut seen = std::collections::BTreeSet::new();
+    for decl in decls {
+        if !seen.insert(decl.kind.as_str()) {
+            return Err(format!(
+                "event kind `{}` is declared more than once; declare each kind once, with all of \
+                 its fields",
+                decl.kind
+            ));
+        }
+    }
+    Ok(())
+}
+
+/// The error for a zero `max_window` or `max_horizon` directive.
+fn zero_directive_message(name: &str) -> String {
+    if name == "max_window" {
+        "max_window must be greater than zero; a zero window would forbid every \
+         temporal `within` clause. Omit `max_window` to use the default cap, or \
+         set a positive interval like `max_window = 24h`"
+            .to_string()
+    } else {
+        "max_horizon must be greater than zero; a zero horizon would forbid every \
+         temporal `formerly`, `previous` and `since`. Omit `max_horizon` to leave \
+         the horizon uncapped, or set a positive interval like `max_horizon = 24h`"
+            .to_string()
+    }
+}
+
+/// Build a `max_window = <interval>` or `max_horizon = <interval>` directive's
+/// [`Interval`]. A zero cap is rejected: it would forbid every temporal
+/// operator, which is never what an author intends (omit the directive
+/// instead). So is a cap whose length in seconds overflows 64 bits.
+fn build_interval_directive(pair: &Pair<'_>, name: &str) -> Result<Interval, String> {
     let interval = pair
         .clone()
         .into_inner()
         .find(|p| p.as_rule() == Rule::interval)
-        .expect("max_window_decl has an interval");
+        .expect("directive has an interval");
     let mut amount: i64 = 0;
     let mut unit = TimeUnit::Seconds;
     for p in interval.into_inner() {
@@ -73,7 +136,7 @@ fn build_max_window(pair: &Pair<'_>) -> Result<Interval, String> {
                 amount = p
                     .as_str()
                     .parse()
-                    .map_err(|_| format!("max_window amount `{}` is out of range", p.as_str()))?;
+                    .map_err(|_| format!("{name} amount `{}` is out of range", p.as_str()))?;
             }
             Rule::time_unit => {
                 unit = TimeUnit::from_token(p.as_str())
@@ -83,14 +146,16 @@ fn build_max_window(pair: &Pair<'_>) -> Result<Interval, String> {
         }
     }
     if amount == 0 {
-        return Err(
-            "max_window must be greater than zero; a zero window would forbid every \
-             temporal `within` clause. Omit `max_window` to use the default cap, or \
-             set a positive interval like `max_window = 24h`"
-                .to_string(),
-        );
+        return Err(zero_directive_message(name));
     }
-    Ok(Interval { amount, unit })
+    let interval = Interval { amount, unit };
+    if interval.checked_seconds().is_none() {
+        return Err(format!(
+            "{name} `{}` is too large; its length in seconds overflows a 64-bit integer",
+            interval.render()
+        ));
+    }
+    Ok(interval)
 }
 
 fn build_event_decl(pair: Pair<'_>) -> Result<EventDecl, String> {
@@ -403,6 +468,20 @@ mod tests {
                 ..
             }
         ));
+    }
+
+    #[test]
+    fn a_kind_declared_twice_is_an_error() {
+        let err = parse_err(
+            "decision event <A>::request { input: String }\n\
+             event <A>::request { amount: Long }",
+        );
+        assert!(
+            err.contains("event kind `request` is declared more than once"),
+            "{err}"
+        );
+        // Distinct kinds, and the same kind spelled apart, parse.
+        parse("decision event <A>::request { }\nevent <A>::response { }");
     }
 
     #[test]

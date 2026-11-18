@@ -5,7 +5,9 @@ allowlist. The distinctive shape is the provider **argument**: `Access::Allowed`
 is passed `principal.id` — an attribute path rooted at `principal`, not
 `context`. Provider arguments are resolved *pre-Cedar* against the request
 event; `principal` / `resource` roots resolve to the request scope entity, and
-a trailing `.id` projects that entity's id.
+a trailing `.id` reads that entity's `id` attribute, as in Cedar (the schema
+declares `OAuthUser = { id: String }`, and the trace supplies each principal's
+`id` in its `entities(...)` data).
 
 `allowed.rhai` stands in for a membership lookup with a one-name allowlist
 (`alice`). Because the CLI loads `providers.json` via `from_json` (text only,

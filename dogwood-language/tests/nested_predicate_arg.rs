@@ -111,7 +111,9 @@ fn read_event(ts: i64, region: &str) -> Event {
         .principal("Drupe::OAuthUser::\"alice\"")
         .resource("Drupe::Gateway::\"gw1\"")
         .request_context("input", "user", Value::String("alice".to_string()))
+        .field("input", "user", Value::String("alice".to_string()))
         .request_context("input", "meta", meta(region, 1))
+        .field("input", "meta", meta(region, 1))
         .build()
 }
 
@@ -246,7 +248,9 @@ fn output_read_event(ts: i64) -> Event {
         .principal("Drupe::OAuthUser::\"alice\"")
         .resource("Drupe::Gateway::\"gw1\"")
         .request_context("input", "user", Value::String("alice".to_string()))
+        .field("input", "user", Value::String("alice".to_string()))
         .request_context("input", "meta", meta("us", 1))
+        .field("input", "meta", meta("us", 1))
         .build()
 }
 
@@ -381,6 +385,7 @@ fn injected_read(ts: i64) -> Event {
         .principal("Drupe::OAuthUser::\"alice\"")
         .resource("Drupe::Gateway::\"gw1\"")
         .request_context("input", "user", Value::String("alice".to_string()))
+        .field("input", "user", Value::String("alice".to_string()))
         .build()
 }
 

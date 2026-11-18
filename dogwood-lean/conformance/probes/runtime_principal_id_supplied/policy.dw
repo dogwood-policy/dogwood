@@ -1,0 +1,6 @@
+// The entity data gives alice an `id` attribute of "mallory". Both read `principal.id` as the
+// supplied attribute, as Cedar does, and deny: the login was by alice.
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::response{ input.user: principal.id }
+};

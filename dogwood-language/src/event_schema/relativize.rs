@@ -6,8 +6,8 @@
 //!
 //! # The guarantee this pass manufactures
 //!
-//! Pin injection ([`super::pin`]) already conjoins `f = context.<f>` onto
-//! every predicate, so no *predicate* can match an event of another key
+//! Pin injection ([`super::pin`]) already conjoins each pin's correlation
+//! (`f: <ref>`) onto every predicate, so no *predicate* can match an event of another key
 //! ("foreign" event). That confines every existential position (`formerly`
 //! bodies, `since` anchors, aggregation rows). What it cannot confine are the
 //! two **universally quantified** positions, where a foreign event influences
@@ -26,13 +26,13 @@
 //! # When it runs
 //!
 //! Only when the event schema declares at least one **universal symmetric
-//! pin** — a field pinned on *every* declared event kind whose pin value is
-//! the field's own path on the current request (`pin f: T = context.f`, or
-//! the reserved scope aliases `pin callerPrincipal = principal` /
-//! `pin callerResource = resource`). Schemas without such pins are
-//! untouched — the rewrite is opt-in by schema. The default schema declares
-//! one (on `callerPrincipal`), so its leaves are relativized; verdicts are
-//! unchanged because the rewrite is verdict-preserving.
+//! pin**, a field pinned on *every* declared event kind to the current
+//! request's principal, resource, or a context attribute (`pin f = principal`,
+//! `pin f = resource`, `pin f = context.<path>`), whatever the field is called.
+//! Schemas without such pins are untouched — the rewrite is opt-in by schema.
+//! The default schema declares one (on `callerPrincipal`), so its leaves are
+//! relativized; verdicts are unchanged because the rewrite is
+//! verdict-preserving.
 //!
 //! # The encodings (and why they are range-restricted)
 //!
@@ -81,7 +81,10 @@
 //!   `since` machinery already computes the local semantics.
 //!
 //! Every synthesized variable is fresh (`__pin_*<n>`), typed at its binder
-//! (`Timepoint` / `Long`), and used only after a restricting atom.
+//! (`Timepoint` / `Long`), and used only after a restricting atom. Its
+//! prefix is `__pin_`, lengthened by one `_` for as long as a variable of
+//! the leaf starts with it ([`fresh_prefix`]), so no synthesized name is a
+//! name of the leaf: an authored binder named `__pin_ti0` is not captured.
 
 use dogwood_syntax::{BudgetExhausted, NodeBudget};
 
@@ -89,8 +92,9 @@ use super::ast::PinRoot;
 use super::derive::{DerivedEvent, DerivedEventSchema, Pin};
 use crate::error::Span;
 use crate::extension::temporal::ast::{
-    AggExpr, AggExprKind, CmpOp, Condition, ConditionKind, NamedArg, Predicate, Term, Type,
-    TypedBinder, WithinSpec,
+    AggExpr, AggExprKind, ArithOp, BinderSlot, CmpOp, Condition, ConditionKind, NamedArg,
+    Predicate, Term,
+    Type, TypedBinder, WithinSpec,
 };
 
 /// A universal symmetric pin — the partition-key declaration this pass keys
@@ -104,11 +108,10 @@ pub struct UniversalPin {
     pub root: PinRoot,
 }
 
-/// Compute the universal symmetric pins of a derived event schema: the pins
-/// declared (identically) on **every** event kind whose context path is
-/// *symmetric* — the field's own path, or the reserved principal/resource
-/// scope alias. Returns an empty vec when the schema has no events (nothing
-/// is universally pinned over an empty schema) or no qualifying pin.
+/// Compute the universal symmetric pins of a derived event schema: the
+/// symmetric pins (see `is_symmetric`) declared identically on **every** event
+/// kind. Returns an empty vec when the schema has no events (nothing is
+/// universally pinned over an empty schema) or no qualifying pin.
 pub fn universal_pins(schema: &DerivedEventSchema) -> Vec<UniversalPin> {
     let Some((first, rest)) = schema.events.split_first() else {
         return Vec::new();
@@ -126,25 +129,24 @@ pub fn universal_pins(schema: &DerivedEventSchema) -> Vec<UniversalPin> {
         .collect()
 }
 
-/// Is a pin *symmetric* — does its request-side value resolve, on the current
-/// decision event, to the pinned field's own value? True for `pin f = context.f`
-/// (a context field at the field's own path) and for the reserved scope-alias
-/// pairs (`callerPrincipal` ↔ `principal`, `callerResource` ↔ `resource`),
-/// whose field the engine populates from the request scope. The alias case
-/// requires a *scope* root: `callerPrincipal = context.principal` reads a
-/// context field literally named `principal` (Cedar-consistent), not the scope
-/// entity, so it is not the reserved alias and is not symmetric.
+/// A pin is *symmetric* when its request-side value is the current request's
+/// principal, its resource, or a context attribute (`pin f = principal`,
+/// `pin f = resource`, `pin f = context.<path>`), whatever the field is called.
+/// Under the default (strict) mirror rule, event conformance rejects an event
+/// whose symmetric-pin field differs from its own request's value
+/// ([`crate::conformance`]), so an event is stored under the same key it is
+/// looked up by. A pin to an attribute of the
+/// principal or resource (`pin dept = principal.dept`, `pin uid =
+/// principal.id`) is not symmetric, and its field need only be logged.
 fn is_symmetric(pin: &Pin) -> bool {
-    if pin.root == PinRoot::Context && pin.context_path == pin.field_path {
-        return true;
+    match pin.root {
+        PinRoot::Context => true,
+        // Compared as paths: `["principal"]` and `["resource"]` exactly.
+        PinRoot::Scope => matches!(
+            pin.context_path.as_slice(),
+            [scope] if scope == "principal" || scope == "resource"
+        ),
     }
-    if pin.root == PinRoot::Scope {
-        let field = pin.field_path.join(".");
-        let scope = pin.context_path.join(".");
-        return (field == "callerPrincipal" && scope == "principal")
-            || (field == "callerResource" && scope == "resource");
-    }
-    false
 }
 
 /// The error from [`relativize_condition`]: rewriting the leaf would create
@@ -176,6 +178,7 @@ pub fn relativize_condition(
     let mut cx = Cx {
         schema,
         pins,
+        prefix: fresh_prefix(cond),
         next_fresh: 0,
         budget,
     };
@@ -190,9 +193,100 @@ pub fn relativize_condition(
 /// A rewrite step's result: the node built, or the budget ran out first.
 type Built<T> = Result<T, BudgetExhausted>;
 
+/// The prefix of the rewrite's fresh names: `__pin_`, with one more `_` for
+/// as long as some variable of `cond`, bound or used, starts with it. Every
+/// fresh name starts with the prefix and no variable of `cond` does, so no
+/// fresh name is a variable of `cond`.
+fn fresh_prefix(cond: &Condition) -> String {
+    let mut names = Vec::new();
+    condition_names(cond, &mut names);
+    let mut prefix = String::from("__pin_");
+    while names.iter().any(|name| name.starts_with(prefix.as_str())) {
+        prefix.push('_');
+    }
+    prefix
+}
+
+/// Every variable name of a condition, bound or used. A slot that is still a
+/// macro sigil is no name (expansion has replaced every one before this
+/// pass), and an array, which lowering rejects before this pass, holds none.
+fn condition_names(c: &Condition, out: &mut Vec<String>) {
+    match &c.kind {
+        ConditionKind::And { left, right }
+        | ConditionKind::Or { left, right }
+        | ConditionKind::Since { left, right, .. } => {
+            condition_names(left, out);
+            condition_names(right, out);
+        }
+        ConditionKind::Not { inner }
+        | ConditionKind::Formerly { body: inner, .. }
+        | ConditionKind::Previous { body: inner, .. } => condition_names(inner, out),
+        ConditionKind::Exists { var, body } => {
+            slot_name(&var.slot, out);
+            condition_names(body, out);
+        }
+        ConditionKind::Predicate(p) => {
+            for arg in &p.args {
+                term_names(&arg.value, out);
+            }
+        }
+        ConditionKind::Comparison { left, right, .. } => {
+            term_names(left, out);
+            term_names(right, out);
+        }
+        ConditionKind::Tp { var } => slot_name(var, out),
+        ConditionKind::Call(_) | ConditionKind::SigilRef { .. } => {}
+        ConditionKind::Refine { base, fields, .. } => {
+            condition_names(base, out);
+            for arg in fields {
+                term_names(&arg.value, out);
+            }
+        }
+    }
+}
+
+fn term_names(t: &Term, out: &mut Vec<String>) {
+    match t {
+        Term::Var(x) => out.push(x.clone()),
+        Term::Agg(agg) => match &agg.kind {
+            AggExprKind::Sum {
+                bound_var,
+                for_vars,
+                body,
+            } => {
+                slot_name(bound_var, out);
+                for v in for_vars {
+                    slot_name(&v.slot, out);
+                }
+                condition_names(body, out);
+            }
+            AggExprKind::Count { for_vars, body } => {
+                for v in for_vars {
+                    slot_name(&v.slot, out);
+                }
+                condition_names(body, out);
+            }
+            AggExprKind::Call(_) => {}
+        },
+        Term::Arith { left, right, .. } => {
+            term_names(left, out);
+            term_names(right, out);
+        }
+        _ => {}
+    }
+}
+
+fn slot_name(slot: &BinderSlot, out: &mut Vec<String>) {
+    if let BinderSlot::Name(name) = slot {
+        out.push(name.clone());
+    }
+}
+
 struct Cx<'a> {
     schema: &'a DerivedEventSchema,
     pins: &'a [UniversalPin],
+    /// The prefix of every fresh name ([`fresh_prefix`]).
+    prefix: String,
     next_fresh: u64,
     /// What is left of the policy set's node budget; every node the rewrite
     /// creates is charged to it before it is built.
@@ -203,7 +297,7 @@ impl Cx<'_> {
     fn fresh(&mut self, stem: &str) -> String {
         let n = self.next_fresh;
         self.next_fresh += 1;
-        format!("__pin_{stem}{n}")
+        format!("{}{stem}{n}", self.prefix)
     }
 
     // ── the node budget ──────────────────────────────────────────────
@@ -236,7 +330,8 @@ impl Cx<'_> {
             .pins
             .iter()
             .map(|pin| NamedArg {
-                name: pin.field_path.join("."),
+                // The escaped text of the path, as pin injection writes it.
+                name: crate::field_path::join(&pin.field_path),
                 // Mirror `super::pin::inject_into_predicate`: a scope pin
                 // (`= principal` / `= resource`) reads the request scope
                 // entity, a context pin (`= context.<path>`) a context field.
@@ -383,6 +478,13 @@ impl Cx<'_> {
                     .map(|i| self.rewrite_term(i))
                     .collect::<Built<Vec<_>>>()?;
                 self.array(items)?
+            }
+            // An aggregate inside a compound operand is relativized like a bare
+            // one: its body sees only the decision's own key's events.
+            Term::Arith { op, left, right } => {
+                let left = self.rewrite_term(left)?;
+                let right = self.rewrite_term(right)?;
+                self.arith(*op, left, right)?
             }
             other => self.clone_term(other)?,
         })
@@ -747,6 +849,15 @@ impl Cx<'_> {
         Ok(Term::Array(items))
     }
 
+    fn arith(&mut self, op: ArithOp, left: Term, right: Term) -> Built<Term> {
+        self.charge(1)?;
+        Ok(Term::Arith {
+            op,
+            left: Box::new(left),
+            right: Box::new(right),
+        })
+    }
+
     fn exists_tp(&mut self, span: Span, var: &str, body: Condition) -> Built<Condition> {
         self.exists(span, typed_tp(var), body)
     }
@@ -867,37 +978,42 @@ mod tests {
     }
 
     #[test]
-    fn symmetric_field_pin_is_universal_and_asymmetric_is_not() {
-        // `session_id = context.session_id` is symmetric; a pin whose
-        // context path differs from its field path is not (storage key and
-        // query key would diverge).
+    fn symmetric_pins_are_universal_and_attribute_pins_are_not() {
+        // A pin to a context attribute or to the bare principal is symmetric,
+        // whatever its field is called; a pin to an attribute of the principal
+        // is not.
         let pins = pins_of(
             r#"
             decision event <A>::request {
                 ...inputs(A),
                 pin session_id: String = context.session_id,
-                pin actor: principalType(A) = context.principal,
+                pin actor: principalType(A) = principal,
+                pin dept: String = principal.dept,
                 requestId: String,
             }
             event <A>::response {
                 ...inputs(A),
                 pin session_id: String = context.session_id,
-                pin actor: principalType(A) = context.principal,
+                pin actor: principalType(A) = principal,
+                pin dept: String = principal.dept,
                 requestId: String,
             }
             "#,
         );
-        // `session_id` qualifies (context path == field path); `actor =
-        // context.principal` does not — its context path differs from its
-        // field path, and the reserved scope-alias pairing applies only to
-        // the reserved field name with a *scope* root (`= principal`).
         assert_eq!(
             pins,
-            vec![UniversalPin {
-                field_path: vec!["session_id".into()],
-                context_path: vec!["session_id".into()],
-                root: PinRoot::Context,
-            }]
+            vec![
+                UniversalPin {
+                    field_path: vec!["session_id".into()],
+                    context_path: vec!["session_id".into()],
+                    root: PinRoot::Context,
+                },
+                UniversalPin {
+                    field_path: vec!["actor".into()],
+                    context_path: vec!["principal".into()],
+                    root: PinRoot::Scope,
+                },
+            ]
         );
     }
 
@@ -971,10 +1087,8 @@ mod tests {
     }
 
     /// `is_symmetric` boundary table — the classifier that decides whether a
-    /// pin activates the partition rewrite. The rows include the cases the
-    /// Cedar-consistent split turns on: the reserved alias requires a *scope*
-    /// root (`= principal`), while `= context.principal` (a context field
-    /// literally named `principal`) is NOT the reserved alias.
+    /// pin activates the partition rewrite. Symmetry depends on the pin's
+    /// request-side reference, not on the field's name.
     #[test]
     fn is_symmetric_boundary_table() {
         fn pin(field: &[&str], context: &[&str], root: PinRoot) -> Pin {
@@ -987,75 +1101,73 @@ mod tests {
         use PinRoot::{Context, Scope};
 
         // (field, context_path, root, expected_symmetric, why)
-        let cases: &[(&[&str], &[&str], PinRoot, bool, &str)] = &[
-            // Reserved scope aliases — symmetric ONLY with a scope root.
+        type Case<'a> = (&'a [&'a str], &'a [&'a str], PinRoot, bool, &'a str);
+        let cases: &[Case<'_>] = &[
             (
                 &["callerPrincipal"],
                 &["principal"],
                 Scope,
                 true,
-                "principal scope alias",
+                "callerPrincipal = principal",
             ),
             (
                 &["callerResource"],
                 &["resource"],
                 Scope,
                 true,
-                "resource scope alias",
+                "callerResource = resource",
             ),
-            // The exact pre-rebase footgun: `= context.principal` is a context
-            // field named `principal`, NOT the scope entity → not the alias.
+            (&["actor"], &["principal"], Scope, true, "actor = principal"),
+            (&["target"], &["resource"], Scope, true, "target = resource"),
+            (
+                &["callerPrincipal"],
+                &["resource"],
+                Scope,
+                true,
+                "callerPrincipal = resource: the name does not matter",
+            ),
+            // `= context.principal` is a context field named `principal`.
             (
                 &["callerPrincipal"],
                 &["principal"],
                 Context,
-                false,
-                "context.principal is not the alias",
+                true,
+                "callerPrincipal = context.principal",
             ),
-            (
-                &["callerResource"],
-                &["resource"],
-                Context,
-                false,
-                "context.resource is not the alias",
-            ),
-            // Symmetric context pin: context path equals the field's own path.
             (
                 &["session_id"],
                 &["session_id"],
                 Context,
                 true,
-                "context.session_id == field path",
+                "session_id = context.session_id",
             ),
             (
                 &["__drupe", "session_id"],
                 &["__drupe", "session_id"],
                 Context,
                 true,
-                "nested symmetric context pin",
-            ),
-            // Asymmetric: context path differs from field path, non-reserved.
-            (
-                &["actor"],
-                &["principal"],
-                Context,
-                false,
-                "actor = context.principal is asymmetric",
+                "nested context pin",
             ),
             (
-                &["session_id"],
-                &["other_id"],
+                &["session"],
+                &["session", "id"],
                 Context,
-                false,
-                "context path differs from field path",
+                true,
+                "session = context.session.id",
             ),
-            // A scope-rooted attribute pin that is not a reserved alias.
             (
                 &["dept"],
                 &["principal", "dept"],
                 Scope,
                 false,
-                "principal.dept is not a reserved alias",
+                "principal.dept is an attribute pin",
+            ),
+            (
+                &["target_id"],
+                &["resource", "id"],
+                Scope,
+                false,
+                "resource.id is an attribute pin",
             ),
         ];
 
@@ -1115,7 +1227,7 @@ mod tests {
         .unwrap();
         let derived = derive(&parsed, ACTION_SCHEMA).unwrap();
         let pins = universal_pins(&derived);
-        // Both pins qualify (one scope-alias, one symmetric context field).
+        // Both pins qualify (one pin to the principal, one to a context attribute).
         assert_eq!(pins.len(), 2, "expected two universal pins: {pins:?}");
 
         // Build μ directly (the disjunction of one branch per derived event).
@@ -1124,6 +1236,7 @@ mod tests {
         let mut cx = Cx {
             schema: &derived,
             pins: &pins,
+            prefix: "__pin_".to_string(),
             next_fresh: 0,
             budget: &mut budget,
         };
@@ -1195,6 +1308,7 @@ mod tests {
         let mut cx = Cx {
             schema: &derived,
             pins: &pins,
+            prefix: "__pin_".to_string(),
             next_fresh: 0,
             budget: &mut budget,
         };
@@ -1225,6 +1339,7 @@ mod tests {
             let mut cx = Cx {
                 schema: &derived,
                 pins: &pins,
+                prefix: "__pin_".to_string(),
                 next_fresh: 0,
                 budget: &mut budget,
             };
@@ -1344,6 +1459,7 @@ mod tests {
             let mut cx = Cx {
                 schema: &derived,
                 pins: &pins,
+                prefix: "__pin_".to_string(),
                 next_fresh: 0,
                 budget: &mut budget,
             };

@@ -1,0 +1,5 @@
+// A nested namespace and annotations on the schema, its namespace, types, attributes and actions: Cedar's JSON of the augmented schema keeps them.
+permit (principal, action == App::Core::Action::"Read", resource)
+when temporal {
+    formerly within 1h App::Core::Action::"Read"::request{ input.user: context.input.user }
+};

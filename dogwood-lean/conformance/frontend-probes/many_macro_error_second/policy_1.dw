@@ -1,0 +1,2 @@
+// The second entry calls an undefined macro. (entry 1)
+permit (principal, action, resource) when { temporal { nosuch(1h) } };

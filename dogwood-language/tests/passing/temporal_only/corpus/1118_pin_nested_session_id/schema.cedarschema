@@ -26,6 +26,9 @@ namespace Drupe {
     principal: [OAuthUser],
     resource: [Gateway],
     context: {
+      __drupe: {
+        session_id: String
+      },
       input: LoginInput,
       output?: LoginOutput,
       system: SystemContext
@@ -36,6 +39,9 @@ namespace Drupe {
     principal: [OAuthUser],
     resource: [Gateway],
     context: {
+      __drupe: {
+        session_id: String
+      },
       input: ReadInput,
       output?: ReadOutput,
       system: SystemContext

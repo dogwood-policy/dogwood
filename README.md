@@ -34,6 +34,10 @@ of important limitations of the interpreter.
 - **Pluggable backends** — swap the policy engine (local Cedar or a remote
   policy store) and the temporal engine (in-memory or database-backed)
   independently
+- **Language server** — the pure editor-agnostic `dogwood-lsp` workspace crate
+  provides diagnostics and semantic tokens. This repository includes no editor
+  extension code. `dogwood-language` owns the canonical parser-backed syntax
+  spans.
 
 ## Repository layout
 
@@ -44,8 +48,10 @@ of important limitations of the interpreter.
 | [`dogwood-formatter/`](dogwood-formatter/README.md) | Source-preserving pretty-printer for Dogwood policies |
 | [`dogwood-docs/guide/`](dogwood-docs/guide/README.md) | The language guide (syntax, schemas, temporal expressions, providers, formal spec) |
 | [`dogwood-cli/`](dogwood-docs/guide/12-cli.md) | The `dogwood` CLI (validate, lower, replay, explain) |
+| [`dogwood-lsp/`](dogwood-lsp/README.md) | The pure `dogwood-lsp` server (diagnostics and semantic tokens over stdio; no editor extension) |
 | [`dogwood-docs/examples/`](dogwood-docs/examples/) | Runnable example policies with traces and expected output |
 | [`dogwood-language/configuration/`](dogwood-language/configuration/README.md) | Starter action schemas and event schemas |
+| [`dogwood-lean/`](dogwood-lean/README.md) | A formal specification of the language in Lean 4, checked against the crate (not part of the Cargo build) |
 
 ## Quick start
 

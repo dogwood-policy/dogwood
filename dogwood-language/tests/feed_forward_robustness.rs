@@ -409,33 +409,43 @@ fn sell_decisions(policies: LoweredPolicySet, events: &[Event]) -> Vec<Decision>
     let mut authorizer = Authorizer::new(policies);
     let mut out = Vec::new();
     for e in events {
-        if let Some(response) = authorizer.is_authorized(e) {
-            if e.action().ends_with("Sell") {
-                out.push(response.decision());
-            }
+        if let Some(response) = authorizer.is_authorized(e)
+            && e.action().ends_with("Sell")
+        {
+            out.push(response.decision());
         }
     }
     out
 }
 
-/// Lower `policy` once against the original schema, then feed the augmented
-/// schema forward `passes` times, returning the policy set lowered against the
-/// final (repeatedly re-augmented) schema.
+/// A temporal rule on `Approve`, lowered on each pass before the last: it
+/// re-augments the schema (inlining every context, with the reserved
+/// `__cedar::` spelling) and hoists its fields onto `Approve` alone.
+const CARRIER_POLICY: &str = r#"
+permit ( principal, action == Svc::Action::"Approve", resource )
+when temporal { formerly within 1h Svc::Action::"Sell"::request{} };
+"#;
+
+/// Feed the augmented schema forward `passes - 1` times, each pass lowering
+/// [`CARRIER_POLICY`] with a distincter of its own (lowering refuses a schema
+/// that declares a name it hoists), then lower `policy` against the final
+/// (repeatedly re-augmented) schema. The carried fields are on `Approve`, so
+/// a `Sell` request need not supply them.
 fn lower_after_feed_forward(policy: &str, passes: usize) -> LoweredPolicySet {
     let svc = ServiceSchema::defaults();
     let mut current = VERDICT_SCHEMA.to_string();
-    let mut last = None;
-    for pass in 0..passes {
+    for pass in 0..passes - 1 {
         let schema = PolicySchema::from_cedarschema_str(&current)
             .unwrap_or_else(|e| panic!("pass {pass}: re-ingest: {e:?}"));
-        let lowered = LoweredPolicySet::from_str(policy, &svc, &schema)
+        let lowered = ParsedPolicySet::parse(CARRIER_POLICY, &svc)
+            .and_then(|parsed| parsed.lower_with_distincter(&schema, &format!("p{pass}")))
             .unwrap_or_else(|e| panic!("pass {pass}: lower: {e:?}"));
         current = lowered
             .cedar_schema_str()
             .unwrap_or_else(|e| panic!("pass {pass}: serialize: {e:?}"));
-        last = Some(lowered);
     }
-    last.expect("at least one pass")
+    let schema = PolicySchema::from_cedarschema_str(&current).expect("re-ingest");
+    LoweredPolicySet::from_str(policy, &svc, &schema).expect("the last pass lowers")
 }
 
 #[test]

@@ -1,0 +1,6 @@
+// Under `principal in Drupe::Group::"staff"` on `Ping`, a leaf reads `principal.level`, which a
+// `Bot` lacks. A `Bot` cannot be in a `Group`, so the rule decides no `Bot`, and both accept it.
+permit (principal in Drupe::Group::"staff", action == Drupe::Action::"Ping", resource)
+when temporal {
+    formerly within 1h (Drupe::Action::"Login"::request{ input.user: context.input.user } && principal.level > 3)
+};

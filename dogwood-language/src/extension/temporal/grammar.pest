@@ -65,7 +65,12 @@ glued_within   = @{ "within"   ~ ident_char }
 // They are legal *only* inside a macro body; outside a macro body the
 // well-formedness pass rejects them.
 param_ref  = @{ "?" ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
-binder_ref = @{ "$" ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }
+// A binder reference may carry `$<digits>` suffixes: that is how the canonical
+// text of an expanded leaf (`temporal_ast::condition_text`) spells a binder that
+// macro expansion generated (`t$372` is written `$t$372`). Only the leaf parser
+// (`parse_leaf_condition`) reads such a token as a binder name; a policy or a
+// macro body that writes one is rejected (`reject_generated_names`).
+binder_ref = @{ "$" ~ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* ~ ("$" ~ ASCII_DIGIT+)* }
 
 // A position that names a binder: either a concrete identifier or a
 // macro sigil (`?p` for a binder-position param, `$t` for an introduced

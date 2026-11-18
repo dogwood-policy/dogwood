@@ -1,0 +1,25 @@
+[package]
+name = "dogwood-ops"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+description = "Host-neutral Dogwood operations (check, validate, lower, replay, explain, live authorization) with owned, serializable reports — the shared core of the `dogwood` CLI and the language bindings."
+license = "Apache-2.0"
+repository = "https://github.com/dogwood-policy/dogwood"
+homepage = "https://dogwood-policy.github.io/dogwood/"
+documentation = "https://dogwood-policy.github.io/dogwood/"
+readme = "README.md"
+exclude = ["/build", "/Config", "/build-tools/"]
+
+[lib]
+name = "dogwood_ops"
+
+[dependencies]
+dogwood-language = { path = "../dogwood-language", version = "1.2.0" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+miette = "7"
+
+[features]
+# `mcp_to_cedar_schema` (MCP `tools/list` manifest -> Cedar action schema).
+mcp-schema = ["dogwood-language/mcp-schema"]

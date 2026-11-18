@@ -30,17 +30,170 @@
 //!    the restrictors of the variables it consumes; nested chains inherit
 //!    the accumulator at their position. See [`check_demands`].
 
+use vstd::prelude::*;
+verus! {
+
+// Verified property of `check_condition` / `check_aggregation`.
+//
+// Verus proves that the bodies of `check_condition`, `check_exists_safe`,
+// and `check_aggregation`:
+//   1. never call `TypedBinder::name` / `BinderSlot::name` on a slot that is
+//      still a macro sigil (`ParamRef` / `BinderRef`), so the "still a sigil
+//      after expansion" panics are unreachable from these functions;
+//   2. contain no out-of-bounds indexing or arithmetic overflow;
+//   3. have terminating loops, and `check_condition`'s direct self-recursion
+//      terminates (`decreases cond_height`).
+//
+// Relative to (trusted, unverified):
+//   - These `#[verifier::external_body]` helpers, assumed not to panic or
+//     diverge:
+//     tree walkers: `check_operand`, `check_agg_expr`, `reject_nested_agg`,
+//       `reject_reserved_binder`, `body_has_sigil`, `collect_free`,
+//       `collect_range_restricted`;
+//     message formatters: `not_range_restricted_msg`,
+//       `summand_not_in_for_msg`, `check_aggregation_sum_msg`,
+//       `for_var_absent_msg`, `for_var_not_range_restricted_msg`.
+//   - Also `external_body` but not called from the verified functions:
+//     `term_contains_wildcard`, `condition_has_arith`, `term_has_arith`,
+//     `reject_arithmetic_unless_enabled`, `eq_reads_msg`, and
+//     `ast::Term::for_each_operand_agg`.
+//   - vstd / `ast.rs` assumed specifications for `BTreeSet`, `String`,
+//     `Clone`, and iterators.
+//
+// Not covered:
+//   - Termination of the mutual recursion
+//     `check_condition` -> `check_operand` -> `check_agg_expr` ->
+//     `check_aggregation` -> `check_condition` (the cycle passes through
+//     `external_body` functions, so Verus does not see it).
+//   - Stack overflow on deeply nested conditions; allocation failure.
+//   - Functional correctness: that the checks accept exactly the monitorable
+//     fragment. Only the absence of the panics listed above is proved.
+
 use std::collections::BTreeSet;
 
 use super::ast::{
     AggExpr, AggExprKind, BinderSlot, Condition, ConditionKind, NamedArg, Predicate, Term,
     TypedBinder,
 };
+// Used only by the spec fns below, which are erased outside Verus.
+#[cfg(verus_keep_ghost)]
+use super::ast::{Call, CallArg};
+
+#[verifier::external_body]
+fn reserved_binder_msg(name: &str) -> String {
+    format!(
+        "`{name}` is a reserved word and cannot be used as a binder name; \
+         `principal`, `action`, `resource`, and `context` are the Cedar \
+         request variables — rename the `exists` / `for` / `tp` variable"
+    )
+}
+
+#[verifier::external_body]
+fn not_range_restricted_msg(name: &str) -> String {
+    format!(
+        "existential variable `{name}` is not range-restricted by any \
+         positive atom in the `exists` body; bind it with a predicate \
+         field (`P{{ f: {name} }}`), a `tp({name})`, or an equality \
+         (`(count …) == {name}`)"
+    )
+}
+
+#[verifier::external_body]
+fn eq_reads_msg(bound: &str, unmet: &str, value_is_agg: bool) -> String {
+    let reads = if value_is_agg {
+        format!(
+            "inside its aggregate operand (`{unmet}` is used in the \
+             aggregation body but not bound by its `for` list)"
+        )
+    } else {
+        "in its value operand".to_string()
+    };
+    format!(
+        "the equality binding `{bound}` reads `{unmet}` {reads}, and `{unmet}` \
+         is not range-restricted by a preceding conjunct; place the conjunct \
+         that binds `{unmet}` before the equality, widening the `exists` \
+         scope if needed"
+    )
+}
+
+#[verifier::external_body]
+fn since_left_msg(unmet: &str) -> String {
+    format!(
+        "variable `{unmet}` is used in the left operand of a `since` \
+         but is restricted neither by the `since` anchor (its right \
+         operand) nor by a preceding conjunct; the left of a `since` \
+         is a per-step condition and cannot bind `{unmet}` — restrict \
+         it in the anchor or in a conjunct before the `since`"
+    )
+}
+
+#[verifier::external_body]
+fn unmet_filter_msg(unbound: &str) -> String {
+    format!(
+        "variable `{unbound}` is used in a filter (a comparison or \
+         negation) that is not range-restricted by a preceding \
+         conjunct; place a conjunct that binds `{unbound}` (a \
+         predicate, `tp`, or a binding equality) before it"
+    )
+}
+
+#[verifier::external_body]
+fn summand_not_in_for_msg(bv_name: &str, for_vars: &[TypedBinder]) -> String {
+    format!(
+        "aggregation sums `{bv_name}`, which is not one of its `for` \
+         binders ({}); the summed variable must appear in the `for` \
+         list (the sum is computed over the `for` columns)",
+        fmt_for_vars(for_vars)
+    )
+}
+
+#[verifier::external_body]
+fn for_var_absent_msg(name: &str, for_vars: &[TypedBinder]) -> String {
+    format!(
+        "`for`-variable `{name}` does not occur in the aggregation body \
+         ({}); a group-by variable must be used in the `where` body, \
+         otherwise the grouping ranges over an unbounded domain",
+        fmt_for_vars(for_vars)
+    )
+}
+
+#[verifier::external_body]
+fn check_leaf_closed_binder_msg(name: &str) -> String {
+    format!(
+        "variable `{name}` is free in this temporal condition (bound by no \
+        `exists` binder or aggregation `for` list); a temporal condition \
+        must be closed — wrap it as `exists ({name}: <type>). (…)`, or \
+        use `*` to match any value"
+    )
+}
+
+#[verifier::external_body]
+fn check_aggregation_sum_msg(unbound: &str, for_vars: &[TypedBinder]) -> String {
+    format!(
+        "variable `{unbound}` is used in the aggregation body but is \
+        bound by neither the `for` list ({}) nor an enclosing binder; \
+        add it to the `for` list",
+        fmt_for_vars(for_vars)
+    )
+}
+
+#[verifier::external_body]
+fn for_var_not_range_restricted_msg(name: &str) -> String {
+    format!(
+        "aggregation `for`-variable `{name}` is not range-restricted by \
+        any positive atom in the `where` body; bind it with a predicate \
+        field (`P{{ f: {name} }}`), a `tp({name})`, or an equality \
+        (`(count …) == {name}`) — an occurrence under a negation or in \
+        the left operand of a `since` does not restrict"
+    )
+}
 
 /// Check every explicit aggregation in `cond` for unbound `for`-domain
 /// variables. `bound` is the set of variables already in scope from
 /// enclosing binders (empty at the top level).
-pub fn check_condition(cond: &Condition, bound: &BTreeSet<String>) -> Result<(), String> {
+pub fn check_condition(cond: &Condition, bound: &BTreeSet<String>) -> Result<(), String>
+    decreases cond_height(*cond), 0int,
+{
     match &cond.kind {
         ConditionKind::And { left, right } => {
             check_condition(left, bound)?;
@@ -115,6 +268,7 @@ pub fn check_condition(cond: &Condition, bound: &BTreeSet<String>) -> Result<(),
 /// other term must contain no aggregate (an aggregate is legal only in
 /// comparison-operand position, enforced here). A macro sigil term is
 /// opaque (expansion re-checks the substituted form).
+#[verifier::external_body]
 fn check_operand(operand: &Term, bound: &BTreeSet<String>) -> Result<(), String> {
     match operand {
         Term::Agg(agg) => check_agg_expr(agg, bound),
@@ -132,6 +286,7 @@ fn check_operand(operand: &Term, bound: &BTreeSet<String>) -> Result<(), String>
 /// Reject any aggregate appearing anywhere inside `term` — used for every
 /// term position that is not a direct comparison operand (predicate args,
 /// array elements, an operand that is itself a compound term).
+#[verifier::external_body]
 fn reject_nested_agg(term: &Term) -> Result<(), String> {
     match term {
         Term::Agg(_) => Err(
@@ -163,21 +318,18 @@ fn reject_nested_agg(term: &Term) -> Result<(), String> {
 /// temporal condition — so a binder of any of these names binds something the
 /// term syntax can never read back. Reserving all four mirrors Cedar, where
 /// they are reserved words.
-const RESERVED_BINDER_NAMES: [&str; 4] = ["principal", "action", "resource", "context"];
+const RESERVED_BINDER_NAMES: [&'static str; 4] = ["principal", "action", "resource", "context"];
 
 /// Reject a binder whose (concrete) name is a Cedar reserved request variable.
 /// A macro-sigil slot (`?p` / `$t`) has no concrete name yet — expansion
 /// re-runs this check on the substituted form — so it is passed through.
+#[verifier::external_body]
 fn reject_reserved_binder(slot: &BinderSlot) -> Result<(), String> {
     let BinderSlot::Name(name) = slot else {
         return Ok(());
     };
     if RESERVED_BINDER_NAMES.contains(&name.as_str()) {
-        return Err(format!(
-            "`{name}` is a reserved word and cannot be used as a binder name; \
-             `principal`, `action`, `resource`, and `context` are the Cedar \
-             request variables — rename the `exists` / `for` / `tp` variable"
-        ));
+        return Err(reserved_binder_msg(name.as_str()));
     }
     Ok(())
 }
@@ -211,12 +363,7 @@ fn check_exists_safe(var: &TypedBinder, body: &Condition) -> Result<(), String> 
     if restricted.contains(name) {
         Ok(())
     } else {
-        Err(format!(
-            "existential variable `{name}` is not range-restricted by any \
-             positive atom in the `exists` body; bind it with a predicate \
-             field (`P{{ f: {name} }}`), a `tp({name})`, or an equality \
-             (`(count …) == {name}`)"
-        ))
+        Err(not_range_restricted_msg(name))
     }
 }
 
@@ -269,6 +416,7 @@ pub fn check_demands(cond: &Condition) -> Result<(), String> {
 /// Walk one `&&` chain (or a single conjunct) left-to-right with seed `rho`,
 /// checking each conjunct's demands, descending into nested chains with the
 /// accumulator at their position, then folding in the conjunct's RR.
+#[verifier::external_body]
 fn check_chain(cond: &Condition, rho: &BTreeSet<String>) -> Result<(), String> {
     let conjuncts = flatten_and(cond);
     if conjuncts.iter().any(|c| body_has_sigil(c)) {
@@ -287,6 +435,7 @@ fn check_chain(cond: &Condition, rho: &BTreeSet<String>) -> Result<(), String> {
 /// kind-specific diagnostic. Recurses through non-chain wrappers; a nested
 /// `&&` chain contributes no demand here (it is checked self-contained by
 /// [`descend_nested_chains`]).
+#[verifier::external_body]
 fn check_conjunct_demands(c: &Condition, rho: &BTreeSet<String>) -> Result<(), String> {
     match &c.kind {
         ConditionKind::Comparison {
@@ -305,14 +454,12 @@ fn check_conjunct_demands(c: &Condition, rho: &BTreeSet<String>) -> Result<(), S
             let mut needs = BTreeSet::new();
             collect_term_var(value_side, &mut needs);
             if let Some(unmet) = needs.iter().find(|v| !rho.contains(*v)) {
-                return Err(format!(
-                    "the equality binding `{bound}` reads `{unmet}` inside its \
-                     aggregate operand (`{unmet}` is used in the aggregation body \
-                     but not bound by its `for` list), and `{unmet}` is not \
-                     range-restricted by a preceding conjunct; place the conjunct \
-                     that binds `{unmet}` before the equality, widening the \
-                     `exists` scope if needed"
-                ));
+                // Where the value side reads the variable: an aggregate's
+                // body, or a compound's operands (and the bodies of the
+                // aggregates among them).
+                return Err(
+                    eq_reads_msg(&bound, &unmet, matches!(value_side, Term::Agg(_)))
+                );
             }
             Ok(())
         }
@@ -342,13 +489,9 @@ fn check_conjunct_demands(c: &Condition, rho: &BTreeSet<String>) -> Result<(), S
                 .iter()
                 .find(|v| !anchor_rr.contains(*v) && !rho.contains(*v))
             {
-                return Err(format!(
-                    "variable `{unmet}` is used in the left operand of a `since` \
-                     but is restricted neither by the `since` anchor (its right \
-                     operand) nor by a preceding conjunct; the left of a `since` \
-                     is a per-step condition and cannot bind `{unmet}` — restrict \
-                     it in the anchor or in a conjunct before the `since`"
-                ));
+                return Err(
+                    since_left_msg(&unmet)
+                );
             }
             Ok(())
         }
@@ -380,12 +523,9 @@ fn check_conjunct_demands(c: &Condition, rho: &BTreeSet<String>) -> Result<(), S
 
 fn reject_unmet_filter_var(fv: &BTreeSet<String>, rho: &BTreeSet<String>) -> Result<(), String> {
     if let Some(unbound) = fv.iter().find(|v| !rho.contains(*v)) {
-        return Err(format!(
-            "variable `{unbound}` is used in a filter (a comparison or \
-             negation) that is not range-restricted by a preceding \
-             conjunct; place a conjunct that binds `{unbound}` (a \
-             predicate, `tp`, or a binding equality) before it"
-        ));
+        return Err(
+            unmet_filter_msg(unbound)
+        );
     }
     Ok(())
 }
@@ -394,6 +534,7 @@ fn reject_unmet_filter_var(fv: &BTreeSet<String>, rho: &BTreeSet<String>) -> Res
 /// the accumulator at this position (minus a shadowing binder's name). This
 /// mirrors the evaluator's environment threading: bindings produced by
 /// preceding conjuncts are visible inside nested structure.
+#[verifier::external_body]
 fn descend_nested_chains(c: &Condition, rho: &BTreeSet<String>) -> Result<(), String> {
     match &c.kind {
         ConditionKind::And { .. } => check_chain(c, rho),
@@ -460,6 +601,7 @@ fn descend_nested_chains(c: &Condition, rho: &BTreeSet<String>) -> Result<(), St
 /// A non-`And` node is a single-element chain.
 fn flatten_and(cond: &Condition) -> Vec<&Condition> {
     let mut out = Vec::new();
+    #[verifier::external_body]
     fn rec<'a>(c: &'a Condition, out: &mut Vec<&'a Condition>) {
         if let ConditionKind::And { left, right } = &c.kind {
             rec(left, out);
@@ -481,6 +623,7 @@ fn flatten_and(cond: &Condition) -> Vec<&Condition> {
 /// `formerly`/`previous`/`since`-right, nested `exists`, parens); a
 /// disjunction or exotic nesting is not modeled, so a variable only
 /// restricted there simply won't appear — yielding a conservative reject.
+#[verifier::external_body]
 fn collect_range_restricted(cond: &Condition, out: &mut BTreeSet<String>) {
     match &cond.kind {
         ConditionKind::And { left, right } => {
@@ -562,7 +705,7 @@ fn collect_range_restricted(cond: &Condition, out: &mut BTreeSet<String>) {
 /// name. A wildcard is NOT a resolvable value side: `x == *` never binds at
 /// evaluation (a wildcard resolves to no value), so treating it as a
 /// restrictor would validate a permanently-false guard.
-fn eq_restricted_var(left: &Term, right: &Term) -> Option<String> {
+pub(crate) fn eq_restricted_var(left: &Term, right: &Term) -> Option<String> {
     let bare_var = |t: &Term| match t {
         Term::Var(n) => Some(n.clone()),
         _ => None,
@@ -585,6 +728,7 @@ fn eq_restricted_var(left: &Term, right: &Term) -> Option<String> {
 }
 
 /// Does the term contain a wildcard (`*` / `_`) anywhere?
+#[verifier::external_body]
 fn term_contains_wildcard(t: &Term) -> bool {
     match t {
         Term::Wildcard => true,
@@ -598,6 +742,7 @@ fn term_contains_wildcard(t: &Term) -> bool {
 
 /// Does the condition contain a still-unresolved macro sigil or call,
 /// making its concrete atoms unavailable until expansion?
+#[verifier::external_body]
 fn body_has_sigil(cond: &Condition) -> bool {
     match &cond.kind {
         ConditionKind::Call(_) | ConditionKind::SigilRef { .. } => true,
@@ -629,6 +774,7 @@ fn body_has_sigil(cond: &Condition) -> bool {
 
 /// Does a term carry an unresolved macro sigil, or an aggregate whose body
 /// does? (An aggregate is a term now.)
+#[verifier::external_body]
 fn term_has_sigil(term: &Term) -> bool {
     match term {
         Term::ParamRef(_) | Term::BinderRef(_) => true,
@@ -646,6 +792,7 @@ fn term_has_sigil(term: &Term) -> bool {
 /// `Call` (unresolved macro invocation) is opaque to this check — macro
 /// expansion is the layer that validates its arguments and produced
 /// body.
+#[verifier::external_body]
 fn check_agg_expr(value: &AggExpr, bound: &BTreeSet<String>) -> Result<(), String> {
     match &value.kind {
         AggExprKind::Sum {
@@ -675,15 +822,29 @@ fn check_aggregation(
 ) -> Result<(), String> {
     // If either the bound var or any `for` element is still a sigil, the
     // body's free vars include sigils too; punt to expansion.
-    let has_sigil = matches!(
+    let mut has_sigil = matches!(
         bound_var,
         Some(BinderSlot::ParamRef(_) | BinderSlot::BinderRef(_))
-    ) || for_vars
-        .iter()
-        .any(|v| matches!(v.slot, BinderSlot::ParamRef(_) | BinderSlot::BinderRef(_)));
+    );
+    let mut i: usize = 0;
+    while i < for_vars.len()
+        invariant
+            0 <= i <= for_vars.len(),
+            has_sigil || !matches!(bound_var, Some(BinderSlot::ParamRef(_) | BinderSlot::BinderRef(_))),
+            !has_sigil ==> forall|j: int| 0 <= j < i ==> (#[trigger] for_vars@[j]).slot is Name,
+        decreases for_vars.len() - i,
+    {
+        if matches!(for_vars[i].slot, BinderSlot::ParamRef(_) | BinderSlot::BinderRef(_)) {
+            has_sigil = true;
+        }
+        i += 1;
+    }
     if has_sigil {
         return Ok(());
     }
+    // Past the guard every `for`-var slot is a concrete `Name`: this is what
+    // discharges each `for_vars[i].name()` call below.
+    assert(forall|j: int| 0 <= j < for_vars.len() ==> (#[trigger] for_vars@[j]).slot is Name);
 
     // Reject a reserved request-variable name as a `for` domain binder.
     for v in for_vars {
@@ -693,8 +854,15 @@ fn check_aggregation(
     // Scope visible to `body`: enclosing binders + this `for` list. All
     // slots are concrete names at this point.
     let mut inner = bound.clone();
-    for v in for_vars {
-        inner.insert(v.name().to_string());
+    let mut i: usize = 0;
+    while i < for_vars.len()
+        invariant
+            0 <= i <= for_vars.len(),
+            forall|j: int| 0 <= j < for_vars.len() ==> (#[trigger] for_vars@[j]).slot is Name,
+        decreases for_vars.len() - i,
+    {
+        inner.insert(for_vars[i].name().to_string());
+        i += 1;
     }
 
     // The summed variable must be one of *this* aggregation's `for` binders —
@@ -705,14 +873,23 @@ fn check_aggregation(
     // membership (rather than the wider `inner` scope) rejects that trap.
     if let Some(bv) = bound_var {
         let bv_name = bv.name();
-        let in_for_list = for_vars.iter().any(|v| v.name() == bv_name);
+        let mut in_for_list = false;
+        let mut i: usize = 0;
+        while i < for_vars.len()
+            invariant
+                0 <= i <= for_vars.len(),
+                forall|j: int| 0 <= j < for_vars.len() ==> (#[trigger] for_vars@[j]).slot is Name,
+            decreases for_vars.len() - i,
+        {
+            if for_vars[i].name() == bv_name {
+                in_for_list = true;
+            }
+            i += 1;
+        }
         if !in_for_list {
-            return Err(format!(
-                "aggregation sums `{bv_name}`, which is not one of its `for` \
-                 binders ({}); the summed variable must appear in the `for` \
-                 list (the sum is computed over the `for` columns)",
-                fmt_for_vars(for_vars)
-            ));
+            return Err(
+                summand_not_in_for_msg(bv_name, for_vars)
+            );
         }
     }
 
@@ -720,12 +897,9 @@ fn check_aggregation(
     let mut free = BTreeSet::new();
     collect_free(body, &mut free);
     if let Some(unbound) = free.iter().find(|v| !inner.contains(*v)) {
-        return Err(format!(
-            "variable `{unbound}` is used in the aggregation body but is \
-             bound by neither the `for` list ({}) nor an enclosing binder; \
-             add it to the `for` list",
-            fmt_for_vars(for_vars)
-        ));
+        return Err(
+            check_aggregation_sum_msg(unbound, for_vars)
+        );
     }
 
     // The converse: every `for` (group-by) variable must OCCUR in the body.
@@ -738,18 +912,21 @@ fn check_aggregation(
     // (including a `Timepoint` bound only via `tp(t)`, and a `Sum` summand used
     // as `P{ f: a }`) appears in `free`; only a genuinely unused group key is
     // rejected here.
-    for v in for_vars {
-        let name = v.name();
+    let mut i: usize = 0;
+    while i < for_vars.len()
+        invariant
+            0 <= i <= for_vars.len(),
+            forall|j: int| 0 <= j < for_vars.len() ==> (#[trigger] for_vars@[j]).slot is Name,
+        decreases for_vars.len() - i,
+    {
+        let name = for_vars[i].name();
         if !free.contains(name) {
-            return Err(format!(
-                "`for`-variable `{name}` does not occur in the aggregation body \
-                 ({}); a group-by variable must be used in the `where` body, \
-                 otherwise the grouping ranges over an unbounded domain",
-                fmt_for_vars(for_vars)
-            ));
+            return Err(
+                for_var_absent_msg(&name, for_vars)
+            );
         }
+        i += 1;
     }
-
     // Occurrence is necessary but NOT sufficient: every `for` variable must be
     // **range-restricted** by a positive atom of the body, exactly like an
     // `exists` binder (the monitorable fragment requires the aggregation
@@ -761,17 +938,20 @@ fn check_aggregation(
     // such column (a `sum` to 0).
     let mut restricted = BTreeSet::new();
     collect_range_restricted(body, &mut restricted);
-    for v in for_vars {
-        let name = v.name();
+    let mut i: usize = 0;
+    while i < for_vars.len()
+        invariant
+            0 <= i <= for_vars.len(),
+            forall|j: int| 0 <= j < for_vars.len() ==> (#[trigger] for_vars@[j]).slot is Name,
+        decreases for_vars.len() - i,
+    {
+        let name = for_vars[i].name();
         if !restricted.contains(name) {
-            return Err(format!(
-                "aggregation `for`-variable `{name}` is not range-restricted by \
-                 any positive atom in the `where` body; bind it with a predicate \
-                 field (`P{{ f: {name} }}`), a `tp({name})`, or an equality \
-                 (`(count …) == {name}`) — an occurrence under a negation or in \
-                 the left operand of a `since` does not restrict"
-            ));
+            return Err(
+                for_var_not_range_restricted_msg(name)
+            );
         }
+        i += 1;
     }
 
     // Recurse with the for-domain in scope.
@@ -783,6 +963,7 @@ fn check_aggregation(
 /// `tp(t)` variable. Descends through boolean/temporal structure; a binder
 /// (`exists`, an aggregation `for` list) removes its own name from what its
 /// body exposes upward, so the result is the standard free-variable set.
+#[verifier::external_body]
 fn collect_free(cond: &Condition, out: &mut BTreeSet<String>) {
     match &cond.kind {
         ConditionKind::And { left, right } => {
@@ -840,16 +1021,19 @@ fn collect_free(cond: &Condition, out: &mut BTreeSet<String>) {
     }
 }
 
+#[verifier::external_body]
 fn collect_pred_vars(p: &Predicate, out: &mut BTreeSet<String>) {
     for arg in &p.args {
         collect_arg_var(arg, out);
     }
 }
 
+#[verifier::external_body]
 fn collect_arg_var(arg: &NamedArg, out: &mut BTreeSet<String>) {
     collect_term_var(&arg.value, out);
 }
 
+#[verifier::external_body]
 fn collect_term_var(term: &Term, out: &mut BTreeSet<String>) {
     match term {
         Term::Var(name) => {
@@ -892,12 +1076,23 @@ fn collect_term_var(term: &Term, out: &mut BTreeSet<String>) {
     }
 }
 
+#[verifier::external_body]
+fn fmt_param_ref(p: &str) -> String {
+    format!("?{p}")
+}
+
+#[verifier::external_body]
+fn fmt_binder_ref(b: &str) -> String {
+    format!("${b}")
+}
+
+#[verifier::external_body]
 fn fmt_for_vars(vars: &[TypedBinder]) -> String {
     vars.iter()
         .map(|v| match &v.slot {
             BinderSlot::Name(s) => s.clone(),
-            BinderSlot::ParamRef(p) => format!("?{p}"),
-            BinderSlot::BinderRef(b) => format!("${b}"),
+            BinderSlot::ParamRef(p) => fmt_param_ref(p),
+            BinderSlot::BinderRef(b) => fmt_binder_ref(b),
         })
         .collect::<Vec<_>>()
         .join(", ")
@@ -920,16 +1115,14 @@ fn fmt_for_vars(vars: &[TypedBinder]) -> String {
 /// would keep as written) — so a variable free here is necessarily still
 /// free after expansion, and rejecting it at parse time is sound (and
 /// earlier).
+#[verifier::external_body]
 pub fn check_leaf_closed(cond: &Condition) -> Result<(), String> {
     let mut free = BTreeSet::new();
     collect_free(cond, &mut free);
     if let Some(name) = free.iter().next() {
-        return Err(format!(
-            "variable `{name}` is free in this temporal condition (bound by no \
-             `exists` binder or aggregation `for` list); a temporal condition \
-             must be closed — wrap it as `exists ({name}: <type>). (…)`, or \
-             use `*` to match any value"
-        ));
+        return Err(
+            check_leaf_closed_binder_msg(name)
+        )
     }
     Ok(())
 }
@@ -941,6 +1134,7 @@ pub fn check_leaf_closed(cond: &Condition) -> Result<(), String> {
 /// a compound operand is rejected as the last parse-time and post-expansion
 /// pass. This function (with its pipeline calls and pinned test) may be
 /// deleted when the feature is released; grep EXPERIMENTAL-ARITHMETIC.
+#[verifier::external_body]
 pub fn reject_arithmetic_unless_enabled(cond: &Condition) -> Result<(), String> {
     if cfg!(feature = "experimental-arithmetic") {
         return Ok(());
@@ -957,6 +1151,7 @@ pub fn reject_arithmetic_unless_enabled(cond: &Condition) -> Result<(), String> 
 /// `check_condition` has already rejected by the time the gate runs.
 /// `pub(crate)` because, with the feature on, validation reuses this walk
 /// to anchor the experimental warning.
+#[verifier::external_body]
 pub(crate) fn condition_has_arith(cond: &Condition) -> bool {
     match &cond.kind {
         ConditionKind::And { left, right }
@@ -979,6 +1174,7 @@ pub(crate) fn condition_has_arith(cond: &Condition) -> bool {
     }
 }
 
+#[verifier::external_body]
 fn term_has_arith(t: &Term) -> bool {
     match t {
         Term::Arith { .. } => true,
@@ -992,6 +1188,332 @@ fn term_has_arith(t: &Term) -> bool {
     }
 }
 
+// verus specs
+pub open spec fn cond_height(cond: Condition) -> nat
+    decreases cond,
+{
+    match cond.kind {
+        ConditionKind::And { left, right }
+        | ConditionKind::Or { left, right }
+        | ConditionKind::Since { left, right, .. } =>
+            1 + if cond_height(*left) >= cond_height(*right) { cond_height(*left) } else { cond_height(*right) },
+        ConditionKind::Not { inner } => 1 + cond_height(*inner),
+        ConditionKind::Formerly { body, .. }
+        | ConditionKind::Previous { body, .. }
+        | ConditionKind::Exists { body, .. } => 1 + cond_height(*body),
+        ConditionKind::Comparison { left, right, .. } =>
+            1 + if term_height(left) >= term_height(right) { term_height(left) } else { term_height(right) },
+        ConditionKind::Predicate(p) => 1 + args_max_height(p.args@),
+        ConditionKind::Refine { base, fields, .. } =>
+            1 + if cond_height(*base) >= args_max_height(fields@) { cond_height(*base) } else { args_max_height(fields@) },
+        // A macro call counts its arguments (`1 + call_height(call)`), so
+        // macro expansion — which recurses into call arguments — terminates.
+        ConditionKind::Call(call) => 3 + callargs_max_height(call.args@),
+        ConditionKind::Tp { .. }
+        | ConditionKind::SigilRef { .. } => 1,
+    }
+}
+
+pub open spec fn term_height(term: Term) -> nat
+    decreases term,
+{
+    match term {
+        Term::Array(items) => 1 + terms_max_height(items@),
+        Term::Agg(agg) => 1 + agg_height(*agg),
+        Term::Arith { left, right, .. } =>
+            1 + if term_height(*left) >= term_height(*right) { term_height(*left) } else { term_height(*right) },
+        _ => 1,
+    }
+}
+
+pub open spec fn agg_height(agg: AggExpr) -> nat
+    decreases agg,
+{
+    match agg.kind {
+        AggExprKind::Sum { body, .. } => 1 + cond_height(*body),
+        AggExprKind::Count { body, .. } => 1 + cond_height(*body),
+        // `call_height(call)`; see the `ConditionKind::Call` arm of `cond_height`.
+        AggExprKind::Call(call) => 2 + callargs_max_height(call.args@),
+    }
+}
+
+/// Termination measure for macro expansion of a `Call`: strictly above the
+/// expansion measure of its argument list (`1 + callargs_max_height`), and
+/// strictly below the height of any `Condition` / `Term` that wraps it.
+/// (Not called from the height functions themselves, which inline it, so it
+/// stays out of their mutual-recursion group.)
+pub open spec fn call_height(call: Call) -> nat {
+    2 + callargs_max_height(call.args@)
+}
+
+/// Height of a macro-call argument (`Within` is a leaf literal).
+pub open spec fn callarg_height(a: CallArg) -> nat
+    decreases a,
+{
+    match a {
+        CallArg::Condition(c) => cond_height(c),
+        CallArg::Term(t) => term_height(t),
+        CallArg::Within(_) => 0,
+    }
+}
+
+/// Max `callarg_height` over a `Seq<CallArg>` (for `Call.args`).
+pub open spec fn callargs_max_height(args: Seq<CallArg>) -> nat
+    decreases args,
+{
+    if args.len() == 0 {
+        0
+    } else {
+        let h0 = callarg_height(args[0]);
+        let hr = callargs_max_height(args.drop_first());
+        if h0 >= hr { h0 } else { hr }
+    }
+}
+
+/// `callarg_height(args[k]) <= callargs_max_height(args)`.
+pub proof fn lemma_callarg_elem_le(args: Seq<CallArg>, k: int)
+    requires 0 <= k < args.len(),
+    ensures callarg_height(args[k]) <= callargs_max_height(args),
+    decreases args,
+{
+    if k == 0 {
+    } else {
+        assert(args.drop_first()[k - 1] == args[k]);
+        lemma_callarg_elem_le(args.drop_first(), k - 1);
+    }
+}
+
+/// Max `term_height` over a `Seq<Term>` (for `Term::Array`).
+pub open spec fn terms_max_height(items: Seq<Term>) -> nat
+    decreases items,
+{
+    if items.len() == 0 {
+        0
+    } else {
+        let h0 = term_height(items[0]);
+        let hr = terms_max_height(items.drop_first());
+        if h0 >= hr { h0 } else { hr }
+    }
+}
+
+/// Max `term_height` over the field values of a `Seq<NamedArg>` (for
+/// `Predicate.args` and `Refine.fields`).
+pub open spec fn args_max_height(args: Seq<NamedArg>) -> nat
+    decreases args,
+{
+    if args.len() == 0 {
+        0
+    } else {
+        let h0 = term_height(args[0].value);
+        let hr = args_max_height(args.drop_first());
+        if h0 >= hr { h0 } else { hr }
+    }
+}
+
+// ---- element lemmas: an element's height <= the seq's max height ----
+
+/// `term_height(items[k]) <= terms_max_height(items)`.
+pub proof fn lemma_term_elem_le(items: Seq<Term>, k: int)
+    requires 0 <= k < items.len(),
+    ensures term_height(items[k]) <= terms_max_height(items),
+    decreases items,
+{
+    if k == 0 {
+    } else {
+        assert(items.drop_first()[k - 1] == items[k]);
+        lemma_term_elem_le(items.drop_first(), k - 1);
+    }
+}
+
+/// `term_height(args[k].value) <= args_max_height(args)`.
+pub proof fn lemma_arg_elem_le(args: Seq<NamedArg>, k: int)
+    requires 0 <= k < args.len(),
+    ensures term_height(args[k].value) <= args_max_height(args),
+    decreases args,
+{
+    if k == 0 {
+    } else {
+        assert(args.drop_first()[k - 1] == args[k]);
+        lemma_arg_elem_le(args.drop_first(), k - 1);
+    }
+}
+
+pub open spec fn args_prefix(args: Seq<NamedArg>, n: int) -> bool
+    decreases n,
+{
+    if n <= 0 { false } else { args_prefix(args, n - 1) || spec_term_has_sigil(args[n - 1].value) }
+}
+
+/// The full-length `args_prefix` equals the `spec_args_any` front fold.
+pub proof fn lemma_args_prefix_full(args: Seq<NamedArg>)
+    ensures args_prefix(args, args.len() as int) == spec_args_any(args),
+    decreases args,
+{
+    if args.len() == 0 {
+    } else {
+        lemma_args_prefix_shift(args, args.len() as int);
+        lemma_args_prefix_full(args.drop_first());
+    }
+}
+
+pub proof fn lemma_args_prefix_shift(args: Seq<NamedArg>, n: int)
+    requires 1 <= n <= args.len(),
+    ensures args_prefix(args, n)
+        == (spec_term_has_sigil(args[0].value) || args_prefix(args.drop_first(), n - 1)),
+    decreases n,
+{
+    if n == 1 {
+        assert(args_prefix(args, 0) == false);
+        assert(args_prefix(args.drop_first(), 0) == false);
+    } else {
+        lemma_args_prefix_shift(args, n - 1);
+        assert(args.drop_first()[n - 2] == args[n - 1]);
+    }
+}
+
+pub open spec fn terms_prefix(items: Seq<Term>, n: int) -> bool
+    decreases n,
+{
+    if n <= 0 { false } else { terms_prefix(items, n - 1) || spec_term_has_sigil(items[n - 1]) }
+}
+
+/// The full-length `terms_prefix` equals the `spec_terms_any` front fold.
+pub proof fn lemma_terms_prefix_full(items: Seq<Term>)
+    ensures terms_prefix(items, items.len() as int) == spec_terms_any(items),
+    decreases items,
+{
+    if items.len() == 0 {
+    } else {
+        lemma_terms_prefix_shift(items, items.len() as int);
+        lemma_terms_prefix_full(items.drop_first());
+    }
+}
+
+pub proof fn lemma_terms_prefix_shift(items: Seq<Term>, n: int)
+    requires 1 <= n <= items.len(),
+    ensures terms_prefix(items, n)
+        == (spec_term_has_sigil(items[0]) || terms_prefix(items.drop_first(), n - 1)),
+    decreases n,
+{
+    if n == 1 {
+        assert(terms_prefix(items, 0) == false);
+        assert(terms_prefix(items.drop_first(), 0) == false);
+    } else {
+        lemma_terms_prefix_shift(items, n - 1);
+        assert(items.drop_first()[n - 2] == items[n - 1]);
+    }
+}
+
+/// Some field value of a `Seq<NamedArg>` has a sigil. Front fold.
+pub open spec fn spec_args_any(args: Seq<NamedArg>) -> bool
+    decreases args,
+{
+    if args.len() == 0 {
+        false
+    } else {
+        spec_term_has_sigil(args[0].value) || spec_args_any(args.drop_first())
+    }
+}
+
+pub open spec fn spec_has_sigil(cond: Condition) -> bool
+    decreases cond,
+{
+    match cond.kind {
+        ConditionKind::Call(_) => true,
+        ConditionKind::SigilRef { .. } => true,
+        ConditionKind::And { left, right } => spec_has_sigil(*left) || spec_has_sigil(*right),
+        ConditionKind::Or { left, right } => spec_has_sigil(*left) || spec_has_sigil(*right),
+        ConditionKind::Since { left, within, right } =>
+            spec_within_has_sigil(within) || spec_has_sigil(*left) || spec_has_sigil(*right),
+        ConditionKind::Not { inner } => spec_has_sigil(*inner),
+        ConditionKind::Formerly { within, body } =>
+            spec_within_has_sigil(within) || spec_has_sigil(*body),
+        ConditionKind::Previous { within, body } =>
+            spec_within_has_sigil(within) || spec_has_sigil(*body),
+        ConditionKind::Exists { var, body } =>
+            spec_slot_has_sigil(var.slot) || spec_has_sigil(*body),
+        ConditionKind::Refine { base, fields, .. } =>
+            spec_has_sigil(*base) || spec_args_any(fields@),
+        ConditionKind::Comparison { left, right, .. } =>
+            spec_term_has_sigil(left) || spec_term_has_sigil(right),
+        ConditionKind::Predicate(p) => spec_args_any(p.args@),
+        ConditionKind::Tp { var } => spec_slot_has_sigil(var),
+    }
+}
+
+/// A `within` window is still a macro `?w` parameter reference.
+pub open spec fn spec_within_has_sigil(w: super::ast::WithinSpec) -> bool {
+    w is ParamRef
+}
+
+/// A binder slot is still a macro sigil (`?p` / `$t`).
+pub open spec fn spec_slot_has_sigil(s: BinderSlot) -> bool {
+    !(s is Name)
+}
+
+/// Some binder of a `Seq<TypedBinder>` has a sigil slot. Front fold.
+pub open spec fn spec_binders_any(bs: Seq<TypedBinder>) -> bool
+    decreases bs.len(),
+{
+    if bs.len() == 0 {
+        false
+    } else {
+        spec_slot_has_sigil(bs[0].slot) || spec_binders_any(bs.drop_first())
+    }
+}
+
+/// If every binder's slot is a concrete `Name`, no binder has a sigil.
+pub proof fn lemma_binders_all_named(bs: Seq<TypedBinder>)
+    requires forall|j: int| 0 <= j < bs.len() ==> (#[trigger] bs[j]).slot is Name,
+    ensures !spec_binders_any(bs),
+    decreases bs.len(),
+{
+    if bs.len() > 0 {
+        let rest = bs.drop_first();
+        assert forall|j: int| 0 <= j < rest.len() implies (#[trigger] rest[j]).slot is Name by {
+            assert(rest[j] == bs[j + 1]);
+        }
+        lemma_binders_all_named(rest);
+    }
+}
+
+pub open spec fn spec_term_has_sigil(term: Term) -> bool
+    decreases term,
+{
+    match term {
+        Term::ParamRef(_) => true,
+        Term::BinderRef(_) => true,
+        Term::Array(items) => spec_terms_any(items@),
+        Term::Agg(agg) => spec_agg_has_sigil(*agg),
+        Term::Arith { left, right, .. } => spec_term_has_sigil(*left) || spec_term_has_sigil(*right),
+        _ => false,
+    }
+}
+
+/// Some element of a `Seq<Term>` has a sigil. Front fold.
+pub open spec fn spec_terms_any(items: Seq<Term>) -> bool
+    decreases items,
+{
+    if items.len() == 0 {
+        false
+    } else {
+        spec_term_has_sigil(items[0]) || spec_terms_any(items.drop_first())
+    }
+}
+
+pub open spec fn spec_agg_has_sigil(agg: AggExpr) -> bool
+    decreases agg,
+{
+    match agg.kind {
+        AggExprKind::Call(_) => true,
+        AggExprKind::Sum { bound_var, for_vars, body } =>
+            spec_slot_has_sigil(bound_var) || spec_binders_any(for_vars@)
+                || spec_has_sigil(*body),
+        AggExprKind::Count { for_vars, body } =>
+            spec_binders_any(for_vars@) || spec_has_sigil(*body),
+    }
+}
+} // verus
 #[cfg(test)]
 mod tests {
     //! §7 basic range-restriction safety for `exists`. Each case parses a

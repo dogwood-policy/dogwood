@@ -1,0 +1,6 @@
+// A wildcard is a comparison operand: the comparison is always false. The specification rejects it
+// (placement).
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h (Drupe::Action::"Login"::request{ input.user: context.input.user } && context.input.user == *)
+};

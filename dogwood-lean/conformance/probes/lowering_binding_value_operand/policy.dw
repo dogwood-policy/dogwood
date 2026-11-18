@@ -1,0 +1,8 @@
+// A macro's body binds `$x` to `$y + 1` before the count that binds `$y`. Expansion rejects it;
+// the error names the value operand, not an aggregate operand, which it is not.
+def temporal bind() { exists ($x: Long). exists ($y: Long). ($x == $y + 1
+    && (count for ($t: Timepoint). where (formerly within 1h (Drupe::Action::"Login"::request{} && tp($t)))) == $y) };
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    bind()
+};

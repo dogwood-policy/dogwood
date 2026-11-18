@@ -1,0 +1,6 @@
+// An aggregate inside a compound operand has a body that does not vary with the timepoint
+// (`experimental-arithmetic`). The specification rejects it (time dependence).
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    (count for (a: Long). where (a == context.input.count)) + 1 > 3
+};

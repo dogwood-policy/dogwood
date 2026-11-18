@@ -1,0 +1,18 @@
+max_window = 30 // legal interval trivia 🚀
+d
+
+decision event <Action>::request {
+    ...inputs(Action),
+    ...outputs(Action),
+    pin actor: principalType(Action) = principal.department,
+    target: resourceType(Action),
+    pin: String,
+    nested: {
+        pin target_id: Acme::Types::Identifier = resource.id,
+        pin session: String = context.session.id,
+    },
+}
+
+event <Action>::audit {
+    value: Acme::Types::Value,
+}

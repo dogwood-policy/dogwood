@@ -1,0 +1,18 @@
+namespace Drupe {
+  type LoginInput = { user: String };
+  type A = { x: A };
+  type ReadCtx = { input: ReadInput, meta: A };
+  type ReadInput = { user: String, note?: String, level?: Long };
+  entity Gateway;
+  entity OAuthUser = { id: String, level: Long } tags String;
+  action "Login" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: { input: LoginInput }
+  };
+  action "Read" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: ReadCtx
+  };
+}

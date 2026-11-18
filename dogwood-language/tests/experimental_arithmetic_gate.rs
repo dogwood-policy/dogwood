@@ -38,10 +38,7 @@ when temporal {
 };"#,
     )
     .expect_err("a default build rejects arithmetic");
-    assert!(
-        err.contains("not yet supported"),
-        "unexpected error: {err}"
-    );
+    assert!(err.contains("not yet supported"), "unexpected error: {err}");
 }
 
 #[test]
@@ -59,8 +56,5 @@ when temporal {
 };"#,
     )
     .expect_err("a default build rejects macro-carried arithmetic");
-    assert!(
-        err.contains("not yet supported"),
-        "unexpected error: {err}"
-    );
+    assert!(err.contains("not yet supported"), "unexpected error: {err}");
 }

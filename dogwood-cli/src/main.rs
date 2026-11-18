@@ -1,19 +1,20 @@
 //! The `dogwood` command-line tool.
 //!
 //! A local checker/replayer for Dogwood policies: parse, validate, lower to
-//! Cedar, and replay an event trace. It is a thin shell over the
-//! `dogwood-language` frontend — the [`ops`] module drives the frontend and
-//! returns owned, serializable reports, and this file plus [`render`] handle
-//! argument parsing, file I/O, and output formatting.
+//! Cedar, and replay an event trace. It is a thin shell over `dogwood-ops` —
+//! whose [`ops`] module drives the `dogwood-language` frontend and returns
+//! owned, serializable reports, shared with the language bindings — and this
+//! file plus [`render`] handle argument parsing, file I/O, and output
+//! formatting.
 
 use std::path::PathBuf;
 use std::process::ExitCode;
 
 use clap::{Args, Parser, Subcommand, ValueEnum};
 
-mod error;
-mod ops;
 mod render;
+
+use dogwood_ops::{error, ops};
 
 use error::OpError;
 use ops::SchemaInputs;
@@ -134,7 +135,8 @@ enum Command {
 
 /// The `schema` subcommands — each checks one schema artifact in isolation
 /// (so you can tell "my schema is broken" from "my policy is broken"), plus
-/// `mcp` which generates a Cedar action schema from an MCP tool manifest.
+/// `mcp` (feature `mcp-schema`) which generates a Cedar action schema from an
+/// MCP tool manifest.
 #[derive(Subcommand)]
 enum SchemaCmd {
     /// Check a Cedar action schema (.cedarschema).
@@ -162,6 +164,7 @@ enum SchemaCmd {
         format: Format,
     },
     /// Generate a Cedar action schema from an MCP `tools/list` manifest.
+    #[cfg(feature = "mcp-schema")]
     Mcp {
         /// The MCP tool manifest (JSON). `-` reads stdin.
         #[arg(long, value_name = "FILE")]
@@ -191,7 +194,8 @@ fn main() -> ExitCode {
             render::error(&error, format);
             ExitCode::from(2)
         }
-        // A usage/IO problem (file missing, etc.): exit 1.
+        // An I/O error (an input that cannot be read, or an output that
+        // cannot be written): exit 1.
         Err(RunError::Io(msg)) => {
             eprintln!("error: {msg}");
             ExitCode::from(1)
@@ -200,7 +204,9 @@ fn main() -> ExitCode {
 }
 
 /// A run either succeeds (with the process exit code the command chose) or
-/// fails with a fatal operation error (exit 2) or an IO/usage error (exit 1).
+/// fails with a fatal operation error (exit 2) or an I/O error (exit 1). A
+/// usage error does not reach `RunError`, because clap exits 2 while it parses
+/// the arguments.
 enum RunError {
     Op { error: OpError, format: Format },
     Io(String),
@@ -322,6 +328,7 @@ fn run_schema(what: SchemaCmd) -> Result<ExitCode, RunError> {
             render::schema_check(&report, format);
             Ok(ExitCode::SUCCESS)
         }
+        #[cfg(feature = "mcp-schema")]
         SchemaCmd::Mcp { manifest, output } => {
             let src = read(&manifest)?;
             // A fatal generation error renders in human form (no --format here).

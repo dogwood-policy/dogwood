@@ -1,0 +1,8 @@
+// Action and enum ids with characters Rust's escape_debug writes as \u{…}, in the rules' text and
+// in the validator's messages, which print them as Cedar does (`Eid::escaped`): a predicate
+// argument of the wrong type, an enum id that is not one of the declared ones (listed in the
+// order the schema declares them), and an undeclared action literal.
+permit (principal, action == Drupe::Action::"Re\u{200b}ad", resource)
+when { temporal { formerly within 1h Drupe::Action::"\u{301}Login"::response{ input.count: "x" } } }
+when { temporal { formerly within 1h Drupe::Action::"\u{301}Login"::response{ input.mode: Drupe::Mode::"z\u{301}" } } }
+when { temporal { formerly within 1h Drupe::Action::"\u{301}Login"::response{ input.user: context.input.user } && Drupe::Action::"No\u{200b}pe" == Drupe::Action::"No\u{200b}pe" } };

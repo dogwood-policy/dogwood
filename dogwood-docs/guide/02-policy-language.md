@@ -12,7 +12,7 @@ Every policy example on this page is a runnable bundle under
 
 Dogwood's core language is an intentional re-implementation of upstream
 [Cedar](https://www.cedarpolicy.com/) (the grammar is a faithful translation of
-`cedar-policy-core` v4.11.0), so its syntax follows Cedar's. What
+`cedar-policy-core` v4.11.0; differential tests check it against v4.14.0), so its syntax follows Cedar's. What
 Dogwood adds on top is the `temporal { … }` *marker clause* — which hands off to a
 dedicated sub-language — plus a thin `guardrails { … }` clause that is sugar for a
 bare `when` (it invokes information providers, which are ordinary Cedar calls). This page

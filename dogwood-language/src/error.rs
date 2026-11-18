@@ -373,6 +373,87 @@ impl MacroError {
 
 impl_diagnostic_source_loc!(MacroError, loc);
 
+/// Why a stable policy id could not be assigned. Carried by [`PolicyIdError`].
+///
+/// `#[non_exhaustive]`, like the crate's other error enums, so new failure
+/// kinds can be added without a breaking change.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum PolicyIdErrorKind {
+    /// [`IdSource::Annotation`](crate::IdSource::Annotation) was selected and
+    /// the policy has no `@id("…")` annotation (or an `@id` with no value).
+    Missing,
+    /// Two policies of one parsed set were given the same id.
+    Duplicate,
+    /// The id is empty, too long, or uses a character outside the portable id
+    /// alphabet `[A-Za-z0-9_.:-]` (see [`IdSource`](crate::IdSource)).
+    Invalid,
+    /// [`IdSource::Explicit`](crate::IdSource::Explicit) supplied a different
+    /// number of ids than the set has policies.
+    CountMismatch,
+    /// [`IdSource::Annotation`](crate::IdSource::Annotation) was selected and
+    /// the policy has more than one `@id` annotation, so its id would be
+    /// ambiguous (Cedar's policy keeps the last of them).
+    RepeatedAnnotation,
+}
+
+/// A stable policy id could not be assigned, returned by
+/// [`ParsedPolicySet::with_ids`](crate::ParsedPolicySet::with_ids).
+///
+/// Self-rendering: when the failure is tied to one policy, the error carries
+/// that policy's `.dw` span and source, like [`MacroError`].
+#[derive(Error, Debug, Clone)]
+#[error("{message}")]
+pub struct PolicyIdError {
+    kind: PolicyIdErrorKind,
+    message: String,
+    policy_index: Option<usize>,
+    id: Option<String>,
+    loc: Option<SourceLoc>,
+}
+
+impl PolicyIdError {
+    pub(crate) fn new(
+        kind: PolicyIdErrorKind,
+        message: String,
+        policy_index: Option<usize>,
+        id: Option<String>,
+        loc: Option<SourceLoc>,
+    ) -> Self {
+        PolicyIdError {
+            kind,
+            message,
+            policy_index,
+            id,
+            loc,
+        }
+    }
+
+    /// Which check failed.
+    pub fn kind(&self) -> PolicyIdErrorKind {
+        self.kind
+    }
+
+    /// The 0-based position, in its parsed set, of the policy the error is
+    /// about (for [`Duplicate`](PolicyIdErrorKind::Duplicate), the second of
+    /// the two). `None` for [`CountMismatch`](PolicyIdErrorKind::CountMismatch).
+    pub fn policy_index(&self) -> Option<usize> {
+        self.policy_index
+    }
+
+    /// The offending id, when there is one.
+    pub fn id(&self) -> Option<&str> {
+        self.id.as_deref()
+    }
+
+    /// The located span (with its source) of the policy, when there is one.
+    pub fn location(&self) -> Option<&SourceLoc> {
+        self.loc.as_ref()
+    }
+}
+
+impl_diagnostic_source_loc!(PolicyIdError, loc?);
+
 /// The findings of one schema-aware validation pass, split into an error
 /// channel and a warning channel.
 ///

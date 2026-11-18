@@ -1,0 +1,18 @@
+namespace Drupe {
+  type LoginInput = { user: String };
+  type ReadInput = { user: String, note?: String, level?: Long };
+  entity Gateway;
+  external entity Remote in [Gateway];
+  entity OAuthUser = { id: String, level: Long } tags String;
+  external action "Outside";
+  action "Login" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: { input: LoginInput }
+  };
+  action "Read" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: { input: ReadInput }
+  };
+}

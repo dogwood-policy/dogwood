@@ -119,9 +119,12 @@ Work through this checklist:
      user says "recently" without a number, **ask** — the window is not optional
      and there is no default. Windows are also **capped** by the event schema's
      `max_window` (**24h when absent**): a `within 7d` under the default schema
-     is a validation error. If the requirement genuinely needs a longer
-     look-back, that is an event-schema change (`max_window = 30d` at the top
-     of a `.dwschema` that also declares the events) — route it to
+     is a validation error. Nested windows add up, and if the event schema
+     declares `max_horizon` their sum (the condition's horizon) may not exceed
+     it. If the requirement genuinely needs a longer look-back, that is an
+     event-schema change (`max_window = 30d`, and a matching `max_horizon` if
+     one is declared, at the top of a `.dwschema` that also declares the
+     events) — route it to
      **authoring-service-schema**, don't shrink the user's window silently.
    - **"the same X"** (same user, same document) → *pin* the past predicate's
      field to the current request: `input.user: context.input.user`. Decide
@@ -201,7 +204,7 @@ or a negated `since` left; counting a threshold uses the
 `exists (n: Long). ((count …) == n && n > k)` shape. **Follow the acceptance
 rules in the temporal doc's "Writing temporal expressions that are accepted"
 section exactly** — close the condition (bind every variable with an `exists`
-or a `for` list; use `*` for "any value"), range-restrict every `exists` var
+or a `for` list; use `*` in a predicate argument for "any value"), range-restrict every `exists` var
 and every aggregation `for` var with a positive atom (a negated occurrence or
 a since-left occurrence restricts nothing), order conjuncts so producers
 precede consumers (a filter, a correlated aggregate behind a binding equality,
@@ -267,8 +270,9 @@ Common rejection causes and where they surface:
   outside a comparison operand; a missing `within` window.
 - **Schema-aware:** an unknown entity type or action; a `context.input.<field>`
   that does not resolve in the scoped action; a `within` window exceeding the
-  event schema's `max_window` cap (**24h** under the default schema — raising
-  it is an event-schema change, see **authoring-service-schema**); an ordering
+  event schema's `max_window` cap (**24h** under the default schema), or nested
+  windows whose sum exceeds a declared `max_horizon` (raising either is an
+  event-schema change, see **authoring-service-schema**); an ordering
   comparison on a non-numeric operand; a decimal ordered with `<` instead of
   `.lessThan(…)`.
 

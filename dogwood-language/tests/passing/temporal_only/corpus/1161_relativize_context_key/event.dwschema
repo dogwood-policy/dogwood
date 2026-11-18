@@ -7,10 +7,10 @@
 // `Term::ContextField` (read from the request context record) and the
 // interpreter must resolve it correctly — with no scope pin as a safety net.
 //
-// `tenant_id` is symmetric because its context path equals its field path
-// (`is_symmetric`'s `PinRoot::Context && context_path == field_path` arm). Like
-// 1158's `session_id`, it is carried in the trace's `request_context(...)`
-// envelope; it is not part of the Cedar action-schema context.
+// `tenant_id` is symmetric because it is pinned to a context attribute
+// (`is_symmetric`'s `PinRoot::Context` arm). Like 1158's `session_id`, it is
+// carried in the trace's `request_context(...)` envelope; it is not part of
+// the Cedar action-schema context.
 
 decision event <A>::request {
     ...inputs(A),

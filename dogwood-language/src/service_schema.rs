@@ -88,6 +88,8 @@ struct Inner {
     /// The macro library source (`def` definitions), merged into every policy
     /// set at lowering time.
     macros: String,
+    /// The frontend that lowers and validates the sets parsed against this schema.
+    frontend: crate::frontend::Frontend,
 }
 
 impl ServiceSchema {
@@ -99,6 +101,7 @@ impl ServiceSchema {
             event_schema_src: None,
             providers: None,
             macros_src: None,
+            frontend: None,
         }
     }
 
@@ -125,9 +128,32 @@ impl ServiceSchema {
         &self.0.macros
     }
 
+    /// The frontend that lowers and validates every policy set parsed against
+    /// this schema (see [`Frontend`](crate::Frontend)): the one
+    /// [`ServiceSchemaBuilder::frontend`] chose, else the default
+    /// ([`Frontend::from_env`](crate::Frontend::from_env)).
+    pub fn frontend(&self) -> crate::frontend::Frontend {
+        self.0.frontend
+    }
+
     /// Whether `self` and `other` are clones of one value.
     pub(crate) fn same_instance(&self, other: &ServiceSchema) -> bool {
         Arc::ptr_eq(&self.0, &other.0)
+    }
+
+    /// A copy of `self` whose parsed event schema `edit` has changed. For tests
+    /// that need an event schema the DSL cannot spell, such as a field name
+    /// that holds a `.`.
+    #[cfg(test)]
+    pub(crate) fn with_edited_event_schema(&self, edit: impl FnOnce(&mut EventSchema)) -> Self {
+        let mut event_schema = self.0.event_schema.clone();
+        edit(&mut event_schema);
+        ServiceSchema(Arc::new(Inner {
+            event_schema,
+            providers: self.0.providers.clone(),
+            macros: self.0.macros.clone(),
+            frontend: self.0.frontend,
+        }))
     }
 }
 
@@ -138,6 +164,7 @@ pub struct ServiceSchemaBuilder {
     event_schema_src: Option<String>,
     providers: Option<ProviderDeclarations>,
     macros_src: Option<String>,
+    frontend: Option<crate::frontend::Frontend>,
 }
 
 impl ServiceSchemaBuilder {
@@ -162,6 +189,21 @@ impl ServiceSchemaBuilder {
     /// same name takes precedence over a macro from this library.
     pub fn macros_str(mut self, src: &str) -> Self {
         self.macros_src = Some(src.to_string());
+        self
+    }
+
+    /// Choose the frontend that lowers and validates every policy set parsed
+    /// against the built schema: the Rust frontend (the default), the Lean
+    /// frontend, or both, compared (see [`Frontend`](crate::Frontend)). Without
+    /// this call the schema takes [`Frontend::from_env`](crate::Frontend::from_env):
+    /// `DOGWOOD_FRONTEND` with the `lean-frontend` feature, else
+    /// [`Frontend::Rust`](crate::Frontend::Rust).
+    ///
+    /// [`build`](ServiceSchemaBuilder::build) returns
+    /// [`Error::Frontend`] for a frontend this build cannot
+    /// run (any but `Rust`, without the `lean-frontend` feature).
+    pub fn frontend(mut self, frontend: crate::frontend::Frontend) -> Self {
+        self.frontend = Some(frontend);
         self
     }
 
@@ -209,10 +251,18 @@ impl ServiceSchemaBuilder {
             .macros_src
             .unwrap_or_else(|| DEFAULT_MACROS.to_string());
 
+        let frontend = self
+            .frontend
+            .unwrap_or_else(crate::frontend::Frontend::from_env);
+        if !frontend.is_available() {
+            return Err(crate::frontend::unavailable(frontend));
+        }
+
         Ok(ServiceSchema(Arc::new(Inner {
             event_schema,
             providers: self.providers,
             macros,
+            frontend,
         })))
     }
 }

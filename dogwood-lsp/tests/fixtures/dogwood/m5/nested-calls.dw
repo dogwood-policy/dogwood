@@ -1,0 +1,4 @@
+def cedar allowed(?value) { ?value == true };
+permit(principal, action, resource) when {
+  allowed(Guard::Allowed(context.input.name).result.contains("yes"))
+};

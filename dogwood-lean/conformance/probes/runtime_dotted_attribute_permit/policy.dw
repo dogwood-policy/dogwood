@@ -1,0 +1,10 @@
+// The `input` record has an attribute named "user.id" and a record `user` with an `id`. A path
+// steps one level per `.`, so `context.input.user.id` and the field `input.user.id` are the `id`
+// inside `user`, never the attribute "user.id". The first `Read` shares the `Login`'s nested id
+// and not its "user.id": allowed. The second has bob's nested id and alice's in its "user.id":
+// denied. A request environment that gave the two paths one key would read the attribute, and
+// decide both the other way.
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::response{ input.user.id: context.input.user.id }
+};

@@ -1,0 +1,9 @@
+{
+  "availableProviders": {
+    "Risk::Score": {
+      "argumentTypes": [],
+      "outputType": { "paramType": "record", "fields": { "score": { "paramType": "decimal" } }, "required": ["score"] },
+      "implementation": { "kind": "rhai", "script": "fn evaluate() { #{ score: parse_decimal(\"0.75\") } }" }
+    }
+  }
+}

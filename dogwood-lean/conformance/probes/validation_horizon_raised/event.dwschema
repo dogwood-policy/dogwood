@@ -1,0 +1,35 @@
+// The default pinned event schema, with `max_horizon` raised to 48h: the nested 24h windows of
+// the policy are admitted, and the window cap follows the declared horizon.
+max_horizon = 48h
+
+// Pinned event schema (DEFAULT).
+//
+// request/response/error with a universal symmetric pin on callerPrincipal.
+// Every temporal predicate is automatically correlated to the current
+// request's principal — events from other principals are invisible.
+// This gives per-principal key-local semantics.
+
+decision event <A>::request {
+    ...inputs(A),
+    pin callerPrincipal: principalType(A) = principal,
+    callerResource:    resourceType(A),
+    requestId:         String,
+    sessionId:         String,
+}
+
+event <A>::response {
+    ...inputs(A),
+    ...outputs(A),
+    pin callerPrincipal: principalType(A) = principal,
+    callerResource:    resourceType(A),
+    requestId:         String,
+    sessionId:         String,
+}
+
+event <A>::error {
+    ...inputs(A),
+    pin callerPrincipal: principalType(A) = principal,
+    callerResource:    resourceType(A),
+    requestId:         String,
+    sessionId:         String,
+}

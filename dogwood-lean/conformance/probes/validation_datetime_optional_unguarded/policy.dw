@@ -1,0 +1,7 @@
+// The optional `datetime` attribute `context.input.later` is compared with no `has` test. Both
+// reject it. The specification reports the optional attribute (optional attributes); the crate
+// reports that and the unsupported type (extension types), a difference the baseline expects.
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h (Drupe::Action::"Login"::response{ input.user: context.input.user } && context.input.later == context.input.later)
+};

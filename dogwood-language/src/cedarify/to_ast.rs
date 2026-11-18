@@ -58,7 +58,12 @@ pub(super) fn lower_expr(
     let b = || at(src, span);
     match &expr.kind {
         ExprKind::Lit(lit) => Ok(b().val(rename_enum_literal(lit, &ctx.enum_names))),
-        ExprKind::Var(v) => Ok(b().var(*v)),
+        ExprKind::Var(v) => {
+            if *v == cedar_ast::Var::Context {
+                note_context_read(ctx, span, None);
+            }
+            Ok(b().var(*v))
+        }
         ExprKind::Slot(s) => Ok(b().slot(*s)),
 
         ExprKind::Extension(Extension::Temporal(t)) => {
@@ -97,12 +102,12 @@ pub(super) fn lower_expr(
             Ok(lower_binary(*op, l, r, src, span))
         }
         ExprKind::GetAttr { expr, attr } => {
-            let e = lower_expr(expr, action, ctx, src)?;
+            let e = lower_attribute_base(expr, Some(attr), action, ctx, src)?;
             Ok(b().get_attr(e, attr.as_str().into()))
         }
         ExprKind::HasAttr { expr, attrs } => {
-            let e = lower_expr(expr, action, ctx, src)?;
-            Ok(b().extended_has_attr(e, to_nonempty(attrs)))
+            let e = lower_attribute_base(expr, attrs.first(), action, ctx, src)?;
+            Ok(lower_has(b, e, attrs))
         }
         ExprKind::Like { expr, pattern } => {
             let e = lower_expr(expr, action, ctx, src)?;
@@ -207,6 +212,52 @@ pub(super) fn lower_expr(
     }
 }
 
+/// Lower the base of an attribute access or `has` test of `attr`. The request
+/// `context` read this way is read through one of its attributes, which is
+/// what the hoisting of leaves preserves, unless the attribute has a name
+/// lowering reserves for a leaf's value (`<rule>__temporal_<n>`, `providers`).
+fn lower_attribute_base(
+    base: &Expr,
+    attr: Option<&String>,
+    action: &ScopedAction,
+    ctx: &mut Ctx,
+    src: &Arc<str>,
+) -> Result<AstExpr, RawCedarifyError> {
+    if matches!(base.kind, ExprKind::Var(cedar_ast::Var::Context)) {
+        if let Some(attr) = attr.filter(|a| crate::api::is_hoisted_name(a)) {
+            note_context_read(ctx, base.span, Some(attr));
+        }
+        return Ok(at(src, base.span).var(cedar_ast::Var::Context));
+    }
+    lower_expr(base, action, ctx, src)
+}
+
+/// Record that the rule reads the request context in a way lowering does not
+/// preserve: whole (`attr` is `None`), or through the reserved attribute
+/// `attr`. Lowering adds each leaf's value to the context under a reserved name,
+/// so such a read would see the leaves' values, or a context of another shape,
+/// rather than the request's. Validation reports it.
+fn note_context_read(ctx: &mut Ctx, span: Span, attr: Option<&str>) {
+    let message = match attr {
+        None => "the rule reads the request context whole, not through one of its \
+                 attributes; lowering adds the values of the policy set's temporal and \
+                 provider leaves to the context, so read the attributes the rule needs \
+                 (`context.<attr>`) instead"
+            .to_string(),
+        Some(attr) => format!(
+            "the rule reads the request context attribute `{attr}`, a name lowering \
+             reserves for the value of a temporal or provider leaf; a request cannot \
+             supply it, so rename the attribute"
+        ),
+    };
+    ctx.context_reads.push(super::ContextRead {
+        rule: 0,
+        span,
+        message,
+        whole: attr.is_none(),
+    });
+}
+
 /// Desugar a surface unary op onto an already-lowered argument, stamping the
 /// node's `.dw` span. Extension constructors/methods become
 /// `ExtensionFunctionApp`s; the three core ops use the native builder.
@@ -220,16 +271,15 @@ fn rename_enum_literal(
     names: &std::collections::BTreeMap<String, String>,
 ) -> cedar_policy_core::ast::Literal {
     use cedar_policy_core::ast::{EntityType, EntityUID, Literal};
-    if let Literal::EntityUID(uid) = lit {
-        if let Some(exported) = names.get(&uid.entity_type().to_string()) {
-            if let Ok(ty) = EntityType::from_normalized_str(exported) {
-                return Literal::EntityUID(Arc::new(EntityUID::from_components(
-                    ty,
-                    uid.eid().clone(),
-                    uid.loc().cloned(),
-                )));
-            }
-        }
+    if let Literal::EntityUID(uid) = lit
+        && let Some(exported) = names.get(&uid.entity_type().to_string())
+        && let Ok(ty) = EntityType::from_normalized_str(exported)
+    {
+        return Literal::EntityUID(Arc::new(EntityUID::from_components(
+            ty,
+            uid.eid().clone(),
+            uid.loc().cloned(),
+        )));
     }
     lit.clone()
 }
@@ -308,6 +358,28 @@ fn ext_call<const N: usize>(
     at(src, span)
         .call_extension_fn(name, args)
         .expect("ast::ExprBuilder build is infallible")
+}
+
+/// `e has a1.….an`. Cedar 4.14 keeps a path as one extended `has` node, which
+/// admits only unreserved identifiers; a path with a reserved word (Dogwood's
+/// extension) lowers to the left-nested conjunction Cedar 4.11 desugared every
+/// path to: `e has a1 && e.a1 has a2 && …`. A one-segment path is a plain
+/// `has` (`ExprBuilder::extended_has_attr` builds one for a path of one).
+fn lower_has(b: impl Fn() -> ExprBuilder<()>, e: AstExpr, attrs: &[String]) -> AstExpr {
+    match attrs.split_first() {
+        Some((head, tail))
+            if !tail.is_empty() && !attrs.iter().all(|a| cedar_ast::is_normalized_ident(a)) =>
+        {
+            let mut test = b().has_attr(e.clone(), head.as_str().into());
+            let mut base = b().get_attr(e, head.as_str().into());
+            for attr in tail {
+                test = b().and(test, b().has_attr(base.clone(), attr.as_str().into()));
+                base = b().get_attr(base, attr.as_str().into());
+            }
+            test
+        }
+        _ => b().extended_has_attr(e, to_nonempty(attrs)),
+    }
 }
 
 /// Build the non-empty attribute path `has` requires. The grammar

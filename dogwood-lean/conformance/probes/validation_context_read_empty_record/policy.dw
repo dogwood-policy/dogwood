@@ -1,0 +1,7 @@
+// The Cedar part of a rule with a temporal leaf compares the request context with `{}`, which
+// lowering extends with the leaves' values. Both reject it (context reads).
+permit (principal, action == Drupe::Action::"Read", resource)
+when { context == {} }
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

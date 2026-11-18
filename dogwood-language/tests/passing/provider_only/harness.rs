@@ -56,7 +56,12 @@ fn read_sorted(dir: &Path, prefix: &str, ext: &str) -> Vec<PathBuf> {
 /// The top-level namespaces of a Cedar JSON schema (`""` is the root).
 fn namespaces(json: &str) -> std::collections::BTreeSet<String> {
     let value: serde_json::Value = serde_json::from_str(json).expect("schema JSON");
-    value.as_object().expect("schema object").keys().cloned().collect()
+    value
+        .as_object()
+        .expect("schema object")
+        .keys()
+        .cloned()
+        .collect()
 }
 
 /// `schema_src` (`.cedarschema` text) as Cedar JSON.
@@ -150,12 +155,11 @@ fn provider_corpus_verdicts() {
                 // declares (provider fields and provider enums alike), so an
                 // exported schema can be consumed where only the action
                 // schema's namespaces are allowed.
-                let added: Vec<String> = namespaces(
-                    &policies.cedar_schema_json().map_err(|e| format!("{e:?}"))?,
-                )
-                .difference(&namespaces(&base_schema_json(&schema_src)))
-                .cloned()
-                .collect();
+                let added: Vec<String> =
+                    namespaces(&policies.cedar_schema_json().map_err(|e| format!("{e:?}"))?)
+                        .difference(&namespaces(&base_schema_json(&schema_src)))
+                        .cloned()
+                        .collect();
                 if !added.is_empty() {
                     return Err(format!("exported schema adds namespaces {added:?}"));
                 }

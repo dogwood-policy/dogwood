@@ -484,8 +484,10 @@ fn render_term(t: &tast::Term, ren: &BinderRenames) -> String {
         T::Decimal(s) => format!("decimal({})", quote(s)),
         T::String(s) => quote(s),
         T::Bool(b) => b.to_string(),
-        T::ContextField(path) => format!("context.{}", path.join(".")),
-        T::ScopeField(path) => path.join("."),
+        // A temporal path is identifiers (the grammar spells no other kind),
+        // so its text (`crate::field_path`) is the source spelling.
+        T::ContextField(path) => crate::field_path::join_under("context", path),
+        T::ScopeField(path) => crate::field_path::join(path),
         T::Var(v) => ren.apply(v),
         T::Wildcard => "*".to_string(),
         T::Array(items) => {
@@ -759,7 +761,7 @@ fn collect_slot_name(slot: &tast::BinderSlot, out: &mut BTreeSet<String>) {
 }
 
 /// Whether `name` is a bare identifier (so it needs no quoting as a member).
-fn is_ident(name: &str) -> bool {
+pub(crate) fn is_ident(name: &str) -> bool {
     let mut chars = name.chars();
     match chars.next() {
         Some(c) if c == '_' || c.is_ascii_alphabetic() => {}

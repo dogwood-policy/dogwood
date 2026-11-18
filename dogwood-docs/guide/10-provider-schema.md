@@ -89,7 +89,9 @@ when { GuardDuty::ThreatDetector([context.input.prompt]).threatSeverity == Guard
   `UNKNOWN` is not a member of `GuardDuty::Severity` ``. So does an output of the wrong
   shape: a bare `"HIGH"` instead of the declared record (`expected a record, got a
   string`), or a record missing a required enum field (``missing required field
-  `threatSeverity` ``). This shape check applies only to types that contain an enum.
+  `threatSeverity` ``). An output of any other declared type is checked against it
+  too: one that is not a value of its declared type denies the request, with a
+  `nonconforming provider output: …` diagnostic.
 - **Only what's used:** an enum is added to the schema only when the policy set calls a
   provider that uses it.
 - **Not the action schema's enums:** an output can't use an enum declared in the action
@@ -240,36 +242,34 @@ invocation:
 4. Each **output method** in a chain is checked: it must be declared in the
    provider's `availableMethods`, must not shadow a Cedar extension-method name,
    must be given the declared argument count/types, and — when it declares an
-   `inputType` — must be fed a compatible value by the preceding pipeline stage.
+   `inputType` — must be fed a value of that Cedar type by the preceding
+   pipeline stage. Types compare as the Cedar types they declare, so a `set` of
+   `string` does not feed a `set` of `long`, and `integer` feeds `long`.
 
 5. Each **field-path** argument (`context.input.x`, `principal.id`,
    `resource.owner`, including paths nested inside a set argument) is resolved
    against the schema — the SAME resolution Cedar and the temporal dialect apply
-   to the same dereference — on **every action the rule's scope reaches**:
+   to the same dereference — in **every request environment the rule decides**:
+   every action its scope reaches, with every principal and resource type the
+   scope admits there.
    - **Existence**: a `context.<path>` undeclared on a scoped action, or a
      `principal.<attr>` / `resource.<attr>` absent from an entity type the scope
      admits, is an error. A present-but-**optional** context field resolves and
-     is accepted. An action the rule's `principal` / `resource` scope narrowing
-     (`is` / `==` / `in`) makes *infeasible* (no valid request environment) is
-     skipped, matching Cedar.
-   - **Type**: the resolved type must match the declared `paramType` by category
-     (scalar kind / set / record) and, for a `set`, by element type —
-     recursively, so a `Set<Set<String>>` argument is checked to its leaves. A
-     field of the wrong type on any scoped action is an error (an entity-typed
-     field, for instance, matches no scalar / set / record arg). A
+     is accepted: an absent one reaches the script as null. The whole request
+     `context` is not an argument. An action the rule's `principal` /
+     `resource` scope narrowing (`is` / `==` / `in`) makes *infeasible* (no
+     valid request environment) is skipped, matching Cedar.
+   - **Type**: in every environment, the argument has the declared Cedar type
+     exactly (the type the declaration's `paramType` converts to). A set
+     argument's elements, literals included, each have the declared element
+     type, recursively, so a `Set<Set<String>>` argument is checked to its
+     leaves. A record has the declared attributes, an entity the declared
+     `entityType` wherever the argument comes from, and a bare `principal` /
+     `resource` is an entity of the environment's type, so it matches no
+     scalar. `datetime`, `ipaddr`, and `duration` values are not strings. A
      `principal`/`resource` attribute whose resolved type *differs* across the
      admitted entity types is rejected outright — there is no single type to
-     check. Record FIELDS are not compared (Cedar records are invariant, but
-     exact field matching needs structured record types, which the shared
-     resolver collapses to `object`) — a deliberate deferred boundary.
-   - **Entity types are compared only for a direct `context` field.** An `entity`
-     argument such as `context.input.level` must have the declared `entityType`:
-     an `App::Bar` field is rejected for a declared `App::Foo`. Anywhere else only
-     the category is checked, so validation accepts a `Set<App::Bar>` for a
-     declared `Set<App::Foo>`, an `App::Bar` field inside a record argument, and a
-     `principal`/`resource` attribute of type `App::Bar`. The script receives the
-     bare id (`"HIGH"`) either way, so nothing catches such a mismatch at runtime
-     either: make sure the enum types match.
+     check.
 
 This is a validation-time check; provider execution stays unconditional at
 runtime and still receives null for an absent argument (see [The provider
@@ -420,9 +420,13 @@ fn evaluate(text) {
 }
 ```
 
-Scripts can also build nested records dynamically. `filter.rhai` (cases `0006_set_arg_index_projection` /
-`0009_unwrapped_no_marker`) loops over the requested categories and builds a record keyed by category
-name:
+Scripts can also fill a nested record in a loop. The output type of `Content::Filter`
+requires both `VIOLENCE` and `HATE`. Thus `filter.rhai` (in the
+[`provider_filter_set_index_decimal`](../examples/provider_filter_set_index_decimal/)
+bundle) starts with a record that has the two categories, each with the score 1.0. Then
+it loops over the requested categories and gives each declared one its real score. It
+ignores a category that the output type does not declare. A policy that reads a
+category it did not request sees the score 1.0.
 
 ```rhai
 fn score_for(text, category) {
@@ -437,9 +441,18 @@ fn score_for(text, category) {
 
 fn evaluate(text, categories) {
     // … unit-argument guard elided — see "Defensive scripts" above …
-    let out = #{};
+    // The output type requires every declared category. A category that is
+    // not in the set gets the score 1.0, so a policy that reads it sees a
+    // high severity instead of a low one.
+    let out = #{
+        VIOLENCE: #{ severityScore: parse_decimal("1.0") },
+        HATE: #{ severityScore: parse_decimal("1.0") }
+    };
     for category in categories {
-        out[category] = #{ severityScore: score_for(text, category) };
+        // The script ignores an undeclared category.
+        if out.contains(category) {
+            out[category] = #{ severityScore: score_for(text, category) };
+        }
     }
     out
 }

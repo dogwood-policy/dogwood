@@ -1,0 +1,6 @@
+// The `datetime` attribute `context.input.since` is the argument of the `datetime` field
+// `input.at`. Temporal conditions do not support `datetime`, so both reject it (extension types).
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::response{ input.user: context.input.user, input.at: context.input.since }
+};

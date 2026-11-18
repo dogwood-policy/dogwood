@@ -81,6 +81,7 @@ fn provider_runtime_failure_fails_closed() {
         .principal("Drupe::OAuthUser::\"alice\"")
         .resource("Drupe::Gateway::\"gw1\"")
         .field("input", "document", Value::String("hello".to_string()))
+        .request_context("input", "document", Value::String("hello".to_string()))
         .build();
 
     let response = authorizer
@@ -161,6 +162,7 @@ fn resolver_error_currently_denies_with_diagnostics() {
         .principal("Drupe::OAuthUser::\"alice\"")
         .resource("Drupe::Gateway::\"gw1\"")
         .field("input", "document", Value::String("hello".to_string()))
+        .request_context("input", "document", Value::String("hello".to_string()))
         .build();
 
     let response = authorizer
@@ -238,6 +240,7 @@ fn decide(authorizer: &mut Authorizer, document: &str) -> (Decision, Vec<String>
         .principal("Drupe::OAuthUser::\"alice\"")
         .resource("Drupe::Gateway::\"gw1\"")
         .request_context("input", "document", Value::String(document.to_string()))
+        .field("input", "document", Value::String(document.to_string()))
         .build();
     let response = authorizer
         .is_authorized(&event)

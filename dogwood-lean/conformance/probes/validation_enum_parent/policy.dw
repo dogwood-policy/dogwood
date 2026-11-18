@@ -1,0 +1,6 @@
+// An entity type has an enumerated entity type as its parent, which Cedar allows and the
+// specification's validity does not (`Schema.standardAncestors`). Both reject it (schema).
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

@@ -20,7 +20,7 @@
         "fields": { "result": { "paramType": "entity", "entityType": "MyGuardrails::Score" } },
         "required": ["result"]
       },
-      "implementation": { "kind": "rhai", "scriptFile": "scan.rhai" }
+      "implementation": { "kind": "rhai", "scriptFile": "content_filter.rhai" }
     }
   }
 }

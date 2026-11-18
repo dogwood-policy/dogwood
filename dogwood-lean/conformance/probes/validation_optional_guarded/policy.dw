@@ -1,0 +1,7 @@
+// The same leaf, guarded by `context.input has note` in an earlier condition of the rule. The
+// specification accepts it.
+permit (principal, action == Drupe::Action::"Read", resource)
+when { context.input has note }
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::response{ input.user: context.input.note }
+};

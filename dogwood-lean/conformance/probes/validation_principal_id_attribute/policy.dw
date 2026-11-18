@@ -1,0 +1,5 @@
+// `principal.id` reads the `id` attribute `OAuthUser` declares, a `String`, as in Cedar. Accepted.
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::response{ input.user: principal.id }
+};

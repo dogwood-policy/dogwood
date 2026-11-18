@@ -1,0 +1,9 @@
+// An authored binder is named `__pin_ti0`, a name of the form the relativization rewrite gives its
+// own binders, and is used inside a `previous`. The rewrite draws names no variable of the leaf
+// starts with, so it does not capture the binder. Both allow alice's `Read` after her login.
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    exists (__pin_ti0: Timepoint). (
+        formerly within 1h (Drupe::Action::"Login"::request{ input.user: context.input.user } && tp(__pin_ti0))
+        && previous within 1h (formerly within 1h (Drupe::Action::"Login"::request{ input.user: context.input.user } && tp(__pin_ti0))))
+};

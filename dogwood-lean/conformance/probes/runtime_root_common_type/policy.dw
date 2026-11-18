@@ -1,0 +1,7 @@
+// The action schema declares `LoginInput` in the root namespace, and `Drupe`'s actions refer to it
+// bare. Cedar resolves the name there, and so do the derived events, which have the field
+// `input.user`. Both allow alice's `Read` after her login and deny bob's.
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

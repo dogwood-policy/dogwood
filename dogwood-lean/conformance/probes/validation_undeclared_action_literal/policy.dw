@@ -1,0 +1,5 @@
+// An action literal names no declared action. The specification rejects it (paths).
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h (Drupe::Action::"Login"::request{ input.user: context.input.user } && Drupe::Action::"Lgoin" == Drupe::Action::"Login")
+};

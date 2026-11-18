@@ -15,6 +15,11 @@
 //!
 //! The schema declares `Svc::User = { id, dept }` so these attribute reads
 //! validate cleanly — the only variable under test is the runtime store.
+//!
+//! The `.log` traces log `callerPrincipal` / `callerResource` alongside their
+//! `scope(...)`: under the mirror rule an event whose signature declares those
+//! fields must log its principal and resource there (the authorizer rejects it
+//! otherwise; `MirrorRule`).
 
 use std::sync::Mutex;
 
@@ -150,6 +155,7 @@ fn read_event_with_principal_attrs() -> Event {
         .principal("Svc::User::\"alice\"")
         .resource("Svc::Gateway::\"gw1\"")
         .field("input", "doc", Value::String("hello".to_string()))
+        .request_context("input", "doc", Value::String("hello".to_string()))
         .entity(
             "Svc::User::\"alice\"",
             [
@@ -203,6 +209,7 @@ fn wrong_typed_supplied_attribute_fails_conformance_closed() {
         .principal("Svc::User::\"alice\"")
         .resource("Svc::Gateway::\"gw1\"")
         .field("input", "doc", Value::String("hello".to_string()))
+        .request_context("input", "doc", Value::String("hello".to_string()))
         .entity(
             "Svc::User::\"alice\"",
             [
@@ -233,6 +240,7 @@ fn missing_required_attribute_on_a_supplied_entity_fails_conformance() {
         .principal("Svc::User::\"alice\"")
         .resource("Svc::Gateway::\"gw1\"")
         .field("input", "doc", Value::String("hello".to_string()))
+        .request_context("input", "doc", Value::String("hello".to_string()))
         .entity(
             "Svc::User::\"alice\"",
             [("dept", Value::String("eng".to_string()))],
@@ -265,6 +273,7 @@ fn null_supplied_for_a_string_attribute_is_not_coerced_to_empty_string() {
         .principal("Svc::User::\"alice\"")
         .resource("Svc::Gateway::\"gw1\"")
         .field("input", "doc", Value::String("hello".to_string()))
+        .request_context("input", "doc", Value::String("hello".to_string()))
         .entity(
             "Svc::User::\"alice\"",
             [
@@ -379,6 +388,7 @@ fn provider_argument_resolves_a_supplied_principal_attribute() {
         .principal("Svc::User::\"alice\"")
         .resource("Svc::Gateway::\"gw1\"")
         .field("input", "doc", Value::String("hi".to_string()))
+        .request_context("input", "doc", Value::String("hi".to_string()))
         .entity(
             "Svc::User::\"alice\"",
             [("dept", Value::String("eng".to_string()))],
@@ -464,6 +474,7 @@ fn external_resolver_receives_null_for_absent_argument() {
         .principal("Svc::User::\"alice\"")
         .resource("Svc::Gateway::\"gw1\"")
         .field("input", "doc", Value::String("hi".to_string()))
+        .request_context("input", "doc", Value::String("hi".to_string()))
         .build();
 
     let mut authorizer = Authorizer::builder(policies)
@@ -499,8 +510,8 @@ fn log_entities_envelope_drives_a_decision() {
     let policy = r#"permit ( principal, action == Svc::Action::"Read", resource )
                     when { principal.dept == "eng" };"#;
     let log = r#"
-@0 scope(principal: Svc::User::"alice", resource: Svc::Gateway::"gw1") entities(Svc::User::"alice": { id: "alice", dept: "eng" }) Svc::Action::"Read"::request(input: { doc: "x" })
-@1 scope(principal: Svc::User::"bob", resource: Svc::Gateway::"gw1") entities(Svc::User::"bob": { id: "bob", dept: "sales" }) Svc::Action::"Read"::request(input: { doc: "y" })
+@0 scope(principal: Svc::User::"alice", resource: Svc::Gateway::"gw1") entities(Svc::User::"alice": { id: "alice", dept: "eng" }) request_context(input: { doc: "x" }) Svc::Action::"Read"::request(callerPrincipal: Svc::User::"alice", callerResource: Svc::Gateway::"gw1", input: { doc: "x" })
+@1 scope(principal: Svc::User::"bob", resource: Svc::Gateway::"gw1") entities(Svc::User::"bob": { id: "bob", dept: "sales" }) request_context(input: { doc: "y" }) Svc::Action::"Read"::request(callerPrincipal: Svc::User::"bob", callerResource: Svc::Gateway::"gw1", input: { doc: "y" })
 "#;
     let out = replay_log(lower(policy), log).expect("replay");
     let verdicts: Vec<bool> = out.lines().map(|l| l.ends_with("true")).collect();
@@ -519,7 +530,7 @@ fn log_entities_envelope_drives_a_decision() {
 fn log_without_entities_envelope_denies_attribute_read() {
     let policy = r#"permit ( principal, action == Svc::Action::"Read", resource )
                     when { principal.dept == "eng" };"#;
-    let log = r#"@0 scope(principal: Svc::User::"alice", resource: Svc::Gateway::"gw1") Svc::Action::"Read"::request(input: { doc: "x" })"#;
+    let log = r#"@0 scope(principal: Svc::User::"alice", resource: Svc::Gateway::"gw1") request_context(input: { doc: "x" }) Svc::Action::"Read"::request(callerPrincipal: Svc::User::"alice", callerResource: Svc::Gateway::"gw1", input: { doc: "x" })"#;
     let out = replay_log(lower(policy), log).expect("replay");
     assert!(
         out.ends_with("false"),
@@ -548,6 +559,7 @@ fn nested_event() -> Event {
         .principal("Svc::User::\"alice\"")
         .resource("Svc::Gateway::\"gw1\"")
         .field("input", "doc", Value::String("x".to_string()))
+        .request_context("input", "doc", Value::String("x".to_string()))
         .entity(
             "Svc::User::\"alice\"",
             [(
@@ -685,6 +697,7 @@ fn optional_attr_event(clearance: Option<&str>) -> Event {
         .principal("Svc::User::\"alice\"")
         .resource("Svc::Gateway::\"gw1\"")
         .field("input", "doc", Value::String("x".to_string()))
+        .request_context("input", "doc", Value::String("x".to_string()))
         .entity("Svc::User::\"alice\"", attrs)
         .build()
 }
@@ -875,10 +888,10 @@ fn request_context_only_field_is_invisible_to_temporal_matching() {
 #[test]
 fn logged_only_field_is_invisible_to_cedar() {
     // The other direction: `sys` supplied ONLY in the logged bag, absent from
-    // request_context. A pure-Cedar `when { context.sys.mode == … }` reads
-    // request_context (empty for `sys`), so the read is unresolved -> the clause
-    // does not hold -> Deny. A logged-only field is invisible to the Cedar
-    // request.
+    // request_context. The Cedar request is built from request_context alone,
+    // so it lacks the `sys` attribute the action's context requires: the
+    // request does not conform, and the decision fails closed. A logged-only
+    // field is invisible to the Cedar request.
     let event = Event::builder("Svc::Action::Read", "request")
         .principal("Svc::User::\"alice\"")
         .resource("Svc::Gateway::\"gw1\"")
@@ -896,6 +909,13 @@ fn logged_only_field_is_invisible_to_cedar() {
         resp.decision(),
         Decision::Deny,
         "a logged-only field must be invisible to the Cedar request (reads request_context)"
+    );
+    let errors: Vec<&str> = resp.diagnostics().errors().collect();
+    assert!(
+        errors.len() == 1
+            && errors[0].starts_with("nonconforming request:")
+            && errors[0].contains("lacks the attribute `sys`"),
+        "the request context lacks `sys`, whatever the logged record holds: {errors:?}"
     );
 }
 
@@ -946,7 +966,7 @@ fn replay_escaped_entity_id_provider_arg_resolves_not_null() {
         &PolicySchema::from_cedarschema_str(&schema_src()).expect("policy schema"),
     )
     .expect("lower");
-    let log = r#"@0 scope(principal: Svc::User::"a\"b", resource: Svc::Gateway::"gw1") entities(Svc::User::"a\"b": { id: "a\"b", dept: "banned" }) Svc::Action::"Read"::request(input: { doc: "x" }, callerPrincipal: Svc::User::"a\"b", callerResource: Svc::Gateway::"gw1", requestId: "u1")"#;
+    let log = r#"@0 scope(principal: Svc::User::"a\"b", resource: Svc::Gateway::"gw1") entities(Svc::User::"a\"b": { id: "a\"b", dept: "banned" }) request_context(input: { doc: "x" }) Svc::Action::"Read"::request(input: { doc: "x" }, callerPrincipal: Svc::User::"a\"b", callerResource: Svc::Gateway::"gw1", requestId: "u1")"#;
     let trace = parse_trace(log).expect("parse");
 
     let seen = std::sync::Arc::new(Mutex::new(Vec::new()));
@@ -969,7 +989,7 @@ fn replay_escaped_entity_id_pure_cedar_reads_attribute() {
     // provider path must now match.
     let policy = r#"permit ( principal, action == Svc::Action::"Read", resource )
                     when { principal.dept == "banned" };"#;
-    let log = r#"@0 scope(principal: Svc::User::"a\"b", resource: Svc::Gateway::"gw1") entities(Svc::User::"a\"b": { id: "a\"b", dept: "banned" }) Svc::Action::"Read"::request(input: { doc: "x" }, callerPrincipal: Svc::User::"a\"b", callerResource: Svc::Gateway::"gw1", requestId: "u1")"#;
+    let log = r#"@0 scope(principal: Svc::User::"a\"b", resource: Svc::Gateway::"gw1") entities(Svc::User::"a\"b": { id: "a\"b", dept: "banned" }) request_context(input: { doc: "x" }) Svc::Action::"Read"::request(input: { doc: "x" }, callerPrincipal: Svc::User::"a\"b", callerResource: Svc::Gateway::"gw1", requestId: "u1")"#;
     let out = replay_log(lower(policy), log).expect("replay");
     assert!(
         out.trim().ends_with("true"),
@@ -991,6 +1011,7 @@ fn production_escaped_entity_id_pure_cedar_reads_attribute() {
         .principal(uid)
         .resource("Svc::Gateway::\"gw1\"")
         .field("input", "doc", Value::String("x".to_string()))
+        .request_context("input", "doc", Value::String("x".to_string()))
         .entity(
             uid,
             [
@@ -1020,7 +1041,7 @@ fn replay_backslash_entity_id_provider_arg_resolves() {
     )
     .expect("lower");
     // `.log` literal for id `a\b`: Svc::User::"a\\b".
-    let log = r#"@0 scope(principal: Svc::User::"a\\b", resource: Svc::Gateway::"gw1") entities(Svc::User::"a\\b": { id: "a\\b", dept: "banned" }) Svc::Action::"Read"::request(input: { doc: "x" }, callerPrincipal: Svc::User::"a\\b", callerResource: Svc::Gateway::"gw1", requestId: "u1")"#;
+    let log = r#"@0 scope(principal: Svc::User::"a\\b", resource: Svc::Gateway::"gw1") entities(Svc::User::"a\\b": { id: "a\\b", dept: "banned" }) request_context(input: { doc: "x" }) Svc::Action::"Read"::request(input: { doc: "x" }, callerPrincipal: Svc::User::"a\\b", callerResource: Svc::Gateway::"gw1", requestId: "u1")"#;
     let trace = parse_trace(log).expect("parse");
     let seen = std::sync::Arc::new(Mutex::new(Vec::new()));
     let mut authorizer = Authorizer::builder(policies)
@@ -1065,7 +1086,7 @@ fn replay_escaped_id_entity_typed_attribute_value_resolves() {
     )
     .expect("lower");
     // The principal `boss` has `manager = Svc::User::"a\"b"` (escaped id).
-    let log = r#"@0 scope(principal: Svc::User::"boss", resource: Svc::Gateway::"gw1") entities(Svc::User::"boss": { manager: Svc::User::"a\"b" }, Svc::User::"a\"b": { manager: Svc::User::"a\"b" }) Svc::Action::"Read"::request(input: { doc: "x" }, callerPrincipal: Svc::User::"boss", callerResource: Svc::Gateway::"gw1", requestId: "u1")"#;
+    let log = r#"@0 scope(principal: Svc::User::"boss", resource: Svc::Gateway::"gw1") entities(Svc::User::"boss": { manager: Svc::User::"a\"b" }, Svc::User::"a\"b": { manager: Svc::User::"a\"b" }) request_context(input: { doc: "x" }) Svc::Action::"Read"::request(input: { doc: "x" }, callerPrincipal: Svc::User::"boss", callerResource: Svc::Gateway::"gw1", requestId: "u1")"#;
     let out = replay_log(policies, log).expect("replay");
     assert!(
         out.trim().ends_with("true"),
@@ -1104,6 +1125,7 @@ fn control_char_id_attribute_resolves_via_production_path() {
         .principal(uid)
         .resource("Svc::Gateway::\"gw1\"")
         .field("input", "doc", Value::String("x".to_string()))
+        .request_context("input", "doc", Value::String("x".to_string()))
         .entity(
             uid,
             [
@@ -1130,7 +1152,9 @@ fn control_char_id_via_log_envelope() {
                     when { principal.dept == "eng" };"#;
     let log = "@0 scope(principal: Svc::User::\"a\\u{e}b\", resource: Svc::Gateway::\"gw1\") \
         entities(Svc::User::\"a\\u{e}b\": { id: \"a\\u{e}b\", dept: \"eng\" }) \
-        Svc::Action::\"Read\"::request(input: { doc: \"x\" })";
+        request_context(input: { doc: \"x\" }) \
+        Svc::Action::\"Read\"::request(input: { doc: \"x\" }, callerPrincipal: Svc::User::\"a\\u{e}b\", \
+        callerResource: Svc::Gateway::\"gw1\")";
     let out = replay_log(lower(policy), log).expect("replay");
     assert!(
         out.trim().ends_with("true"),
@@ -1155,6 +1179,7 @@ fn structured_setters_take_decoded_ids_verbatim() {
         .principal_for("Svc::User", raw_id)
         .resource_for("Svc::Gateway", "gw1")
         .field("input", "doc", Value::String("x".to_string()))
+        .request_context("input", "doc", Value::String("x".to_string()))
         .entity_for(
             "Svc::User",
             raw_id,
@@ -1199,7 +1224,9 @@ fn control_char_action_id_renders_canonically() {
     .expect("lower");
     // A `.log` event for that action (canonical `\u{e}` id).
     let log = "@0 scope(principal: Svc::User::\"alice\", resource: Svc::Gateway::\"gw1\") \
-        Svc::Action::\"a\\u{e}b\"::request(input: { doc: \"x\" })";
+        request_context(input: { doc: \"x\" }) \
+        Svc::Action::\"a\\u{e}b\"::request(input: { doc: \"x\" }, callerPrincipal: Svc::User::\"alice\", \
+        callerResource: Svc::Gateway::\"gw1\")";
     let out = replay_log(policies, log).expect("replay");
     assert!(
         out.trim().ends_with("true"),
@@ -1312,6 +1339,7 @@ fn membership_event(parents: &[&str]) -> Event {
         .principal("Svc::User::\"alice\"")
         .resource("Svc::Gateway::\"gw1\"")
         .field("input", "doc", Value::String("x".to_string()))
+        .request_context("input", "doc", Value::String("x".to_string()))
         .entity_parents("Svc::User::\"alice\"", parents.iter().copied())
         .build()
 }
@@ -1406,7 +1434,7 @@ fn membership_is_transitive_through_a_group_hierarchy() {
         &PolicySchema::from_cedarschema_str(group_hierarchy_schema).expect("policy schema"),
     )
     .expect("lower");
-    let log = r#"@0 scope(principal: Svc::User::"alice", resource: Svc::Gateway::"gw1") entities(Svc::Group::"admins": {}, Svc::Group::"eng": {} in [Svc::Group::"admins"], Svc::User::"alice": {} in [Svc::Group::"eng"]) Svc::Action::"Read"::request(input: { doc: "x" })"#;
+    let log = r#"@0 scope(principal: Svc::User::"alice", resource: Svc::Gateway::"gw1") entities(Svc::Group::"admins": {}, Svc::Group::"eng": {} in [Svc::Group::"admins"], Svc::User::"alice": {} in [Svc::Group::"eng"]) request_context(input: { doc: "x" }) Svc::Action::"Read"::request(callerPrincipal: Svc::User::"alice", callerResource: Svc::Gateway::"gw1", input: { doc: "x" })"#;
     let out = replay_log(policies, log).expect("replay");
     assert!(
         out.trim().ends_with("true"),
@@ -1428,8 +1456,8 @@ fn log_envelope_membership_drives_decision_both_ways() {
     )
     .expect("lower");
     let log = r#"
-@0 scope(principal: Svc::User::"alice", resource: Svc::Gateway::"gw1") entities(Svc::Group::"admins": {}, Svc::User::"alice": {} in [Svc::Group::"admins"]) Svc::Action::"Read"::request(input: { doc: "x" })
-@1 scope(principal: Svc::User::"bob", resource: Svc::Gateway::"gw1") entities(Svc::Group::"admins": {}, Svc::User::"bob": {}) Svc::Action::"Read"::request(input: { doc: "y" })
+@0 scope(principal: Svc::User::"alice", resource: Svc::Gateway::"gw1") entities(Svc::Group::"admins": {}, Svc::User::"alice": {} in [Svc::Group::"admins"]) request_context(input: { doc: "x" }) Svc::Action::"Read"::request(callerPrincipal: Svc::User::"alice", callerResource: Svc::Gateway::"gw1", input: { doc: "x" })
+@1 scope(principal: Svc::User::"bob", resource: Svc::Gateway::"gw1") entities(Svc::Group::"admins": {}, Svc::User::"bob": {}) request_context(input: { doc: "y" }) Svc::Action::"Read"::request(callerPrincipal: Svc::User::"bob", callerResource: Svc::Gateway::"gw1", input: { doc: "y" })
 "#;
     let out = replay_log(policies, log).expect("replay");
     let verdicts: Vec<bool> = out.lines().map(|l| l.ends_with("true")).collect();
@@ -1466,6 +1494,7 @@ fn attributes_and_parents_compose_on_one_entity() {
         .principal("Svc::User::\"alice\"")
         .resource("Svc::Gateway::\"gw1\"")
         .field("input", "doc", Value::String("x".to_string()))
+        .request_context("input", "doc", Value::String("x".to_string()))
         .entity(
             "Svc::User::\"alice\"",
             [("dept", Value::String("eng".to_string()))],
@@ -1512,6 +1541,7 @@ fn structured_attrs_and_parents_compose_via_setters() {
         .principal_for("Svc::User", "alice")
         .resource_for("Svc::Gateway", "gw1")
         .field("input", "doc", Value::String("x".to_string()))
+        .request_context("input", "doc", Value::String("x".to_string()))
         .entity_for(
             "Svc::User",
             "alice",

@@ -1,0 +1,6 @@
+// An aggregate inside a compound operand names an undeclared event (`experimental-arithmetic`).
+// The specification rejects it (event names).
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    (count for (t: Timepoint). where (formerly within 1h (Drupe::Action::"Nope"::request{} && tp(t)))) + 1 > 3
+};

@@ -5,8 +5,8 @@
 //! [`OpError`] it uses miette's graphical handler so the offending `.dw`
 //! (or schema / trace) span is underlined.
 
-use crate::error::OpError;
-use crate::ops::{
+use dogwood_ops::error::OpError;
+use dogwood_ops::ops::{
     CheckParseReport, ExplainReport, LowerArtifacts, ReplayReport, SchemaCheckReport,
     ValidateReport, Verdict,
 };
@@ -134,7 +134,12 @@ pub fn replay(report: &ReplayReport, format: Format) {
     if format == Format::Json {
         return json(report);
     }
+    // The verdicts and the rejected history events, in trace order.
+    let mut rejected = report.rejected.iter().peekable();
     for v in &report.verdicts {
+        while let Some(r) = rejected.next_if(|r| r.position < v.position) {
+            replay_rejected(r);
+        }
         let decision = match v.verdict {
             Verdict::Allow => "ALLOW",
             Verdict::Deny => "DENY",
@@ -149,6 +154,19 @@ pub fn replay(report: &ReplayReport, format: Format) {
             println!("    error: {e}");
         }
     }
+    for r in rejected {
+        replay_rejected(r);
+    }
+}
+
+/// A rejected history event decides nothing, so it has no time point of the
+/// decision stream: it is reported with its position in the trace.
+fn replay_rejected(r: &dogwood_ops::ops::RejectedEvent) {
+    println!(
+        "@{} (event {} of the trace): REJECTED, not ingested",
+        r.timestamp, r.position
+    );
+    println!("    error: {}", r.reason);
 }
 
 /// `explain`: the informalization as indented plain text, or the structured

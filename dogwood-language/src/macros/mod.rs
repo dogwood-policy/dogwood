@@ -131,6 +131,8 @@ const RESERVED_MACRO_NAMES: &[&str] = &[
 /// before the copy is made.
 pub fn expand(ps: &mut PolicySet, options: &ParseOptions) -> Result<(), RawMacroError> {
     let mut registry = Registry::build(&ps.defs, options)?;
+    #[cfg(test)]
+    crate::api::stage_probe::enter("expand");
     for def in &ps.defs {
         check_def(def, &registry)?;
     }
@@ -268,25 +270,27 @@ fn check_def(def: &MacroDef, _registry: &Registry<'_>) -> Result<(), RawMacroErr
     match &def.body {
         MacroBody::Cedar(e) => check_cedar_body(e, &declared)?,
         MacroBody::TemporalCondition(c) => check_temporal_condition_body(c, &declared)?,
-        MacroBody::TemporalValue(t) => check_temporal_value_body(t, &declared)?,
+        MacroBody::TemporalValue(t) => check_temporal_value_body(t, &declared, def.span)?,
     }
     Ok(())
 }
 
 /// Check a value body: each aggregation leaf is checked like an
 /// aggregation body; arithmetic recurses; any other leaf term is checked
-/// for stray/undeclared sigils.
+/// for stray/undeclared sigils. A term has no span of its own, so an error
+/// there points at the definition (`def_span`).
 fn check_temporal_value_body(
     t: &Term,
     declared: &std::collections::BTreeSet<&str>,
+    def_span: Span,
 ) -> Result<(), RawMacroError> {
     match t {
         Term::Arith { left, right, .. } => {
-            check_temporal_value_body(left, declared)?;
-            check_temporal_value_body(right, declared)
+            check_temporal_value_body(left, declared, def_span)?;
+            check_temporal_value_body(right, declared, def_span)
         }
         Term::Agg(agg) => check_temporal_agg_body(agg, declared),
-        other => check_temporal_term(other, declared, Span::new(0, 0)),
+        other => check_temporal_term(other, declared, def_span),
     }
 }
 
@@ -746,7 +750,14 @@ fn expand_extension(
     match ext {
         Extension::Temporal(t) => {
             let span = t.span;
-            expand_temporal_condition(&mut t.condition, registry)?;
+            // The walk's errors carry spans relative to the block's body (a
+            // macro body's errors point at its call): rebase them into the
+            // source.
+            let rebase = |e: RawMacroError| RawMacroError {
+                span: e.span.rebased(span.start),
+                ..e
+            };
+            expand_temporal_condition(&mut t.condition, registry).map_err(rebase)?;
             check_expanded_depth(
                 crate::parser::condition_depth(&t.condition),
                 registry.max_depth,
@@ -757,7 +768,7 @@ fn expand_extension(
             // should already have replaced or rejected every call and
             // sigil; a position missing from that enumeration would
             // otherwise reach the evaluator's panic arms.
-            check_no_residue(&t.condition)?;
+            check_no_residue(&t.condition).map_err(rebase)?;
             // After expansion, re-run the temporal binding check on the
             // resolved body. (`Temporal::parse` skips it for bodies with
             // sigils; now that they're substituted, the check is
@@ -1170,7 +1181,7 @@ fn expand_temporal_condition(
         // like in the exists case.
         ConditionKind::Predicate(p) => {
             for arg in &p.args {
-                check_concrete_term(&arg.value, c.span)?;
+                check_concrete_term(&arg.value, c.span, "predicate-argument")?;
             }
             Ok(())
         }
@@ -1180,8 +1191,8 @@ fn expand_temporal_condition(
         // call (`(sum_formerly(…)) == n`) or wraps a macro body; expand
         // each operand.
         ConditionKind::Comparison { left, right, .. } => {
-            expand_temporal_operand(left, registry)?;
-            expand_temporal_operand(right, registry)
+            expand_temporal_operand(left, registry, c.span)?;
+            expand_temporal_operand(right, registry, c.span)
         }
         ConditionKind::Exists { var, body } => {
             check_concrete_slot(&var.slot, c.span)?;
@@ -1268,7 +1279,11 @@ fn expand_temporal_agg(a: &mut AggExpr, registry: &mut Registry<'_>) -> Result<(
 /// an unexpanded operand sigil would survive validation and then panic the
 /// evaluator at authorize time (`resolve_term`) — a validated policy crashing
 /// the authorizer. Any other term carries no macro condition/aggregate.
-fn expand_temporal_operand(t: &mut Term, registry: &mut Registry<'_>) -> Result<(), RawMacroError> {
+fn expand_temporal_operand(
+    t: &mut Term,
+    registry: &mut Registry<'_>,
+    span: Span,
+) -> Result<(), RawMacroError> {
     match t {
         // A value-macro call replaces the whole term: its body may be
         // arithmetic (`a() - b()` inlined), which cannot live inside an
@@ -1288,25 +1303,25 @@ fn expand_temporal_operand(t: &mut Term, registry: &mut Registry<'_>) -> Result<
         // A compound operand: expand each side (either may be an
         // aggregate-valued macro call or carry a stray sigil).
         Term::Arith { left, right, .. } => {
-            expand_temporal_operand(left, registry)?;
-            expand_temporal_operand(right, registry)
+            expand_temporal_operand(left, registry, span)?;
+            expand_temporal_operand(right, registry, span)
         }
+        // A term has no span of its own: the error points at the comparison.
         Term::ParamRef(p) => Err(err(
             format!(
                 "stray macro parameter reference `?{p}` in a comparison-operand position \
                  outside a macro body"
             ),
-            // Term carries no span of its own here; the enclosing condition's
-            // span is attached by the caller's `?` propagation site.
-            Span::new(0, 0),
+            span,
         )),
         Term::BinderRef(b) => Err(err(
             format!(
                 "stray macro binder reference `${b}` in a comparison-operand position \
                  outside a macro body"
             ),
-            Span::new(0, 0),
+            span,
         )),
+        Term::Array(_) => check_concrete_term(t, span, "comparison-operand"),
         _ => Ok(()),
     }
 }
@@ -1341,33 +1356,47 @@ fn check_concrete_slot(s: &BinderSlot, span: Span) -> Result<(), RawMacroError> 
     }
 }
 
-/// Reject a stray macro sigil (`?p` / `$t`) in a predicate-argument term
-/// position outside a macro body, exactly as [`check_concrete_slot`] does
-/// for binder positions and [`check_concrete_within`] for `within`
-/// positions. Recurses into arrays so a sigil nested inside `[?x]` is
-/// caught too. Any other term carries no macro reference.
-fn check_concrete_term(t: &Term, span: Span) -> Result<(), RawMacroError> {
+/// Reject a stray macro sigil (`?p` / `$t`) in a term outside a macro body,
+/// exactly as [`check_concrete_slot`] does for binder positions and
+/// [`check_concrete_within`] for `within` positions. Recurses into arrays and
+/// arithmetic so a sigil nested inside `[?x]` is caught too. An aggregate is
+/// never a legal predicate-argument or array-element value. `position` names
+/// where the term sits, for the error message (`"predicate-argument"` or
+/// `"comparison-operand"`).
+fn check_concrete_term(t: &Term, span: Span, position: &str) -> Result<(), RawMacroError> {
     match t {
         Term::ParamRef(p) => Err(err(
             format!(
-                "stray macro parameter reference `?{p}` in a predicate-argument position \
+                "stray macro parameter reference `?{p}` in a {position} position \
                  outside a macro body"
             ),
             span,
         )),
         Term::BinderRef(b) => Err(err(
             format!(
-                "stray macro binder reference `${b}` in a predicate-argument position \
+                "stray macro binder reference `${b}` in a {position} position \
                  outside a macro body"
             ),
             span,
         )),
         Term::Array(items) => {
             for it in items {
-                check_concrete_term(it, span)?;
+                check_concrete_term(it, span, position)?;
             }
             Ok(())
         }
+        Term::Arith { left, right, .. } => {
+            check_concrete_term(left, span, position)?;
+            check_concrete_term(right, span, position)
+        }
+        // Same text as `check`'s comparison-operand-only rule, which would
+        // reject this placement later anyway.
+        Term::Agg(_) => Err(err(
+            "an aggregate (`sum`/`count`) may appear only as the immediate operand \
+             of a comparison, not as a predicate-argument value or nested in another \
+             term",
+            span,
+        )),
         _ => Ok(()),
     }
 }
@@ -1409,7 +1438,7 @@ fn expand_temporal_call_to_condition(
         }
     };
     check_arity(def, call.args.len(), call.span)?;
-    expand_temporal_call_args(&mut call.args, registry)?;
+    expand_temporal_call_args(&mut call.args, registry, call.span)?;
     registry.charge_body(def, call.span)?;
     let substituted = substitute_temporal_condition(body.clone(), def, registry, &call)?;
     Ok(substituted)
@@ -1438,12 +1467,13 @@ fn expand_temporal_call_to_condition(
 fn expand_temporal_call_args(
     args: &mut [CallArg],
     registry: &mut Registry<'_>,
+    call_span: Span,
 ) -> Result<(), RawMacroError> {
     for arg in args.iter_mut() {
         let c = match arg {
             CallArg::Condition(c) => c,
             CallArg::Term(t) => {
-                expand_temporal_operand(t, registry)?;
+                expand_temporal_operand(t, registry, call_span)?;
                 continue;
             }
             CallArg::Within(_) => continue,
@@ -1506,7 +1536,7 @@ fn expand_temporal_call_to_value(
         }
     };
     check_arity(def, call.args.len(), call.span)?;
-    expand_temporal_call_args(&mut call.args, registry)?;
+    expand_temporal_call_args(&mut call.args, registry, call.span)?;
     registry.charge_body(def, call.span)?;
     let substituted = substitute_temporal_value(body.clone(), def, registry, &call)?;
     Ok(substituted)
@@ -1575,14 +1605,14 @@ impl<'a> SubstMaps<'a> {
 
     /// Lookup the call-site argument for `?p`, returning an error if
     /// it's not declared.
-    fn arg_for(&self, param_name: &str, span: Span) -> Result<&'a CallArg, RawMacroError> {
+    fn arg_for(&self, param_name: &str) -> Result<&'a CallArg, RawMacroError> {
         self.param_to_arg.get(param_name).copied().ok_or_else(|| {
             err(
                 format!(
                     "unbound macro parameter `?{param_name}` in body of `{}`",
                     self.macro_name
                 ),
-                span,
+                self.call_span,
             )
         })
     }
@@ -1606,7 +1636,7 @@ fn substitute_temporal_value(
     call: &Call,
 ) -> Result<Term, RawMacroError> {
     let mut maps = SubstMaps::build(def, call, &mut registry.budget);
-    subst_temporal_term(&mut body, &mut maps, call.span)?;
+    subst_temporal_term(&mut body, &mut maps)?;
     Ok(body)
 }
 
@@ -1619,7 +1649,7 @@ fn subst_temporal_condition(
         match sigil {
             Sigil::Param => {
                 // Splice the call-site argument's condition AST here.
-                let arg = maps.arg_for(name, c.span)?;
+                let arg = maps.arg_for(name)?;
                 match arg {
                     CallArg::Condition(arg_c) => {
                         maps.charge_paste(name)?;
@@ -1633,7 +1663,7 @@ fn subst_temporal_condition(
                                  so the call-site argument must be a temporal condition (got a different shape)",
                                 maps.macro_name
                             ),
-                            c.span,
+                            maps.call_span,
                         ));
                     }
                 }
@@ -1644,7 +1674,7 @@ fn subst_temporal_condition(
                 // a name isn't a condition. Reject.
                 return Err(err(
                     format!("macro binder `${name}` used as a whole condition has no meaning"),
-                    c.span,
+                    maps.call_span,
                 ));
             }
         }
@@ -1663,11 +1693,11 @@ fn subst_temporal_condition(
         }
         ConditionKind::Not { inner } => subst_temporal_condition(inner, maps),
         ConditionKind::Formerly { within, body } => {
-            subst_within(within, maps, c.span)?;
+            subst_within(within, maps)?;
             subst_temporal_condition(body, maps)
         }
         ConditionKind::Previous { within, body } => {
-            subst_within(within, maps, c.span)?;
+            subst_within(within, maps)?;
             subst_temporal_condition(body, maps)
         }
         ConditionKind::Since {
@@ -1676,23 +1706,23 @@ fn subst_temporal_condition(
             right,
             ..
         } => {
-            subst_within(within, maps, c.span)?;
+            subst_within(within, maps)?;
             subst_temporal_condition(left, maps)?;
             subst_temporal_condition(right, maps)
         }
         ConditionKind::Predicate(p) => {
             for arg in &mut p.args {
-                subst_temporal_term(&mut arg.value, maps, c.span)?;
+                subst_temporal_term(&mut arg.value, maps)?;
             }
             Ok(())
         }
         ConditionKind::Comparison { left, right, .. } => {
-            subst_temporal_term(left, maps, c.span)?;
-            subst_temporal_term(right, maps, c.span)
+            subst_temporal_term(left, maps)?;
+            subst_temporal_term(right, maps)
         }
-        ConditionKind::Tp { var } => subst_binder_slot(var, maps, c.span),
+        ConditionKind::Tp { var } => subst_binder_slot(var, maps),
         ConditionKind::Exists { var, body } => {
-            subst_binder_slot(&mut var.slot, maps, c.span)?;
+            subst_binder_slot(&mut var.slot, maps)?;
             subst_temporal_condition(body, maps)
         }
         // A field-injection refinement `?s{ f: v }` (or a nested one) in a
@@ -1703,10 +1733,10 @@ fn subst_temporal_condition(
         ConditionKind::Refine { base, fields, .. } => {
             subst_temporal_condition(base, maps)?;
             for arg in fields.iter_mut() {
-                subst_temporal_term(&mut arg.value, maps, c.span)?;
+                subst_temporal_term(&mut arg.value, maps)?;
             }
-            let (base, fields, span) = take_refine(c).expect("c is a Refine");
-            *c = fold_refine(base, fields, span)?;
+            let (base, fields, _) = take_refine(c).expect("c is a Refine");
+            *c = fold_refine(base, fields, maps.call_span)?;
             Ok(())
         }
         // Already handled via the early SigilRef branch above; should
@@ -1724,15 +1754,15 @@ fn subst_temporal_agg(a: &mut AggExpr, maps: &mut SubstMaps<'_>) -> Result<(), R
             for_vars,
             body,
         } => {
-            subst_binder_slot(bound_var, maps, a.span)?;
+            subst_binder_slot(bound_var, maps)?;
             for v in for_vars.iter_mut() {
-                subst_binder_slot(&mut v.slot, maps, a.span)?;
+                subst_binder_slot(&mut v.slot, maps)?;
             }
             subst_temporal_condition(body, maps)
         }
         AggExprKind::Count { for_vars, body } => {
             for v in for_vars.iter_mut() {
-                subst_binder_slot(&mut v.slot, maps, a.span)?;
+                subst_binder_slot(&mut v.slot, maps)?;
             }
             subst_temporal_condition(body, maps)
         }
@@ -1744,16 +1774,12 @@ fn subst_temporal_agg(a: &mut AggExpr, maps: &mut SubstMaps<'_>) -> Result<(), R
 /// call-site argument's `Interval`. The argument must be a `within`
 /// clause (parsed as `CallArg::Within`); other shapes are kind
 /// mismatches.
-fn subst_within(
-    w: &mut WithinSpec,
-    maps: &mut SubstMaps<'_>,
-    span: Span,
-) -> Result<(), RawMacroError> {
+fn subst_within(w: &mut WithinSpec, maps: &mut SubstMaps<'_>) -> Result<(), RawMacroError> {
     let name = match w {
         WithinSpec::Concrete(_) => return Ok(()),
         WithinSpec::ParamRef(name) => name.clone(),
     };
-    let arg = maps.arg_for(&name, span)?;
+    let arg = maps.arg_for(&name)?;
     match arg {
         CallArg::Within(interval) => {
             *w = WithinSpec::Concrete(*interval);
@@ -1765,19 +1791,15 @@ fn subst_within(
                  the call-site argument must be an interval literal `<n><unit>` (e.g. `1h`)",
                 maps.macro_name
             ),
-            span,
+            maps.call_span,
         )),
     }
 }
 
-fn subst_temporal_term(
-    t: &mut Term,
-    maps: &mut SubstMaps<'_>,
-    span: Span,
-) -> Result<(), RawMacroError> {
+fn subst_temporal_term(t: &mut Term, maps: &mut SubstMaps<'_>) -> Result<(), RawMacroError> {
     match t {
         Term::ParamRef(name) => {
-            let arg = maps.arg_for(name, span)?;
+            let arg = maps.arg_for(name)?;
             match arg {
                 // A term-position `?p` argument: any `Term` (including
                 // a literal, a Var, a wildcard) splices in directly.
@@ -1794,7 +1816,7 @@ fn subst_temporal_term(
                          the call-site argument has the wrong shape",
                         maps.macro_name
                     ),
-                    span,
+                    maps.call_span,
                 )),
             }
         }
@@ -1805,7 +1827,7 @@ fn subst_temporal_term(
         }
         Term::Array(items) => {
             for it in items.iter_mut() {
-                subst_temporal_term(it, maps, span)?;
+                subst_temporal_term(it, maps)?;
             }
             Ok(())
         }
@@ -1813,25 +1835,21 @@ fn subst_temporal_term(
         // substitute inside it like an aggregation body.
         Term::Agg(agg) => subst_temporal_agg(agg, maps),
         Term::Arith { left, right, .. } => {
-            subst_temporal_term(left, maps, span)?;
-            subst_temporal_term(right, maps, span)
+            subst_temporal_term(left, maps)?;
+            subst_temporal_term(right, maps)
         }
         _ => Ok(()),
     }
 }
 
-fn subst_binder_slot(
-    s: &mut BinderSlot,
-    maps: &mut SubstMaps<'_>,
-    span: Span,
-) -> Result<(), RawMacroError> {
+fn subst_binder_slot(s: &mut BinderSlot, maps: &mut SubstMaps<'_>) -> Result<(), RawMacroError> {
     match s {
         BinderSlot::Name(_) => Ok(()),
         BinderSlot::ParamRef(name) => {
             // Find the parameter index so we can use the binder-pos
             // single-identifier check.
             // The arg must be a CallArg::Term(Term::Var(name)).
-            let arg = maps.arg_for(name, span)?;
+            let arg = maps.arg_for(name)?;
             match arg {
                 CallArg::Term(Term::Var(ident)) => {
                     *s = BinderSlot::Name(ident.clone());

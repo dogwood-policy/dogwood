@@ -103,43 +103,6 @@ fn event(ts: i64, n: usize, principal_eid: &str, manager_eid: &str) -> String {
     )
 }
 
-/// Like [`event`] but declaring the principal a member of `W::Team::"t1"` via the
-/// trailing `in [ … ]` parents clause.
-fn event_in_team(ts: i64, n: usize, principal_eid: &str) -> String {
-    format!(
-        "@{ts} scope(principal: W::Staff::\"{principal_eid}\", resource: W::Gateway::\"gw\") \
-         entities(W::Staff::\"{principal_eid}\": {{ id: \"{principal_eid}\", \
-         manager: W::Manager::\"m1\" }} in [W::Team::\"t1\"]) \
-         request_context(input: {{ amount: 1, owner: W::Manager::\"m1\" }}) \
-         W::Action::\"Read\"::request(input: {{ amount: 1, owner: W::Manager::\"m1\" }}, \
-         callerPrincipal: W::Staff::\"{principal_eid}\", callerResource: W::Gateway::\"gw\", \
-         requestId: \"r{n}\")"
-    )
-}
-
-/// [`verdict`] with the principal declared a member of `W::Team::"t1"`.
-fn verdict_in_team(policy: &str, principal_eid: &str) -> Option<Decision> {
-    let service = ServiceSchema::builder()
-        .event_schema_str(EVENT_SCHEMA)
-        .build()
-        .expect("event schema builds");
-    let schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("schema builds");
-    let lowered = LoweredPolicySet::from_str(policy, &service, &schema).expect("policy lowers");
-    let mut authorizer = Authorizer::new(lowered);
-    let trace = format!(
-        "{}\n{}",
-        event_in_team(0, 0, principal_eid),
-        event_in_team(5, 1, principal_eid)
-    );
-    let mut last = None;
-    for e in &parse_trace(&trace).expect("trace parses") {
-        if let Some(r) = authorizer.is_authorized(e) {
-            last = Some(r.decision());
-        }
-    }
-    last
-}
-
 /// Like [`event`] but for a named action, so a rule scoped to that action applies.
 fn event_for(action: &str, ts: i64, n: usize, principal_eid: &str) -> String {
     format!(
@@ -584,10 +547,8 @@ fn temporal_verdict_same_type_is_true_under_two_permitted_types() {
 fn cedar_verdict_cross_type_is_false_under_narrowed_scope() {
     assert_eq!(
         verdict_on(
-            &format!(
-                "permit (principal is W::Staff, action == W::Action::\"Duo\", resource)\n\
-                 when {{ principal == W::Gateway::\"g1\" }};"
-            ),
+            "permit (principal is W::Staff, action == W::Action::\"Duo\", resource)\n\
+             when { principal == W::Gateway::\"g1\" };",
             "Duo",
             "g1"
         ),
@@ -600,11 +561,9 @@ fn cedar_verdict_cross_type_is_false_under_narrowed_scope() {
 fn temporal_verdict_cross_type_is_false_under_narrowed_scope() {
     assert_eq!(
         verdict_on(
-            &format!(
-                "permit (principal is W::Staff, action == W::Action::\"Duo\", resource)\n\
-                 when temporal {{ formerly within 1h \
-                 (W::Action::\"Duo\"::request{{}} && principal == W::Gateway::\"g1\") }};"
-            ),
+            "permit (principal is W::Staff, action == W::Action::\"Duo\", resource)\n\
+             when temporal { formerly within 1h \
+             (W::Action::\"Duo\"::request{} && principal == W::Gateway::\"g1\") };",
             "Duo",
             "g1"
         ),
@@ -843,8 +802,9 @@ fn temporal_verdict_same_type_negated_is_false() {
 // of its possible types is the discriminating idiom
 // `a == Ns::T1::"x" || a == Ns::T2::"y"`, where each disjunct is wrong only in isolation.
 // Reachable today via a condition or macro reused across `action in [...]`. Cedar's
-// equivalent diagnostic is a whole-policy `policy is impossible` WARNING, which cannot
-// reach a temporal leaf — so this is SILENT for now, deliberately. Erroring would cement
+// equivalent diagnostic is a whole-policy `policy is impossible` finding (a warning of
+// Cedar's, an error of validation's), which cannot reach a temporal leaf — so this is
+// SILENT for now, deliberately. Erroring would cement
 // a restriction that a future temporal impossibility analysis should lift, and that
 // analysis is where the diagnostic belongs.
 //
@@ -878,7 +838,7 @@ fn temporal_accepts_cross_type_entity_equality() {
 }
 
 #[test]
-fn cedar_witness_warns_on_cross_type_entity_equality() {
+fn cedar_witness_finds_cross_type_entity_equality_impossible() {
     let service = ServiceSchema::builder()
         .event_schema_str(EVENT_SCHEMA)
         .build()
@@ -887,12 +847,16 @@ fn cedar_witness_warns_on_cross_type_entity_equality() {
     let src = cedar(r#"principal == W::Gateway::"g1""#);
     let lowered = LoweredPolicySet::from_str(&src, &service, &schema).expect("lowers");
     let result = dogwood_language::Validator::new().validate(&lowered);
-    assert_eq!(result.validation_errors().count(), 0, "Cedar: well-typed");
+    let errors: Vec<String> = result
+        .validation_errors()
+        .map(|e| e.to_string())
+        .collect();
     assert!(
-        result.validation_warnings().count() > 0,
-        "Cedar flags it as an impossible policy. That is the channel a future temporal \
-         impossibility analysis should mirror — and its absence inside a temporal leaf is \
-         why the temporal side is silent rather than erroring"
+        errors.len() == 1 && errors[0].contains("policy is impossible"),
+        "Cedar: well-typed, but it flags the policy as impossible, which validation \
+         reports as an error. That is the channel a future temporal impossibility \
+         analysis should mirror — and its absence inside a temporal leaf is why the \
+         temporal side is silent. Got: {errors:?}"
     );
 }
 

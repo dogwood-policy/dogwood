@@ -74,6 +74,52 @@ pub struct AuthorizationDecision {
     pub errors: Vec<String>,
 }
 
+/// The full outcome of one policy-engine decision: an
+/// [`AuthorizationDecision`] plus the **erroring policies** by id. Returned by
+/// [`PolicyEngine::authorize`].
+///
+/// `#[non_exhaustive]`: build one with [`From<AuthorizationDecision>`] and
+/// [`with_erroring_policy`](AuthorizationOutcome::with_erroring_policy).
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct AuthorizationOutcome {
+    /// `Allow` or `Deny`.
+    pub decision: Decision,
+    /// The ids of the determining policies, as in
+    /// [`AuthorizationDecision::determining_policy_ids`].
+    pub determining_policy_ids: Vec<String>,
+    /// The policies that raised an evaluation error, as `(policy id, error
+    /// message)`; the message does not repeat the id. Empty when the engine
+    /// does not attribute errors to policies.
+    pub erroring_policies: Vec<(String, String)>,
+    /// Every evaluation error as text, as in [`AuthorizationDecision::errors`]
+    /// (including those also listed in `erroring_policies`).
+    pub errors: Vec<String>,
+}
+
+impl From<AuthorizationDecision> for AuthorizationOutcome {
+    fn from(d: AuthorizationDecision) -> Self {
+        AuthorizationOutcome {
+            decision: d.decision,
+            determining_policy_ids: d.determining_policy_ids,
+            erroring_policies: Vec::new(),
+            errors: d.errors,
+        }
+    }
+}
+
+impl AuthorizationOutcome {
+    /// Record that policy `id` raised `message` while the request was decided.
+    pub fn with_erroring_policy(
+        mut self,
+        id: impl Into<String>,
+        message: impl Into<String>,
+    ) -> Self {
+        self.erroring_policies.push((id.into(), message.into()));
+        self
+    }
+}
+
 /// Makes the authorization decision for a request against a fixed policy set.
 ///
 /// The policy set + schema are supplied once, at [`prepare`](PolicyEngine::prepare)
@@ -81,14 +127,40 @@ pub struct AuthorizationDecision {
 /// [`is_authorized`](PolicyEngine::is_authorized) then decides one request.
 pub trait PolicyEngine: Send {
     /// Install the (lowered Cedar) policies and their schema. Called once when
-    /// the [`Authorizer`](crate::Authorizer) is built. A local engine keeps a
-    /// reference/clone; a remote-policy-store-backed engine might upsert them into a policy
-    /// store here.
+    /// the [`Authorizer`](crate::Authorizer) is built, and again by
+    /// [`Authorizer::update_policies`](crate::Authorizer::update_policies) for
+    /// an engine whose [`supports_policy_update`](PolicyEngine::supports_policy_update)
+    /// is `true`. A local engine keeps a reference/clone; a
+    /// remote-policy-store-backed engine might upsert them into a policy store
+    /// here.
     fn prepare(&mut self, policies: &PolicySet, schema: &Schema) -> Result<(), Error>;
 
     /// Decide one authorization request. Must not panic — surface problems
     /// through [`AuthorizationDecision::errors`] with a fail-closed `Deny`.
     fn is_authorized(&self, request: AuthorizationRequest<'_>) -> AuthorizationDecision;
+
+    /// Decide one request and also report which policies erred. The
+    /// [`Authorizer`](crate::Authorizer) calls this (not
+    /// [`is_authorized`](PolicyEngine::is_authorized)) and maps the erroring ids
+    /// into [`Diagnostics::erroring`](crate::Diagnostics::erroring).
+    ///
+    /// The default delegates to `is_authorized` and reports no erroring
+    /// policies, so an existing engine behaves exactly as before. Override it
+    /// when the engine can attribute errors to policies (the built-in
+    /// [`CedarPolicyEngine`] does).
+    fn authorize(&self, request: AuthorizationRequest<'_>) -> AuthorizationOutcome {
+        AuthorizationOutcome::from(self.is_authorized(request))
+    }
+
+    /// Whether [`prepare`](PolicyEngine::prepare) may be called again with a
+    /// new policy set, replacing the old one, by
+    /// [`Authorizer::update_policies`](crate::Authorizer::update_policies).
+    /// Default `false`: an engine bound to a pre-populated remote store, say,
+    /// would keep deciding with the old policies. Such an engine is replaced
+    /// instead ([`Authorizer::update_policies_with_engine`](crate::Authorizer::update_policies_with_engine)).
+    fn supports_policy_update(&self) -> bool {
+        false
+    }
 }
 
 /// The built-in [`PolicyEngine`]: evaluate locally with the `cedar-policy`
@@ -111,21 +183,41 @@ impl PolicyEngine for CedarPolicyEngine {
     }
 
     fn is_authorized(&self, request: AuthorizationRequest<'_>) -> AuthorizationDecision {
+        let outcome = self.authorize(request);
+        AuthorizationDecision {
+            decision: outcome.decision,
+            determining_policy_ids: outcome.determining_policy_ids,
+            errors: outcome.errors,
+        }
+    }
+
+    fn authorize(&self, request: AuthorizationRequest<'_>) -> AuthorizationOutcome {
         let Some(policies) = self.policies.as_ref() else {
-            return AuthorizationDecision {
+            return AuthorizationOutcome {
                 decision: Decision::Deny,
                 determining_policy_ids: Vec::new(),
+                erroring_policies: Vec::new(),
                 errors: vec!["policy engine was not prepared".to_string()],
             };
         };
         let response =
             CedarAuthorizer::new().is_authorized(request.request, policies, request.entities);
-        AuthorizationDecision {
+        AuthorizationOutcome {
             decision: response.decision(),
             determining_policy_ids: response
                 .diagnostics()
                 .reason()
                 .map(|pid| AsRef::<str>::as_ref(pid).to_string())
+                .collect(),
+            erroring_policies: response
+                .diagnostics()
+                .errors()
+                .map(|e| match e {
+                    cedar_policy::AuthorizationError::PolicyEvaluationError(e) => (
+                        AsRef::<str>::as_ref(e.policy_id()).to_string(),
+                        e.inner().to_string(),
+                    ),
+                })
                 .collect(),
             errors: response
                 .diagnostics()
@@ -133,6 +225,10 @@ impl PolicyEngine for CedarPolicyEngine {
                 .map(|e| e.to_string())
                 .collect(),
         }
+    }
+
+    fn supports_policy_update(&self) -> bool {
+        true
     }
 }
 
@@ -159,7 +255,7 @@ pub type TemporalBindings = BTreeMap<ExtensionId, bool>;
 /// D's partition" is identical to "E is one of D's μ-events". This is forced by
 /// how μ works: a μ-branch is a predicate, and a predicate can only address a
 /// candidate event through its **logged** record (`match_args` reads
-/// `event.field_path(arg.name)`); the pin's request-side `context_path` only
+/// `event.field_path(&arg.field_path())`); the pin's request-side `context_path` only
 /// ever names the *decision* event's scope/context on the comparison's other
 /// side, never a candidate's field. So the sole μ-addressable handle on a
 /// candidate — and thus the only sound partition key — is the logged
@@ -172,15 +268,14 @@ pub type TemporalBindings = BTreeMap<ExtensionId, bool>;
 /// the *decision* event's own key: μ correlates candidates against the decision
 /// event's request-side `context_path` value, while routing keys the decision
 /// event by its `logged[field_path]`. These agree when the decision event
-/// mirrors the two (`logged[field_path] == request_side[context_path]`). That
-/// mirror is an **authoring invariant** on how decision events are constructed
-/// — the normal event-construction paths (a service emitting its own events; the
-/// `.log` trace/replay path) populate both — **not** a runtime guarantee. One
-/// public path does *not* fully establish it: [`Event::from_request`] mirrors
-/// only the `input` context group and the scope aliases into `logged`, so a
-/// context pin on a non-`input` field fed a decision event via that bridge would
-/// route by an absent `logged` field. That path is a single-decision (`ts = 0`)
-/// interop shim with no accumulated history to diverge against; a partitioned
+/// mirrors the two (`logged[field_path] == request_side[context_path]`). Under
+/// the default (strict) mirror rule, event conformance rejects an event that
+/// breaks the mirror, so an ingested event always routes by its own key. One
+/// public path does not log the pinned field: [`Event::from_request`] mirrors
+/// only the `input` context group and `callerPrincipal` / `callerResource` into
+/// `logged`, so under a context pin on a non-`input` field, or a scope pin under
+/// another name (`pin actor = principal`), the event it builds is rejected.
+/// That path is a single-decision (`ts = 0`) interop shim; a partitioned
 /// deployment supplies the pinned field to the logged record like any other
 /// correlated field. `root` and `context_path` are retained for diagnostics but
 /// are **not** the routing key.
@@ -240,6 +335,36 @@ pub trait TemporalEngine: Send {
     /// [`evaluate`](TemporalEngine::evaluate) that includes it.
     fn observe(&mut self, event: &Event);
 
+    /// [`observe`](TemporalEngine::observe), reporting whether the event was
+    /// recorded. An `Err` means the engine did not record the event, or cannot
+    /// say that it did: [`Rejection::Nonconforming`](crate::Rejection::Nonconforming)
+    /// for an event the engine's own checks reject, and
+    /// [`Rejection::Unavailable`](crate::Rejection::Unavailable) for a write that
+    /// failed (a database out of reach, a retry budget spent, a reading the
+    /// engine cannot store, or a commit whose outcome is unknown, which the
+    /// reason then says). No later decision can rely on such an event, so the
+    /// caller must learn of it: [`Authorizer::submit`](crate::Authorizer::submit)
+    /// returns the rejection for a history event, and fails a decision event
+    /// closed without evaluating it.
+    ///
+    /// The authorizer calls this, not `observe`. The default calls `observe` and
+    /// reports success, so an engine that cannot fail (or reports its failure at
+    /// the next `evaluate`, as engines written against Dogwood 1.1 do) needs no
+    /// change; an engine whose writes can fail overrides it.
+    fn try_observe(&mut self, event: &Event) -> Result<(), crate::Rejection> {
+        self.observe(event);
+        Ok(())
+    }
+
+    /// The deployment generation of the leaves the next [`prepare`](TemporalEngine::prepare)
+    /// installs ([`PolicySetVersion::generation`](crate::PolicySetVersion::generation)): the
+    /// builder's [`generation`](crate::AuthorizerBuilder::generation) at build, and one more
+    /// at each [`update_policies`](crate::Authorizer::update_policies). The authorizer calls
+    /// it before every `prepare`. An engine whose instances share history across processes
+    /// uses it to order deployments: a key decided under one generation must never be
+    /// decided again under an older one. Default: ignored.
+    fn set_generation(&mut self, _generation: u64) {}
+
     /// Evaluate every leaf at the current decision point (the most recently
     /// observed event). Returns each leaf's boolean keyed by its id. A failure
     /// (e.g. the database is unreachable) fails the decision closed.
@@ -269,6 +394,32 @@ pub trait TemporalEngine: Send {
     /// called, the `leaves` subsequently handed to `prepare` are the
     /// **non-relativized** ones. Default no-op (for engines that do not partition).
     fn set_partition_keys(&mut self, _keys: &[PartitionKey]) {}
+
+    /// Install the **authored** leaves: the non-relativized leaves, parallel by position to the
+    /// `leaves` the next [`prepare`](TemporalEngine::prepare) receives (the same ids, in the same
+    /// order). Called by the [`Authorizer`](crate::Authorizer) **before** every `prepare`, at
+    /// build and at a policy update, whether or not evaluation is partitioned. Under partitioned
+    /// evaluation they are the leaves `prepare` receives; under global evaluation with universal
+    /// symmetric pins, `prepare` receives their relativized form. An engine that compiles the
+    /// authored leaf itself, applying the visibility the schema's pins define, reads them here
+    /// (the leaf the specification's conformance bridge exports). Default: ignored, so every
+    /// other engine behaves exactly as before.
+    fn set_authored_leaves(&mut self, _authored: &[TemporalField]) {}
+
+    /// Whether [`prepare`](TemporalEngine::prepare) may be called again, with a
+    /// new policy set's leaves, while keeping the history observed so far —
+    /// the live update of
+    /// [`Authorizer::update_policies`](crate::Authorizer::update_policies).
+    /// Default `false`: an engine that keys state by leaf name or position
+    /// would misread its history after a reorder, so it must opt in.
+    ///
+    /// An engine that returns `true` defines what the new leaves see of the
+    /// past (its *update reading*) and documents it. Partition keys are never
+    /// changed by an update ([`set_partition_keys`](TemporalEngine::set_partition_keys)
+    /// is not called again).
+    fn supports_policy_update(&self) -> bool {
+        false
+    }
 }
 
 /// The built-in [`TemporalEngine`]: keep the event history in memory and
@@ -399,7 +550,9 @@ impl InMemoryTemporalEngine {
     /// encoding so `1.5` and `1.50` share a partition, matching μ's `dom_eq`.
     fn partition_value_of(event: &Event, keys: &[PartitionKey]) -> String {
         keys.iter()
-            .map(|k| match event.field_path(&k.field_path) {
+            // A logged `null` is an absent field (the specification has no
+            // null), so it files under `<none>`, as an unlogged one does.
+            .map(|k| match event.data().logged_value(&k.field_path) {
                 Some(v) => partition_value_key(v),
                 None => "<none>".to_string(),
             })
@@ -410,8 +563,11 @@ impl InMemoryTemporalEngine {
 
 /// Canonical rendering of a partition-key [`Value`], such that
 /// `encode == encode` **iff** the values are equal under [`Value::dom_eq`] — the
-/// same equality μ's predicate matcher uses. Two properties make it sound:
+/// same equality μ's predicate matcher uses. Three properties make it sound:
 ///
+/// * **set-canonical**: an array is rendered as a set (its element keys sorted
+///   and deduplicated, `null` elements left out), and a `null` record member is
+///   left out, so `["a", "b"]` and `["b", "a"]` share a partition.
 /// * **dom-canonical**: accepted decimals are rendered canonically from Cedar's
 ///   fixed-point numeric value, while rejected spellings retain exact text under
 ///   a separate tag. Thus every pair agrees with `dom_eq`, including leading
@@ -438,13 +594,25 @@ pub fn partition_value_key(value: &Value) -> String {
         Value::String(s) => framed('s', s),
         Value::Entity { ty, id } => framed('e', &format!("{ty}::\"{id}\"")),
         Value::Array(items) => {
-            let body: String = items.iter().map(partition_value_key).collect();
-            framed('a', &body)
+            // An array is a set (`Value::dom_eq`): render its elements' keys
+            // sorted and deduplicated, so the key depends on the set only. A
+            // `null` element is absent. Each element key is self-delimiting, so
+            // the concatenation of a sorted, duplicate-free list stays injective.
+            let mut keys: Vec<String> = items
+                .iter()
+                .filter(|v| !v.is_null())
+                .map(partition_value_key)
+                .collect();
+            keys.sort_unstable();
+            keys.dedup();
+            framed('a', &keys.concat())
         }
         Value::Object(members) => {
             // BTreeMap iterates in key order, so equal objects render identically.
+            // A `null` member is absent (`Value::dom_eq`), so it is not rendered.
             let body: String = members
                 .iter()
+                .filter(|(_, v)| !v.is_null())
                 .map(|(k, v)| format!("{}:{}{}", k.len(), k, partition_value_key(v)))
                 .collect();
             framed('o', &body)
@@ -556,6 +724,76 @@ impl TemporalEngine for InMemoryTemporalEngine {
             traces: BTreeMap::new(),
             last: None,
         };
+    }
+
+    /// The in-memory engine keeps every observed event and re-runs the
+    /// interpreter at each decision, so after an update every leaf — new,
+    /// edited or kept — is evaluated over the whole retained history (the
+    /// retrospective reading).
+    fn supports_policy_update(&self) -> bool {
+        true
+    }
+}
+
+/// The Cedar request and entity store an [`Authorizer`](crate::Authorizer)
+/// builds for a decision at `event`, before it binds the temporal leaves and
+/// the information providers, against `schema`, the augmented Cedar schema the
+/// policy set was lowered to (the one a [`TemporalEngine`] receives at
+/// [`prepare`](TemporalEngine::prepare), and
+/// [`LoweredPolicySet::cedar_schema`](crate::LoweredPolicySet::cedar_schema)).
+///
+/// [`LoweredPolicySet::decision_request`](crate::LoweredPolicySet::decision_request)
+/// is this with the set's own schema; an engine that holds only the schema (it
+/// partially evaluates the policies its [`PolicyEngine`] was prepared with)
+/// calls this. The request's context holds the event's request context only;
+/// the entity store is the decision's. The error is the message the decision
+/// fails closed with; in particular, a request context group named like an
+/// attribute the crate binds itself (a hoisted temporal leaf
+/// `<rule_key>__temporal_<j>`, or the provider record `providers`) is refused,
+/// as every decision refuses it.
+pub fn decision_request(
+    event: &Event,
+    schema: &Schema,
+) -> Result<(cedar_policy::Request, cedar_policy::Entities), String> {
+    crate::api::decision_request_with(event, schema)
+}
+
+/// [`decision_request`] for many decisions against one schema: what the entity store takes
+/// from the schema alone (the store of an event that supplies no entity, which holds the
+/// schema's action entities) is computed once, at [`new`](Self::new), and parsed entity uids are
+/// kept (at most 65,536; then the cache starts over). Parsing a uid costs more than the rest of
+/// the request. A store built with the schema already holds its action hierarchy, so the last
+/// step of `decision_request`, which adds it again and changes nothing, is skipped (`new`
+/// checks that it changes nothing). Otherwise every step is [`decision_request`]'s, and the
+/// request and the store are the same. It can be shared between threads. Additive.
+pub struct DecisionRequestCache(crate::api::RequestCache);
+
+impl DecisionRequestCache {
+    /// The cache for `schema` (the augmented schema an engine receives at
+    /// [`prepare`](TemporalEngine::prepare)). Errs, with the message a decision would fail
+    /// closed with, when the schema's action entities do not build.
+    pub fn new(schema: &Schema) -> Result<Self, String> {
+        crate::api::RequestCache::new(schema).map(DecisionRequestCache)
+    }
+
+    /// [`decision_request`]`(event, schema)`, `schema` being the cache's.
+    pub fn decision_request(
+        &self,
+        event: &Event,
+    ) -> Result<(cedar_policy::Request, cedar_policy::Entities), String> {
+        self.0.decision_request(event)
+    }
+
+    /// The schema the cache was built for.
+    pub fn schema(&self) -> &Schema {
+        self.0.schema()
+    }
+}
+
+impl std::fmt::Debug for DecisionRequestCache {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("DecisionRequestCache")
+            .finish_non_exhaustive()
     }
 }
 
@@ -723,5 +961,60 @@ mod partition_encoding_tests {
             partition_value_key(&Value::Object(m1)),
             partition_value_key(&Value::Object(m2))
         );
+    }
+
+    /// The multi-key text of a partition (`partition_value_of`) is injective:
+    /// its `<none>` marker for an unlogged (or `null`) pin field and its U+001F
+    /// separator cannot be forged by a value, because every value's key starts
+    /// with a one-letter tag and a length (`partition_value_key`), and `<` is no
+    /// tag. (The review exporter's `partition_text` had no such framing,
+    /// semantics review F1.3; this pins that the crate's has.)
+    #[test]
+    fn multi_key_partition_text_is_injective() {
+        use super::{InMemoryTemporalEngine, PartitionKey};
+        use crate::api::EventPinRoot;
+        let keys: Vec<PartitionKey> = ["k1", "k2"]
+            .iter()
+            .map(|k| PartitionKey {
+                field_path: vec![k.to_string()],
+                root: EventPinRoot::Context,
+                context_path: vec![k.to_string()],
+            })
+            .collect();
+        let s = |x: &str| Value::String(x.to_string());
+        let event = |k1: Option<Value>, k2: Option<Value>| {
+            let mut b = crate::Event::builder("Login", "request");
+            if let Some(v) = k1 {
+                b = b.logged_field("k1", v);
+            }
+            if let Some(v) = k2 {
+                b = b.logged_field("k2", v);
+            }
+            b.build()
+        };
+        let cases = [
+            event(None, None),
+            event(Some(Value::Null), None),
+            event(Some(s("<none>")), None),
+            event(None, Some(s("<none>"))),
+            event(Some(s("a\u{1f}<none>")), None),
+            event(Some(s("a")), Some(s("<none>"))),
+            event(Some(s("a")), None),
+            event(Some(s("a\u{1f}s1:b")), None),
+            event(Some(s("a")), Some(s("b"))),
+            event(Some(s("")), Some(s(""))),
+            event(Some(s("")), None),
+        ];
+        let texts: Vec<String> = cases
+            .iter()
+            .map(|e| InMemoryTemporalEngine::partition_value_of(e, &keys))
+            .collect();
+        // Only the unlogged field and the logged `null` (an absent value) share a key.
+        assert_eq!(texts[0], texts[1]);
+        for (i, a) in texts.iter().enumerate().skip(1) {
+            for (j, b) in texts.iter().enumerate().skip(i + 1) {
+                assert_ne!(a, b, "cases {i} and {j} collide: {a:?}");
+            }
+        }
     }
 }

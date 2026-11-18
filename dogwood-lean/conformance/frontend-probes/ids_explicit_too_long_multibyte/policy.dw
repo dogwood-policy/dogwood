@@ -1,0 +1,3 @@
+// An id of 65 two-byte characters: its length is counted in bytes.
+permit (principal, action == Drupe::Action::"Read", resource)
+when { temporal { formerly within 1h Drupe::Action::"Login"::response{ input.user: context.input.user } } };

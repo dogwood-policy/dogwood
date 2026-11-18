@@ -1,0 +1,6 @@
+// A binder is declared `OAuthUser`, which names no declared entity type: the entity type is
+// `Drupe::OAuthUser`. The specification rejects it (binders).
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    exists (u: OAuthUser). formerly within 1h Drupe::Action::"Login"::request{ callerPrincipal: u }
+};

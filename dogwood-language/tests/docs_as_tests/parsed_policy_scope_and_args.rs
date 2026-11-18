@@ -1,11 +1,12 @@
-//! Reading a policy's **scope** and its **provider-invocation arguments**
-//! straight off a [`ParsedPolicy`] — *before* lowering, with only a
+//! Reading a policy's **effect**, **scope** and **provider-invocation
+//! arguments** straight off a [`ParsedPolicy`] — *before* lowering, with only a
 //! [`ServiceSchema`] (no action schema).
 //!
-//! These two accessors let a consumer that previously had to lower a policy
-//! (or hand-crawl an opaque handle) answer "what does this rule scope, and what
-//! does it pass to its providers?" up front:
+//! These accessors let a consumer that previously had to lower a policy
+//! (or hand-crawl an opaque handle) answer "does this rule permit or forbid,
+//! what does it scope, and what does it pass to its providers?" up front:
 //!
+//!   * [`ParsedPolicy::effect`] returns the policy's [`Effect`].
 //!   * [`ParsedPolicy::scope`] returns a Dogwood-owned [`PolicyScope`] view.
 //!     Its entity leaves are the public [`cedar_policy::EntityUid`] /
 //!     `EntityTypeName`, and a `?principal` / `?resource` slot reads as `None`
@@ -14,10 +15,11 @@
 //!     [`Invocation`]s, each carrying its `Ns::Fn` key **and** its resolved
 //!     [`Arg`] list, extracted through the exact conversion lowering uses.
 //!
-//! Provider invocations are recognized structurally (`Ns::Fn(...)`), so neither
+//! Provider invocations are recognized structurally (`Ns::Fn(...)`), so no
 //! accessor needs the providers to be *declared* — a bare `ServiceSchema` (no
-//! provider declarations, default event schema) suffices to read both.
+//! provider declarations, default event schema) suffices to read them.
 
+use dogwood_language::cedar::Effect;
 use dogwood_language::{
     ActionConstraint, Arg, ParsedPolicySet, PrincipalConstraint, ResourceConstraint, ServiceSchema,
 };
@@ -43,6 +45,15 @@ unless guardrails {
 fn parse(src: &str) -> ParsedPolicySet {
     let service = ServiceSchema::builder().build().expect("service schema");
     ParsedPolicySet::parse(src, &service).expect("parses")
+}
+
+#[test]
+fn effect_reports_permit_and_forbid() {
+    let src = format!("{SCORE_ABOVE}\nforbid (principal, action, resource);");
+    let parsed = parse(&src);
+
+    let effects: Vec<Effect> = parsed.policies().map(|policy| policy.effect()).collect();
+    assert_eq!(effects, [Effect::Permit, Effect::Forbid]);
 }
 
 #[test]

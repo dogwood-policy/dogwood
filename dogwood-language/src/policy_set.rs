@@ -34,11 +34,13 @@
 
 use crate::api::{self, Error, EventSignature, Lowered, Parsed, ProviderField, TemporalField};
 use crate::authorize::DogwoodRuleRef;
+use crate::extension::temporal::construct_counts::TemporalConstructCounts;
 use crate::policy_schema::PolicySchema;
 use crate::service_schema::ServiceSchema;
 
-/// A validated distincter: a string that parses as a Cedar identifier
-/// (`[_A-Za-z][_A-Za-z0-9]*`).
+/// A validated distincter: a string that is a Cedar identifier
+/// (`[_A-Za-z][_A-Za-z0-9]*`), with nothing around it (no white space, no
+/// comment).
 ///
 /// Construct one with [`str::parse`] or [`TryFrom`]; a malformed string is
 /// [`Error::InvalidDistincter`].
@@ -56,10 +58,32 @@ impl std::str::FromStr for Distincter {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Error> {
-        match s.parse::<cedar_policy_core::ast::AnyId>() {
-            Ok(_) => Ok(Distincter(s.to_string())),
-            Err(_) => Err(Error::InvalidDistincter(s.to_string())),
+        // Cedar's parser reads an identifier with white space and comments
+        // around it, which the distincter would keep (`" pad"` named rules
+        // `" pad_0"`), so the string must be the identifier alone.
+        if is_bare_identifier(s) && s.parse::<cedar_policy_core::ast::AnyId>().is_ok() {
+            Ok(Distincter(s.to_string()))
+        } else {
+            Err(Error::InvalidDistincter(s.to_string()))
         }
+    }
+}
+
+/// Whether `s` is `[_A-Za-z][_A-Za-z0-9]*`.
+fn is_bare_identifier(s: &str) -> bool {
+    let mut chars = s.chars();
+    chars
+        .next()
+        .is_some_and(|c| c == '_' || c.is_ascii_alphabetic())
+        && chars.all(|c| c == '_' || c.is_ascii_alphanumeric())
+}
+
+/// Why a string is not a distincter, for [`Error::InvalidDistincter`]'s message.
+pub(crate) fn distincter_problem(s: &str) -> &'static str {
+    if s != s.trim() && is_bare_identifier(s.trim()) {
+        "must be a Cedar identifier ([_A-Za-z][_A-Za-z0-9]*), without white space around it"
+    } else {
+        "must be a Cedar identifier ([_A-Za-z][_A-Za-z0-9]*)"
     }
 }
 
@@ -91,6 +115,46 @@ impl std::fmt::Display for Distincter {
     }
 }
 
+/// Where the **stable policy ids** of a parsed set come from. Chosen with
+/// [`ParsedPolicySet::with_ids`]; the default is [`Positional`](IdSource::Positional).
+///
+/// A stable id names a rule across versions of its policy set: it survives
+/// reorders, insertions and removals of other rules, edits of the rule itself,
+/// and recompiles. Positions do not. With an id source other than
+/// `Positional`, lowering emits the stable id as the rule's Cedar `PolicyId`
+/// (prefixed `<distincter>/<id>` under a distincter), so every decision names
+/// its supporting policies by their stable ids, and each rule also carries a
+/// content [revision](crate::PolicyRef::revision).
+///
+/// Ids use the portable alphabet `[A-Za-z0-9_.:-]`, 1 to 128 characters (UUIDs,
+/// policy-store ids and dotted names fit). `/` is reserved for the distincter
+/// prefix. Ids must be unique within the parsed set.
+///
+/// Stable ids change only the emitted Cedar policy ids. The hoisted
+/// `context.<rule_key>__temporal_<j>` / `<rule_key>_p_<j>` field names stay
+/// positional (`policy_<k>…`, or `<distincter>_<k>…`) under every id source,
+/// because consumers bind and store them by name; see the
+/// [`TemporalField::content_hash`](crate::TemporalField::content_hash) for a
+/// position-free name of a leaf.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[non_exhaustive]
+pub enum IdSource {
+    /// Today's behavior: rule `k` is named by its position, `policy_<k>` (or
+    /// `<distincter>_<k>`). Positional ids silently name a different rule after
+    /// a reorder.
+    #[default]
+    Positional,
+    /// Each policy's `@id("…")` annotation is its id. A policy without an `@id`
+    /// (or with an `@id` that has no value), an invalid id, and two policies
+    /// with one id are all rejected ([`Error::PolicyId`]).
+    Annotation,
+    /// The caller supplies the ids, one per policy in source order:
+    /// `ids[k]` names the `k`-th policy (the policy store's record id, for
+    /// example). The length must equal the policy count; ids must be valid and
+    /// unique. `@id` annotations are ignored.
+    Explicit(Vec<String>),
+}
+
 /// **Phase 2** for several parsed sets, each under its own distincter, into
 /// one [`LoweredPolicySet`].
 ///
@@ -102,6 +166,10 @@ impl std::fmt::Display for Distincter {
 /// `policy_schema` augmented once with every entry's hoisted fields, and the
 /// event schema derived from `policy_schema`. Each entry's validation findings
 /// render against its own text.
+///
+/// An entry given stable ids ([`ParsedPolicySet::with_ids`]) emits each rule
+/// under the Cedar policy id `<distincter>/<id>`, so a system rule keeps one id
+/// in every set it is merged into, and the prefixes keep entries apart.
 ///
 /// Every entry must have been parsed with a clone of one [`ServiceSchema`];
 /// this is checked by identity, not structure.
@@ -121,11 +189,13 @@ pub fn lower_many(
     policies: &[(&ParsedPolicySet, Distincter)],
     policy_schema: &PolicySchema,
 ) -> Result<LoweredPolicySet, Error> {
-    let mut seen = std::collections::BTreeSet::new();
-    for (_, distincter) in policies {
-        if !seen.insert(distincter) {
-            return Err(Error::DuplicateDistincter(distincter.to_string()));
-        }
+    // The Lean frontend checks the distincters itself; the Rust frontend's check
+    // runs first, as it always has.
+    let rust_frontend = policies
+        .first()
+        .is_none_or(|(p, _)| !p.parsed.service_schema().frontend().runs_lean());
+    if rust_frontend {
+        api::check_distincters(policies.iter().map(|(_, d)| d))?;
     }
     let Some((first, _)) = policies.first() else {
         return Err(Error::NoPolicies);
@@ -138,13 +208,13 @@ pub fn lower_many(
         return Err(Error::MismatchedServiceSchema(i));
     }
 
-    let base = api::Base::derive(service_schema, policy_schema)?;
-    let entries = policies
-        .iter()
-        .map(|(p, distincter)| api::lower_entry(&p.parsed, &base, Some(distincter)))
-        .collect::<Result<Vec<_>, Error>>()?;
+    let entries: Vec<(&Parsed, &Distincter)> =
+        policies.iter().map(|(p, d)| (&p.parsed, d)).collect();
+    let (lowered, identity) = api::lower_many(&entries, policy_schema)?;
     Ok(LoweredPolicySet {
-        lowered: api::merge(base, entries)?,
+        lowered: std::sync::Arc::new(lowered),
+        identity: std::sync::Arc::new(identity),
+        policy_schema: Some(std::sync::Arc::new(policy_schema.clone())),
     })
 }
 
@@ -160,7 +230,7 @@ pub fn lower_many(
 /// as a stability contract).
 #[derive(Debug)]
 pub struct ParsedPolicySet {
-    parsed: Parsed,
+    pub(crate) parsed: Parsed,
 }
 
 impl ParsedPolicySet {
@@ -210,6 +280,50 @@ impl ParsedPolicySet {
         })
     }
 
+    /// Choose where this set's **stable policy ids** come from (see
+    /// [`IdSource`]); opt-in, additive.
+    ///
+    /// With [`IdSource::Annotation`] or [`IdSource::Explicit`], every later
+    /// lowering of this set ([`lower`](ParsedPolicySet::lower),
+    /// [`lower_with_distincter`](ParsedPolicySet::lower_with_distincter),
+    /// [`lower_many`]) emits rule `k` under its stable id instead of
+    /// `policy_<k>`, and the [`Authorizer`](crate::Authorizer)'s responses
+    /// report it ([`Diagnostics::determining`](crate::Diagnostics::determining)),
+    /// with the policy-set version
+    /// ([`Response::policy_set`](crate::Response::policy_set)).
+    /// [`IdSource::Positional`] restores today's ids.
+    ///
+    /// The ids are checked here, before the action schema is needed: a missing
+    /// or invalid `@id`, a duplicate, or an explicit list of the wrong length
+    /// is [`Error::PolicyId`].
+    ///
+    /// ```
+    /// # use dogwood_language::{IdSource, ParsedPolicySet, ServiceSchema};
+    /// let src = r#"
+    /// @id("allow-read")
+    /// permit (principal, action, resource);
+    /// "#;
+    /// let parsed = ParsedPolicySet::parse(src, &ServiceSchema::defaults())?
+    ///     .with_ids(IdSource::Annotation)?;
+    /// assert_eq!(parsed.policies().next().unwrap().policy_id(), Some("allow-read"));
+    /// # Ok::<(), dogwood_language::Error>(())
+    /// ```
+    pub fn with_ids(mut self, ids: IdSource) -> Result<ParsedPolicySet, Error> {
+        #[cfg(feature = "lean-frontend")]
+        let assigned = if self.parsed.service_schema().frontend().runs_lean() {
+            let rust = || assign_ids(&self.parsed, ids.clone());
+            let assigned = crate::lean_frontend::assign_ids(&self.parsed, &ids, rust)?;
+            self.parsed.set_id_source(ids);
+            assigned
+        } else {
+            assign_ids(&self.parsed, ids)?
+        };
+        #[cfg(not(feature = "lean-frontend"))]
+        let assigned = assign_ids(&self.parsed, ids)?;
+        self.parsed.set_ids(assigned);
+        Ok(self)
+    }
+
     /// **Phase 2** — lower this parsed set to Cedar against `policy_schema`
     /// (the action schema).
     ///
@@ -220,7 +334,9 @@ impl ParsedPolicySet {
     /// [`cedar_schema`](LoweredPolicySet::cedar_schema)).
     ///
     /// The emitted policy ids and hoisted field names use the default
-    /// `policy_<index>` namespace. To combine several independently-lowered
+    /// `policy_<index>` namespace (with stable ids from
+    /// [`with_ids`](ParsedPolicySet::with_ids), the policy ids are the stable
+    /// ids instead; the field names are unchanged). To combine several independently-lowered
     /// sets into one Cedar `PolicySet` / policy store (or to lower incrementally
     /// over a shared augmented schema), give each call a distinct namespace via
     /// [`lower_with_distincter`](ParsedPolicySet::lower_with_distincter).
@@ -229,15 +345,20 @@ impl ParsedPolicySet {
     /// the schema are *not* returned here — run
     /// [`Validator::validate`](crate::Validator::validate) for those.
     pub fn lower(&self, policy_schema: &PolicySchema) -> Result<LoweredPolicySet, Error> {
+        let (lowered, identity) = api::lower(&self.parsed, policy_schema, None)?;
         Ok(LoweredPolicySet {
-            lowered: api::lower(&self.parsed, policy_schema, None)?,
+            lowered: std::sync::Arc::new(lowered),
+            identity: std::sync::Arc::new(identity),
+            policy_schema: Some(std::sync::Arc::new(policy_schema.clone())),
         })
     }
 
     /// Like [`lower`](ParsedPolicySet::lower), but namespaces this call's
     /// synthesized policy ids and hoisted `context.<id>` field names under
     /// `distincter`: rule `k` gets the id `<distincter>_<k>`, and its `j`-th
-    /// temporal leaf the field `<distincter>_<k>__temporal_<j>`.
+    /// temporal leaf the field `<distincter>_<k>__temporal_<j>`. With stable
+    /// ids ([`with_ids`](ParsedPolicySet::with_ids)), rule `k` gets the id
+    /// `<distincter>/<id>` instead; its field names are unchanged.
     ///
     /// Supply a **distinct** `distincter` per call when the results will be
     /// combined — e.g. lowering rules as they arrive and accreting them into a
@@ -258,6 +379,23 @@ impl ParsedPolicySet {
     /// forms must pick distincters that also avoid `"policy"` if the results
     /// will be combined.
     ///
+    /// **Combining sets: a whole-context read breaks once any set has a leaf.**
+    /// Each call validates only its own rules. At decision time the authorizer
+    /// puts *every* hoisted leaf value of the combined store into *every*
+    /// request's context, whatever the action. A rule that reads `context`
+    /// whole, such as `context == { input: { user: "alice" } }`, is accepted in
+    /// a set without leaves, but once it shares a store with any set that has a
+    /// temporal or provider leaf — on its own action or any other — the
+    /// request contexts it sees carry extra attributes, so the comparison is
+    /// silently `false`. Re-validating the earlier set against the final
+    /// schema does **not** catch this when the new leaves target other
+    /// actions. Instead, lower the sets together with [`lower_many`] and run
+    /// [`Validator::validate`](crate::Validator::validate) on the result: it
+    /// checks the combined set and reports a whole-context read whenever the
+    /// combination has a leaf. A caller that feeds schemas forward should
+    /// apply the same rule: no rule may read `context` whole in a store that
+    /// has any leaf.
+    ///
     /// A single-entry [`lower_many`] is the same call taking a [`Distincter`].
     pub fn lower_with_distincter(
         &self,
@@ -265,9 +403,18 @@ impl ParsedPolicySet {
         distincter: &str,
     ) -> Result<LoweredPolicySet, Error> {
         let distincter: Distincter = distincter.parse()?;
+        let (lowered, identity) = api::lower(&self.parsed, policy_schema, Some(&distincter))?;
         Ok(LoweredPolicySet {
-            lowered: api::lower(&self.parsed, policy_schema, Some(&distincter))?,
+            lowered: std::sync::Arc::new(lowered),
+            identity: std::sync::Arc::new(identity),
+            policy_schema: Some(std::sync::Arc::new(policy_schema.clone())),
         })
+    }
+
+    /// The parsed set's internal payload.
+    #[cfg(all(test, feature = "lean-frontend"))]
+    pub(crate) fn parsed(&self) -> &Parsed {
+        &self.parsed
     }
 
     // ─── pre-lowering diagnostics ────────────────────────────────────
@@ -302,6 +449,7 @@ impl ParsedPolicySet {
                 service,
                 dw_src,
                 index,
+                id: self.parsed.ids().map(|ids| ids[index].as_str()),
             })
     }
 
@@ -365,6 +513,8 @@ pub struct ParsedPolicy<'a> {
     /// self-rendering [`Error`] from an internal span-only argument error.
     dw_src: &'a std::sync::Arc<str>,
     index: usize,
+    /// The stable id assigned by [`ParsedPolicySet::with_ids`], if any.
+    id: Option<&'a str>,
 }
 
 impl<'a> ParsedPolicy<'a> {
@@ -372,6 +522,18 @@ impl<'a> ParsedPolicy<'a> {
     /// index the lowered rule takes in [`LoweredPolicySet::rules`].
     pub fn index(&self) -> usize {
         self.index
+    }
+
+    /// This policy's stable id, as assigned by
+    /// [`ParsedPolicySet::with_ids`] (without any distincter prefix). `None`
+    /// under the default [`IdSource::Positional`].
+    pub fn policy_id(&self) -> Option<&'a str> {
+        self.id
+    }
+
+    /// Whether this policy is a `permit` or a `forbid`.
+    pub fn effect(&self) -> crate::cedar::Effect {
+        crate::cedar::Effect::from(self.policy.effect)
     }
 
     /// This policy's source, re-rendered from its parsed, macro-expanded form:
@@ -425,6 +587,16 @@ impl<'a> ParsedPolicy<'a> {
         &self,
     ) -> impl Iterator<Item = &'a crate::temporal_ast::Condition> + use<'a> {
         self.policy.temporal_conditions().into_iter()
+    }
+
+    /// How many times each temporal operator, aggregation and `exists` appears
+    /// in this policy after macro expansion, across all of its temporal blocks.
+    pub fn temporal_construct_counts(&self) -> TemporalConstructCounts {
+        let mut counts = TemporalConstructCounts::default();
+        for condition in self.temporal_conditions() {
+            counts.tally(condition);
+        }
+        counts
     }
 
     // ── information providers ───────────────────────────────────────────
@@ -533,9 +705,18 @@ impl<'a> ParsedPolicy<'a> {
 /// equality — equating compiled Cedar artifacts would freeze the internal
 /// representation as a stability contract, and a `cedar_policy::Schema` has no
 /// `PartialEq` of its own anyway).
-#[derive(Debug)]
+///
+/// Cloning is cheap: a clone shares the lowered artifacts (they are immutable), so many
+/// [`Authorizer`](crate::Authorizer)s, one per concurrent caller, can decide with one lowered
+/// set in memory.
+#[derive(Debug, Clone)]
 pub struct LoweredPolicySet {
-    lowered: Lowered,
+    lowered: std::sync::Arc<Lowered>,
+    /// Per-rule revisions, id stability and the version hash.
+    identity: std::sync::Arc<crate::identity::SetIdentity>,
+    /// The policy schema the set was lowered against, as given; `None` for a set built from
+    /// a Lean frontend run's output.
+    policy_schema: Option<std::sync::Arc<PolicySchema>>,
 }
 
 impl LoweredPolicySet {
@@ -687,6 +868,23 @@ impl LoweredPolicySet {
             .map_err(|e| Error::CedarSchema(Box::new(e.into())))
     }
 
+    /// The policy schema the set was lowered against, **as given**: the action schema passed to
+    /// [`ParsedPolicySet::lower`] (or [`lower_with_distincter`](ParsedPolicySet::lower_with_distincter),
+    /// [`lower_many`], [`LoweredPolicySet::from_str`], [`LoweredPolicySet::from_many_str`]),
+    /// before lowering augmented it. The augmented schema
+    /// ([`cedar_schema_json`](LoweredPolicySet::cedar_schema_json)) depends on the policies:
+    /// it holds the hoisted `context.<id>` fields, the enumerated entity types the providers
+    /// the policies call declare, and an action context written as a record where a field is
+    /// hoisted into a context the schema names by a common type. This one does not: two sets
+    /// lowered against one policy schema return the same text, whatever their policies.
+    ///
+    /// `None` for a set built from a Lean frontend run's output
+    /// ([`frontend::lowered_from_lean`](crate::frontend::lowered_from_lean)), which does not
+    /// carry the schema it was lowered against.
+    pub fn policy_schema(&self) -> Option<&PolicySchema> {
+        self.policy_schema.as_deref()
+    }
+
     /// Whether the compiled Cedar artifacts are *self-contained*: `true` iff
     /// lowering hoisted no temporal or provider `context.<id>` fields, so the
     /// policies from [`as_cedar`](LoweredPolicySet::as_cedar) and the schema
@@ -733,6 +931,96 @@ impl LoweredPolicySet {
     /// is empty these are identical to [`temporal_fields`](LoweredPolicySet::temporal_fields).
     pub fn nonrelativized_temporal_fields(&self) -> impl Iterator<Item = &TemporalField> {
         self.lowered.temporal.iter()
+    }
+
+    /// **The action groups whose scope resolves to `action`**: the groups it is
+    /// in, transitively, in this set's action schema, sorted by namespace and
+    /// id. Empty when the schema does not declare `action`, and when `action`
+    /// applies to no principal or no resource (a pure group): a group's scope
+    /// resolves to its members that can receive a request, as
+    /// [`TemporalField::target_actions`] does. Depends on the schemas alone, so
+    /// a set lowered from no policies answers it too.
+    ///
+    /// The argument [`ActionScope::narrowed_to`](crate::ActionScope::narrowed_to)
+    /// takes, computed once per action.
+    pub fn action_groups(&self, action: &crate::ActionRef) -> Vec<crate::ActionRef> {
+        use cedar_policy_core::validator::ValidatorSchema;
+        use std::str::FromStr;
+        let schema: &ValidatorSchema = self.lowered.augmented_schema.as_ref();
+        let Ok(uid) = cedar_policy::EntityUid::from_str(&api::action_ref_uid(action)) else {
+            return Vec::new();
+        };
+        let uid: &cedar_policy_core::ast::EntityUID = uid.as_ref();
+        let appliable = schema.get_action_id(uid).is_some_and(|a| {
+            a.applies_to_principals().next().is_some() && a.applies_to_resources().next().is_some()
+        });
+        if !appliable {
+            return Vec::new();
+        }
+        let mut groups: Vec<crate::ActionRef> = schema
+            .action_ids()
+            .filter(|g| g.descendants().any(|d| d == uid))
+            .map(|g| {
+                let g = cedar_policy::EntityUid::from(g.name().clone());
+                api::action_ref(g.type_name().namespace(), g.id().unescaped().to_owned())
+            })
+            .collect();
+        groups.sort_by(|a, b| (&a.namespace, &a.id).cmp(&(&b.namespace, &b.id)));
+        groups
+    }
+
+    /// **The temporal leaves of the rules that can apply to `action`**, each
+    /// described for an evaluator of temporal fields that lowers nothing itself
+    /// ([`TemporalLeafDescriptor`](crate::TemporalLeafDescriptor)): its id, the
+    /// action scope it is sent under, and its condition as authored, in
+    /// canonical text.
+    ///
+    /// The slice is a function of the set and the action alone, so the same
+    /// set and action always give the same leaves in the same order: the
+    /// leaves of [`nonrelativized_temporal_fields`](LoweredPolicySet::nonrelativized_temporal_fields),
+    /// in that order, whose rule's scope applies to `action` by
+    /// [`ActionScope::narrowed_to`](crate::ActionScope::narrowed_to) with the
+    /// groups of [`action_groups`](LoweredPolicySet::action_groups), each sent
+    /// under the scope it returns. A rule over an action list is sent with its
+    /// scope narrowed to `action`, since a descriptor carries one action, so
+    /// [`SliceError::ActionList`](crate::SliceError::ActionList) is no longer
+    /// returned.
+    ///
+    /// Each condition is the leaf's pinned condition with the pins lowering
+    /// injected taken off again: the evaluator injects them itself, from the
+    /// same event schema, and gets this set's leaf back. Its text parses back
+    /// to that authored condition
+    /// ([`temporal_ast::parse_condition`](crate::temporal_ast::parse_condition)).
+    pub fn temporal_slice(
+        &self,
+        action: &crate::ActionRef,
+    ) -> Result<Vec<crate::api::TemporalLeafDescriptor>, crate::api::SliceError> {
+        use crate::api::{SliceError, TemporalLeafDescriptor};
+        let groups = self.action_groups(action);
+        let mut out = Vec::new();
+        for leaf in self.nonrelativized_temporal_fields() {
+            let Some(scope) = leaf.action.narrowed_to(action, &groups) else {
+                continue;
+            };
+            let authored = crate::event_schema::pin::strip_pins(
+                &leaf.condition.condition,
+                &self.lowered.event_schema,
+            )
+            .ok_or_else(|| SliceError::Pins {
+                leaf: leaf.id.clone(),
+            })?;
+            let condition = crate::extension::temporal::text::condition_text(&authored)
+                .map_err(|e| SliceError::NoText {
+                    leaf: leaf.id.clone(),
+                    reason: e.message().to_owned(),
+                })?;
+            out.push(TemporalLeafDescriptor {
+                id: leaf.id.clone(),
+                action: scope,
+                condition,
+            });
+        }
+        Ok(out)
     }
 
     /// The partition keys derived from the event schema's universal symmetric
@@ -789,6 +1077,85 @@ impl LoweredPolicySet {
         self.lowered.event_signatures()
     }
 
+    /// Check `event` against the pin rules of its signature under `rule`, as
+    /// an [`Authorizer`](crate::Authorizer) does before it ingests it: every
+    /// pinned field is logged, and every field that mirrors the request holds
+    /// the request's value (see [`MirrorRule`](crate::MirrorRule)). An event of
+    /// no declared signature is not checked here, and
+    /// [`MirrorRule::Unchecked`](crate::MirrorRule::Unchecked) accepts every
+    /// event.
+    ///
+    /// An engine that logs events itself (a database-backed
+    /// [`TemporalEngine`](crate::TemporalEngine)) runs this before the write,
+    /// so that it logs what the authorizer ingests.
+    pub fn check_event(
+        &self,
+        event: &crate::Event,
+        rule: crate::MirrorRule,
+    ) -> Result<(), crate::Rejection> {
+        self.lowered.check_event(event, rule)
+    }
+
+    /// Check `event` as an [`Authorizer`](crate::Authorizer) built from this
+    /// set with the mirror rule `rule` checks it before it ingests it, without
+    /// ingesting it or changing anything. This is the one event-conformance
+    /// check the authorizer runs (the specification's `Event.Conforms`,
+    /// `dogwood-lean`): the event schema declares a signature for the event's
+    /// action and kind, every logged declared field is a value of its declared
+    /// type (an entity among them a valid entity of the schema), every required
+    /// field and every pinned field is logged, and every field that mirrors the
+    /// request obeys `rule` (see [`MirrorRule`](crate::MirrorRule)). Where
+    /// [`check_event`](Self::check_event) checks the pin rules alone, this
+    /// checks all of it.
+    ///
+    /// `Ok(())` exactly when the authorizer ingests the event, unless its
+    /// temporal engine then fails to record it
+    /// ([`Rejection::Unavailable`](crate::Rejection::Unavailable), which this
+    /// method never returns). An `Err` is the
+    /// [`Rejection::Nonconforming`](crate::Rejection::Nonconforming) that
+    /// [`Authorizer::submit`](crate::Authorizer::submit) returns for a history
+    /// event; for a decision event the authorizer instead fails the decision
+    /// closed, with the error `nonconforming decision event: <reason>` and the
+    /// same reason. The checks a decision makes after ingestion (a principal
+    /// and a resource in scope, the request, the entity store, the providers)
+    /// are not made here.
+    ///
+    /// The checks are built from the set on the first call (or when the first
+    /// authorizer is built from it) and kept, and every clone of the set and
+    /// every authorizer built from it uses the same ones.
+    pub fn check_event_conformance(
+        &self,
+        event: &crate::Event,
+        rule: crate::MirrorRule,
+    ) -> Result<(), crate::Rejection> {
+        self.lowered.check_event_conformance(event, rule)
+    }
+
+    /// The Cedar request and entity store an [`Authorizer`](crate::Authorizer)
+    /// builds for a decision at `event`, **before** it binds the temporal
+    /// leaves and the information providers.
+    ///
+    /// The request's principal, action and resource are the decision's, and
+    /// its context holds the event's request context only: none of the hoisted
+    /// `context.<leaf>` booleans and no `context.providers` record. The entity
+    /// store is exactly the one the decision is authorized against: the
+    /// supplied entities, validated against the augmented schema, the bare
+    /// scope entities, and the schema's action entities. A `null` is absent in
+    /// both.
+    ///
+    /// An engine that partially evaluates the policies before the temporal
+    /// leaves are known (to skip leaves that cannot affect the decision, for
+    /// example) uses this rather than rebuilding them, so the two stay
+    /// identical. The error is the message the decision fails closed with
+    /// (no principal or resource, a malformed uid, nonconforming entities, a
+    /// request context group named like a hoisted leaf or `providers`).
+    pub fn decision_request(
+        &self,
+        event: &crate::Event,
+    ) -> Result<(cedar_policy::Request, cedar_policy::Entities), String> {
+        crate::api::decision_request(&self.lowered, event)
+    }
+
     /// The Dogwood rules in this set, each as a [`DogwoodRuleRef`] pairing the
     /// rule's 0-based index in this set with the synthesized Cedar policy id it was
     /// lowered to (the id the policy store / Cedar stores it under, and names it by in a
@@ -810,13 +1177,54 @@ impl LoweredPolicySet {
     /// `None` if no rule in this set lowered to that id.
     pub fn rule_ref(&self, cedar_policy_id: &str) -> Option<DogwoodRuleRef> {
         self.lowered
-            .rule_ids
-            .iter()
-            .position(|id| id == cedar_policy_id)
+            .rule_index
+            .get(cedar_policy_id)
+            .copied()
             .map(|rule_index| DogwoodRuleRef {
                 rule_index,
                 cedar_policy_id: cedar_policy_id.to_string(),
             })
+    }
+
+    // ─── stable identity ─────────────────────────────────────────────
+
+    /// Whether every rule in this set carries a stable, owner-chosen id
+    /// (each input was given an [`IdSource`] other than
+    /// [`Positional`](IdSource::Positional) via [`ParsedPolicySet::with_ids`]).
+    /// When `true`, the emitted Cedar policy ids are the stable ids, responses
+    /// carry the policy-set version, and an unknown determining id fails a
+    /// decision closed.
+    pub fn has_stable_ids(&self) -> bool {
+        self.identity.stable()
+    }
+
+    /// Every rule in this set as a position-free [`PolicyRef`](crate::PolicyRef)
+    /// (its emitted policy id and its revision), in rule order — the same order
+    /// as [`rules`](LoweredPolicySet::rules).
+    pub fn policy_refs(&self) -> impl Iterator<Item = crate::PolicyRef> + '_ {
+        self.lowered
+            .rule_ids
+            .iter()
+            .enumerate()
+            .map(|(k, id)| crate::PolicyRef::new(id.clone(), self.identity.revision(k).to_string()))
+    }
+
+    /// The [`PolicyRef`](crate::PolicyRef) of the rule emitted under
+    /// `cedar_policy_id`, or `None` if no rule in this set has that id.
+    pub fn policy_ref(&self, cedar_policy_id: &str) -> Option<crate::PolicyRef> {
+        let k = self.lowered.rule_index.get(cedar_policy_id).copied()?;
+        Some(crate::PolicyRef::new(
+            cedar_policy_id.to_string(),
+            self.identity.revision(k).to_string(),
+        ))
+    }
+
+    /// This set's version hash (see [`PolicySetVersion::hash`](crate::PolicySetVersion::hash)):
+    /// SHA-256 over the sorted `(policy id, revision)` pairs, the augmented
+    /// Cedar schema, the decision kinds and the partition keys. Computed once,
+    /// on first use.
+    pub fn version_hash(&self) -> &str {
+        self.identity.version_hash(&self.lowered)
     }
 
     /// The event kinds this policy set treats as **decision points** — the
@@ -847,9 +1255,133 @@ impl LoweredPolicySet {
         &self.lowered
     }
 
-    /// Consume into the lowered artifacts (for [`Authorizer`](crate::Authorizer)).
-    pub(crate) fn into_lowered(self) -> Lowered {
-        self.lowered
+    /// A lowered set of its artifacts and their identity (for
+    /// [`frontend::lowered_from_lean`](crate::frontend::lowered_from_lean)).
+    #[cfg(feature = "lean-frontend")]
+    pub(crate) fn from_parts(
+        lowered: Lowered,
+        identity: crate::identity::SetIdentity,
+    ) -> LoweredPolicySet {
+        LoweredPolicySet {
+            lowered: std::sync::Arc::new(lowered),
+            identity: std::sync::Arc::new(identity),
+            policy_schema: None,
+        }
+    }
+
+    /// Consume into the lowered artifacts and their identity (for
+    /// [`Authorizer`](crate::Authorizer)).
+    pub(crate) fn into_parts(
+        self,
+    ) -> (
+        std::sync::Arc<Lowered>,
+        std::sync::Arc<crate::identity::SetIdentity>,
+    ) {
+        (self.lowered, self.identity)
+    }
+}
+
+/// Resolve an [`IdSource`] against a parsed set: `None` for positional ids,
+/// otherwise one validated, unique id per policy in source order.
+pub(crate) fn assign_ids(parsed: &Parsed, source: IdSource) -> Result<Option<Vec<String>>, Error> {
+    use crate::error::{PolicyIdError, PolicyIdErrorKind as Kind, SourceLoc};
+
+    let policies = parsed.policies();
+    let loc = |k: usize| Some(SourceLoc::new(policies[k].span, parsed.dw_src().clone()));
+    let ids: Vec<String> = match source {
+        IdSource::Positional => return Ok(None),
+        IdSource::Annotation => policies
+            .iter()
+            .enumerate()
+            .map(|(k, policy)| {
+                let mut ids = policy.annotations.iter().filter(|a| a.key == "id");
+                match (ids.next(), ids.next()) {
+                    // The stable id would be one of them and Cedar's policy
+                    // would keep the last: the policy must say which.
+                    (Some(first), Some(second)) => Err(PolicyIdError::new(
+                        Kind::RepeatedAnnotation,
+                        format!(
+                            "policy {k} has a second `@id` annotation, `{}` after `{}`; \
+                             IdSource::Annotation takes a policy's id from its one `@id(\"…\")` \
+                             annotation",
+                            id_annotation_text(second),
+                            id_annotation_text(first)
+                        ),
+                        Some(k),
+                        None,
+                        loc(k),
+                    )),
+                    (
+                        Some(crate::ast::Annotation {
+                            value: Some(id), ..
+                        }),
+                        None,
+                    ) => Ok(id.clone()),
+                    _ => Err(PolicyIdError::new(
+                        Kind::Missing,
+                        format!(
+                            "policy {k} has no `@id(\"…\")` annotation, which IdSource::Annotation requires"
+                        ),
+                        Some(k),
+                        None,
+                        loc(k),
+                    )),
+                }
+            })
+            .collect::<Result<_, _>>()?,
+        IdSource::Explicit(ids) => {
+            if ids.len() != policies.len() {
+                return Err(PolicyIdError::new(
+                    Kind::CountMismatch,
+                    format!(
+                        "IdSource::Explicit gave {} ids for {} policies",
+                        ids.len(),
+                        policies.len()
+                    ),
+                    None,
+                    None,
+                    None,
+                )
+                .into());
+            }
+            ids
+        }
+    };
+
+    let mut seen: std::collections::BTreeMap<&str, usize> = std::collections::BTreeMap::new();
+    for (k, id) in ids.iter().enumerate() {
+        crate::identity::validate_policy_id(id).map_err(|reason| {
+            PolicyIdError::new(
+                Kind::Invalid,
+                format!(
+                    "invalid policy id `{}` for policy {k}: {reason}",
+                    id.escape_default()
+                ),
+                Some(k),
+                Some(id.clone()),
+                loc(k),
+            )
+        })?;
+        if let Some(first) = seen.insert(id.as_str(), k) {
+            return Err(PolicyIdError::new(
+                Kind::Duplicate,
+                format!("duplicate policy id `{id}`: policies {first} and {k} both use it"),
+                Some(k),
+                Some(id.clone()),
+                loc(k),
+            )
+            .into());
+        }
+    }
+    Ok(Some(ids))
+}
+
+/// An `@id` annotation as a message shows it: `@id("…")`, its value escaped,
+/// or `@id` without one.
+fn id_annotation_text(a: &crate::ast::Annotation) -> String {
+    match &a.value {
+        Some(v) => format!("@id(\"{}\")", v.escape_default()),
+        None => "@id".to_string(),
     }
 }
 
@@ -983,7 +1515,19 @@ when temporal {
             .expect("parses")
             .lower_with_distincter(schema, distincter)
             .expect("lowers")
-            .lowered
+            .into_parts()
+            .0
+            .pipe_unwrap()
+    }
+
+    /// The lowered set out of its `Arc` (a freshly lowered set is not shared).
+    trait PipeUnwrap {
+        fn pipe_unwrap(self) -> Lowered;
+    }
+    impl PipeUnwrap for std::sync::Arc<Lowered> {
+        fn pipe_unwrap(self) -> Lowered {
+            std::sync::Arc::try_unwrap(self).expect("a freshly lowered set is not shared")
+        }
     }
 
     /// Each Cedar policy as `(id, text)`, sorted: `PolicySet::policies()` has no
@@ -1073,6 +1617,7 @@ when temporal {
             augmented_schema: _,
             augmented_schema_fragment,
             temporal,
+            temporal_executable,
             temporal_rewritten,
             partition_keys,
             providers,
@@ -1085,7 +1630,16 @@ when temporal {
             decision_kinds,
             // The fixtures call no providers.
             enum_names: _,
-        } = merged;
+            // The fixtures read the context through its attributes.
+            context_reads: _,
+            // Derived from `rule_ids`.
+            rule_index: _,
+            // Built from the rest on first use.
+            checks: _,
+            // The Lean frontend's record: its findings, checked by validation.
+            #[cfg(feature = "lean-frontend")]
+                lean: _,
+        } = std::sync::Arc::try_unwrap(merged).expect("the merged set is not shared");
 
         assert_eq!(
             sorted_policies([&policies]),
@@ -1102,6 +1656,13 @@ when temporal {
             alone
                 .iter()
                 .flat_map(|l| l.temporal.clone())
+                .collect::<Vec<_>>()
+        );
+        assert_eq!(
+            temporal_executable,
+            alone
+                .iter()
+                .flat_map(|l| l.temporal_executable.clone())
                 .collect::<Vec<_>>()
         );
         assert_eq!(
@@ -1158,5 +1719,123 @@ when temporal {
     #[test]
     fn lower_many_is_the_standalone_union_over_a_reference_context() {
         assert_lower_many_is_the_standalone_union(BROKER_SCHEMA, &BROKER_PARTS);
+    }
+}
+
+#[cfg(test)]
+mod shared_clone_tests {
+    use super::*;
+
+    const SCHEMA: &str = r#"
+namespace Drupe {
+  type ReadInput = { user: String };
+  entity Gateway;
+  entity OAuthUser;
+  action "Login" appliesTo { principal: [OAuthUser], resource: [Gateway], context: { input: ReadInput } };
+  action "Read" appliesTo { principal: [OAuthUser], resource: [Gateway], context: { input: ReadInput } };
+}
+"#;
+
+    const POLICIES: &str = r#"
+@id("a")
+permit ( principal, action == Drupe::Action::"Read", resource )
+when temporal { formerly within 1h Drupe::Action::"Login"::request{} };
+@id("b")
+forbid ( principal == Drupe::OAuthUser::"mallory", action, resource );
+"#;
+
+    /// A clone shares the lowered set (one copy in memory), and authorizers built from the
+    /// original and the clone decide alike; a policy id maps back to its rule through the
+    /// index.
+    #[test]
+    fn clones_share_the_lowered_set() {
+        let service = ServiceSchema::defaults();
+        let schema = PolicySchema::from_cedarschema_str(SCHEMA).unwrap();
+        let set = ParsedPolicySet::parse(POLICIES, &service)
+            .unwrap()
+            .with_ids(IdSource::Annotation)
+            .unwrap()
+            .lower(&schema)
+            .unwrap();
+        let copy = set.clone();
+        assert!(std::sync::Arc::ptr_eq(&set.lowered, &copy.lowered));
+        assert!(std::sync::Arc::ptr_eq(&set.identity, &copy.identity));
+        assert_eq!(set.rule_ref("b").map(|r| r.rule_index), Some(1));
+        assert_eq!(
+            copy.policy_ref("a").map(|r| r.id().to_string()),
+            Some("a".to_string())
+        );
+        assert!(set.rule_ref("zz").is_none());
+        let mut one = crate::Authorizer::new(set);
+        let mut two = crate::Authorizer::new(copy);
+        let log = r#"@1 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"g") Drupe::Action::"Login"::request(input: { user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"g")
+@2 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"g") request_context(input: { user: "alice" }) Drupe::Action::"Read"::request(input: { user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"g")
+@3 scope(principal: Drupe::OAuthUser::"mallory", resource: Drupe::Gateway::"g") request_context(input: { user: "m" }) Drupe::Action::"Read"::request(input: { user: "m" }, callerPrincipal: Drupe::OAuthUser::"mallory", callerResource: Drupe::Gateway::"g")"#;
+        for e in crate::parse_trace(log).unwrap() {
+            let (a, b) = (one.is_authorized(&e), two.is_authorized(&e));
+            assert_eq!(
+                a.as_ref().map(|r| r.decision()),
+                b.as_ref().map(|r| r.decision())
+            );
+            assert_eq!(
+                a.as_ref().map(|r| r
+                    .diagnostics()
+                    .reason()
+                    .map(|x| x.cedar_policy_id.clone())
+                    .collect::<Vec<_>>()),
+                b.as_ref().map(|r| r
+                    .diagnostics()
+                    .reason()
+                    .map(|x| x.cedar_policy_id.clone())
+                    .collect::<Vec<_>>())
+            );
+        }
+    }
+
+    /// A lowered set keeps the policy schema it was lowered against as given, whatever its
+    /// policies; its augmented schema is not that text.
+    #[test]
+    fn the_policy_schema_is_the_one_given() {
+        let service = ServiceSchema::defaults();
+        let schema = PolicySchema::from_cedarschema_str(&format!("\u{FEFF}{SCHEMA}")).unwrap();
+        assert_eq!(schema.cedarschema_str(), SCHEMA);
+        let set = LoweredPolicySet::from_str(POLICIES, &service, &schema).unwrap();
+        let none = LoweredPolicySet::from_str("", &service, &schema).unwrap();
+        let many =
+            LoweredPolicySet::from_many_str(&[(POLICIES, "p".parse().unwrap())], &service, &schema)
+                .unwrap();
+        for s in [&set, &none, &many, &set.clone()] {
+            assert_eq!(
+                s.policy_schema().map(PolicySchema::cedarschema_str),
+                Some(SCHEMA)
+            );
+        }
+        assert_ne!(
+            set.cedar_schema_json().unwrap(),
+            none.cedar_schema_json().unwrap(),
+            "the augmented schemas differ: one holds the hoisted field"
+        );
+    }
+
+    /// The runtime conformance checks are built once per lowered set: a clone,
+    /// `check_event_conformance`, and an authorizer built from either all use
+    /// the same ones.
+    #[test]
+    fn clones_and_authorizers_share_one_set_of_runtime_checks() {
+        let service = ServiceSchema::defaults();
+        let schema = PolicySchema::from_cedarschema_str(SCHEMA).unwrap();
+        let set = LoweredPolicySet::from_str(POLICIES, &service, &schema).unwrap();
+        let copy = set.clone();
+        let event = crate::Event::builder("Drupe::Action::Login", "error").build();
+        assert!(
+            copy.check_event_conformance(&event, crate::MirrorRule::Strict)
+                .is_err()
+        );
+        let checks: *const crate::conformance::RuntimeChecks = set.lowered().runtime_checks();
+        assert!(std::ptr::eq(copy.lowered().runtime_checks(), checks));
+        let authorizer = crate::Authorizer::new(copy);
+        assert!(std::ptr::eq(authorizer.lowered().runtime_checks(), checks));
+        // `Debug` names the cache without printing the checks it holds.
+        assert!(format!("{set:?}").contains("checks: RuntimeChecksCache"));
     }
 }

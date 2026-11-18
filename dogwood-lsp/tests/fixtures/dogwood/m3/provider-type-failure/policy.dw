@@ -1,0 +1,3 @@
+permit (principal, action == App::Action::"Read", resource) when guardrails {
+  Strings::Matches(context.input.document, 42).matched == true
+};

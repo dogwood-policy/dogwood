@@ -155,6 +155,8 @@ impl ProviderDeclarations {
     /// which covers declarations built directly in code. All problems are
     /// reported, one per line.
     pub fn check(&self) -> Result<(), String> {
+        #[cfg(test)]
+        crate::api::stage_probe::enter("providerCheck");
         let mut errors: Vec<String> = Vec::new();
         let provider_namespaces: BTreeSet<&str> = self
             .available
@@ -620,6 +622,13 @@ impl ParamType {
                     } else {
                         "?"
                     };
+                    // A name that is not an identifier is written as a string,
+                    // as Cedar's own schema printer writes it.
+                    let name = if cedar_policy_core::ast::is_normalized_ident(name) {
+                        name.clone()
+                    } else {
+                        format!("\"{}\"", name.escape_debug())
+                    };
                     attrs.push(format!("{name}{opt}: {}", ty.to_cedar_type_with(names)));
                 }
                 format!("{{ {} }}", attrs.join(", "))
@@ -767,8 +776,14 @@ mod tests {
 
     #[test]
     fn exported_names_replace_each_namespace_separator() {
-        assert_eq!(exported_enum_basename("GuardDuty::Severity"), "GuardDuty_Severity");
-        assert_eq!(exported_enum_basename("Acme::Guard::Score"), "Acme_Guard_Score");
+        assert_eq!(
+            exported_enum_basename("GuardDuty::Severity"),
+            "GuardDuty_Severity"
+        );
+        assert_eq!(
+            exported_enum_basename("Acme::Guard::Score"),
+            "Acme_Guard_Score"
+        );
     }
 
     #[test]

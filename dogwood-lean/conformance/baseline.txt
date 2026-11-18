@@ -1,0 +1,42 @@
+# The disagreements between the crate and the specification that conformance/run.sh expects.
+# Each line is `<group> | <bundle> | <key>`; the run fails on a disagreement this file does not
+# list. Regenerate the list with `lake exe conformance --write-baseline FILE …` and review the
+# difference. The sections below say why each kind of disagreement is expected;
+# `conformance/README.md` ("Validator and runtime gaps") discusses them.
+
+# An invocation of an undeclared provider or method: the crate also reports a Cedar finding
+# against the field it hoisted for it; the specification reports the provider finding alone.
+ExpectedFailures | corpus/2085_provider_undeclared | validation cedar: crate only
+ExpectedFailures | corpus/2088_provider_method_undeclared | validation cedar: crate only
+
+# A trace whose recorded times do not strictly increase. The specification decides over the trace
+# its authorizer stamps: each event at its clock reading, or one tick after the last stamp. The
+# crate takes the times as given. In `decreasing_timestamp_read`, a `Read` recorded before the
+# `Login` response is stamped one tick after it, so the specification allows the `Read`; the crate
+# sees the response in the future, and denies.
+Probes | probes/decreasing_timestamp_read | stamping: trace.log@2
+# The same, on a trace with an event ingestion rejects: the decision stamping changes is reported
+# once, as stamping.
+Probes | probes/runtime_stamped_ingestion_change | stamping: trace.log@2
+
+# A rule whose scope holds has a temporal leaf that reads an attribute of a scope entity the event
+# does not supply. The specification fails the decision closed (`FailClosed.missingScopeEntity`);
+# the crate adds a bare entity, so the attribute does not resolve, and a comparison with it is
+# false and its negation true. On the outcome with the data supplied, the two agree.
+Arithmetic | corpus/6007_arith_unresolved_attr_fail_closed | runtime: missing scope entity
+Probes | probes/runtime_missing_scope_entity | runtime: missing scope entity
+# The same, where the rule's Cedar part errs on the bare entity, so that the crate's diagnostics
+# report an error, and another rule allows: the crate decided.
+Probes | probes/runtime_erring_rule_missing_scope_entity | runtime: missing scope entity
+
+# The Cedar part of a rule reads the name lowering gives the rule's own temporal leaf. The crate
+# records the read as it lowers the authored rule, and rejects it (context reads). The bridge
+# translates the lowered rule, where the author's read is the reference to the leaf, so the
+# specification sees the leaf read twice, and accepts. (The frontend harness's `validate` check
+# compares the crate's validator with its Lean port on the crate's own expanded rules, and agrees.)
+Probes | probes/validation_context_read_own_leaf_name | validation context reads: crate only
+
+# An optional attribute of one of Cedar's extension types other than `decimal`, read in a temporal
+# leaf with no `has` test. Both reject it. The specification types the path through its guard, so
+# it reports the optional attribute alone; the crate reports that and the unsupported type.
+Probes | probes/validation_datetime_optional_unguarded | validation extension types: crate only

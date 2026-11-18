@@ -69,6 +69,8 @@ use dogwood_language::{LoweredPolicySet, PolicySchema, ServiceSchema, Validator}
 /// - `Orphan` is a group type no entity declares membership in, so a scope `in Orphan::"o1"`
 ///   narrows to nothing at all.
 /// - `Hue` is an enum entity type, which declares no attributes.
+/// - `rank` is `Long` on `Staff` and `String` on `Partner`, so on `Peek` it has a different
+///   type in each request environment.
 /// - The context has groups OTHER than `input`: `system.seq` is `Long` on `Meter` and
 ///   `String` on `Peek`, `system.now` is `String` on both, and `meta` exists only on
 ///   `Meter`. Nothing in the type path may treat `input` specially.
@@ -84,9 +86,9 @@ const SCHEMA: &str = r#"namespace W {
   entity Orphan;
   entity Hue enum ["red", "green"];
 
-  entity Staff   in [Team] = { id: String, tier: Long, dept: String };
+  entity Staff   in [Team] = { id: String, tier: Long, dept: String, rank: Long };
   entity Bot     in [Team] = { id: String, tier: Long, dept: String };
-  entity Partner           = { id: String, dept: String };
+  entity Partner           = { id: String, dept: String, rank: String };
 
   entity Gateway in [Zone] = { id: String, region: String, capacity: Long };
   entity Kiosk             = { id: String, region: String };
@@ -159,8 +161,11 @@ mod says {
     pub const CEDAR_NO_ATTRIBUTE: &str = "not found";
     /// Temporal dialect, comparing two operands of different types.
     pub const TEMPORAL_TYPE_MISMATCH: &str = "same type";
-    /// Cedar, on a scope no request environment can satisfy. Cedar treats this as a hard
-    /// ERROR, not a warning — measured, having first assumed otherwise.
+    /// Temporal dialect, a predicate argument of a type its field cannot hold.
+    pub const TEMPORAL_ARG_MISMATCH: &str = "expects";
+    /// Cedar, on a scope no request environment can satisfy. Cedar 4.11 treated this as a hard
+    /// ERROR, not a warning — measured, having first assumed otherwise. Cedar 4.14 warns;
+    /// Dogwood promotes it back to an error.
     pub const CEDAR_NO_APPLICABLE_ACTION: &str = "unable to find an applicable action";
 }
 
@@ -220,6 +225,43 @@ fn temporal(scope: &str, body: &str) -> String {
         "permit ({scope})\nwhen temporal {{ formerly within 1h \
          (W::Action::\"Meter\"::request{{}} && {body}) }};"
     )
+}
+
+/// The request environments of a rule are visited in the order of their types'
+/// names, so that a finding naming the environment it fails in names the same one
+/// on every run: the schema's applies-to sets are hash sets, whose order varies
+/// from run to run. With ten principal types, an unsorted order is the sorted one
+/// once in 3,628,800 runs.
+#[test]
+fn request_environments_are_visited_in_the_order_of_their_names() {
+    let names = ["P9", "P3", "P0", "P7", "P1", "P5", "P2", "P8", "P4", "P6"];
+    let schema_src = format!(
+        "namespace V {{\n{}  entity Gate;\n  action \"Peek\" appliesTo {{\n    principal: [{}],\n    \
+         resource: [Gate],\n    context: {{ input: {{ n: Long }} }}\n  }};\n}}\n",
+        names.iter().map(|n| format!("  entity {n};\n")).collect::<String>(),
+        names.join(", ")
+    );
+    let src = "permit (principal, action == V::Action::\"Peek\", resource)\n\
+               when temporal { formerly within 1h (V::Action::\"Peek\"::request{} && principal == 5) };";
+    let service = ServiceSchema::builder()
+        .event_schema_str(EVENT_SCHEMA)
+        .build()
+        .expect("event schema builds");
+    let schema = PolicySchema::from_cedarschema_str(&schema_src).expect("schema builds");
+    let lowered = LoweredPolicySet::from_str(src, &service, &schema).expect("lowers");
+    let found: Vec<String> = Validator::new()
+        .validate(&lowered)
+        .validation_errors()
+        .map(|e| format!("{e}"))
+        .filter(|e| e.contains("same type"))
+        .collect();
+    let mut sorted = names;
+    sorted.sort();
+    let expected: Vec<String> = sorted
+        .iter()
+        .map(|n| format!("equality requires both sides to have the same type, got `V::{n}` and `int`"))
+        .collect();
+    assert_eq!(found, expected);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -656,10 +698,10 @@ fn temporal_attribute_on_no_type() {
     );
 }
 
-// ── 14. The entity-reference projections are strings ──────────────────────
+// ── 14. A declared `id` attribute has its declared type ───────────────────
 
 #[test]
-fn cedar_witness_id_projection_is_a_string() {
+fn cedar_witness_declared_id_is_a_string() {
     assert_rejects(
         "cedar: principal.id compared to an int",
         says::CEDAR_TYPE_MISMATCH,
@@ -671,7 +713,7 @@ fn cedar_witness_id_projection_is_a_string() {
 }
 
 #[test]
-fn temporal_id_projection_is_a_string() {
+fn temporal_declared_id_is_a_string() {
     assert_rejects(
         "temporal: principal.id compared to an int",
         says::TEMPORAL_TYPE_MISMATCH,
@@ -789,9 +831,10 @@ fn temporal_principal_is_in_narrowed_then_type_checked() {
 }
 
 // `is Partner in Team` is UNSATISFIABLE: `Partner` is not declared a member of `Team`, so
-// no request environment matches the scope at all. Cedar reports that as a hard ERROR
+// no request environment matches the scope at all. Cedar 4.11 reported that as a hard ERROR
 // ("unable to find an applicable action given the policy scope constraints") rather than a
-// warning — measured, having first expected an attribute error, then a clean pass.
+// warning — measured, having first expected an attribute error, then a clean pass. Cedar
+// 4.14 warns instead; Dogwood promotes it back to an error.
 //
 // This is the case the design leans on: when no environment remains, the temporal validator
 // stays SILENT and lets Cedar own the diagnostic. The policy is still rejected, so silence
@@ -817,6 +860,61 @@ fn temporal_principal_is_in_unsatisfiable_scope() {
             r#"principal is W::Partner in W::Team::"t1", action == W::Action::"Peek", resource"#,
             "principal.tier > 0",
         ),
+    );
+}
+
+// Regression for the Cedar 4.14 promotion: a plain Cedar policy with an impossible scope
+// (`Meter` admits only `Staff`) must yield exactly one error and no duplicate warning.
+#[test]
+fn cedar_no_applicable_action_is_an_error_not_a_warning() {
+    use dogwood_language::ValidationError;
+
+    let src = cedar(
+        r#"principal is W::Partner, action == W::Action::"Meter", resource"#,
+        "true",
+    );
+    let service = ServiceSchema::builder()
+        .event_schema_str(EVENT_SCHEMA)
+        .build()
+        .expect("event schema builds");
+    let schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("schema builds");
+    let lowered = LoweredPolicySet::from_str(&src, &service, &schema).expect("policy lowers");
+    let result = Validator::new().validate(&lowered);
+
+    assert!(
+        !result.validation_passed(),
+        "an impossible action scope must fail validation\n--- policy ---\n{src}"
+    );
+
+    // Exactly one error carries the diagnostic, and it is Cedar's (not a dialect's).
+    let matching: Vec<&ValidationError> = result
+        .validation_errors()
+        .filter(|e| e.to_string().contains(says::CEDAR_NO_APPLICABLE_ACTION))
+        .collect();
+    assert_eq!(
+        matching.len(),
+        1,
+        "expected exactly one no-applicable-action error, got: {:?}",
+        result
+            .validation_errors()
+            .map(ToString::to_string)
+            .collect::<Vec<_>>()
+    );
+    assert!(
+        matches!(matching[0], ValidationError::Cedar { .. }),
+        "the promoted diagnostic must be a Cedar error: {:?}",
+        matching[0]
+    );
+
+    // ...and it is NOT also passed through on the warning channel (Cedar's or a dialect's).
+    let duplicated: Vec<String> = result
+        .validation_warnings()
+        .map(ToString::to_string)
+        .filter(|w| w.contains(says::CEDAR_NO_APPLICABLE_ACTION))
+        .collect();
+    assert!(
+        duplicated.is_empty(),
+        "the promoted diagnostic must not also be reported as a warning: {duplicated:?}"
     );
 }
 
@@ -1460,12 +1558,15 @@ fn temporal_narrowed_entity_root_against_a_string_is_rejected() {
     );
 }
 
-// The control: entity against entity stays accepted whatever the arity, per the
-// decision that a cross-type entity comparison is well-typed.
+// The control: entity against entity is well-typed whatever the arity, per the
+// decision that a cross-type entity comparison is well-typed. In the Cedar part the
+// comparison is always false, so Cedar finds the policy impossible, which validation
+// reports as an error; the temporal side has no such analysis.
 #[test]
-fn cedar_witness_entity_root_against_an_entity_is_accepted() {
-    assert_accepts(
+fn cedar_witness_entity_root_against_an_entity_is_impossible() {
+    assert_rejects(
         "cedar: bare principal on Peek compared to a Gateway",
+        "policy is impossible",
         &cedar(
             r#"principal, action == W::Action::"Peek", resource"#,
             r#"principal == W::Gateway::"gw""#,
@@ -1506,10 +1607,10 @@ fn temporal_entity_root_against_an_entity_is_accepted() {
 // narrowed case would silently pass, which is what these tests pin: a mutation that
 // ignores the narrowing survives the rest of the suite.
 //
-// KNOWN GAP, deliberately not asserted here: with SEVERAL types permitted and no
-// narrowing, the root types untagged and `param_accepts` lets it through, so the dead
-// pattern is accepted. Cedar still warns there. Closing it means consulting the candidate
-// set instead of accepting any untagged operand.
+// With SEVERAL types permitted and no narrowing, the condition is checked once per
+// request environment, with the root typed as that environment's principal type, so the
+// dead pattern is rejected too (it used to type as an untagged entity, which
+// `param_accepts` let through).
 
 #[test]
 fn cedar_witness_manager_field_against_principal_is_flagged() {
@@ -1525,14 +1626,19 @@ fn cedar_witness_manager_field_against_principal_is_flagged() {
     let schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("schema builds");
     let lowered = LoweredPolicySet::from_str(&src, &service, &schema).expect("lowers");
     let result = Validator::new().validate(&lowered);
-    assert_eq!(
-        result.validation_errors().count(),
-        0,
-        "Cedar treats an entity-to-entity comparison as well-typed"
-    );
+    let errors: Vec<String> = result
+        .validation_errors()
+        .map(|e| e.to_string())
+        .collect();
     assert!(
-        result.validation_warnings().count() > 0,
-        "but Cedar DOES flag it as an impossible policy — a Manager is never a Staff"
+        errors.iter().all(|e| e.contains("policy is impossible")),
+        "Cedar treats an entity-to-entity comparison as well-typed: {errors:?}"
+    );
+    assert_eq!(
+        errors.len(),
+        1,
+        "but Cedar flags it as an impossible policy — a Manager is never a Staff — \
+         which validation reports as an error"
     );
 }
 
@@ -1542,8 +1648,19 @@ fn temporal_scope_root_as_pattern_argument_is_rejected_when_typed() {
     // a field declared `W::Manager`.
     assert_rejects(
         "temporal: input.owner: principal under a single-principal-type action",
-        "expects `Manager`",
+        "expects `W::Manager`",
         &temporal_pattern_on("Meter", "input.owner: principal"),
+    );
+}
+
+#[test]
+fn temporal_scope_root_as_pattern_argument_is_rejected_in_each_environment() {
+    // Two permitted types, no narrowing: each request environment types the root as
+    // its own principal type, and neither is a `W::Manager`.
+    assert_rejects(
+        "temporal: input.owner: principal under a two-type action",
+        "expects `W::Manager`",
+        &temporal_pattern_on("Team", "input.owner: principal"),
     );
 }
 
@@ -1555,11 +1672,148 @@ fn temporal_scope_root_as_pattern_argument_honours_narrowing() {
         "temporal: input.owner: principal under `principal is W::Staff` on a two-type action",
         // Needle names the TYPE mismatch, not merely the field: `Team` declares `owner`,
         // so a path error cannot satisfy this.
-        "expects `Manager`",
-        &format!(
-            "permit (principal is W::Staff, action == W::Action::\"Team\", resource)\n\
-             when temporal {{ formerly within 1h \
-             (W::Action::\"Team\"::request{{ input.owner: principal }}) }};"
+        "expects `W::Manager`",
+        "permit (principal is W::Staff, action == W::Action::\"Team\", resource)\n\
+         when temporal { formerly within 1h \
+         (W::Action::\"Team\"::request{ input.owner: principal }) };",
+    );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// An attribute typed differently on each permitted type
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── 18. `rank` is `Long` on Staff and `String` on Partner ─────────────────
+// `Peek` admits both. Cedar types the condition once per request environment, so a use
+// that is well typed in each (`principal.rank == principal.rank`) is accepted, and one
+// that is wrong in one of them (`principal.rank == 5`, a `String` against a `Long` for a
+// Partner) is rejected. Narrowing to one type makes the comparison right for it.
+
+#[test]
+fn cedar_witness_attribute_typed_per_environment_accepted() {
+    assert_accepts(
+        "cedar: rank compared with itself on Peek",
+        &cedar(
+            r#"principal, action == W::Action::"Peek", resource"#,
+            "principal.rank == principal.rank",
         ),
+    );
+}
+
+#[test]
+fn temporal_attribute_typed_per_environment_accepted() {
+    assert_accepts(
+        "temporal: rank compared with itself on Peek",
+        &temporal(
+            r#"principal, action == W::Action::"Peek", resource"#,
+            "principal.rank == principal.rank",
+        ),
+    );
+}
+
+#[test]
+fn cedar_witness_attribute_typed_per_environment_wrong_in_one() {
+    for body in ["principal.rank == 5", r#"principal.rank == "x""#] {
+        assert_rejects(
+            "cedar: rank compared with one type on Peek",
+            says::CEDAR_TYPE_MISMATCH,
+            &cedar(r#"principal, action == W::Action::"Peek", resource"#, body),
+        );
+    }
+}
+
+#[test]
+fn temporal_attribute_typed_per_environment_wrong_in_one() {
+    for body in ["principal.rank == 5", r#"principal.rank == "x""#] {
+        assert_rejects(
+            "temporal: rank compared with one type on Peek",
+            says::TEMPORAL_TYPE_MISMATCH,
+            &temporal(r#"principal, action == W::Action::"Peek", resource"#, body),
+        );
+    }
+}
+
+#[test]
+fn cedar_witness_attribute_typed_per_environment_narrowed() {
+    assert_accepts(
+        "cedar: rank on Peek narrowed to Staff",
+        &cedar(
+            r#"principal is W::Staff, action == W::Action::"Peek", resource"#,
+            "principal.rank == 5",
+        ),
+    );
+}
+
+#[test]
+fn temporal_attribute_typed_per_environment_narrowed() {
+    assert_accepts(
+        "temporal: rank on Peek narrowed to Staff",
+        &temporal(
+            r#"principal is W::Staff, action == W::Action::"Peek", resource"#,
+            "principal.rank == 5",
+        ),
+    );
+}
+
+// Discriminating negative: narrowed to Staff, `rank` is a `Long`, so a `String` is wrong.
+
+#[test]
+fn cedar_witness_attribute_typed_per_environment_narrowed_then_type_checked() {
+    assert_rejects(
+        "cedar: rank on Peek narrowed to Staff, compared with a String",
+        says::CEDAR_TYPE_MISMATCH,
+        &cedar(
+            r#"principal is W::Staff, action == W::Action::"Peek", resource"#,
+            r#"principal.rank == "x""#,
+        ),
+    );
+}
+
+#[test]
+fn temporal_attribute_typed_per_environment_narrowed_then_type_checked() {
+    assert_rejects(
+        "temporal: rank on Peek narrowed to Staff, compared with a String",
+        says::TEMPORAL_TYPE_MISMATCH,
+        &temporal(
+            r#"principal is W::Staff, action == W::Action::"Peek", resource"#,
+            r#"principal.rank == "x""#,
+        ),
+    );
+}
+
+#[test]
+fn cedar_witness_attribute_typed_per_environment_against_a_field() {
+    assert_rejects(
+        "cedar: rank against a String field on Peek",
+        says::CEDAR_TYPE_MISMATCH,
+        &cedar(
+            r#"principal, action == W::Action::"Peek", resource"#,
+            "context.input.tag == principal.rank",
+        ),
+    );
+}
+
+#[test]
+fn temporal_attribute_typed_per_environment_against_a_field() {
+    assert_rejects(
+        "temporal: rank against a String field on Peek",
+        says::TEMPORAL_TYPE_MISMATCH,
+        &temporal(
+            r#"principal, action == W::Action::"Peek", resource"#,
+            "context.input.tag == principal.rank",
+        ),
+    );
+}
+
+#[test]
+fn temporal_attribute_typed_per_environment_as_an_argument() {
+    // A predicate argument of a `String` field: wrong for a Staff, whose rank is a `Long`.
+    let src = "permit (principal, action == W::Action::\"Peek\", resource)\n\
+               when temporal { formerly within 1h \
+               (W::Action::\"Peek\"::request{ input.tag: principal.rank }) };";
+    assert_rejects(
+        "temporal: rank as an argument of a String field on Peek",
+        says::TEMPORAL_ARG_MISMATCH,
+        src,
     );
 }

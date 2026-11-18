@@ -1,0 +1,13 @@
+// Three scope-less `Read` requests log alice as their caller, ahead of alice's own `Read`. Under
+// the strict mirror rule ingestion rejects them, so alice's first request is under her limit, and
+// the specification allows it. Under its default rule, `MirrorRule::Strict`, the crate fails each
+// forged request closed and does not record it, so it allows her request too. Under the opt-out
+// `MirrorRule::Current`, which accepts any logged caller when the request side does not resolve,
+// it would record them in alice's history and deny her request.
+@id("read")
+permit (principal, action == Drupe::Action::"Read", resource);
+@id("read_rate_limit")
+forbid (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    (count for (t: Timepoint). where formerly within 1h (Drupe::Action::"Read"::request{} && tp(t))) > 2
+};

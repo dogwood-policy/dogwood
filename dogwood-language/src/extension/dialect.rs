@@ -28,12 +28,18 @@ pub enum Rendered {
 ///   typed schema info derives it from `schema.as_ref()`, a `ValidatorSchema`,
 ///   rather than re-parsing a source string),
 /// - the derived event schema (the temporal dialect checks predicate event /
-///   field names against it), and
-/// - the `.dw` source, so a rendered finding can embed it and self-render.
+///   field names against it),
+/// - the `.dw` source, so a rendered finding can embed it and self-render, and
+/// - the facts each temporal leaf's position in its rule establishes, which
+///   guard its reads of optional attributes.
 pub struct ValidationCtx<'a> {
     pub schema: &'a cedar_policy::Schema,
     pub event_schema: &'a crate::event_schema::derive::DerivedEventSchema,
     pub dw_src: &'a std::sync::Arc<str>,
+    /// The facts each hoisted temporal leaf's position establishes, by leaf id
+    /// (`crate::extension::temporal::facts`).
+    pub leaf_facts:
+        &'a std::collections::BTreeMap<String, Vec<crate::extension::temporal::facts::Guard>>,
 }
 
 /// A Dogwood sublanguage dialect's validation contract. Implemented once per
@@ -164,6 +170,7 @@ mod tests {
         crate::event_schema::derive::DerivedEventSchema {
             events: Vec::new(),
             max_window: crate::event_schema::derive::DEFAULT_MAX_WINDOW,
+            max_horizon: None,
         }
     }
 
@@ -182,10 +189,12 @@ mod tests {
         let schema = empty_schema();
         let event_schema = empty_event_schema();
         let src: std::sync::Arc<str> = std::sync::Arc::from("");
+        let facts = Default::default();
         let ctx = ValidationCtx {
             schema: &schema,
             event_schema: &event_schema,
             dw_src: &src,
+            leaf_facts: &facts,
         };
 
         let (errors, warnings) = ToyDialect.run(&leaves, &ctx);
@@ -207,10 +216,12 @@ mod tests {
         let schema = empty_schema();
         let event_schema = empty_event_schema();
         let src: std::sync::Arc<str> = std::sync::Arc::from("");
+        let facts = Default::default();
         let ctx = ValidationCtx {
             schema: &schema,
             event_schema: &event_schema,
             dw_src: &src,
+            leaf_facts: &facts,
         };
 
         let (errors, warnings) = ToyDialect.run(&[], &ctx);

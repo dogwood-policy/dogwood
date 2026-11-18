@@ -2,9 +2,10 @@ name: Publish to crates.io
 
 # Manual GitHub Action to publish the Dogwood language crates to crates.io.
 #
-# Publishes four crates in dependency order: dogwood-syntax, then
+# Publishes five crates in dependency order: dogwood-syntax, then
 # dogwood-language and dogwood-formatter (both depend on syntax), then
-# dogwood-cli (depends on language + formatter). dogwood-docs is publish = false
+# dogwood-ops (depends on language), then dogwood-cli (depends on language,
+# formatter and ops). dogwood-docs is publish = false
 # and is never uploaded.
 #
 # This workflow is branch-agnostic: it names crates, never versions. The version
@@ -67,7 +68,7 @@ jobs:
 
       # Verify each publishable crate packages cleanly from a clean tarball —
       # catches a file that `exclude` drops but the build needs. One command for
-      # all four: cargo packages them in dependency order and verifies each
+      # all five: cargo packages them in dependency order and verifies each
       # against the others' new tarballs. Separate dry runs would resolve
       # dogwood-language's `dogwood-syntax = "^X.Y.Z"` against crates.io, where
       # the new version is not yet, and fail on every version bump. `-p` names
@@ -81,6 +82,7 @@ jobs:
             -p dogwood-syntax \
             -p dogwood-language \
             -p dogwood-formatter \
+            -p dogwood-ops \
             -p dogwood-cli
 
       # Pinned to a commit SHA rather than a mutable tag or branch; the action
@@ -111,6 +113,12 @@ jobs:
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
 
+      - name: Publish dogwood-ops
+        if: ${{ !inputs.dry_run }}
+        run: cargo publish -p dogwood-ops
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+
       - name: Publish dogwood-cli
         if: ${{ !inputs.dry_run }}
         id: publish_cli
@@ -124,6 +132,6 @@ jobs:
           if [ "${{ inputs.dry_run }}" = "true" ]; then
             echo "Dry run only — nothing was uploaded to crates.io."
           else
-            echo "Publish attempted for dogwood-syntax, dogwood-language, dogwood-formatter, dogwood-cli."
+            echo "Publish attempted for dogwood-syntax, dogwood-language, dogwood-formatter, dogwood-ops, dogwood-cli."
             echo "Check the per-crate step outcomes above; publishing stops at the first failure."
           fi >> "$GITHUB_STEP_SUMMARY"

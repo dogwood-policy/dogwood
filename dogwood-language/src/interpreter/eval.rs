@@ -611,13 +611,16 @@ fn match_predicate(trace: &Trace, i: usize, env: &Env, p: &Predicate) -> Option<
 /// Match a list of named args against an event's fields. An arg whose
 /// term is an unbound variable binds that variable to the field value;
 /// otherwise the resolved term must equal the field value. A `*`
-/// wildcard matches anything.
+/// wildcard matches any present value.
+///
+/// A logged `null` is an absent field (the specification has no null), so it
+/// matches no argument: not a wildcard, not a variable, not a value.
 fn match_args(env: &Env, event: &super::value::EventData, args: &[NamedArg]) -> Option<Env> {
     let mut bindings = Env::new();
     for arg in args {
         // The field name is a dotted path (`input.user`); descend nested
         // event records. A bare name is a single-segment path.
-        let field_val = event.field_path(&arg.field_path())?;
+        let field_val = event.logged_value(&arg.field_path())?;
         match &arg.value {
             Term::Wildcard => {}
             Term::Var(name) => {
@@ -724,7 +727,7 @@ fn resolve_term(env: &Env, term: &Term) -> Option<Value> {
         // ordinary context field named `principal` / `resource` (as in Cedar),
         // resolving only if the context actually carries it. The scope
         // entities are [`Term::ScopeField`].
-        Term::ContextField(path) => env.get(&format!("context.{}", path.join("."))).cloned(),
+        Term::ContextField(path) => env.get(&context_env_key(path)).cloned(),
         // `principal` / `resource` (± attribute tail): the request scope
         // entity or one of its attributes, seeded into the env by
         // [`request_env`] under an `@`-prefixed dotted key (`@principal.dept`).
@@ -756,12 +759,16 @@ fn resolve_term(env: &Env, term: &Term) -> Option<Value> {
 /// live here, both anchored to the **current request**:
 ///
 ///   * **context fields** — every member of the request `context` record,
-///     keyed by its full dotted path (a nested `input: { user }` seeds
-///     `input.user`), so a `context.input.user` term resolves to `input.user`.
+///     keyed by the text of its full path (a nested `input: { user }` seeds
+///     `context.input.user`), so a `context.input.user` term resolves to
+///     `input.user`. The text escapes each segment (`crate::field_path`), so a
+///     member whose name holds a `.` (`input["user.id"]`, key
+///     `context.input.user\.id`) never shares a key with a nested path
+///     (`input.user.id`, key `context.input.user.id`).
 ///   * **scope fields** — the request scope's principal / resource, keyed by
 ///     `principal` / `resource` (the bare entity) plus every supplied entity
-///     attribute under `principal.<attr>` / `resource.<attr>` (and the
-///     `.id` / `.type` uid projections), so a `principal.dept` term resolves.
+///     attribute under `principal.<attr>` / `resource.<attr>`, so a
+///     `principal.dept` term resolves.
 ///
 /// A temporal formula's `context.<path>` / `principal.<attr>` / `resource.<attr>`
 /// references **the current request** — the exact same values the Cedar request
@@ -781,14 +788,14 @@ pub fn request_env(trace: &Trace, i: usize) -> Env {
     for (k, v) in &event.request_context {
         // Seed context members under a `context.`-headed key
         // (`context.input`, `context.input.user`). The `context.` head keeps
-        // the context namespace disjoint from variable bindings: a
-        // `context_field` path always carries at least one dot (grammar:
-        // `"context" ~ ("." ~ ident)+`) and an `ident` never contains a dot,
-        // so a full-path context key can never equal a bare variable name.
+        // the context namespace disjoint from variable bindings: a context
+        // key always carries the dot after `context` and an `ident` never
+        // contains a dot, so a full-path context key can never equal a bare
+        // variable name.
         // This is what lets `exists`/`for` binders shed their name from the
         // env (see the `Exists` / `eval_agg_expr` arms) without stranding a
         // same-named `context.<name>` reference in the body.
-        seed_env(&mut env, &format!("context.{k}"), v);
+        seed_env(&mut env, &context_env_key(std::slice::from_ref(k)), v);
     }
     let scope = trace.scope(i);
     if let Some(p) = &scope.principal {
@@ -804,10 +811,9 @@ pub fn request_env(trace: &Trace, i: usize) -> Env {
 /// `root` (`"principal"` / `"resource"`). The bare `root` key holds the entity
 /// itself (for an identity comparison); each supplied attribute of the entity's
 /// uid is seeded under `root.<attr>` (nested records flattened into dotted keys,
-/// like [`seed_env`]); and the `.id` / `.type` uid projections are seeded unless
-/// a supplied attribute already occupies that key. This mirrors the provider-arg
-/// resolver `resolve_scope_path` (in `api.rs`): a supplied attribute wins,
-/// `.id` / `.type` fall back to the uid, and a deeper path descends — so
+/// like [`seed_env`]). `id` and `type` are attributes like any other, as in
+/// Cedar. This mirrors the provider-arg resolver `resolve_scope_path` (in
+/// `api.rs`): a path reads the supplied attributes and descends — so
 /// `principal.dept` resolves for a temporal formula exactly as it does for a
 /// provider argument and a pure-Cedar `when`.
 fn seed_scope_env(env: &mut Env, root: &str, entity: &Value, event: &super::value::EventData) {
@@ -822,7 +828,7 @@ fn seed_scope_env(env: &mut Env, root: &str, entity: &Value, event: &super::valu
     if let Some(rec) = event.entities.get(&uid) {
         for (attr, value) in &rec.attrs {
             // Seed each supplied attribute under `@<root>.<attr>` (nested
-            // records flattened by `seed_env`, which appends `.` segments).
+            // records flattened by `seed_env`, which appends escaped segments).
             seed_env(
                 env,
                 &scope_env_key(&[root.to_string(), attr.clone()]),
@@ -830,36 +836,46 @@ fn seed_scope_env(env: &mut Env, root: &str, entity: &Value, event: &super::valu
             );
         }
     }
-    // `.id` / `.type` project the uid via the shared resolver, unless a supplied
-    // attribute of that name already took the key (a supplied attribute wins —
-    // the resolver checks supplied attrs first, and `seed_env` above already
-    // wrote those keys, so `or_insert` only fills a genuinely-absent projection).
-    for name in ["id", "type"] {
-        let key = scope_env_key(&[root.to_string(), name.to_string()]);
-        if let Some(v) = event.resolve_entity_attr(ty, id, &[name.to_string()]) {
-            env.entry(key).or_insert(v);
-        }
-    }
 }
 
 /// The env binding key for a scope path (`["principal", "dept"]`). Prefixed
-/// with `@` so the scope namespace cannot collide with a context field: the
-/// `@` character never appears in a Dogwood identifier, so `@principal.dept`
-/// is disjoint from every `context.<path>` key (which are bare dotted
-/// identifiers). This is the same reserved-prefix trick the pre-Cedar-parity
-/// code used for the scope aliases, generalized to carry an attribute tail.
+/// with `@` so the scope namespace cannot collide with a context field: every
+/// context key starts with `context.`, so `@principal.dept` is disjoint from
+/// every `context.<path>` key. This is the same reserved-prefix trick the
+/// pre-Cedar-parity code used for the scope aliases, generalized to carry an
+/// attribute tail. The path is written as its escaped text
+/// (`crate::field_path`), so an attribute whose name holds a `.` keeps a key of
+/// its own.
 fn scope_env_key(path: &[String]) -> String {
-    format!("@{}", path.join("."))
+    format!("@{}", crate::field_path::join(path))
+}
+
+/// The env binding key for a context path (`["input", "user"]` →
+/// `context.input.user`): `context`, then the path's escaped segments
+/// (`crate::field_path`), all joined by `.`.
+fn context_env_key(path: &[String]) -> String {
+    crate::field_path::join_under("context", path)
 }
 
 /// Seed the request env with a field, flattening nested records into
-/// dotted-path keys. `input: { user, server }` seeds `input.user` and
+/// path-text keys. `input: { user, server }` seeds `input.user` and
 /// `input.server` (plus `input` itself, so a whole-group reference still
-/// resolves). A scalar seeds just its key.
+/// resolves). A scalar seeds just its key. Each member's name is appended as
+/// an escaped segment (`crate::field_path::push_segment`), so a member named
+/// `user.id` and a member `id` of a member `user` seed different keys.
+///
+/// A [`Value::Null`] is an absent value (the specification has no null), so
+/// it seeds nothing: a `context.<path>` or `principal.<attr>` reference to it
+/// does not resolve, exactly as for a member that is not there.
 fn seed_env(env: &mut Env, key: &str, value: &Value) {
+    if value.is_null() {
+        return;
+    }
     if let Value::Object(members) = value {
         for (k, v) in members {
-            seed_env(env, &format!("{key}.{k}"), v);
+            let mut member_key = key.to_string();
+            crate::field_path::push_segment(&mut member_key, k);
+            seed_env(env, &member_key, v);
         }
     }
     env.insert(key.to_string(), value.clone());
@@ -1661,10 +1677,8 @@ mod tests {
         let mut event = ev("Read", input);
         event.entities = entities;
         // Mirror the scope principal into `logged["callerPrincipal"]`, exactly
-        // as `EventBuilder::principal` / the `.log` scope envelope do — the
-        // provider-arg resolver reads the scope-entity uid from there, so a
-        // well-formed event keeps `scope.principal` and that logged alias in
-        // sync.
+        // as `EventBuilder::principal` / the `.log` scope envelope do, so the
+        // event conforms like one they build.
         event
             .logged
             .insert("callerPrincipal".to_string(), principal.clone());
@@ -1735,17 +1749,17 @@ mod tests {
     }
 
     #[test]
-    fn temporal_scope_id_and_type_fall_back_to_uid() {
-        // With no supplied attributes, `.id` / `.type` project the uid — the
-        // fallback branch (guards identity-only traces).
+    fn temporal_scope_id_and_type_have_no_uid_fallback() {
+        // With no supplied attributes, `.id` / `.type` are absent, as any other
+        // unsupplied attribute: there is no projection of the uid.
         let tr = scoped_trace(oauth("alice"), &[], &[]);
         assert!(
-            holds(&tr, r#"principal.id == "alice""#),
-            ".id is the uid id"
+            !holds(&tr, r#"principal.id == "alice""#),
+            ".id is not the uid id"
         );
         assert!(
-            holds(&tr, r#"principal.type == "Drupe::OAuthUser""#),
-            ".type is the uid type"
+            !holds(&tr, r#"principal.type == "Drupe::OAuthUser""#),
+            ".type is not the uid type"
         );
     }
 
@@ -1830,12 +1844,10 @@ mod tests {
     }
 
     #[test]
-    fn temporal_supplied_id_attribute_overrides_uid_projection() {
-        // A supplied attribute literally named `id` / `type` WINS over the uid
-        // projection (the `entry().or_insert` "supplied wins" branch in
-        // `seed_scope_env`), matching `resolve_scope_path`, where the supplied
-        // attribute is looked up before the `.id`/`.type` uid fallback. Here the
-        // supplied `id` is "override", not the uid's "alice".
+    fn temporal_id_and_type_read_the_supplied_attributes() {
+        // `principal.id` / `principal.type` are attributes like any other, as
+        // in Cedar: they read the supplied `id` / `type`, not the uid. Here the
+        // supplied `id` is "override", and the uid's id is "alice".
         let tr = scoped_trace(
             oauth("alice"),
             &[("id", s("override")), ("type", s("Custom"))],
@@ -1843,15 +1855,15 @@ mod tests {
         );
         assert!(
             holds(&tr, r#"principal.id == "override""#),
-            "a supplied `id` attribute wins over the uid id"
+            "`principal.id` is the supplied attribute"
         );
         assert!(
             !holds(&tr, r#"principal.id == "alice""#),
-            "the uid projection must not shadow the supplied `id`"
+            "`principal.id` is not the uid's id"
         );
         assert!(
             holds(&tr, r#"principal.type == "Custom""#),
-            "a supplied `type` attribute wins over the uid type"
+            "`principal.type` is the supplied attribute"
         );
     }
 
@@ -1903,7 +1915,7 @@ mod tests {
         use crate::extension::temporal::ast::Term;
 
         // One event: principal alice with a scalar attr, a nested record attr,
-        // and a supplied `id` that overrides the uid projection.
+        // and a supplied `id`, which `principal.id` reads.
         let nested = Value::Object(BTreeMap::from([("city".to_string(), s("sea"))]));
         let tr = scoped_trace(
             oauth("alice"),
@@ -1925,8 +1937,8 @@ mod tests {
             &["principal", "dept"],            // supplied scalar
             &["principal", "address", "city"], // nested descent
             &["principal", "address"],         // whole nested record
-            &["principal", "id"],              // supplied `id` wins over uid
-            &["principal", "type"],            // uid `.type` projection
+            &["principal", "id"],              // the supplied `id` attribute
+            &["principal", "type"],            // no supplied `type` → absent
             &["principal", "missing"],         // unsupplied → absent
             &["principal", "dept", "x"],       // mid-path scalar → absent
         ];
@@ -1939,7 +1951,7 @@ mod tests {
             // against the entity store. `resolve_scope_path` maps absent to
             // `Value::Null`; normalize the temporal `None` to `Null` so the two
             // "absent" encodings compare equal.
-            let provider = resolve_scope_path("callerPrincipal", &owned[1..], event);
+            let provider = resolve_scope_path(tr.scope(i).principal.as_ref(), &owned[1..], event);
             let temporal = temporal.unwrap_or(Value::Null);
             assert_eq!(
                 temporal,

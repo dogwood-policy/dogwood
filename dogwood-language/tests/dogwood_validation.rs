@@ -622,6 +622,119 @@ when temporal { formerly within 1h App::Action::"Login"::request{input.user: con
     );
 }
 
+/// [`SCHEMA`] plus Cedar 4.14 (RFC 116) `external` declarations. The
+/// external action has no declared context, so the event schema's
+/// `...inputs(A)` / `principalType(A)` derivations must tolerate it.
+const SCHEMA_WITH_EXTERNALS: &str = r#"
+namespace App {
+  type LoginInput = { user: String, server: String };
+  type ReadInput = { user: String, document: String, tags: Set<String> };
+
+  entity Gateway;
+  entity OAuthUser = { id: String };
+  external entity Remote;
+
+  action "Login" appliesTo {
+    principal: [OAuthUser], resource: [Gateway],
+    context: { input: LoginInput }
+  };
+  action "Read" appliesTo {
+    principal: [OAuthUser], resource: [Gateway],
+    context: { input: ReadInput }
+  };
+  external action "Outside";
+}
+"#;
+
+#[test]
+fn external_declarations_lower_then_fail_closed_in_cedar_validation() {
+    // Cedar and temporal clauses over normal actions only. Lowering (incl.
+    // event derivation over the context-less external action) must succeed.
+    let src = r#"
+permit (principal, action == App::Action::"Read", resource)
+when { context.input.document == "d" }
+when temporal { formerly within 1h App::Action::"Login"::request{input.user: context.input.user} };
+"#;
+    // Control: the same policy passes against the schema without externals.
+    assert!(validate_source(src, SCHEMA, None).validation_passed());
+
+    // Cedar 4.14 refuses to validate ANY policy against a schema with
+    // undefined `external` declarations; Dogwood surfaces that as a Cedar
+    // error and adds no spurious temporal/provider finding.
+    let result = validate_source(src, SCHEMA_WITH_EXTERNALS, None);
+    assert!(
+        !result.validation_passed(),
+        "an incomplete schema must fail closed"
+    );
+    let errors: Vec<_> = result.validation_errors().collect();
+    // Guard against `.all()` passing vacuously on an empty error list.
+    assert!(
+        !errors.is_empty(),
+        "expected at least one Cedar error, got:\n{result:?}"
+    );
+    assert!(
+        errors
+            .iter()
+            .all(|e| matches!(e, ValidationError::Cedar { .. })),
+        "expected only Cedar errors, got:\n{result:?}"
+    );
+}
+
+#[test]
+fn an_unconstrained_action_rule_skips_external_actions_in_temporal_checks() {
+    // `action` admits the external `Outside` too; it has no request
+    // environments, so its unknown context adds no temporal finding.
+    let src = r#"
+permit (principal, action, resource)
+when temporal { formerly within 1h App::Action::"Login"::request{input.user: context.input.user} };
+"#;
+    let result = validate_source(src, SCHEMA_WITH_EXTERNALS, None);
+    let errors: Vec<_> = result.validation_errors().collect();
+    assert!(!errors.is_empty(), "an incomplete schema must fail closed");
+    assert!(
+        errors
+            .iter()
+            .all(|e| matches!(e, ValidationError::Cedar { .. })),
+        "expected only Cedar errors, got:\n{result:?}"
+    );
+}
+
+#[test]
+fn a_temporal_rule_scoped_to_an_external_action_lowers_then_fails_closed() {
+    // The rule decides only the external `Outside`, which has no context to
+    // hoist its leaf into, and its predicate reads `Outside`'s own requests,
+    // whose signature (derived from no `appliesTo`) has no inputs. Lowering
+    // succeeds; Cedar refuses the incomplete schema once per rule.
+    let src = r#"
+permit (principal, action == App::Action::"Outside", resource)
+when temporal { formerly within 1h App::Action::"Outside"::request{} };
+permit (principal, action == App::Action::"Read", resource)
+when temporal { formerly within 1h App::Action::"Outside"::request{} };
+"#;
+    let result = validate_source(src, SCHEMA_WITH_EXTERNALS, None);
+    // Cedar's message lists the external entity types, then the external
+    // actions, each sorted as Cedar orders names.
+    let incomplete = |rule: &str| {
+        format!(
+            "for policy `{rule}`, schema is incomplete: `App::Remote` and \
+             `App::Action::\"Outside\"` are declared `external` but not defined"
+        )
+    };
+    assert!(
+        result
+            .validation_errors()
+            .all(|e| matches!(e, ValidationError::Cedar { .. })),
+        "expected only Cedar errors, got:\n{result:?}"
+    );
+    assert_eq!(
+        result
+            .validation_errors()
+            .map(ToString::to_string)
+            .collect::<Vec<_>>(),
+        vec![incomplete("policy_0"), incomplete("policy_1")],
+    );
+}
+
 #[test]
 fn when_temporal_clause_uses_unknown_predicate_then_temporal_error() {
     let src = r#"
@@ -1651,8 +1764,8 @@ when temporal { formerly within 1h App::Action::"Login"::request{input.user: con
 //   ------------------------------------------|-----------|----------|---------
 //   REQUIRED, absent from a scoped action     |  ERROR    |  ERROR   |  ERROR
 //     (== absent-action / in-list / wildcard) |           |          |
-//   OPTIONAL, read without a `has` guard      |  ERROR    |  ok      |  ok
-//   MIXED (req in one action, opt in another) |  ERROR    |  ok      |  ok
+//   OPTIONAL, read without a `has` guard      |  ERROR    |  ERROR   |  ok
+//   MIXED (req in one action, opt in another) |  ERROR    |  ERROR   |  ok
 //   nonexistent field name (e.g. `bogus`)     |  ERROR    |  ERROR   |  ERROR
 //
 // ONE axis of inconsistency remains (axis (A) was closed — see below):
@@ -1669,14 +1782,16 @@ when temporal { formerly within 1h App::Action::"Login"::request{input.user: con
 //      invisibly on the call being a provider.
 //
 //  (B) An OPTIONAL attribute read WITHOUT a `has` guard: Cedar rejects ("unable
-//      to guarantee safety of access to optional attribute"); Temporal and
-//      Provider both ACCEPT. Cedar is the strict outlier here — the temporal
-//      grammar has no `has` guard concept and its context-path resolver treats a
-//      declared-optional field as present, and the provider check likewise only
-//      rejects a flatly-undeclared field (a present-but-optional one resolves).
-//      Closing (B) needs Cedar-style `has`-narrowing over the hoisted leaf
-//      (typechecking work), deliberately deferred. So "declared but optional" is
-//      a safety error only in pure Cedar.
+//      to guarantee safety of access to optional attribute"), and so does
+//      Temporal: the temporal grammar has no `has` test of its own, so a
+//      temporal read of an optional attribute is guarded by a `has` test in the
+//      Cedar part of the rule, at the leaf's position (`context.input has
+//      document && temporal { … }`), as the formal specification requires
+//      (`extension/temporal/facts.rs`, `extension/temporal/validity.rs`). The
+//      Provider dialect still ACCEPTS: its check only rejects a
+//      flatly-undeclared field (a present-but-optional one resolves). The
+//      specification requires the guard of provider arguments too
+//      (`Provider.Call.TypedIn`); closing (B) there is the remaining work.
 //
 // The shared, consistent point: a field ENTIRELY ABSENT from a scoped action is
 // now caught by ALL THREE dialects. The remaining divergence is (B) optionality
@@ -1734,51 +1849,95 @@ when temporal { formerly within 1h App::Action::"Login"::request{input.user: con
 }
 
 #[test]
-fn when_temporal_reads_optional_field_unguarded_then_accepted() {
+fn when_temporal_reads_optional_field_unguarded_then_error() {
     // OPTIONAL `document?` in Read; scope == Read; read WITHOUT a `has` guard.
-    // DIVERGENCE FROM CEDAR: temporal ACCEPTS (it has no `has`-guard concept and
-    // treats a declared-optional field as present). Pure Cedar errors here with
-    // "unable to guarantee safety of access to optional attribute".
+    // Temporal rejects, as pure Cedar does ("unable to guarantee safety of
+    // access to optional attribute"): a request without `document` would make
+    // the correlation false.
     let src = r#"
 permit (principal, action == App::Action::"Read", resource)
 when temporal { formerly within 1h App::Action::"Login"::request{input.user: context.input.document} };
 "#;
     let r = validate_source(src, SCHEMA_OPTIONAL_DOC, None);
     assert!(
-        r.validation_passed(),
-        "temporal accepts an unguarded optional read (no `has` concept); if this \
-         now fails, the dialects have CONVERGED — update the matrix. got:\n{r:?}"
+        !r.validation_passed() && optional_document_error(&r),
+        "temporal must reject an unguarded optional read, got:\n{r:?}"
     );
 }
 
 #[test]
-fn when_temporal_reads_optional_field_in_eq_scope_then_accepted() {
-    // OPTIONAL `document?` in Login; scope == Login. Same divergence as above.
+fn when_temporal_reads_optional_field_guarded_then_accepted() {
+    // The same read after a `has` test of the Cedar part: the test guards it.
+    let src = r#"
+permit (principal, action == App::Action::"Read", resource)
+when { context.input has document }
+when temporal { formerly within 1h App::Action::"Login"::request{input.user: context.input.document} };
+"#;
+    let r = validate_source(src, SCHEMA_OPTIONAL_DOC, None);
+    assert!(
+        r.validation_passed(),
+        "a `has` test before the leaf guards the read, got:\n{r:?}"
+    );
+    // A test in the same clause, left of the leaf, guards it too.
+    let src = r#"
+permit (principal, action == App::Action::"Read", resource)
+when { context.input has document && temporal { formerly within 1h App::Action::"Login"::request{input.user: context.input.document} } };
+"#;
+    let r = validate_source(src, SCHEMA_OPTIONAL_DOC, None);
+    assert!(r.validation_passed(), "got:\n{r:?}");
+    // A test AFTER the leaf does not: Cedar evaluates the leaf first.
+    let src = r#"
+permit (principal, action == App::Action::"Read", resource)
+when { temporal { formerly within 1h App::Action::"Login"::request{input.user: context.input.document} } && context.input has document };
+"#;
+    let r = validate_source(src, SCHEMA_OPTIONAL_DOC, None);
+    assert!(
+        !r.validation_passed() && optional_document_error(&r),
+        "a test after the leaf guards nothing, got:\n{r:?}"
+    );
+}
+
+#[test]
+fn when_temporal_reads_optional_field_in_eq_scope_then_error() {
+    // OPTIONAL `document?` in Login; scope == Login. Rejected, as above.
     let src = r#"
 permit (principal, action == App::Action::"Login", resource)
 when temporal { formerly within 1h App::Action::"Login"::request{input.user: context.input.document} };
 "#;
     let r = validate_source(src, SCHEMA_MIXED_DOC, None);
     assert!(
-        r.validation_passed(),
-        "temporal accepts an unguarded optional read, got:\n{r:?}"
+        !r.validation_passed() && optional_document_error(&r),
+        "temporal must reject an unguarded optional read, got:\n{r:?}"
     );
 }
 
 #[test]
-fn when_temporal_mixed_optionality_in_list_then_accepted() {
+fn when_temporal_mixed_optionality_in_list_then_error() {
     // MIXED: `document` REQUIRED in Read, OPTIONAL in Login; scope in [Read,
-    // Login]. Present (required or optional) in BOTH, so temporal ACCEPTS.
-    // DIVERGENCE: Cedar rejects, attributing the optional-safety error to Login.
+    // Login]. The read is unguarded in the Login environment, so temporal
+    // rejects it, as Cedar does, attributing the error to Login.
     let src = r#"
 permit (principal, action in [App::Action::"Read", App::Action::"Login"], resource)
 when temporal { formerly within 1h App::Action::"Login"::request{input.user: context.input.document} };
 "#;
     let r = validate_source(src, SCHEMA_MIXED_DOC, None);
     assert!(
-        r.validation_passed(),
-        "temporal accepts a field present-but-optional across the scope, got:\n{r:?}"
+        !r.validation_passed() && optional_document_error(&r),
+        "temporal must reject a read optional in one environment of the scope, got:\n{r:?}"
     );
+    assert!(
+        r.validation_errors()
+            .any(|e| e.to_string().contains("App::Action::\"Login\"")),
+        "the error names the environment where the read is optional, got:\n{r:?}"
+    );
+}
+
+/// A temporal finding about the unguarded optional `input.document`.
+fn optional_document_error(r: &ValidationResult) -> bool {
+    r.validation_errors().any(|e| {
+        let m = e.to_string();
+        m.contains("reads the optional attribute `input.document`") && m.contains("`has` test")
+    })
 }
 
 // ─── Provider dialect ───────────────────────────────────────────────

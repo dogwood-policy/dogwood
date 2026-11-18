@@ -1,0 +1,7 @@
+// A provider declares a method whose output is a provider enum, and the rule calls the provider
+// without the method, so lowering does not add the enum to the schema. The bridge leaves out the
+// method alone: leaving out the whole declaration would make the specification find the invocation
+// undeclared. Both accept the set, and allow alice's `Read`.
+@id("read_scanned")
+permit (principal, action == Drupe::Action::"Read", resource)
+when { Risk::Scan(context.input.user) };

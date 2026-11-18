@@ -1,0 +1,3 @@
+permit(principal, action == Acme::Action::"Read", resource)
+when temporal { formerly within 1h Acme::Action::"Read"::response{
+  output.owner: context.input.

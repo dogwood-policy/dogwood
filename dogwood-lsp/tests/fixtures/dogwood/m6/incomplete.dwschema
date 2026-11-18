@@ -1,0 +1,3 @@
+decision event <Action>::request {
+    ...inputs(Action),
+    nested: { pin session: String = context.

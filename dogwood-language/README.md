@@ -40,10 +40,14 @@ assert!(result.validation_passed());
 // 4. Build an authorizer and feed it events. The authorizer is stateful:
 //    each event is remembered, so temporal predicates can see the past.
 let mut authorizer = Authorizer::new(policies);
+// The event's `input` goes to its logged record (`field`, what temporal
+// predicates correlate on) and to its request context (`request_context`,
+// what the policy reads as `context.input`).
 let event = Event::builder("Drupe::Action::Read", "request")
     .principal("Drupe::OAuthUser::\"alice\"")
     .resource("Drupe::Gateway::\"gw1\"")
     .field("input", "document", Value::String("report".to_string()))
+    .request_context("input", "document", Value::String("report".to_string()))
     .build();
 if let Some(response) = authorizer.is_authorized(&event) {
     assert_eq!(response.decision(), Decision::Allow);
@@ -62,6 +66,18 @@ For the full language guide, the `dogwood` command-line tool, and complete,
 runnable example bundles (each checked by the CLI on every build), see the
 sibling **`dogwood-docs`** crate.
 
+## Syntax tooling
+
+The [`syntax`] module is the canonical parser-backed syntax interface for
+complete `.dw` policies and `.dwschema` event schemas. It walks the policy,
+temporal, and event-schema Pest grammars owned by this crate and returns
+editor-neutral UTF-8 byte ranges. Tools such as `dogwood-lsp` map these spans
+to protocol tokens; they do not copy or reinterpret Dogwood grammar.
+
+Use [`syntax::policy_spans`] or [`syntax::event_schema_spans`] only for
+structural classification. Continue to use the normal parse and validation
+APIs for authoritative diagnostics.
+
 ## The schema
 
 Everything the parser and evaluator need about your domain is split into two
@@ -75,7 +91,7 @@ halves, along the one axis that matters — the **action schema**:
 - the **[`PolicySchema`]** — the *per-customer* action schema (a Cedar
   `.cedarschema`, or one generated from an MCP tool manifest), which typically
   arrives later. Construct it with [`PolicySchema::from_cedarschema_str`] or
-  [`PolicySchema::from_mcp_manifest`].
+  `PolicySchema::from_mcp_manifest` (feature `mcp-schema`).
 
 ```rust,ignore
 use dogwood_language::{ServiceSchema, PolicySchema, ProviderDeclarations};
@@ -127,17 +143,23 @@ crate's `data/` directory.
 
 A Dogwood action schema can be produced directly from a Model Context
 Protocol (MCP) tool manifest: each tool becomes an action, with its input
-and output fields as the request context. Use the
-[`PolicySchema::from_mcp_manifest`] shortcut (layered on the built-in
-Drupe template):
+and output fields as the request context. This requires the off-by-default
+`mcp-schema` feature:
+
+```toml
+dogwood-language = { version = "1.2", features = ["mcp-schema"] }
+```
+
+Then use the `PolicySchema::from_mcp_manifest` shortcut (layered on the
+built-in Drupe template):
 
 ```rust,ignore
 let policy_schema = PolicySchema::from_mcp_manifest(mcp_tools_json)?;
 ```
 
 To supply your own template stub instead of Drupe, use
-[`PolicySchema::from_mcp_manifest_with_template`]. (The lower-level
-[`mcp_to_cedar_schema`] function is also available if you want the generated
+`PolicySchema::from_mcp_manifest_with_template`. (The lower-level
+`mcp_to_cedar_schema` function is also available if you want the generated
 `.cedarschema` text directly.)
 
 ## Events and the authorizer
@@ -176,16 +198,56 @@ schema marks some kinds as **decision** kinds (in the default schema,
 - `None` for a history-only event — it still updates the history that
   temporal predicates see, but produces no verdict.
 
+An event must conform to the schemas. Its logged record must be an instance of
+its event's signature, and a decision's request context an instance of its
+action's context record type. An event that does not conform is not ingested,
+so no later decision sees it: [`Authorizer::submit`] reports a nonconforming
+history event as a [`Rejection`], and a nonconforming decision event's
+decision fails closed.
+
 A [`Response`] carries the [`decision`](Response::decision)
 (`Allow` / `Deny`) and [`diagnostics`](Response::diagnostics): the Dogwood
 rules that determined the decision ([`reason`](Diagnostics::reason)) and any
 evaluation errors ([`errors`](Diagnostics::errors)). Evaluation is
-**fail-closed** — if a provider or guard cannot be evaluated, the decision
-degrades to `Deny` with the error recorded in the diagnostics, never a
-spurious `Allow`.
+**fail-closed** — if a provider or guard cannot be evaluated, or the data a
+decision reads does not conform to the schemas, the decision degrades to `Deny`
+with the error recorded in the diagnostics, never a spurious `Allow`.
 
 For a single one-off decision, a fresh `Authorizer` fed one `request`-kind
 event is all you need — there is simply no prior history.
+
+## Identifying policies
+
+By default rule `k` is named by its position (`policy_<k>`), and a position
+names a different rule once the set is reordered. **Stable ids are opt-in and
+additive**: choose an [`IdSource`] with [`ParsedPolicySet::with_ids`] —
+each policy's `@id("…")` ([`IdSource::Annotation`]) or ids you supply
+([`IdSource::Explicit`]) — and lowering emits each rule under its stable id
+(`<distincter>/<id>` under a distincter). Missing, invalid and duplicate ids
+are rejected ([`Error::PolicyId`]).
+
+```rust,ignore
+let parsed = ParsedPolicySet::parse(src, &service)?.with_ids(IdSource::Annotation)?;
+let mut authorizer = Authorizer::new(parsed.lower(&policy_schema)?);
+if let Some(response) = authorizer.is_authorized(&event) {
+    for p in response.diagnostics().determining() {
+        println!("supported by {} (revision {})", p.id(), p.revision());
+    }
+    let version = response.policy_set().expect("stable ids carry a version");
+    println!("policy set generation {} hash {}", version.generation(), version.hash());
+}
+```
+
+Each supporting policy is a [`PolicyRef`]: its id and a **revision**, a hash of
+the canonical lowered rule that ignores positions, formatting, comments and
+annotations, so it changes exactly on a semantic edit. Each response names the
+[`PolicySetVersion`] it was decided under
+([`Response::policy_set`]), and [`Authorizer::update_policies`] replaces the
+policy set live, keeping the temporal history. With stable ids, a determining
+id the policy engine reports that the set does not contain fails the decision
+closed. The hoisted `context.<id>` field names are unchanged, and everything
+stays as it was for a caller that does not opt in; see the guide's API chapter
+(*Stable policy identity*) for the details and the migration of each consumer.
 
 ## Swapping the backends
 
@@ -295,3 +357,249 @@ The hoisted-leaf and rule mappings a consumer needs to reimplement the decision
 loop are also exposed: [`temporal_fields`](LoweredPolicySet::temporal_fields),
 [`provider_fields`](LoweredPolicySet::provider_fields), and
 [`rules`](LoweredPolicySet::rules) / [`rule_ref`](LoweredPolicySet::rule_ref).
+
+## The Lean frontend (feature `lean-frontend`)
+
+The **frontend** is everything after the parsers: macro expansion, event-schema
+derivation, lowering to Cedar, schema augmentation, pin injection,
+relativization, provider resolution, stable ids and identity hashes, and
+validation. Besides its Rust frontend, the repository holds a port of the
+frontend to Lean 4 (`dogwood-lean/Dogwood/Frontend/`), whose validator is
+proved to decide the formal specification's validity and which is tested
+against the Rust frontend. The crate can link it and use it instead of the
+Rust frontend, or alongside it.
+
+It is **opt-in**. By default the crate builds and runs only its Rust frontend
+and needs no Lean toolchain. With the `lean-frontend` feature, the build links
+the Lean frontend, and a [`ServiceSchema`] selects the frontend that lowers and
+validates the policy sets parsed against it:
+
+```rust,ignore
+use dogwood_language::{Frontend, OnMismatch, ServiceSchema};
+
+let lean = ServiceSchema::builder().frontend(Frontend::Lean).build()?;
+let both = ServiceSchema::builder()
+    .frontend(Frontend::Shadow(OnMismatch::Fail))
+    .build()?;
+```
+
+- [`Frontend::Rust`] (the default, with or without the feature) is the Rust
+  frontend.
+- [`Frontend::Lean`] sends the parsers' outputs to the Lean frontend and
+  rebuilds the [`LoweredPolicySet`] from its result: the Cedar policies (with
+  Cedar's own constructors), the augmented schema (compiled by Cedar), the
+  temporal and provider leaves, the event schema, partition keys, decision
+  kinds, rule ids and revisions, and the version hash.
+- [`Frontend::Shadow`] runs both and compares every observable of the lowered
+  set (the Cedar policies, the augmented schema's JSON, the three forms of each
+  temporal leaf with their spans, the provider leaves, the event schema, the
+  partition keys, decision kinds, rule ids, spans and revisions, the version
+  hash, the context reads), the lowering error when both reject the set (its
+  kind, message and span; Cedar's own errors by kind), the stable ids, and the
+  validator's findings. Findings are compared as the Lean validator's
+  correctness claim states their agreement: whether the set validates, the
+  categories of the error findings, and their dialect codes; with
+  `DOGWOOD_SHADOW_FINDINGS=messages` the messages of the findings other than
+  Cedar's are compared too. On agreement it returns the Rust frontend's result.
+  On a difference, [`OnMismatch::Fail`] (the default) returns [`Error::Frontend`]
+  naming the first difference (from validation, an error finding with code
+  `frontend`), and [`OnMismatch::Log`] writes it to standard error and returns
+  the Rust result. A difference in an **identity value** of a set both
+  frontends lower (a rule's id or revision, whether the ids are stable, the
+  version hash, a temporal leaf's content hash, as each frontend computes it)
+  is a panic under `Fail`: these values key what is stored about a policy set,
+  and a caller that tolerates lowering errors (a fuzz harness, say) would take
+  a `Mismatch` error for an input the crate rejects. Such a caller still does
+  not see the other differences under `Fail`; run with `Log` to see every one.
+
+The selection covers [`ParsedPolicySet::lower`],
+[`lower_with_distincter`](ParsedPolicySet::lower_with_distincter),
+[`lower_many`], [`ParsedPolicySet::with_ids`], the one-call
+[`LoweredPolicySet::from_str`] / [`from_many_str`](LoweredPolicySet::from_many_str),
+and [`Validator::validate`], which validates a set with the frontend that
+lowered it. [`ParsedPolicySet::parse`] is the Rust parser and expander in every
+mode (the pre-lowering diagnostics of a [`ParsedPolicy`] read its result); the
+Lean frontend redoes the expansion from the parser's output when it lowers.
+
+Without the feature, [`Frontend`] and the builder option still exist, so that
+code selecting a frontend compiles in every build, but only `Rust` is
+available: [`ServiceSchemaBuilder::build`] rejects the others with
+[`Error::Frontend`] rather than run another frontend than the one asked for.
+
+**The `DOGWOOD_FRONTEND` environment variable.** With the feature, a service
+schema built without an explicit choice (and [`ServiceSchema::defaults`]) takes
+its frontend from `DOGWOOD_FRONTEND`: `rust`, `lean`, `shadow` or `shadow-log`;
+unset is `rust`, and any other value panics. So the whole test suite runs in
+each mode unchanged, e.g. `DOGWOOD_FRONTEND=shadow cargo test --features
+lean-frontend`. Without the feature the variable is not read.
+
+**What differs in `Lean` mode.** The Lean frontend computes what the Rust one
+does, with the same messages for its own findings (the temporal and provider
+dialects', the context reads', the schema's), but some results take another
+form:
+
+- Cedar's part of validation is cedar-lean's validator: one `cedar` finding
+  with cedar-lean's text for the first error in a rule Cedar rejects, where
+  Cedar's Rust validator reports each error with its own message (an impossible
+  policy reads as Cedar's Rust validator reports it); Cedar's Rust-only
+  warnings (on identifiers and strings) are not reported;
+- a finding's span is its rule's, for Cedar's (where the Rust frontend has the
+  span of the subexpression Cedar's diagnostic labels), and its leaf's, for a
+  temporal leaf's (where the Rust frontend has the span of the offending node in
+  the leaf); a provider leaf's findings, the context reads' and the schema's
+  have the Rust frontend's spans, and every finding renders against the source
+  of its rule's policy set;
+- the lowered Cedar policies carry no source locations;
+- Cedar's errors are Cedar's own: a schema Cedar rejects is
+  [`Error::CedarSchema`], from Cedar's compilation of the Lean frontend's
+  augmented schema, and two entries of [`lower_many`] minting one policy id is
+  [`Error::PolicySet`], from Cedar's policy set; an error the crate has no
+  variant to carry (none arises from the crate's own inputs) is
+  [`Error::Frontend`] with kind [`FrontendErrorKind::Lean`];
+- the Lean validator runs when the set is lowered, and
+  [`Validator::validate`] reports its findings.
+
+Strings, ids, patterns and provider arguments are printed (in the rules'
+text, and so in the revisions and the version hash, and in the messages) as
+Rust's `escape_debug` and `{:?}` print them, with the Unicode tables of the
+Rust release the crate builds with, Rust 1.98.1:
+`dogwood-lean/scripts/gen_unicode_tables.py` generates them from the
+toolchain's sources, pinned to that release (`RUST_VERSION`, recorded in the
+tables' file), and checks them against the toolchain (`--verify`). With the
+feature, the build script warns when the compiler is another release than the
+tables'; after a toolchain upgrade that changes what `escape_debug` escapes,
+the crate's test `escaping_agrees_at_every_boundary_of_the_unicode_tables`
+fails, naming both releases, until they are regenerated — unless
+`src/lean_frontend/escape_changes.txt` (from the script's `--changes`) lists
+the two releases: then the test leaves out the characters they escape
+differently, checks that the compiler escapes those as the file says, and
+warns.
+
+**Testing in Lean mode.** `scripts/test-lean-mode.sh` runs the whole test suite
+with `DOGWOOD_FRONTEND=lean` and fails unless the failing tests are exactly
+those `tests/lean-mode-expected.txt` lists: the tests that read the wording or
+the span of Cedar's own diagnostics, the span of a finding inside a temporal
+leaf, or the source locations of the lowered Cedar policies. Each line names
+the test and the reason. In `shadow` mode the whole suite passes.
+
+**Building with the feature** needs a prebuilt archive, or Lean 4.34.0 (the
+version `dogwood-lean/lean-toolchain` pins; elan selects it) and the
+`dogwood-lean` sources of the repository. The archive sits next to its
+manifest, `libdogwood_lean_frontend.link`, which records the SHA-256 digests of
+the sources it was built from, of the archive file, of the crate's side of the
+bridge (`build.rs` and `src/lean_frontend/`) and of the built Lean packages, and
+the Lean version. The build script:
+
+- links a prebuilt archive when there is one it can use: the
+  `libdogwood_lean_frontend.a` that `DOGWOOD_LEAN_PREBUILT` names (which must
+  be usable, or the build fails), else one found on `PATH`, as
+  `<dir>/../lib/libdogwood_lean_frontend.a` for a `<dir>` on `PATH`, in the
+  package's own published `lib/` or a library farm's copy of it (`build.rs` says
+  exactly where; any other is ignored). An archive is usable when its Lean
+  version is this crate's, its digest the manifest's, and the manifest's source
+  digest that of the Lean sources, when they are present, or else (a crate
+  fetched from a registry has none) its bridge digest this crate's. This route
+  runs neither Lean nor Lake and needs neither the Lean sources nor network
+  access. A build from source's `$OUT_DIR` is itself a prebuilt directory: it
+  holds the archive, the manifest, the built Lean packages (`dogwood-lean/`,
+  which the manifest lists) and the list of the packages' files
+  (`libdogwood_lean_frontend.files`), which a packaging step publishes, the
+  packages when dependents are to compile Lean code against them;
+- otherwise (or with `DOGWOOD_LEAN_FROM_SOURCE=1`) builds it from the sources
+  at `DOGWOOD_LEAN_SOURCE` (default `../dogwood-lean`): it copies them into
+  `$OUT_DIR` with their dependencies (cedar-lean, Batteries): the sources in
+  `dogwood-lean/.lake/packages` when present, else `dogwood-lean/vendor/`, a
+  pinned export of exactly the modules the frontend's library and the whole
+  specification import (each the
+  upstream file, Apache-2.0, with its license; `vendor/MANIFEST` records every
+  file's digest, which the build checks, and
+  `dogwood-lean/scripts/vendor_deps.py` writes and checks the export), so that
+  Lake fetches nothing; runs `lake build frontendFfi`; and merges the Lean
+  frontend's library, Lean's `Init` and `Std` libraries (whole), the parts of
+  Lean's `Lean` library and of the Lean kernel they reach, the Lean runtime, and
+  their static dependencies into one archive. A dependency configured in
+  `lakefile.toml` (Batteries) is given the equivalent `lakefile.lean`, with which
+  it is built, so that every package root has one;
+- finds the toolchain with `LEAN_SYSROOT`, else `lean --print-prefix` (its
+  headers in `include/`, or `stage1/include/`); compiles Lean's generated C with
+  `LEAN_CC`, else the C compiler the `cc` crate selects, archives with
+  `LEAN_AR`, else the `cc` crate's archiver, and runs `LAKE`, else the
+  toolchain's `lake`. The static C++, GMP and libuv libraries of an upstream
+  toolchain go into the archive; a toolchain built against the system's C++
+  library, GMP, libuv and mimalloc takes their static archives from
+  `DOGWOOD_LEAN_EXTRA_ARCHIVES` (colon-separated paths), whose members the
+  runtime reaches go into the archive; without them it is linked against the
+  shared libraries, searched in `DOGWOOD_LEAN_LINK_SEARCH` (colon-separated) and
+  the toolchain's `lib` directories. Either of the first two needs nothing at
+  run time beyond the system's libc, `libpthread`, `libdl`, `librt` and `libm`.
+
+The archive is about 210 MB: on Linux it is one relocatable object of the shim,
+the frontend's library, Lean's runtime and standard library, and the members of
+Lean's other libraries they reach. The frontend's library leaves out Batteries'
+tactics, linters and code actions, which the frontend never runs (cedar-lean's
+data modules import them for their proofs), and with them Lean's elaborator, so
+a binary that links the archive holds about 7 MB of Lean code (stripped). The
+build script's documentation (`build.rs`) has the details.
+
+**Linking Lean code of your own.** With the feature, the crate's archive is the
+process's one Lean runtime, and holds the Lean frontend's library
+(`Dogwood/Frontend/Library.lean` and what it imports). A crate that depends on
+this one directly can compile Lean modules of its own against that library and
+link them into the same process:
+
+- The crate declares `links = "dogwood_lean"`. Its build script prints
+  `lean=1`, `LEAN_VERSION` (`4.34.0`), `SOURCE_SHA256` (the digest of the Lean
+  sources the library was built from), `TOOLCHAIN` (the toolchain's prefix),
+  `PACKAGES` (`DogwoodSpec=<dir>;Cedar=<dir>;batteries=<dir>`, the built Lake
+  packages) and, from source, `CC` and `AR`; a dependent's build script reads
+  them as `DEP_DOGWOOD_LEAN_<KEY>`. Without the feature it prints `lean=0`
+  alone. From a prebuilt archive, `TOOLCHAIN` is `LEAN_SYSROOT` (else empty),
+  and `PACKAGES` the packages the manifest lists, when they are there and their
+  files have the manifest's digest, copied into `$OUT_DIR` (Lake writes a lock
+  file into a package it loads, and a published directory may be read-only),
+  else empty. Only the toolchain that built the packages reads their `.olean`
+  files, so a dependent compiles against them with that toolchain.
+- The dependent requires the packages by path from a Lake project of its own,
+  builds its own modules only (Lake finds the library up to date), and links
+  their archive, which holds no Lean runtime and no module of the library.
+  Its modules may import any module of the library, of `Init` and of `Std`.
+  The final link must collect unreferenced sections (`--gc-sections`, as rustc
+  links executables unless `-C link-dead-code`): the library keeps one
+  unreached reference into a left-out module of Batteries. A prebuilt archive
+  of the dependent records the `SOURCE_SHA256` it was compiled against.
+- The crate owns the runtime: `dogwood_lean_init()` (idempotent, thread-safe, 0
+  on success) initializes the runtime, restores the host's signal handlers,
+  initializes every module of the library and ends Lean's initialization, once;
+  `dogwood_lean_thread_enter()` and `dogwood_lean_thread_exit()` register a
+  thread with Lean, counting nested registrations. A dependent calls
+  `dogwood_lean_init` first, then initializes its own root module once, on a
+  registered thread, and runs Lean code on registered threads only. The
+  [`frontend`] module's documentation states the contract in full.
+- To lower with its own Lean code, a dependent sends
+  `frontend_export::inputs` (feature `frontend-export`: the parsers' outputs,
+  exactly the Lean frontend's input, with no frontend stage run) to its
+  module, which calls the library's pipeline and hands back the lowered set's
+  Cedar part as Cedar prints it (`Full.cedar`); `frontend_export::cedar_policy_set`
+  and `cedar_schema` build the Cedar policy set (with ids and annotations) and
+  the augmented schema from it, as the crate does for its own Lean mode, which
+  builds the policies from their policy JSON and does not re-parse their text.
+  Shadow mode checks that the Lean frontend's printed policy JSON, text and
+  schema JSON are Cedar's printing of the Rust frontend's set.
+- To have the crate's whole [`LoweredPolicySet`] of its own Lean run, a
+  dependent's module hands back the pipeline's outcome as the library encodes
+  it (`Driver.outcomeToJson`: the lowered set and the validator's findings, or
+  the error), or the lowered set alone (`Full.toJson`), and
+  `frontend::lowered_from_lean` (with the feature) builds the set from it, as the crate builds
+  the set of its own Lean mode, with no Rust lowering: the Cedar policies and
+  schema, the leaves, the event schema, the ids and the identity hashes. Every
+  method of the set works on it
+  ([`check_event_conformance`](LoweredPolicySet::check_event_conformance), an
+  [`Authorizer`], [`Validator::validate`], which reports the Lean validator's
+  findings when the outcome carries them); a rejection is the crate's error, as
+  the crate's Lean mode returns it.
+
+`dogwood-language/lean-dependent` (not published) is such a dependent: `cargo
+test -p dogwood-lean-dependent --features lean` compiles a Lean module against
+the library, and calls it and the crate's Lean frontend from several threads in
+one process, and checks that the sets `frontend::lowered_from_lean` builds from
+the module's own runs of the pipeline are the crate's Lean mode's.

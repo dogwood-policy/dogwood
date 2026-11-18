@@ -1,0 +1,5 @@
+// A provider argument with characters Rust's `{:?}` escapes (a rule's revision prints the
+// arguments so): combining marks anywhere, a format character, an unassigned code point, a
+// control, and the quotes, of which `{:?}` escapes `"` and not `'`.
+permit (principal, action == Drupe::Action::"Read", resource)
+when guardrails { Strings::Matches(context.input.document, "\u{301}\u{200b}a\u{301}\u{b2cb2}\u{1}'\"é犬").matched == true };

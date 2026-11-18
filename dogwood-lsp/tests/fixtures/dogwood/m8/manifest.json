@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "revision": "c6237c88099b3f492ecc5fcee42df06a19224b97",
+  "mutation_base": {
+    "directory": "tests/fixtures/dogwood/m3/all-optional-valid",
+    "inputs": {
+      "policy": {
+        "path": "policy.dw",
+        "sha256": "ba19809e4292fa6d9bb31da24c79086bd67459ba6b95f8956f9e2ed8f3e35501"
+      },
+      "action_schema": {
+        "path": "schema.cedarschema",
+        "sha256": "b17b4bf9fbfc6db701a54a898cae0d39cb9cb630f84f00078009f25b711212a3"
+      },
+      "event_schema": {
+        "path": "event.dwschema",
+        "sha256": "9a7948fd78297fdac0e70ec2b4b88233af9ad1f886c21e4eba1b72967a55dda7"
+      },
+      "providers": {
+        "path": "providers.json",
+        "sha256": "996634731402538aa65f828611e7fbbc42a55c6fe414b70a521190e0ab94fdc7"
+      },
+      "macros": {
+        "path": "macros.dw",
+        "sha256": "61093fbbbde02d7eb201acc7d3a606b64ced84b56a7ce0bdc570dc10827d7732"
+      }
+    }
+  },
+  "valid_bundles": [
+    {
+      "name": "alert-exactly-three-transfers",
+      "directory": "alert-exactly-three-transfers",
+      "inputs": {
+        "policy": "policy.dw",
+        "action_schema": "actions.cedarschema",
+        "event_schema": "events.dwschema",
+        "providers": null,
+        "macros": null
+      },
+      "artifacts": [
+        {
+          "path": "actions.cedarschema",
+          "upstream_path": "dogwood-docs/examples/alert_exactly_three_transfers/schema.cedarschema",
+          "sha256": "cbe90d1d7ed5cf9a9ebcf66c93d9509ba65f67575b0b461b189181a1cf13370b"
+        },
+        {
+          "path": "events.dwschema",
+          "upstream_path": "dogwood-docs/examples/alert_exactly_three_transfers/events.dwschema",
+          "sha256": "40da3126abd1c819da307de25eb665f802d7ef5257ae2e3fac34dc1843ec5adf"
+        },
+        {
+          "path": "policy.dw",
+          "upstream_path": "dogwood-docs/examples/alert_exactly_three_transfers/policy.dw",
+          "sha256": "e0bf921bf31b8020b0bf493c2845c7105fabbf9fe357aa2598a82449b401386f"
+        }
+      ]
+    },
+    {
+      "name": "call-temporal-aggregation-macro-count",
+      "directory": "call-temporal-aggregation-macro-count",
+      "inputs": {
+        "policy": "policy.dw",
+        "action_schema": "actions.cedarschema",
+        "event_schema": null,
+        "providers": null,
+        "macros": "macros.dw"
+      },
+      "artifacts": [
+        {
+          "path": "actions.cedarschema",
+          "upstream_path": "dogwood-docs/examples/call_temporal_aggregation_macro_count/schema.cedarschema",
+          "sha256": "c203428c5c8d3b3ef07f700622b4a593f97dbb1e777a66172a6db6cf38bc6fb0"
+        },
+        {
+          "path": "macros.dw",
+          "upstream_path": "dogwood-docs/examples/call_temporal_aggregation_macro_count/macros.dw",
+          "sha256": "fe84cf4c2700cf23c59fdc276569bb94dddd7c9fceadf8b9690c68c32bea0c11"
+        },
+        {
+          "path": "policy.dw",
+          "upstream_path": "dogwood-docs/examples/call_temporal_aggregation_macro_count/policy.dw",
+          "sha256": "8b0963812c7ddb6eb85aa7b201a8a6bfb104114c9ab56e97378c313d788f26db"
+        }
+      ]
+    },
+    {
+      "name": "provider-filter-set-index-decimal",
+      "directory": "provider-filter-set-index-decimal",
+      "inputs": {
+        "policy": "policy.dw",
+        "action_schema": "actions.cedarschema",
+        "event_schema": null,
+        "providers": "providers.json",
+        "macros": null
+      },
+      "artifacts": [
+        {
+          "path": "actions.cedarschema",
+          "upstream_path": "dogwood-docs/examples/provider_filter_set_index_decimal/schema.cedarschema",
+          "sha256": "c44a3f59d792b673899eb9c23f3543722de9647811c1a000a8624e348e6a435a"
+        },
+        {
+          "path": "policy.dw",
+          "upstream_path": "dogwood-docs/examples/provider_filter_set_index_decimal/policy.dw",
+          "sha256": "86ec0bdc0db4a9a78d31afcd2eeeb316391fdc97b7db019df73e11da636487bf"
+        },
+        {
+          "path": "providers.json",
+          "upstream_path": "dogwood-docs/examples/provider_filter_set_index_decimal/providers.json",
+          "sha256": "0ec3077e7d6110a16d8fa092a2cd72cde305f23502ff8d8d4299c3c4a8b59a37"
+        }
+      ]
+    }
+  ],
+  "mutations": [
+    {
+      "name": "action-schema-invalid",
+      "component": "action_schema",
+      "kind": "replace",
+      "replacement": "{",
+      "sha256": "021fb596db81e6d02bf3d2586ee3981fe519f275c0ac9ca76bbcf2ebb4097d96"
+    },
+    {
+      "name": "action-schema-truncated",
+      "component": "action_schema",
+      "kind": "drop-tail",
+      "drop_bytes": 2,
+      "sha256": "548fa2bf9ede11ef9ec194c31ef02361b5af6952f7503d5bf1cfbc3a90a92b7c"
+    },
+    {
+      "name": "event-schema-invalid",
+      "component": "event_schema",
+      "kind": "replace",
+      "replacement": "decision event <A>::attempt {",
+      "sha256": "e785f2cf3e4896d360e7f55b634c8605ebe86e014065f84b4e319c9a01bbbaa3"
+    },
+    {
+      "name": "event-schema-truncated",
+      "component": "event_schema",
+      "kind": "drop-tail",
+      "drop_bytes": 2,
+      "sha256": "39108f3d43cd7383e41c735f7b40a79d85a9d43f82ee0144449b15885459bf19"
+    },
+    {
+      "name": "macros-invalid",
+      "component": "macros",
+      "kind": "replace",
+      "replacement": "def cedar broken(x) { true };",
+      "sha256": "1e6a298361e1016872f13261d46b647f9853e77e7c7b353a96aaf4ca0c95cd92"
+    },
+    {
+      "name": "macros-truncated",
+      "component": "macros",
+      "kind": "drop-tail",
+      "drop_bytes": 2,
+      "sha256": "2d0777fa9e3e76ca29cd56dec4a800169e8df861c6fe159dff3cea54f51b52d3"
+    },
+    {
+      "name": "policy-invalid",
+      "component": "policy",
+      "kind": "replace",
+      "replacement": "permit(",
+      "sha256": "d0c8ec51478485e3d0a94e1cbfc471ae2e059e9c9d7d162f8d797629553fd461"
+    },
+    {
+      "name": "policy-truncated",
+      "component": "policy",
+      "kind": "drop-tail",
+      "drop_bytes": 2,
+      "sha256": "703e2545a8f4376356c42c19859e8d5aa22504d525c2f9dac557d67b49455ecf"
+    },
+    {
+      "name": "providers-invalid",
+      "component": "providers",
+      "kind": "replace",
+      "replacement": "{",
+      "sha256": "021fb596db81e6d02bf3d2586ee3981fe519f275c0ac9ca76bbcf2ebb4097d96"
+    },
+    {
+      "name": "providers-truncated",
+      "component": "providers",
+      "kind": "drop-tail",
+      "drop_bytes": 2,
+      "sha256": "8579ecb04ceb0e7eac1401e51efb0aff3a6f231e09c99f9b1228e7175f97f259"
+    }
+  ]
+}

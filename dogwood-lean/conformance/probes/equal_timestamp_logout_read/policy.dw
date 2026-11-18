@@ -1,0 +1,14 @@
+// Permit a Read only if the same user logged in within the last hour and has not logged out within
+// it, over a trace that records the `Login` and the `Logout` responses at one time. The
+// specification's authorizer stamps the `Logout` one tick after the `Login`, so the later `Read`
+// sees it, and denies; the crate takes the times as given, and denies too.
+@id("read_login_no_logout")
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::response{ input.user: context.input.user }
+    && !(formerly within 1h Drupe::Action::"Logout"::response{ input.user: context.input.user })
+};

@@ -1,0 +1,16 @@
+namespace Drupe {
+  type LoginInput = { user: String, at: datetime };
+  type ReadInput = { user: String, since: datetime, later?: datetime };
+  entity Gateway;
+  entity OAuthUser;
+  action "Login" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: { input: LoginInput }
+  };
+  action "Read" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: { input: ReadInput }
+  };
+}

@@ -15,9 +15,9 @@ use crate::error::{Span, ValidationError, ValidationWarning};
 use crate::extension::dialect::{DogwoodDialect, Rendered, ValidationCtx};
 use crate::extension::provider::ast::Arg;
 use crate::extension::provider::declarations::ParamType;
-use crate::extension::temporal::schema_info::{
-    ArrayElem, PathResolution, RichType, SchemaInfo, ScopePath,
-};
+use crate::conformance::CType;
+use crate::extension::temporal::schema_info::{ActionHandle, PathResolution, SchemaInfo, ScopePath};
+use cedar_policy_core::ast::EntityType;
 
 /// One provider validation finding, with its span already rebased into the
 /// `.dw` source.
@@ -191,28 +191,28 @@ impl DogwoodDialect for ProviderDialect {
                 );
             }
 
-            // ── Field-path argument TYPE (axis C) ────────────────────────
-            // A field-path argument's resolved schema type must match the
-            // declared `paramType` for its position — on every scoped action,
-            // just as Cedar type-checks per request environment and the
-            // temporal dialect per action. The resolution reuses the same
-            // `resolve_context_path` as the existence check; only a clear
-            // SCALAR-vs-scalar mismatch is rejected (set/record/entity and
-            // non-scalar resolved types are left lenient for now — see
-            // `check_field_path_type`). Positional: invocation args map to the
-            // provider's `argumentTypes`, method args to the method's.
+            // ── Argument TYPES ───────────────────────────────────────────
+            // Every argument has its declared Cedar type exactly (the type
+            // `ParamType::to_cedar_type_with` gives the hoisted field), in every
+            // request environment the rule decides: every action its scope
+            // reaches, and every principal and resource type it admits there —
+            // as Cedar type-checks per request environment. A set's elements
+            // each have the declared element type; a record has the declared
+            // attributes, and an entity the declared entity type. A path that
+            // does not resolve is the existence pass's finding; a top-level
+            // literal is the literal pass's. Positional: invocation args map to
+            // the provider's `argumentTypes`, method args to the method's.
+            let envs = request_envs(&info, &field.target_actions, &field.principal, &field.resource);
+            let names = &field.entity_type_names;
+            let typing = ArgTyping {
+                key: &key,
+                names,
+                envs: &envs,
+                principal: &field.principal,
+                resource: &field.resource,
+            };
             for (arg, param) in field.invocation.args.iter().zip(&decl.argument_types) {
-                check_arg_type(
-                    &key,
-                    arg,
-                    param,
-                    &info,
-                    &field.target_actions,
-                    &field.principal,
-                    &field.resource,
-                    span,
-                    &mut findings,
-                );
+                typing.check(arg, param, true, span, &mut findings);
             }
             for method in &field.methods {
                 let Some(mdecl) = decl.methods.get(&method.name) else {
@@ -220,17 +220,7 @@ impl DogwoodDialect for ProviderDialect {
                 };
                 let m_span = method.span.rebased(field.body_base);
                 for (arg, param) in method.args.iter().zip(&mdecl.argument_types) {
-                    check_arg_type(
-                        &key,
-                        arg,
-                        param,
-                        &info,
-                        &field.target_actions,
-                        &field.principal,
-                        &field.resource,
-                        m_span,
-                        &mut findings,
-                    );
+                    typing.check(arg, param, true, m_span, &mut findings);
                 }
             }
 
@@ -283,11 +273,13 @@ impl DogwoodDialect for ProviderDialect {
                 };
 
                 // Optional receiver-type check: the previous stage's output
-                // type must match what this method expects to receive.
+                // type must be the Cedar type this method expects to receive —
+                // the types the declarations convert to, not their tokens, so a
+                // `set` of `string` is not a `set` of `long`, and `integer` is
+                // `long`.
                 if let Some(input) = mdecl.input_type.as_ref()
-                    && (input.param_type != pipeline_type.param_type
-                        || (input.param_type == "entity"
-                            && input.entity_type != pipeline_type.entity_type))
+                    && CType::from_param(input, &field.entity_type_names)
+                        != CType::from_param(pipeline_type, &field.entity_type_names)
                 {
                     findings.push(ProviderFinding {
                         message: format!(
@@ -496,8 +488,20 @@ fn check_one_field_path(
     let Some(root) = path.first().map(String::as_str) else {
         return;
     };
-    // A bare `context` / `principal` / `resource` (no tail) always resolves.
+    // A bare `principal` / `resource` (no tail) always resolves, to the
+    // request's entity. The whole request `context` is not an argument: it has
+    // no type a declaration can name.
     if path.len() < 2 {
+        if root == "context" {
+            findings.push(ProviderFinding {
+                message: format!(
+                    "provider `{key}`: argument `context` is the whole request context, which \
+                     is not an argument; pass one of its attributes"
+                ),
+                span,
+                warning: false,
+            });
+        }
         return;
     }
     let rest = &path[1..];
@@ -530,9 +534,9 @@ fn check_one_field_path(
                 if missing {
                     findings.push(ProviderFinding {
                         message: format!(
-                            "provider `{key}`: argument `context.{}` is not present in the \
+                            "provider `{key}`: argument `{}` is not present in the \
                              context of action `{}`",
-                            rest.join("."),
+                            crate::field_path::join_under("context", rest),
                             action_display(action),
                         ),
                         span,
@@ -559,7 +563,7 @@ fn check_one_field_path(
                         message: format!(
                             "provider `{key}`: argument `{}` is not present on the `{root}` \
                              of action `{}` (no attribute `{segment}`)",
-                            path.join("."),
+                            crate::field_path::join(path),
                             action_display(action),
                         ),
                         span,
@@ -582,178 +586,264 @@ fn action_display(action: &ActionRef) -> String {
     }
 }
 
-/// Type-check one provider ARGUMENT against its declared `paramType`, recursing
-/// into a set-literal argument (`[a, b]`) so each element field-path is checked
-/// against the declared set's ELEMENT type — mirroring the existence pass
-/// (`check_field_path_args`), which also recurses into `Arg::Set`. A field-path
-/// argument dispatches to `check_field_path_type`; a set literal recurses per
-/// element (only when the declared arg is a set with a known element type);
-/// other literal args are owned by the scalar/literal arg-type check.
-#[allow(clippy::too_many_arguments)]
-fn check_arg_type(
-    key: &str,
-    arg: &Arg,
-    declared: &ParamType,
-    info: &SchemaInfo,
-    target_actions: &[ActionRef],
+/// One request environment a provider leaf's rule decides: an action its scope
+/// reaches, and a principal and a resource type the action admits and the rule's
+/// scope narrows to.
+struct RequestEnv<'h> {
+    action: &'h ActionRef,
+    handle: ActionHandle<'h>,
+    principal: EntityType,
+    resource: EntityType,
+}
+
+/// Every request environment of the rule: each target action in the schema,
+/// with each principal and resource type the rule's scope admits for it.
+fn request_envs<'h>(
+    info: &'h SchemaInfo,
+    target_actions: &'h [ActionRef],
     principal: &ScopeConstraint,
     resource: &ScopeConstraint,
-    span: Span,
-    findings: &mut Vec<ProviderFinding>,
-) {
-    match arg {
-        Arg::Field(path) => check_field_path_type(
-            key,
-            path,
-            declared,
-            info,
-            target_actions,
-            principal,
-            resource,
-            span,
-            findings,
-        ),
-        Arg::Set(items) => {
-            if let Some(item) = declared.items.as_deref() {
-                for it in items {
-                    check_arg_type(
-                        key,
-                        it,
-                        item,
-                        info,
-                        target_actions,
-                        principal,
-                        resource,
-                        span,
-                        findings,
-                    );
-                }
+) -> Vec<RequestEnv<'h>> {
+    let mut envs = Vec::new();
+    for action in target_actions {
+        let Some(handle) = info.action(action.namespace.as_deref(), &action.id) else {
+            // Not in the projection; Cedar's own validator owns unknown-action.
+            continue;
+        };
+        let principals: Vec<EntityType> = handle
+            .admitted_types("principal", Some(principal))
+            .into_iter()
+            .cloned()
+            .collect();
+        let resources: Vec<EntityType> = handle
+            .admitted_types("resource", Some(resource))
+            .into_iter()
+            .cloned()
+            .collect();
+        for p in &principals {
+            for r in &resources {
+                envs.push(RequestEnv {
+                    action,
+                    handle,
+                    principal: p.clone(),
+                    resource: r.clone(),
+                });
             }
         }
-        _ => {}
+    }
+    envs
+}
+
+/// The Cedar type an argument other than a set has in the request environment
+/// `env`, as the specification types it (`Provider.Arg.typeIn?`): a literal's
+/// type; a `context.<path>` or `principal.<path>` / `resource.<path>` path its
+/// declared type — an optional attribute along it need not be present, since an
+/// absent one resolves to an absent argument, which the provider contract
+/// tolerates (`id` and `type` are attributes like any other); a bare
+/// `principal` / `resource` its entity type. `None` for a bare `context` and
+/// for a path that does not resolve.
+fn arg_type(arg: &Arg, env: &RequestEnv<'_>) -> Option<CType> {
+    match arg {
+        Arg::String(_) => Some(CType::String),
+        Arg::Integer(_) => Some(CType::Long),
+        Arg::Decimal(_) => Some(CType::Decimal),
+        Arg::Bool(_) => Some(CType::Bool),
+        Arg::Set(_) => None,
+        Arg::Field(path) => {
+            let (root, rest) = path.split_first()?;
+            let ety = match root.as_str() {
+                "context" => {
+                    return env.handle.context_path_cedar_type(rest).map(CType::from_type);
+                }
+                "principal" => &env.principal,
+                "resource" => &env.resource,
+                _ => return None,
+            };
+            match rest {
+                [] => Some(CType::Entity(vec![ety.to_string()])),
+                _ => env
+                    .handle
+                    .scope_attribute_cedar_type(ety, rest)
+                    .map(CType::from_type),
+            }
+        }
     }
 }
 
-/// Type-check one field-path argument against its declared `paramType`, per
-/// scoped action.
-///
-/// Resolution reuses `resolve_context_path` / `resolve_scope_path` (whichever
-/// the root selects); this compares the resolved rich type against the declared
-/// `paramType` by CATEGORY (`param_matches_rich`). Scalars must match exactly
-/// (`string`/`Long`/`Bool`/`decimal`). A `set` must be an array, and when both
-/// element types are known the element types must match too (Cedar's set
-/// element-type check, #2). A `record` need only be an object — its FIELDS are
-/// not compared (Cedar records are invariant, but exact field matching needs
-/// structured types and is the deferred boundary #3). A mismatch is reported on
-/// the first scoped action where it occurs ("wrong on any"). An `entity`
-/// parameter fed directly from `context` must have the declared qualified
-/// entity type; anywhere else (a set element, a `principal`/`resource`
-/// attribute) only the category is compared, since `RichType` carries only the
-/// basename. An unknown declared `paramType`, or a resolved type this cannot
-/// classify, is left lenient; missing fields are owned by the existence pass.
-#[allow(clippy::too_many_arguments)]
-fn check_field_path_type(
-    key: &str,
-    path: &[String],
-    declared: &ParamType,
-    info: &SchemaInfo,
-    target_actions: &[ActionRef],
-    principal: &ScopeConstraint,
-    resource: &ScopeConstraint,
-    span: Span,
-    findings: &mut Vec<ProviderFinding>,
-) {
-    let Some(root) = path.first().map(String::as_str) else {
-        return;
-    };
-    if path.len() < 2 {
-        return;
-    }
-    let rest = &path[1..];
-    for action in target_actions {
-        let Some(handle) = info.action(action.namespace.as_deref(), &action.id) else {
-            continue;
-        };
-        // Skip an action the rule's scope can never reach (see the existence
-        // pass and `admits_any_env`): an infeasible request environment must not
-        // be type-checked, matching Cedar and the temporal dialect.
-        if !handle.admits_any_env(Some(principal), Some(resource)) {
-            continue;
-        }
-        // The resolved rich type on this action, for whichever root — `context`
-        // via `resolve_context_path`, `principal`/`resource` via
-        // `resolve_scope_path` (narrowed). Only a `Resolved` single type is
-        // compared; `Ambiguous`/`Unknown`/missing are left to the existence
-        // pass.
-        let resolved_rich = match root {
-            "context" => match handle.resolve_context_path(rest) {
-                PathResolution::Resolved(rich) => Some(rich),
-                _ => None,
+/// What typing one provider leaf's arguments needs: the provider's name, the
+/// exported names of the enums its types name, the rule's request
+/// environments, and its scope narrowing.
+struct ArgTyping<'a> {
+    key: &'a str,
+    names: &'a std::collections::BTreeMap<String, String>,
+    envs: &'a [RequestEnv<'a>],
+    principal: &'a ScopeConstraint,
+    resource: &'a ScopeConstraint,
+}
+
+impl ArgTyping<'_> {
+    /// Type-check one argument against its declared `paramType`
+    /// (`Provider.Arg.hasTypeIn`), in every request environment of the rule,
+    /// reporting the first environment in which it does not have the declared
+    /// type. A set has each element checked against the declared element type.
+    /// At the top level (`top`), a literal, and a set where no set is declared,
+    /// are the literal pass's finding; a bare `context`, and a path that does
+    /// not resolve, are the existence pass's.
+    fn check(
+        &self,
+        arg: &Arg,
+        declared: &ParamType,
+        top: bool,
+        span: Span,
+        findings: &mut Vec<ProviderFinding>,
+    ) {
+        let declared_ty = CType::from_param(declared, self.names);
+        match arg {
+            Arg::String(_) | Arg::Integer(_) | Arg::Decimal(_) | Arg::Bool(_) if top => {}
+            Arg::Set(items) => match &declared_ty {
+                CType::Set(_) => {
+                    // A set with no declared element type holds strings, as
+                    // `to_cedar_type_with` types it.
+                    let element = declared.items.as_deref().cloned().unwrap_or_else(|| ParamType {
+                        param_type: "string".to_string(),
+                        ..Default::default()
+                    });
+                    for item in items {
+                        self.check(item, &element, false, span, findings);
+                    }
+                }
+                _ if top => {}
+                _ => {
+                    if let Some(env) = self.envs.first() {
+                        self.report(arg, "Set".to_string(), declared, &declared_ty, env, span, findings);
+                    }
+                }
             },
-            "principal" | "resource" => {
-                let narrow = if root == "principal" {
-                    principal
-                } else {
-                    resource
-                };
-                match handle.resolve_scope_path(root, rest, Some(narrow)) {
-                    ScopePath::Resolved(rich) => Some(rich),
-                    // Exists on every admitted type but at DIFFERENT types, so no
-                    // single declared arg type can match in every request
-                    // environment. Cedar rejects such a use (it accepts only
-                    // `has` / a use valid in every env); mirror that here in the
-                    // TYPE pass. The existence pass treats an ambiguous attribute
-                    // as present, so the diagnosis is a type mismatch, not
-                    // "not present".
-                    ScopePath::Ambiguous { types } => {
-                        findings.push(ProviderFinding {
-                            message: format!(
-                                "provider `{key}`: argument `{}` has a different type on each \
-                                 `{root}` type the rule admits (`{}`), so it cannot match the \
-                                 declared argument type `{}`",
-                                path.join("."),
-                                types.join("`, `"),
-                                display_param(declared),
-                            ),
-                            span,
-                            warning: false,
-                        });
+            Arg::Field(path) if path.len() < 2 && path.first().is_some_and(|r| r == "context") => {}
+            _ => {
+                if self.ambiguous(arg, declared, span, findings) {
+                    return;
+                }
+                for env in self.envs {
+                    // A path that does not resolve is the existence pass's finding.
+                    let Some(ty) = arg_type(arg, env) else {
+                        continue;
+                    };
+                    if ty != declared_ty {
+                        self.report(arg, display_ctype(&ty), declared, &declared_ty, env, span, findings);
                         return;
                     }
-                    _ => None,
                 }
             }
-            _ => None,
-        };
-        let Some(rich) = resolved_rich else {
-            continue;
-        };
-        // For an `entity` parameter fed from `context`, compare the field's
-        // QUALIFIED entity type with the declared one.
-        let wrong_entity = match (declared.param_type.as_str(), root) {
-            ("entity", "context") if matches!(rich, RichType::Entity(Some(_))) => handle
-                .context_entity_type(rest)
-                .filter(|actual| Some(actual.as_str()) != declared.entity_type.as_deref()),
-            _ => None,
-        };
-        if !param_matches_rich(declared, &rich) || wrong_entity.is_some() {
-            let shown = match &wrong_entity {
-                Some(actual) => format!("entity:{actual}"),
-                None => display_rich(&rich),
-            };
-            findings.push(ProviderFinding {
-                message: format!(
-                    "provider `{key}`: argument `{}` has type `{shown}` on action `{}` but the \
-                     provider declares argument type `{}`",
-                    path.join("."),
-                    action_display(action),
-                    display_param(declared),
-                ),
-                span,
-                warning: false,
-            });
-            return;
         }
+    }
+
+    /// A `principal.<attr>` / `resource.<attr>` argument whose attribute has a
+    /// different type on the entity types the rule admits cannot have one
+    /// declared type in every environment: report it as such.
+    fn ambiguous(
+        &self,
+        arg: &Arg,
+        declared: &ParamType,
+        span: Span,
+        findings: &mut Vec<ProviderFinding>,
+    ) -> bool {
+        let Arg::Field(path) = arg else {
+            return false;
+        };
+        let Some((root, rest)) = path.split_first() else {
+            return false;
+        };
+        let narrow = match root.as_str() {
+            "principal" => self.principal,
+            "resource" => self.resource,
+            _ => return false,
+        };
+        if rest.is_empty() {
+            return false;
+        }
+        for env in self.envs {
+            if let ScopePath::Ambiguous { types } = env.handle.resolve_scope_path(root, rest, Some(narrow)) {
+                findings.push(ProviderFinding {
+                    message: format!(
+                        "provider `{}`: argument `{}` has a different type on each `{root}` type \
+                         the rule admits (`{}`), so it cannot match the declared argument type `{}`",
+                        self.key,
+                        crate::field_path::join(path),
+                        types.join("`, `"),
+                        display_param(declared),
+                    ),
+                    span,
+                    warning: false,
+                });
+                return true;
+            }
+        }
+        false
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn report(
+        &self,
+        arg: &Arg,
+        shown: String,
+        declared: &ParamType,
+        declared_ty: &CType,
+        env: &RequestEnv<'_>,
+        span: Span,
+        findings: &mut Vec<ProviderFinding>,
+    ) {
+        // A declared set by its element type; two records of different shapes
+        // render alike, so by their attributes then.
+        let wanted = match declared_ty {
+            CType::Set(_) => display_ctype(declared_ty),
+            _ => display_param(declared),
+        };
+        let (shown, wanted) = if shown == wanted {
+            (shown_full(arg, env).unwrap_or(shown), declared_ty.render())
+        } else {
+            (shown, wanted)
+        };
+        let reads_scope =
+            |root: &str| matches!(arg, Arg::Field(p) if p.first().is_some_and(|r| r == root));
+        let scope = if reads_scope("principal") {
+            format!(" when the principal is a `{}`", env.principal)
+        } else if reads_scope("resource") {
+            format!(" when the resource is a `{}`", env.resource)
+        } else {
+            String::new()
+        };
+        findings.push(ProviderFinding {
+            message: format!(
+                "provider `{}`: argument `{}` has type `{shown}` on action `{}`{scope} but the \
+                 provider declares argument type `{wanted}`",
+                self.key,
+                render_arg(arg),
+                action_display(env.action),
+            ),
+            span,
+            warning: false,
+        });
+    }
+}
+
+/// An argument's type in full (a record with its attributes), for a diagnostic.
+fn shown_full(arg: &Arg, env: &RequestEnv<'_>) -> Option<String> {
+    arg_type(arg, env).map(|ty| ty.render())
+}
+
+/// An argument as written, for a diagnostic.
+fn render_arg(arg: &Arg) -> String {
+    match arg {
+        Arg::Field(path) => crate::field_path::join(path),
+        Arg::String(s) => format!("{s:?}"),
+        Arg::Integer(i) => i.to_string(),
+        Arg::Decimal(d) => format!("decimal({d:?})"),
+        Arg::Bool(b) => b.to_string(),
+        Arg::Set(items) => format!(
+            "[{}]",
+            items.iter().map(render_arg).collect::<Vec<_>>().join(", ")
+        ),
     }
 }
 
@@ -766,57 +856,14 @@ fn display_param(ty: &ParamType) -> String {
     }
 }
 
-/// Whether a resolved rich type is compatible with a declared `paramType`, by
-/// CATEGORY (#1) plus set element type (#2). Scalars must match exactly; a
-/// `set` must be an array whose element type (when both are known) matches the
-/// declared `items`; a `record` need only be an object (fields deferred, #3).
-/// An unknown declared `paramType`, or a rich type this does not recognize, is
-/// treated as compatible (lenient) rather than risk a false rejection.
-fn param_matches_rich(declared: &ParamType, rich: &RichType) -> bool {
-    match declared.param_type.as_str() {
-        "string" => matches!(rich, RichType::String),
-        "integer" | "long" => matches!(rich, RichType::Long),
-        "bool" | "boolean" => matches!(rich, RichType::Bool),
-        "decimal" => matches!(rich, RichType::Decimal),
-        "set" => match rich {
-            // #1: must be an array. #2: if both element types are known, check
-            // them. A bare array (element unknown), or a declared set with no
-            // `items`, leaves the element unknown -> accept.
-            RichType::Array(ArrayElem::Unknown) => true,
-            RichType::Array(ArrayElem::Of(elem)) => match declared.items.as_deref() {
-                Some(item_decl) => param_matches_rich(item_decl, elem),
-                None => true,
-            },
-            // A mixed-element array matches only a set with no declared element.
-            RichType::Array(ArrayElem::Mixed) => declared.items.is_none(),
-            _ => false,
-        },
-        "record" => matches!(rich, RichType::Record),
-        // Category only: `RichType` carries an entity's basename, so the
-        // qualified type is compared separately (`check_field_path_type`), and
-        // only for a direct `context` argument. A set element is not compared.
-        "entity" => matches!(rich, RichType::Entity(Some(_))),
-        // Unknown declared type: lenient.
-        _ => true,
-    }
-}
-
-/// A user-facing name for a resolved rich type, rendering non-scalars in
-/// Cedar-familiar form (`array<string>` -> `Set<String>`, `object` -> `record`).
-fn display_rich(rich: &RichType) -> String {
-    match rich {
-        RichType::Long => "Long".to_string(),
-        RichType::String => "String".to_string(),
-        RichType::Bool => "Bool".to_string(),
-        RichType::Decimal => "decimal".to_string(),
-        RichType::Timepoint => "timepoint".to_string(),
-        RichType::Record => "record".to_string(),
-        RichType::Array(ArrayElem::Unknown) => "Set".to_string(),
-        RichType::Array(ArrayElem::Mixed) => "Set<?>".to_string(),
-        RichType::Array(ArrayElem::Of(elem)) => format!("Set<{}>", display_rich(elem)),
-        RichType::Entity(Some(name)) => format!("entity:{name}"),
-        RichType::Entity(None) => "entity".to_string(),
-        RichType::Never => "never".to_string(),
+/// A Cedar type in Cedar-familiar form for diagnostics (`Set<String>`, a
+/// `record`, an entity as `entity:Ns::Type`).
+fn display_ctype(ty: &CType) -> String {
+    match ty {
+        CType::Entity(names) if names.len() == 1 => format!("entity:{}", names[0]),
+        CType::Set(inner) => format!("Set<{}>", display_ctype(inner)),
+        CType::Record { .. } => "record".to_string(),
+        other => other.render(),
     }
 }
 

@@ -4,7 +4,7 @@ This is the Advanced-topics page on schema *authoring via MCP*: a Dogwood action
 
 So you often will not hand-write a `.cedarschema`. Because the frontend works in Cedar, Dogwood converts the manifest — a list of tools with their input and output JSON schemas — into a Cedar `.cedarschema` for you, layering the tools on top of the Drupe template.
 
-From the command line, `dogwood schema mcp --manifest tools.json` generates the schema (write it out with `-o schema.cedarschema`); see [The command line](12-cli.md). The Rust equivalents are the `from_mcp_manifest` / `mcp_to_cedar_schema` constructors in [The API and workflow](07-api-and-workflow.md).
+From the command line, `dogwood schema mcp --manifest tools.json` generates the schema (write it out with `-o schema.cedarschema`); see [The command line](12-cli.md). The Rust equivalents are the `from_mcp_manifest` / `mcp_to_cedar_schema` constructors in [The API and workflow](07-api-and-workflow.md). Generation is behind the off-by-default `mcp-schema` Cargo feature of `dogwood-language` (forwarded by `dogwood-cli`), so build with `--features mcp-schema`.
 
 The policy example on this page is a runnable bundle under `examples/`.
 
@@ -25,7 +25,13 @@ A manifest is a JSON array of MCP tool descriptions (or an MCP `tools/list` payl
 }
 ```
 
-A tool's `inputSchema.properties` becomes the Cedar `context.input` record and `outputSchema` becomes `context.output`. JSON types map to Cedar types as follows: `integer` → `Long`, `string` → `String`, `boolean` → `Bool`, and `number` with `format: decimal` → `decimal`.
+A tool's `inputSchema.properties` becomes the Cedar `context.input` record and `outputSchema` becomes `context.output`. JSON types map to Cedar types as follows.
+
+- `integer` → `Long`, `boolean` → `Bool`, and `number` → `decimal`, whatever its `format`.
+- `string` → `String`, except for these formats: `date-time` and `date` → `datetime`, `duration` → `duration`, `ipv4` and `ipv6` → `ipaddr`, and `decimal` → `decimal`.
+- A `string` with `enum` → an enumerated entity type. For example, the input field `senum` of the tool `T`, with `"enum": ["a", "b"]`, becomes `entity T_Input_senum enum ["a", "b"]`.
+
+In a trace, write a `datetime`, `duration`, `ipaddr`, or `decimal` value as Cedar writes it, such as `datetime("2026-01-01T10:00:00Z")`, `duration("1h")`, `ip("127.0.0.1")`, or `decimal("1.5")`. A `decimal` can also be written as `1.5`, but not as `1`, which is a `Long`. Write an enumerated value as an entity of its type, such as `Drupe::T_Input_senum::"a"`. If a `request` event gives another value, such as a string, in its request context or its logged record, the decision is `Deny`. If a history event, such as a `response`, gives one in its logged record, the authorizer rejects the event and does not add it to the history.
 
 ## How generation works
 
@@ -41,28 +47,23 @@ The default config `include_outputs(true)` (emit `context.output` from each tool
 
 ## The Drupe template
 
-The template supplies the principals, resource, base context, and base action hierarchy that tool actions are layered onto. Its key parts:
+The template (`dogwood-language/configuration/mcp-template.cedarschema`) supplies the principal type, the resource type, the `system` context, and the two base actions that tool actions are layered onto. It declares the following (reformatted, without its comments).
 
 ```text
 namespace Drupe {
-  @mcp_principal("User")                entity OAuthUser { id: String } tags String;
-  @mcp_principal("IamEntity")           entity IamEntity { id: String };
-  @mcp_principal("UnauthenticatedUser") entity UnauthenticatedUser;
-  @mcp_resource("Gateway")              entity Gateway;
-  @mcp_context("system")                type SystemContext = { now: datetime };
+  @mcp_principal("User")   entity User;
+  @mcp_resource("Gateway") entity Gateway;
+  @mcp_context("system")   type SystemContext = { now: datetime };
 
-  // guardrail leaf types
-  type ContentFilterFinding = { severityScore: decimal };
-  type PromptAttackFinding  = { severityScore: decimal };
-  type SensitiveInfoFinding = { confidenceScore: decimal };
-
-  action Mcp  appliesTo { principal: [/* 3 */], resource: [Gateway], context: { system: SystemContext } };
-  action Http appliesTo { /* … */ };
+  action Mcp appliesTo {
+    principal: [User], resource: [Gateway],
+    context: { system: SystemContext, isOutput: Bool, output?: {} }
+  };
   @mcp_action("CallTools")
-  action CallTool    in [Mcp]      appliesTo { /* … */ };
-  action UnknownTool in [CallTool] appliesTo { /* … */ };
-  action InvokeAgent in [Http]     appliesTo { /* …, */ input?: {} };
-  action InvokeLLM   in [Http]     appliesTo { /* …, */ input?: {} };
+  action CallTool in [Mcp] appliesTo {
+    principal: [User], resource: [Gateway],
+    context: { system: SystemContext, isOutput: Bool, output?: {} }
+  };
 }
 ```
 
@@ -70,7 +71,7 @@ The `@mcp_principal` / `@mcp_resource` / `@mcp_context` / `@mcp_action` annotati
 
 ## What you get
 
-The generated `.cedarschema` combines the template (principals like `OAuthUser`, base actions) with one action per tool (`SellShares`, `GetStockInfo`, …). Because the tool's `stock` argument lands at `context.input.stock`, a plain Cedar policy validates against it:
+The generated `.cedarschema` combines the template (the principal type `User`, the resource type `Gateway`, and the base actions `Mcp` and `CallTool`) with one action per tool (`SellShares`, `GetStockInfo`, …). For the `SellShares` manifest above, the generated action is `SellShares in [Action::"CallTool"]`, with the context `input: SellSharesInput`, `output?: SellSharesOutput`, and `system: SystemContext`. Because the tool's `stock` argument lands at `context.input.stock`, a plain Cedar policy validates against it:
 
 ```text
 permit(principal, action == Drupe::Action::"GetStockInfo", resource)

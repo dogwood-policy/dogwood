@@ -524,6 +524,7 @@ fn an_authorizer_decides_over_providers_from_two_entries() {
             .principal("Drupe::OAuthUser::\"alice\"")
             .resource("Drupe::Gateway::\"gw\"")
             .field("input", "key", Value::String("doc".to_string()))
+            .request_context("input", "key", Value::String("doc".to_string()))
             .build()
     };
     let reasons = |r: &dogwood_language::Response| -> Vec<(usize, String)> {

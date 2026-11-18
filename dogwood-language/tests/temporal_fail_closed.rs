@@ -74,6 +74,7 @@ fn read_event(ts: i64, document: &str) -> Event {
         .principal("Drupe::OAuthUser::\"alice\"")
         .resource("Drupe::Gateway::\"gw1\"")
         .request_context("input", "document", Value::String(document.to_string()))
+        .field("input", "document", Value::String(document.to_string()))
         .build()
 }
 
@@ -241,5 +242,28 @@ when temporal {
     assert!(
         msg.contains("macro parameter reference") || msg.contains("?p"),
         "the error should identify the stray sigil, got: {msg}"
+    );
+}
+
+/// C6 (array) — a stray `?p` nested inside an array comparison operand is
+/// rejected during expansion, and the error names the comparison-operand
+/// position (not the predicate-argument position the shared term check
+/// otherwise reports).
+#[test]
+fn stray_sigil_in_operand_array_names_operand_position() {
+    let policy = r#"
+permit ( principal, action == Drupe::Action::"Read", resource )
+when temporal {
+    Drupe::Action::"Blocklist"::request{ input.document: context.input.document }
+    && context.input.document == [?p]
+};
+"#;
+    let service = ServiceSchema::defaults();
+    let policy_schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("action schema builds");
+    let result = LoweredPolicySet::from_str(policy, &service, &policy_schema);
+    let msg = format!("{}", result.err().expect("a stray `?p` must be a lowering error"));
+    assert!(
+        msg.contains("stray macro parameter reference `?p` in a comparison-operand position"),
+        "the error should name the comparison-operand position, got: {msg}"
     );
 }
