@@ -1,9 +1,9 @@
 name: CI
 
-# Build and test the workspace on every PR and on pushes to the default branch.
-# This is the gate that catches a publish sync dropping a file the crates depend
-# on: if the sanitized snapshot no longer builds, the sync PR goes red and
-# cannot merge.
+# Build and test the workspace, and check the Lean specification, on every PR
+# and on pushes to main and the release branches. This is the gate that catches
+# a publish sync dropping a file the crates depend on: if the sanitized snapshot
+# no longer builds, the sync PR goes red.
 
 on:
   pull_request:
@@ -53,3 +53,44 @@ jobs:
 
       - name: Test
         run: cargo test --workspace
+
+  lean:
+    # Builds the default library of the Lean specification in dogwood-lean/,
+    # with its proofs and examples, and checks the axioms of every theorem that
+    # Axioms.lean names (dogwood-lean/scripts/check.sh). The proofs do not
+    # depend on the platform, so one runner checks them.
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # elan installs the toolchain that dogwood-lean/lean-toolchain names when
+      # lake first runs there. The elan download is pinned to a release and its
+      # digest.
+      - name: Install elan
+        env:
+          ELAN_VERSION: v4.2.4
+          ELAN_SHA256: 42b94d4244e8353142c456ec0e4ca6528fd898a6c604d4059f494e706e431f63
+        run: |
+          curl -sSfL -o "$RUNNER_TEMP/elan.tar.gz" \
+            "https://github.com/leanprover/elan/releases/download/$ELAN_VERSION/elan-x86_64-unknown-linux-gnu.tar.gz"
+          echo "$ELAN_SHA256  $RUNNER_TEMP/elan.tar.gz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/elan.tar.gz" -C "$RUNNER_TEMP"
+          "$RUNNER_TEMP/elan-init" -y --default-toolchain none --no-modify-path
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      # Lean's memory grows with its number of threads. Four threads, one for
+      # each CPU of the runner, fit in its 16 GB.
+      - name: Check the Lean specification
+        env:
+          LEAN_NUM_THREADS: 4
+        run: dogwood-lean/scripts/check.sh dogwood-lean "$RUNNER_TEMP/lean-logs"
+
+      - name: Upload the Lean logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lean-logs
+          path: ${{ runner.temp }}/lean-logs/
