@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-e4d2f34b.js";
+            window.path_to_searchindex_js = "../searchindex-a051b7d7.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9744742b.js"></script>
@@ -385,10 +385,11 @@ directly. The argument kinds are:</p>
 <code>resource.owner</code>. It begins with one of the roots <code>context</code> / <code>principal</code> /
 <code>resource</code>, followed by one or more <code>.ident</code> segments. At authorize time
 Dogwood resolves the path against the decision event: a <code>context</code> path is
-looked up on the event’s input (leading <code>context</code> skipped); <code>principal</code> /
-<code>resource</code> resolve to the request scope entity, and a trailing <code>.id</code> / <code>.type</code>
-projects that entity’s id or type. A path that does not resolve is null <strong>at
-run time</strong>. Validation (see <a href="10-provider-schema.html#how-invocations-are-validated-against-declarations">How invocations are validated against
+looked up on the event’s request context (leading <code>context</code> skipped);
+<code>principal</code> / <code>resource</code> resolve to the request scope entity, and an
+attribute tail is read off the supplied entity data, as in Cedar. <code>id</code> and
+<code>type</code> are attributes like any other: <code>principal.id</code> reads an attribute the
+entity type declares as <code>id</code>, not the uid’s id. A path that does not resolve is null <strong>at run time</strong>. Validation (see <a href="10-provider-schema.html#how-invocations-are-validated-against-declarations">How invocations are validated against
 declarations</a>)
 rejects a field-path argument undeclared on — or typed incompatibly with — an
 action the rule is <em>scoped to</em>; but because provider execution is unconditional
@@ -488,10 +489,10 @@ never fires:</p>
 <pre><code class="language-text">forbid ( principal, action == Drupe::Action::"Read", resource )
 when { Vendor::ThreatScan(context.input.document).severity == context.input.level };
 </code></pre>
-<p><code>dogwood validate</code> only warns, and the policy passes:</p>
-<pre><code class="language-text">warning: for policy `policy_1`, policy is impossible: the policy expression evaluates
+<p><code>dogwood validate</code> rejects it as an impossible policy, one whose condition no request
+satisfies:</p>
+<pre><code class="language-text">error: for policy `policy_1`, policy is impossible: the policy expression evaluates
 to false for all valid requests
-OK: validation passed (1 warning(s)).
 </code></pre>
 <p>Compare the provider field with the provider enum’s own values
 (<code>Vendor::Severity::"HIGH"</code>) instead. To use a Cedar-schema enum, pass it <em>into</em> the
@@ -500,9 +501,8 @@ script receives the bare id) and return a <code>bool</code>:</p>
 <pre><code class="language-text">forbid ( principal, action == Drupe::Action::"Read", resource )
 when { Vendor::IsBlocked(context.input.level).blocked };
 </code></pre>
-<p>Validation checks that the argument has the declared enum type only for a direct
-<code>context</code> field like this one, not for an enum inside a set or record argument
-(<a href="10-provider-schema.html#how-invocations-are-validated-against-declarations">How invocations are validated</a>).</p>
+<p>Validation checks that the argument has the declared enum type, wherever it comes
+from (<a href="10-provider-schema.html#how-invocations-are-validated-against-declarations">How invocations are validated</a>).</p>
 <p>A provider can’t return a Cedar-schema enum: its output enums must be declared in
 <code>providers.json</code> (<a href="10-provider-schema.html#enum-typed-values">Enum-typed values</a>).</p>
 </li>
@@ -513,9 +513,7 @@ as a new field.</p>
 <p><strong>In the exported Cedar.</strong> Dogwood adds no namespace to the schema. The enum is exported
 into the action schema’s namespace under a generated name (<code>Vendor::Severity</code> becomes
 <code>Drupe::Vendor_Severity</code>), and the lowered policy uses that name:</p>
-<pre><code class="language-text">forbid(principal, action == Drupe::Action::"Read", resource) when {
-  (((context.providers).policy_1_p_0).severity) in
-    [Drupe::Vendor_Severity::"HIGH", Drupe::Vendor_Severity::"CRITICAL"] };
+<pre><code class="language-text">forbid(principal, action == Drupe::Action::"Read", resource) when { context.providers.policy_1_p_0.severity in [Drupe::Vendor_Severity::"HIGH", Drupe::Vendor_Severity::"CRITICAL"] };
 </code></pre>
 <p>You keep writing <code>Vendor::Severity::"HIGH"</code>, and error messages use that name too. If
 the action schema has several namespaces, the enum is exported once and every namespace
@@ -607,12 +605,14 @@ verdict) or handle it differently. A policy set
 whose safety depends on an erroring provider denying is incorrect on <strong>every</strong>
 implementation, including this one. Defensive scripts (point 2) are the only
 defense.</p>
-<p>An output that doesn’t match its declared shape (a bare string where a record is
-declared, a missing required field) counts as a provider error only when the
-declared type contains an enum. Otherwise the value reaches Cedar as is. Cedar
-fails on the field, reports the error in the response’s diagnostics, and treats
-that policy as not satisfied for that request. For a <code>forbid</code>, the request can
-then be allowed.</p>
+<p>An output that doesn’t match its declared type (a bare string where a record is
+declared, a missing required field, an attribute the declared record does not
+declare, a value of another type) is a broken provider contract too, and every
+implementation fails the decision closed for it: the response is a <code>Deny</code>
+whose diagnostics report <code>nonconforming provider output: …</code> (or, for an id
+outside a declared enum, the provider’s error). The output never reaches
+Cedar, where a <code>forbid</code> reading it would fail on the field and stop applying.
+A provider with no declared output type has no conforming output.</p>
 </li>
 </ol>
 <p>The same contract applies to external providers supplied through a

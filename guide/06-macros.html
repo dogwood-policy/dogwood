@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-e4d2f34b.js";
+            window.path_to_searchindex_js = "../searchindex-a051b7d7.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9744742b.js"></script>
@@ -406,6 +406,11 @@ condition); or</li>
 </ul>
 <p>In all of these, the rule is the same: <code>?p</code> is declared once in the parameter
 list, and each call supplies exactly one argument for it.</p>
+<p>The argument is checked where it lands, after expansion. A wildcard is a valid
+argument for a <code>?p</code> the body uses as a predicate argument, but not for one it
+compares: <code>$u == ?user</code> called with <code>*</code> expands to <code>$u == *</code>, which validation
+rejects (a wildcard is not a comparison operand). A macro meant to work for
+“any value” needs a definition without the comparison.</p>
 <p>The parameter list always stores names <em>without</em> the <code>?</code> internally, but you
 always <em>write</em> the <code>?</code> — both in the declaration and at every use inside the
 body. There is no whitespace allowed between the <code>?</code> and the name.</p>
@@ -540,7 +545,10 @@ capture each other and the policy would mean something the author never wrote.</
 <p>Dogwood prevents this with <strong>hygiene</strong>: at expansion, every distinct <code>$t</code> name
 in a macro body is renamed to a fresh, unique concrete name of the form
 <code>&lt;name&gt;$&lt;offset&gt;</code>, where <code>&lt;offset&gt;</code> is the byte position of the call site. So a
-<code>$t</code> becomes something like <code>t$412</code>, which cannot collide with a user’s <code>t</code>.</p>
+<code>$t</code> becomes something like <code>t$412</code>, which cannot collide with a user’s <code>t</code>.
+Since only <code>$t</code> names are renamed, a temporal body may not use a plain identifier
+as a variable at all (see
+<a href="#plain-identifiers-in-a-temporal-body">Plain identifiers in a temporal body</a>).</p>
 <p>Two properties make this both safe and predictable:</p>
 <ul>
 <li><strong>All occurrences of one <code>$t</code> name within a single expansion get the same
@@ -585,6 +593,19 @@ whole-condition positions).</p>
 <p><code>$t</code> binder names are the exception: they are <em>not</em> checked against the
 parameter list (they are never declared there), and are tied together by
 name at expansion.</p>
+<h3 id="plain-identifiers-in-a-temporal-body"><a class="header" href="#plain-identifiers-in-a-temporal-body">Plain identifiers in a temporal body</a></h3>
+<p>A <code>def temporal</code> body may not use a plain identifier as a variable or a binder:
+not in <code>exists (u: String)</code>, <code>count for (u: String)</code>, <code>sum a for …</code>, or <code>tp(t)</code>,
+nor as a term such as <code>input.user: u</code>. Expansion renames only <code>$t</code> names, so a
+plain binder would be kept as written and capture a same-named variable in an
+argument the caller passes, and a plain free variable would bind to whatever
+variable of that name the call site has in scope; either way, the expanded policy
+would mean something other than what was written. Write <code>$u</code> for a variable the
+macro binds itself, or declare a <code>?u</code> parameter for one the caller names. The
+error reads “in <code>def temporal</code> body: plain identifier <code>u</code> is not allowed, because
+expansion does not rename it and it can capture or bind a call-site variable;
+write <code>$u</code> for a variable the macro binds itself, or declare a <code>?u</code> parameter for
+a variable the caller names”.</p>
 <h3 id="no-macro-in-macro"><a class="header" href="#no-macro-in-macro">No macro-in-macro</a></h3>
 <p>A macro body may not contain a call to another macro. A <code>def cedar</code> body that
 calls another macro fails with “in <code>def cedar</code> body: macro-in-macro is not

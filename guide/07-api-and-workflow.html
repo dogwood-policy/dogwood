@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-e4d2f34b.js";
+            window.path_to_searchindex_js = "../searchindex-a051b7d7.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9744742b.js"></script>
@@ -186,7 +186,7 @@
 <p>The API mirrors the <code>cedar-policy</code> crate. Wherever a concept has a Cedar counterpart the name matches: <code>Validator</code>, <code>Authorizer</code>, <code>Response</code>, <code>Decision</code>, <code>Diagnostics</code>, <code>ValidationResult</code>. The schema and policy-set types differ because a Dogwood policy set is bound to its (augmented) schema at lower time and Dogwood’s schema splits into two halves: Cedar’s single <code>Schema</code> becomes a <code>ServiceSchema</code> + <code>PolicySchema</code>, and Cedar’s <code>PolicySet</code> becomes a <code>LoweredPolicySet</code> (with a <code>ParsedPolicySet</code> for the schema-free parse phase). Two signatures then depart from Cedar’s: <code>LoweredPolicySet::from_str</code> <em>takes</em> the schemas, and <code>Validator::new()</code> takes <em>none</em> (details in the Validator section below). Two further divergences are semantic — things Cedar cannot express — and both live on the authorizer:</p>
 <ol>
 <li><code>Authorizer</code> is <strong>stateful</strong> — each ingested <code>Event</code> folds into an accumulated history so temporal operators can see the past.</li>
-<li><code>Authorizer::is_authorized</code> returns <strong><code>Option&lt;Response&gt;</code></strong> — <code>None</code> for a history-only event whose kind is not a decision kind.</li>
+<li><code>Authorizer::is_authorized</code> returns <strong><code>Option&lt;Response&gt;</code></strong> — <code>None</code> for a history-only event whose kind is not a decision kind. <code>Authorizer::submit</code> returns <code>Result&lt;Option&lt;Response&gt;, Rejection&gt;</code>, which also reports a history event the authorizer rejected because it does not conform to the event schema.</li>
 </ol>
 <p>Nearly all of the public API is re-exported at the crate root, so you reach it through <code>dogwood_language::&lt;T&gt;</code>; the internal <code>pub mod</code> modules exist only to give rustdoc a home (and a few AST types live under <code>dogwood_language::temporal_ast</code>).</p>
 <hr>
@@ -241,7 +241,7 @@ permit (
     resource
 )
 when temporal {
-    formerly within 1h Drupe::Action::"Login"::response{ input.user: context.input.user }
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
 };
 "#;
 
@@ -265,7 +265,7 @@ assert!(report.validation_passed());
 </span><span class="boring">fn main() {
 </span>let mut authorizer = Authorizer::new(policies); // consumes policies
 <span class="boring">}</span></code></pre>
-<p><strong>Stage 5 — Event.</strong> An <code>Event</code> is Dogwood’s generalization of a Cedar <code>Request</code>. It carries a first-class <code>kind</code> (here <code>"request"</code>), an optional principal/resource scope, and input fields exposed to the policy as <code>context.input.&lt;name&gt;</code>.</p>
+<p><strong>Stage 5 — Event.</strong> An <code>Event</code> is Dogwood’s generalization of a Cedar <code>Request</code>. It carries a first-class <code>kind</code> (here <code>"request"</code>), an optional principal/resource scope, its <strong>logged</strong> record (<code>field</code>, what later temporal predicates correlate on), and its <strong>request context</strong> (<code>request_context</code>, what the policy reads as <code>context.input.&lt;name&gt;</code>). The <code>input</code> group is supplied to both. The event must conform to the schemas: the action’s context requires <code>input</code>, and the logged record must log the <code>input</code> fields the schema requires, or the decision fails closed.</p>
 <p><strong>Stage 6 &amp; 7 — is_authorized and Response.</strong> <code>is_authorized</code> takes <code>&amp;mut self</code> (stateful) and returns <code>Option&lt;Response&gt;</code>. Every event here is a <code>request</code> (a decision kind), so each yields <code>Some(response)</code>. Read the verdict from <code>response.decision()</code> and the explanation from <code>response.diagnostics()</code>.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -275,18 +275,21 @@ assert!(report.validation_passed());
         .principal("Drupe::OAuthUser::\"alice\"")
         .resource("Drupe::Gateway::\"gw1\"")
         .field("input", "user", Value::String("alice".to_string()))
+        .request_context("input", "user", Value::String("alice".to_string()))
         .build(),
     Event::builder("Drupe::Action::Read", "request")
         .timestamp(10)
         .principal("Drupe::OAuthUser::\"alice\"")
         .resource("Drupe::Gateway::\"gw1\"")
         .field("input", "user", Value::String("alice".to_string()))
+        .request_context("input", "user", Value::String("alice".to_string()))
         .build(),
     Event::builder("Drupe::Action::Read", "request")
         .timestamp(7200)
         .principal("Drupe::OAuthUser::\"alice\"")
         .resource("Drupe::Gateway::\"gw1\"")
         .field("input", "user", Value::String("alice".to_string()))
+        .request_context("input", "user", Value::String("alice".to_string()))
         .build(),
 ];
 
@@ -345,7 +348,9 @@ impl ServiceSchemaBuilder {
 </span><span class="boring">fn main() {
 </span>impl PolicySchema {
     pub fn from_cedarschema_str(action_schema_src: &amp;str) -&gt; Result&lt;PolicySchema, Error&gt;;
+    #[cfg(feature = "mcp-schema")]
     pub fn from_mcp_manifest(manifest_json: &amp;str) -&gt; Result&lt;PolicySchema, Error&gt;;
+    #[cfg(feature = "mcp-schema")]
     pub fn from_mcp_manifest_with_template(manifest_json: &amp;str, template: &amp;str) -&gt; Result&lt;PolicySchema, Error&gt;;
 }
 <span class="boring">}</span></code></pre>
@@ -374,6 +379,9 @@ impl ServiceSchemaBuilder {
 <li><code>lower(&amp;policy_schema)</code> — <strong>phase 2</strong>. Derives the event schema against the action schema, lowers to Cedar, augments the schema with hoisted <code>context.&lt;id&gt;</code> fields, and injects pins. Produces the <code>LoweredPolicySet</code>. Emitted policy ids and hoisted field names use the default <code>policy_&lt;index&gt;</code> namespace.</li>
 <li><code>lower_with_distincter(&amp;policy_schema, distincter)</code> — like <code>lower</code>, but namespaces this call’s policy ids and hoisted field names under <code>distincter</code> (ids become <code>&lt;distincter&gt;_&lt;index&gt;</code>). Supply a <strong>distinct</strong> value per call when combining independently-lowered sets into one Cedar <code>PolicySet</code> / policy store, or when feeding an augmented schema forward; <code>lower_many(&amp;[(&amp;parsed, distincter)], &amp;policy_schema)</code>, where each <code>distincter</code> is a <code>Distincter</code>, lowers each entry independently against <code>policy_schema</code> and returns one merged <code>LoweredPolicySet</code> whose schema is <code>policy_schema</code> augmented once with every entry’s hoisted fields (a repeated distincter is <code>Error::DuplicateDistincter</code>). Its entries are parsed sets, so like <code>lower</code> it needs only the <code>PolicySchema</code>. The <code>distincter</code> must be a valid Cedar identifier (<code>[_A-Za-z][_A-Za-z0-9]*</code>) — else <code>Error::InvalidDistincter</code>. A <code>Distincter</code> is a string validated against that rule once, at construction (<code>"tenant_42".parse::&lt;Distincter&gt;()</code> or <code>Distincter::try_from</code>); <code>lower_with_distincter</code> parses its <code>&amp;str</code> into one. It is <strong>not</strong> derived from a source <code>@id</code>; distinctness is the caller’s decision. Note the plain <code>lower</code> path uses the namespace <code>policy</code>, so it is not automatically distinct from a <code>"policy"</code> distincter.</li>
 </ul>
+<blockquote>
+<p><strong>Combining sets: a whole-context read breaks once any set has a leaf.</strong> Each <code>lower</code> / <code>lower_with_distincter</code> call validates only its own rules. At decision time the authorizer puts every hoisted value of the combined store into every request’s context, whatever the request’s action. A rule that reads <code>context</code> whole, such as <code>context == { input: { user: "alice" } }</code>, is accepted in a set without temporal or provider leaves (nothing is hoisted, so the context is the request’s), but once it shares a store with any set that has a leaf, on its own action or any other, the contexts it sees carry extra attributes and the comparison is silently <code>false</code>. Re-validating the earlier set against the final schema does <strong>not</strong> catch this when the later set’s leaves target other actions, since the schema adds a hoisted field only to its rule’s actions. Lower the sets together with <code>lower_many</code> and run <code>Validator::validate</code> on the result instead: it checks the combined set and reports the whole-context read (<code>lower_many</code> itself does not reject it). A caller that feeds schemas forward should apply the same rule: in a store with any leaf, no rule may read <code>context</code> whole. The formal specification proves that two sequential lowerings that are each valid combine into a valid set exactly when the combined set passes the context-read check, provided the second set’s leaves and the pins read none of the first set’s hoisted attributes (<a href="08-formal-specification.html#45-schema-derivation-and-augmentation">§4.5</a>). The crate rejects such reads.</p>
+</blockquote>
 <p><code>LoweredPolicySet::from_str(src, &amp;service, &amp;policy_schema)</code> (below) is the fused form of <code>parse</code> then <code>lower</code> for when the action schema is already in hand; <code>LoweredPolicySet::from_many_str(&amp;[(text, distincter)], &amp;service, &amp;policy_schema)</code> is likewise the fused form of <code>parse</code> on each entry then <code>lower_many</code>.</p>
 <h3 id="loweredpolicyset-and-the-cedar-export-accessors"><a class="header" href="#loweredpolicyset-and-the-cedar-export-accessors">LoweredPolicySet and the Cedar export accessors</a></h3>
 <p><code>LoweredPolicySet</code> is opaque. It is produced by <code>ParsedPolicySet::lower</code> (or the fused <code>from_str</code> shortcut) and consumed by <code>Validator::validate</code> and <code>Authorizer::new</code> / <code>Authorizer::builder</code>. Beyond lowering, its accessors are the bridge to plain Cedar and external policy stores.</p>
@@ -458,7 +466,10 @@ pub enum ValidationWarning {
 <span class="boring">}</span></code></pre>
 <ul>
 <li><code>builder(action, kind)</code> — start building. <code>action</code> is the qualified Cedar action id, either bare (<code>"Login"</code>) or namespaced (<code>"Drupe::Action::Login"</code>); the builder splits it into <code>(namespace, id)</code>. <code>kind</code> is the event-kind string (<code>"request"</code>, <code>"response"</code>, …).</li>
-<li>The <strong>request scope is optional</strong>: only an event that wraps a request carries a principal/resource, so history-only events return <code>None</code> from <code>principal()</code> / <code>resource()</code>.</li>
+<li>The <strong>request scope</strong> says whose event it is. An event that wraps a request carries its principal and resource. A history-only event (a <code>response</code>, an <code>error</code>) that reports on a request carries <strong>the same principal and resource</strong>, so that it is that principal’s history: build it with <code>principal(..)</code> / <code>resource(..)</code> too. <code>principal()</code> / <code>resource()</code> return <code>None</code> only for an event built without a scope.</li>
+<li><strong>The mirror rule.</strong> A logged field that mirrors the request must hold the event’s own request-side value, and must be <strong>absent</strong> when the event has none. The mirrored fields are the field of each symmetric pin (a pin to the request’s principal, its resource, or a context attribute, such as <code>pin callerPrincipal = principal</code>, <code>pin actor = principal</code> or <code>pin f = context.&lt;path&gt;</code>), and <code>callerPrincipal</code> / <code>callerResource</code> when no pin names them. Every pinned field must be logged. An event that breaks either rule is not ingested: <code>submit</code> returns its <code>Rejection</code>, and <code>is_authorized</code> returns <code>None</code> for a history event and a fail-closed <code>Deny</code> for a decision event. The builder keeps the rule for the default field names: <code>principal(..)</code> and <code>resource(..)</code> set the scope <em>and</em> log <code>callerPrincipal</code> / <code>callerResource</code>. A <code>.log</code> line logs them itself, next to its <code>scope(...)</code>. Under a pin with another name (<code>pin actor = principal</code>), log that field yourself, with the builder or in the <code>.log</code> line.</li>
+<li><strong>What the rule costs.</strong> Under the default event schema, whose universal pin <code>callerPrincipal = principal</code> keys every event by its principal, a history event without a principal is rejected: it cannot be anyone’s history. A scope-less event that logs <code>callerPrincipal: alice</code> used to count as alice’s history; it was a forgery channel (anyone could fill alice’s rate limit), and it is closed. Evidence about another principal (an administrator revoking alice) is the administrator’s history under that pin, so alice’s rules do not see it; to share such evidence across principals, use an event schema without the universal pin. Under a symmetric context pin (<code>pin session: String = context.session</code>), a history event that logs <code>session</code> must carry the same <code>session</code> in its request context (<code>request_context(..)</code> on the builder).</li>
+<li><code>AuthorizerBuilder::mirror_rule(MirrorRule::Unchecked)</code> checks neither the mirror rule nor the pinned-field rule above. The authorizer then ingests an event that does not log a pinned field. It also ingests an event that logs a mirrored field with a value other than the request’s, or with no request-side value to mirror, so it accepts forged history. It still does not ingest an event whose action and kind have no signature in the event schema. It also does not ingest an event that does not log a required field or that logs a field of the wrong type. <code>MirrorRule::Current</code> accepts any logged value for a mirrored field when the event has no request-side value for it. The default, <code>MirrorRule::Strict</code>, is the specification’s rule.</li>
 <li><code>field(group, name)</code> reads one field of the <strong>logged temporal record</strong> (<code>field("input", "user")</code>); <code>fields(group)</code> yields all <code>(name, value)</code> pairs of a group — what an engine that persists history outside the process would record on <code>observe</code>. There is no <code>input</code>-specific accessor: <code>input</code> is just the <code>"input"</code> group, read like any other. The <strong>Cedar request context</strong> a policy sees as <code>context.&lt;group&gt;.&lt;name&gt;</code> is a separate bag, read via <code>request_context_path</code>.</li>
 <li><code>from_request(&amp;cedar::Request)</code> — interop bridge for callers coming from <code>cedar-policy</code>. It lifts a Cedar <code>Request</code> into a <strong><code>request</code>-kind</strong> <code>Event</code> at <strong>timestamp <code>0</code></strong>: principal/resource become the scope, the action becomes the qualified action, and <code>context.input</code> becomes the input fields. A stateless single-decision authorization is then just a fresh <code>Authorizer</code> fed this one event.</li>
 </ul>
@@ -483,22 +494,41 @@ pub enum ValidationWarning {
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub enum Value {
-    Null,
+    Null,                     // an absent value
     Bool(bool),
     Int(i64),
-    Decimal(String),          // canonical text; equality canonicalizes (1.5 == 1.50)
+    Decimal(String),          // compared by value (02.5 == 2.5 == 2.50)
     String(String),
     Entity { ty: String, id: String },
-    Array(Vec&lt;Value&gt;),
+    Array(Vec&lt;Value&gt;),        // a set: order and repetitions do not matter
     Object(BTreeMap&lt;String, Value&gt;),
 }
 
 impl Value {
-    pub fn dom_eq(&amp;self, other: &amp;Value) -&gt; bool; // structural eq with decimal canonicalization
-    pub fn as_int(&amp;self) -&gt; Option&lt;i64&gt;;         // integer view; None if not an Int
+    pub fn extension(constructor: &amp;str, arg: &amp;str) -&gt; Value;   // Cedar extension value, e.g. ("datetime", "2024-01-01T00:00:00Z")
+    pub fn dom_eq(&amp;self, other: &amp;Value) -&gt; bool;               // equality of values (below)
+    pub fn as_int(&amp;self) -&gt; Option&lt;i64&gt;;                       // integer view; None if not an Int
+    pub fn is_null(&amp;self) -&gt; bool;
+    pub fn canonical(&amp;self) -&gt; Value;                          // the one representative of the value
+    pub fn canonical_decimal(spelling: &amp;str) -&gt; Option&lt;String&gt;; // "02.50" -&gt; "2.5"
+}
+
+impl Event {
+    pub fn canonical(&amp;self) -&gt; Event;                          // every value canonical
 }
 <span class="boring">}</span></code></pre>
-<p>The constructors you will use most are <code>Value::String(s.to_string())</code> and <code>Value::Int(n)</code>, as in the tour. <code>Decimal</code> is canonical text; <code>Entity</code> / <code>Array</code> / <code>Object</code> build the structured shapes.</p>
+<p>The constructors you will use most are <code>Value::String(s.to_string())</code> and <code>Value::Int(n)</code>, as in the tour. <code>Entity</code> / <code>Array</code> / <code>Object</code> build the structured shapes. <code>Value::extension(constructor, arg)</code> builds a value of one of Cedar’s extension types, by its constructor: <code>"datetime"</code>, <code>"duration"</code>, <code>"ip"</code>, or <code>"decimal"</code>. A <code>decimal</code> is a <code>Value::Decimal</code>; the others are held as Cedar’s JSON escape for an extension value, <code>{"__extn": {"fn": …, "arg": …}}</code>, which is also what <code>Event::from_request</code> reads off a Cedar request. The Drupe template’s <code>system.now</code> is a <code>datetime</code>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>builder.request_context("system", "now", Value::extension("datetime", "2024-01-01T00:00:00Z"))
+<span class="boring">}</span></code></pre>
+<p>Values compare as the specification’s Cedar values do (<code>dom_eq</code>):</p>
+<ul>
+<li><strong><code>Null</code> is an absent value.</strong> A logged <code>null</code> is a field that is not logged: a <code>*</code> wildcard does not match it, a variable does not bind to it, and a pin does not file under it. A <code>null</code> in the request context or in an entity attribute is absent too, for temporal conditions and for Cedar alike (<code>context.input has tag</code> is false for <code>tag: null</code>).</li>
+<li><strong>Decimals compare by value</strong>: <code>02.5</code>, <code>2.5</code> and <code>2.50</code> are one decimal, in logged values, pins and <code>decimal("…")</code> literals.</li>
+<li><strong>An array is a set</strong>: <code>["a", "b"]</code>, <code>["b", "a"]</code> and <code>["b", "a", "a"]</code> are one value.</li>
+</ul>
+<p><code>canonical()</code> returns the one representative of a value under that equality (decimals respelled, sets sorted and deduplicated, <code>null</code> members and elements dropped), and <code>Event::canonical()</code> canonicalizes every value of an event; an engine that stores values as text stores this form, so that equal values are stored alike. A canonical event decides exactly as the original does.</p>
 <h3 id="authorizer-authorizerbuilder-response-diagnostics-decision"><a class="header" href="#authorizer-authorizerbuilder-response-diagnostics-decision">Authorizer, AuthorizerBuilder, Response, Diagnostics, Decision</a></h3>
 <p>The <code>Authorizer</code> is the stateful monitor. It is built from a <code>LoweredPolicySet</code> and assembled from two swappable backends (see <a href="#the-engine-seam">The engine seam</a>): a <code>PolicyEngine</code> (decision; default <code>CedarPolicyEngine</code>) and a <code>TemporalEngine</code> (temporal-leaf evaluation; default <code>InMemoryTemporalEngine</code>).</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -507,6 +537,13 @@ impl Value {
     pub fn new(policies: LoweredPolicySet) -&gt; Self;                  // built-in backends; infallible
     pub fn builder(policies: LoweredPolicySet) -&gt; AuthorizerBuilder; // to substitute backends
     pub fn is_authorized(&amp;mut self, event: &amp;Event) -&gt; Option&lt;Response&gt;;
+    pub fn submit(&amp;mut self, event: &amp;Event) -&gt; Result&lt;Option&lt;Response&gt;, Rejection&gt;; // reports a rejected event
+}
+
+#[non_exhaustive]
+pub enum Rejection {
+    Nonconforming { reason: String }, // the event does not conform to the event schema
+    Unavailable { reason: String },   // the temporal engine did not record it (`try_observe`)
 }
 <span class="boring">}</span></code></pre>
 <ul>
@@ -514,24 +551,29 @@ impl Value {
 <li><code>builder(policies)</code> — for custom backends.</li>
 <li><code>is_authorized(&amp;mut self, event)</code> — <code>&amp;mut self</code> (stateful) returning <code>Option&lt;Response&gt;</code>:
 <ul>
-<li>The event is <strong>always</strong> handed to the temporal engine (<code>observe</code>) so it sees the history.</li>
-<li>A <strong>decision-kind</strong> event additionally triggers temporal evaluation, request construction, and the policy engine’s decision, yielding <code>Some(Response)</code>.</li>
-<li>A <strong>history-only</strong> event (a kind that is not a decision kind, e.g. <code>response</code>) yields <code>None</code>: it updates temporal state but produces no verdict.</li>
-<li><strong>Evaluation failures do not abort:</strong> a failure (a provider that errors, the temporal engine erroring, a decision event missing a principal/resource) is recorded in <code>Response::diagnostics().errors()</code>, and this reference implementation resolves it to <code>Deny</code>. Note that for provider errors specifically this is an implementation choice, not a guarantee — an erroring provider is undefined behavior under <a href="05-information-providers.html#the-provider-contract">the provider contract</a>.</li>
+<li>The event is first checked against the event schema: the schema must declare a signature for its action and kind, and its logged record must be an instance of it — every logged declared field of its declared type, every required field and every pinned field logged, and every logged field that mirrors the request (the field of each symmetric pin, and <code>callerPrincipal</code> / <code>callerResource</code> when no pin names them) holding the request’s value, and, under the default strict <a href="#event-eventbuilder-value">mirror rule</a>, absent when the request has no value for it (<code>AuthorizerBuilder::mirror_rule</code>: <code>Current</code> drops that last case, <code>Unchecked</code> checks no pin rule). A field spliced from the action’s <code>context.input</code> / <code>context.output</code> is required when every attribute along its path is.</li>
+<li>A <strong>conforming</strong> event is handed to the temporal engine (<code>try_observe</code>) so it sees the history. A <strong>nonconforming</strong> event is not: no later decision sees it. An event the engine could not record is not in the history either: a decision event fails closed (<code>temporal engine: …</code>).</li>
+<li>A <strong>decision-kind</strong> event additionally triggers the decision’s checks, temporal evaluation, request construction, and the policy engine’s decision, yielding <code>Some(Response)</code>.</li>
+<li>A <strong>history-only</strong> event (a kind that is not a decision kind, e.g. <code>response</code>) yields <code>None</code>: it updates temporal state but produces no verdict. A nonconforming history event yields <code>None</code> too; use <code>submit</code> to learn of the rejection.</li>
+<li><strong>Failures do not abort:</strong> a failure is recorded in <code>Response::diagnostics().errors()</code>, and the decision fails closed to <code>Deny</code>. The checks, in order: a decision event with no principal or resource (when it does not conform either, a second error says so: it was not ingested); a decision event that does not conform (<code>nonconforming decision event: …</code>); a request whose principal or resource is of a type its action does not apply to, or whose context has an undeclared attribute, lacks a required one, or holds a value of the wrong type (<code>nonconforming request: …</code>); entity data that does not conform to the schema (<code>entity conformance: …</code>); a provider that errors; a provider output that is not of its declared type (<code>nonconforming provider output: …</code>); and a temporal engine that errors, values a name that is not a leaf, or gives no value for a leaf a policy reads (<code>temporal evaluation: …</code>; Cedar reports such a policy as erroring, so an engine that binds only the leaves a decision can read decides as one that binds them all). This is the order of the formal specification’s <code>PolicySet.decideWith</code> (<code>dogwood-lean</code>). For provider errors specifically the denial is an implementation choice, not a guarantee — an erroring provider is undefined behavior under <a href="05-information-providers.html#the-provider-contract">the provider contract</a>.</li>
 </ul>
 </li>
+<li><code>submit(&amp;mut self, event)</code> — the same ingestion, reporting what it did: <code>Ok(Some(response))</code> for a decision event, <code>Ok(None)</code> for an ingested history event, and <code>Err(Rejection::Nonconforming { reason })</code> for a history event that does not conform, or <code>Err(Rejection::Unavailable { reason })</code> for one the temporal engine could not record (<code>TemporalEngine::try_observe</code>), which was <strong>not</strong> ingested. A rejection is not a decision. A nonconforming decision event is not ingested either, and its decision fails closed. Supplied timestamps are preserved and not checked.</li>
 </ul>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>impl AuthorizerBuilder {
     pub fn policy_engine(mut self, engine: impl PolicyEngine + 'static) -&gt; Self;
     pub fn temporal_engine(mut self, engine: impl TemporalEngine + 'static) -&gt; Self;
+    pub fn mirror_rule(mut self, rule: MirrorRule) -&gt; Self; // Strict (default), Current, Unchecked
     pub fn build(self) -&gt; Result&lt;Authorizer, Error&gt;;
 }
 <span class="boring">}</span></code></pre>
 <ul>
 <li><code>policy_engine(engine)</code> — install the decision backend (e.g. a remote Cedar-based engine). Default <code>CedarPolicyEngine</code>.</li>
 <li><code>temporal_engine(engine)</code> — install a custom temporal backend. Default <code>InMemoryTemporalEngine</code>.</li>
+<li><code>partition_temporal()</code> — partition temporal history by the event schema’s universal symmetric pins.</li>
+<li><code>generation(g)</code> — the deployment generation of the initial policy set (default <code>0</code>), reported in <code>PolicySetVersion::generation</code>.</li>
 <li><code>build()</code> — runs each backend’s <code>prepare</code> (the policy engine gets the lowered Cedar policies plus schema; the temporal engine gets the temporal leaves plus schema). It <strong>errors if a backend’s <code>prepare</code> fails</strong> (e.g. a compiling temporal engine rejects a leaf, or a remote policy engine cannot reach its policy store). This is why <code>builder()</code> is fallible while <code>new()</code> is not.</li>
 </ul>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -556,10 +598,126 @@ impl Diagnostics {
 </span><span class="boring">fn main() {
 </span>pub struct DogwoodRuleRef {
     pub rule_index: usize,       // 0-based index of the rule in the source policy set
-    pub cedar_policy_id: String, // synthesized Cedar policy id, e.g. "policy0"
+    pub cedar_policy_id: String, // synthesized Cedar policy id, e.g. "policy_0"
 }
 <span class="boring">}</span></code></pre>
 <p><code>Decision</code> is <code>pub use cedar_policy::Decision;</code> — re-exported so consumers need no direct <code>cedar-policy</code> dependency. Its values are <code>Decision::Allow</code> and <code>Decision::Deny</code>, and it is the type returned by <code>Response::decision()</code>.</p>
+<h3 id="stable-policy-identity-ids-revisions-versions-opt-in"><a class="header" href="#stable-policy-identity-ids-revisions-versions-opt-in">Stable policy identity: ids, revisions, versions (opt-in)</a></h3>
+<p>By default a rule is named by its <strong>position</strong>: rule <code>k</code> is lowered to the Cedar policy <code>policy_&lt;k&gt;</code> (<code>&lt;distincter&gt;_&lt;k&gt;</code> under a distincter), and <code>reason()</code> reports that name. A position is not an identity. After a reorder, an insertion or a removal, <code>policy_0</code> names a different rule, silently, so a log line, an audit record or a prompt that says “denied by <code>policy_0</code>” cannot be resolved once the set changes. Stable identity is an <strong>opt-in, additive</strong> API: nothing changes for a caller that does not ask for it.</p>
+<p><strong>Opting in.</strong> Choose an id source on the parsed set, before lowering:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[non_exhaustive]
+pub enum IdSource {
+    Positional,           // the default: today's `policy_&lt;k&gt;`
+    Annotation,           // each policy's `@id("…")`; required and unique
+    Explicit(Vec&lt;String&gt;),// ids[k] names the k-th policy (e.g. a policy-store record id)
+}
+
+impl ParsedPolicySet {
+    pub fn with_ids(self, ids: IdSource) -&gt; Result&lt;ParsedPolicySet, Error&gt;;
+}
+impl ParsedPolicy&lt;'_&gt; {
+    pub fn policy_id(&amp;self) -&gt; Option&lt;&amp;str&gt;;  // the assigned id, before lowering
+}
+<span class="boring">}</span></code></pre>
+<pre><code class="language-text">@id("read-after-login")
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal { formerly within 1d Drupe::Action::"Login"::request{} };
+</code></pre>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let parsed = ParsedPolicySet::parse(src, &amp;service)?.with_ids(IdSource::Annotation)?;
+let lowered = parsed.lower(&amp;policy_schema)?;   // or lower_with_distincter / lower_many
+<span class="boring">}</span></code></pre>
+<ul>
+<li><strong>Checked at <code>with_ids</code></strong>, before the action schema is needed: with <code>Annotation</code>, a policy without an <code>@id</code> (or with a valueless <code>@id</code>) is rejected; with either source, two policies with one id, an id outside the portable alphabet <code>[A-Za-z0-9_.:-]</code> (1 to 128 characters), and an <code>Explicit</code> list of the wrong length are rejected. All are <code>Error::PolicyId(PolicyIdError)</code>, a self-rendering error that points at the policy and reports a <code>PolicyIdErrorKind</code> (<code>Missing</code>, <code>Duplicate</code>, <code>Invalid</code>, <code>CountMismatch</code>), the policy’s index and the id.</li>
+<li><strong>The emitted Cedar <code>PolicyId</code> is the stable id</strong>, so <code>as_cedar()</code>, <code>rules()</code>, <code>rule_ref()</code>, <code>reason()</code> and the text of Cedar’s error messages all name it. Under a distincter (<code>lower_with_distincter</code>, <code>lower_many</code>) the id is <code>&lt;distincter&gt;/&lt;id&gt;</code>: Cedar’s <code>PolicyId</code> accepts any string, and <code>/</code> is outside both the distincter and the id alphabets, so the prefix is unambiguous. With <code>lower_many</code>, a shared rule (an application’s system rules under <code>sys</code>, say) has one id and one revision in every set it is merged into. A set that merges a positional entry is not stable (<code>has_stable_ids()</code> is <code>false</code>).</li>
+<li><strong>The hoisted field names do not change.</strong> <code>context.policy_&lt;k&gt;__temporal_&lt;j&gt;</code> and <code>context.providers.policy_&lt;k&gt;_p_&lt;j&gt;</code> stay positional under every id source, because consumers bind and store them by name (a temporal service’s leaf-id contract, the Cedar text in external policy stores, an engine’s persisted state). A position-free name for a leaf is <code>TemporalField::content_hash()</code>, which an engine may key state by (see <a href="#the-temporal-evaluation-seam">The temporal-evaluation seam</a>).</li>
+</ul>
+<p><strong>What a decision reports.</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct PolicyRef { /* … */ }          // id + revision
+impl PolicyRef {
+    pub fn id(&amp;self) -&gt; &amp;str;              // the emitted Cedar policy id
+    pub fn revision(&amp;self) -&gt; &amp;str;        // SHA-256 hex of the canonical lowered rule
+}
+pub struct ErroringPolicy { /* … */ }
+impl ErroringPolicy {
+    pub fn policy(&amp;self) -&gt; &amp;PolicyRef;
+    pub fn message(&amp;self) -&gt; &amp;str;         // the error, without the policy id
+}
+pub struct PolicySetVersion { /* … */ }
+impl PolicySetVersion {
+    pub fn generation(&amp;self) -&gt; u64;       // deployments within one Authorizer
+    pub fn hash(&amp;self) -&gt; &amp;str;            // SHA-256 hex over the rules and schema
+}
+
+impl Diagnostics {
+    pub fn determining(&amp;self) -&gt; impl Iterator&lt;Item = &amp;PolicyRef&gt;;    // the supporting policies, sorted by id
+    pub fn erroring(&amp;self) -&gt; impl Iterator&lt;Item = &amp;ErroringPolicy&gt;; // the policies that erred, sorted
+}
+impl Response {
+    pub fn policy_set(&amp;self) -&gt; Option&lt;&amp;PolicySetVersion&gt;; // Some iff the set has stable ids
+}
+impl LoweredPolicySet {
+    pub fn has_stable_ids(&amp;self) -&gt; bool;
+    pub fn policy_refs(&amp;self) -&gt; impl Iterator&lt;Item = PolicyRef&gt; + '_; // every rule, in rule order
+    pub fn policy_ref(&amp;self, cedar_policy_id: &amp;str) -&gt; Option&lt;PolicyRef&gt;;
+    pub fn version_hash(&amp;self) -&gt; &amp;str;
+}
+impl TemporalField {
+    pub fn content_hash(&amp;self) -&gt; String;  // position-free name of a leaf
+}
+<span class="boring">}</span></code></pre>
+<ul>
+<li><strong><code>determining()</code></strong> lists the same rules as <code>reason()</code>: for an <code>Allow</code> every satisfied <code>permit</code>, for an explicit <code>Deny</code> every satisfied <code>forbid</code>, for an implicit or fail-closed <code>Deny</code> none. It is sorted by id, so its order does not depend on Cedar’s hash set or on rule positions. <code>reason()</code> keeps the engine’s order.</li>
+<li><strong>The revision</strong> is a SHA-256 of the canonical lowered rule: its effect, scope and Cedar condition, with each hoisted leaf’s content (pins injected, action scope resolved) in place of its positional name. Spans, comments, formatting, annotations (<code>@id</code> included), the rule’s position and the id are excluded, and macro binders are alpha-normalized (macro expansion names them by byte offset). So a reorder, an insertion elsewhere, a restyle or a rename keeps the revision, and a semantic edit (a window, an effect, a scope, a predicate, a Cedar condition, or an event-schema pin that changes what a leaf means) changes it. A rule removed and later re-added verbatim gets its old revision back. <code>(id, revision)</code> names one rule text exactly.</li>
+<li><strong>The version</strong> is the deployment generation and a hash over the sorted <code>(id, revision)</code> pairs, the augmented Cedar schema (canonical JSON), the decision kinds and the partition keys. <code>Response::policy_set()</code> carries it when the set has stable ids, so each reported <code>PolicyRef</code> resolves against the deployment it was decided under. <code>Authorizer::policy_set_version()</code> reads the current one under every id source.</li>
+<li><strong>Never silently dropped.</strong> With stable ids, a determining (or erroring) policy id that the policy engine reports but the set does not contain is an engine fault: the decision fails closed, a <code>Deny</code> with no supporting policies and an error naming the id. Under positional ids such an id is still dropped, as before, so existing deployments keep their behavior.</li>
+<li><strong>Erroring policies.</strong> <code>erroring()</code> lists the policies that raised an evaluation error (Cedar skips them), with the error. The text of every error is still in <code>errors()</code>. It is filled by policy engines that override <code>PolicyEngine::authorize</code> (the built-in Cedar engine does).</li>
+</ul>
+<p><strong>Live policy updates.</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl Authorizer {
+    pub fn update_policies(&amp;mut self, policies: LoweredPolicySet) -&gt; Result&lt;(), Error&gt;;
+    pub fn update_policies_with_engine(
+        &amp;mut self, policies: LoweredPolicySet, policy_engine: impl PolicyEngine + 'static,
+    ) -&gt; Result&lt;(), Error&gt;;
+    pub fn policy_set_version(&amp;self) -&gt; PolicySetVersion;
+}
+impl AuthorizerBuilder {
+    pub fn generation(self, generation: u64) -&gt; Self; // the initial generation; default 0
+}
+<span class="boring">}</span></code></pre>
+<ul>
+<li><code>update_policies</code> re-prepares both engines with the new set, keeps the temporal history, and adds one to the generation. Each engine must declare support (<code>supports_policy_update()</code>, default <code>false</code>); otherwise it returns <code>Error::PolicyUpdateUnsupported</code> and changes nothing. <code>update_policies_with_engine</code> installs a new policy engine instead (one bound to a new remote store per generation, for example).</li>
+<li>The new set must partition temporal history as the current one does (the same partition keys), else <code>Error::PartitionKeysChanged</code>, and nothing changes.</li>
+<li>If a <code>prepare</code> fails part-way, the error is returned and the authorizer <strong>fails closed</strong> (every decision is a <code>Deny</code> naming the failure, and events are not recorded) until an update succeeds.</li>
+<li>What the new rules see of the past is the temporal engine’s <strong>update reading</strong>. The built-in <code>InMemoryTemporalEngine</code> evaluates every leaf over the whole retained history (retrospective). An engine that keys its state by leaf content can instead start a new or edited leaf empty (prospective), and keep a kept leaf’s history wherever its rule moved.</li>
+</ul>
+<p><strong>What stays the same.</strong> <code>DogwoodRuleRef</code>, <code>rule_index</code>, <code>rules()</code>, <code>rule_ref()</code> and <code>reason()</code> keep working unchanged; under stable ids, <code>cedar_policy_id</code> simply holds the stable id. They are superseded by <code>PolicyRef</code> / <code>determining()</code> / <code>policy_refs()</code>, which name rules without positions, but they are not marked <code>#[deprecated]</code> in 1.x: an attribute would turn into a build failure for consumers that compile with <code>-D warnings</code>. Every existing behavior is the default: positional ids, no version in responses, unknown ids dropped, the engine’s <code>reason()</code> order.</p>
+<p><strong>Migrating a consumer.</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Consumer</th><th>Today</th><th>With stable ids</th></tr>
+</thead>
+<tbody>
+<tr><td>An agent runtime with system and user rules</td><td>Renders <code>"denied by: policy_0"</code> from <code>reason()</code> into logs, its event history and the agent’s prompt; user rules are concatenated text without ids.</td><td>Give <code>system.dw</code> <code>@id</code>s (<code>IdSource::Annotation</code>, distincter <code>sys</code>) and each user’s rules their record ids (<code>IdSource::Explicit</code>, distincter <code>usr</code>); <code>lower_many</code> them. Render <code>determining()</code> (<code>sys/&lt;name&gt;</code>, <code>usr/&lt;rule-id&gt;</code>) and record <code>(id, revision)</code> with <code>policy_set()</code> in the event history. Existing code that prints <code>cedar_policy_id</code> already improves with no change.</td></tr>
+<tr><td>A service that evaluates rules it stamps with ids</td><td>Stamps <code>@id(&lt;ruleId&gt;)</code> on every rule, maps <code>policy_&lt;N&gt;</code> back by position, regex-rewrites <code>policy_N</code> in error text, returns the deciding rules.</td><td>Parse with <code>IdSource::Annotation</code>; return <code>determining()</code> ids (and revisions) as the deciding rules; report <code>erroring()</code> instead of rewriting error text. Delete the position map and the regex.</td></tr>
+<tr><td>A service that logs its decisions</td><td>Logs the reasons and the bundle name.</td><td>Log <code>determining()</code> and <code>policy_set()</code> (generation and hash) beside the bundle name.</td></tr>
+<tr><td>A service that maps rule indexes to its callers’ ids</td><td>Stamps <code>@id</code>, maps <code>rule_index</code> to the caller’s policy id, regex-rewrites error text.</td><td><code>IdSource::Annotation</code> (or <code>Explicit</code> with the caller’s ids); read <code>determining()</code> / <code>erroring()</code>; delete the index map and the regex.</td></tr>
+<tr><td>A platform that stores policies in an external policy store</td><td>Returns the store’s ids for plain Cedar and positional ids for Dogwood; no stable ids.</td><td>Lower each record with its record id (<code>IdSource::Explicit</code>). Map the store’s ids back through the ids it returned when each policy was created.</td></tr>
+<tr><td>A temporal service</td><td>Validates leaf ids <code>&lt;prefix&gt;_&lt;k&gt;__temporal_&lt;j&gt;</code> and returns verdicts keyed by them.</td><td>Nothing to change: leaf ids are unchanged under every id source.</td></tr>
+<tr><td>An engine with durable per-policy state</td><td>Keeps a durable token per policy and checks <code>rule_index == N</code>.</td><td>Unaffected (positions are unchanged); it may move its tokens to ids.</td></tr>
+<tr><td>A custom <code>PolicyEngine</code></td><td>Returns the ids its backend uses.</td><td>No change needed. An engine whose backend renames policies must map the names back, or stable-id decisions fail closed. Override <code>authorize</code> to report erroring policies.</td></tr>
+<tr><td>A custom <code>TemporalEngine</code></td><td>Prepared once.</td><td>No change needed. To accept live updates, return <code>true</code> from <code>supports_policy_update</code> and document the update reading; key state by <code>TemporalField::content_hash</code> so it follows a leaf across reorders.</td></tr>
+</tbody>
+</table>
+</div>
 <hr>
 <h2 id="the-engine-seam"><a class="header" href="#the-engine-seam">The engine seam</a></h2>
 <p>Why does the seam exist? A Dogwood <code>Authorizer</code> is really two decisions glued together: <em>what boolean does each temporal / provider leaf evaluate to right now</em> (the temporal seam), and <em>given those booleans folded into the context, does the Cedar policy allow the request</em> (the policy seam). Each of those has a built-in default, and each is a trait you can implement to replace it. That is how you point Dogwood at a <strong>remote policy engine</strong> for the final Cedar decision, or at an alternative <strong>temporal engine</strong> of your own for the history. You install a custom backend through the builder:</p>
@@ -590,10 +748,23 @@ pub struct AuthorizationDecision {
 pub trait PolicyEngine: Send {
     fn prepare(&amp;mut self, policies: &amp;cedar_policy::PolicySet, schema: &amp;cedar_policy::Schema) -&gt; Result&lt;(), Error&gt;;
     fn is_authorized(&amp;self, request: AuthorizationRequest&lt;'_&gt;) -&gt; AuthorizationDecision;
+    // Additive, with defaults (an existing engine needs no change):
+    fn authorize(&amp;self, request: AuthorizationRequest&lt;'_&gt;) -&gt; AuthorizationOutcome; // default: is_authorized, no erroring ids
+    fn supports_policy_update(&amp;self) -&gt; bool;                                       // default: false
 }
+
+#[non_exhaustive]
+pub struct AuthorizationOutcome {
+    pub decision: Decision,
+    pub determining_policy_ids: Vec&lt;String&gt;,
+    pub erroring_policies: Vec&lt;(String, String)&gt;, // (policy id, error message)
+    pub errors: Vec&lt;String&gt;,
+}
+// AuthorizationOutcome::from(AuthorizationDecision), .with_erroring_policy(id, message)
 <span class="boring">}</span></code></pre>
-<p><code>prepare</code> is called once at authorizer-build time (analogous to creating and populating a policy store); <code>is_authorized</code> decides one request. Implementations <strong>must not panic</strong> — surface problems through <code>AuthorizationDecision::errors</code> with a fail-closed <code>Deny</code>.</p>
-<p>The built-in default is <code>CedarPolicyEngine</code> (implements <code>Default</code>, with <code>CedarPolicyEngine::new()</code>). Its <code>prepare</code> keeps the policy set; its <code>is_authorized</code> runs <code>cedar_policy::Authorizer::new().is_authorized(request, policies, entities)</code> and maps the decision, determining ids, and errors across. If it was never prepared it returns a <code>Deny</code> with an error string.</p>
+<p><code>prepare</code> is called once at authorizer-build time (analogous to creating and populating a policy store), and again by <code>Authorizer::update_policies</code> for an engine whose <code>supports_policy_update()</code> is <code>true</code>; <code>is_authorized</code> decides one request. Implementations <strong>must not panic</strong> — surface problems through <code>AuthorizationDecision::errors</code> with a fail-closed <code>Deny</code>. The authorizer calls <code>authorize</code>, whose default delegates to <code>is_authorized</code>; override it to report which policies erred (they appear in <code>Diagnostics::erroring</code>).</p>
+<p>The determining ids an engine returns must be the ids of the policies it was prepared with. An engine whose backend renames policies (a policy store that assigns its own ids) maps them back; with <a href="#stable-policy-identity-ids-revisions-versions-opt-in">stable ids</a>, an id the set does not contain fails the decision closed.</p>
+<p>The built-in default is <code>CedarPolicyEngine</code> (implements <code>Default</code>, with <code>CedarPolicyEngine::new()</code>). Its <code>prepare</code> keeps the policy set (and may be re-run: it supports policy updates); its <code>authorize</code> runs <code>cedar_policy::Authorizer::new().is_authorized(request, policies, entities)</code> and maps the decision, determining ids, erroring policies and errors across. If it was never prepared it returns a <code>Deny</code> with an error string.</p>
 <h3 id="the-temporal-evaluation-seam"><a class="header" href="#the-temporal-evaluation-seam">The temporal-evaluation seam</a></h3>
 <p>This trait computes the boolean value of each hoisted <code>temporal { … }</code> leaf for the current decision point.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -605,15 +776,25 @@ pub trait TemporalEngine: Send {
     fn prepare(&amp;mut self, leaves: &amp;[TemporalField], schema: &amp;cedar_policy::Schema, events: &amp;[EventSignature]) -&gt; Result&lt;(), Error&gt;;
     fn observe(&amp;mut self, event: &amp;Event);
     fn evaluate(&amp;mut self) -&gt; Result&lt;TemporalBindings, String&gt;;
+    // With defaults:
+    fn supports_partitioning(&amp;self) -&gt; bool;          // default: false
+    fn set_partition_keys(&amp;mut self, keys: &amp;[PartitionKey]);
+    fn set_authored_leaves(&amp;mut self, authored: &amp;[TemporalField]); // default: ignored (additive)
+    fn supports_policy_update(&amp;self) -&gt; bool;         // default: false (additive)
+    fn try_observe(&amp;mut self, event: &amp;Event) -&gt; Result&lt;(), Rejection&gt;; // default: observe, then Ok
+    fn set_generation(&amp;mut self, generation: u64);    // default: ignored
 }
 <span class="boring">}</span></code></pre>
 <p>The lifecycle has three points:</p>
 <ul>
 <li><code>prepare(leaves, schema, events)</code> — <strong>once</strong>, at authorizer-build time. A custom backend does its one-time setup here (an engine that precomputes queries against a store, say, would build them now); <code>events</code> carries the declared signature of every event kind the policy set can see (each field’s dotted path and type), which such a backend needs to emit type-correct comparisons.</li>
-<li><code>observe(event)</code> — for <strong>every</strong> ingested event (decision or history-only), in ingestion order, before any <code>evaluate</code> that includes it. A backend persists the event (in memory, or in an external store).</li>
+<li><code>observe(event)</code> — for <strong>every</strong> ingested event (decision or history-only), in ingestion order, before any <code>evaluate</code> that includes it. A backend persists the event (in memory, or in an external store). The authorizer calls it through <code>try_observe</code>, whose default calls <code>observe</code> and reports success. A backend whose writes can fail overrides <code>try_observe</code> to say so: <code>Err(Rejection::Unavailable { reason })</code> for an event it did not record (or whose commit it cannot confirm, which the reason then says), and <code>Err(Rejection::Nonconforming { reason })</code> for one its own checks reject. The authorizer then returns the rejection from <code>submit</code> for a history event, so that no event is lost without a report, and fails a decision event closed without calling <code>evaluate</code>.</li>
 <li><code>evaluate()</code> — at each decision point, <strong>after</strong> that point’s event has been observed. It returns each leaf’s boolean keyed by id. The in-memory backend re-runs the interpreter; a custom backend evaluates however it prepared. A failure (an external store being unreachable, say) <strong>fails the decision closed</strong> by returning <code>Err(String)</code>.</li>
 </ul>
 <p>The built-in default is <code>InMemoryTemporalEngine</code> (implements <code>Default</code>, with <code>InMemoryTemporalEngine::new()</code>): it keeps the event history in memory and re-runs the in-process temporal interpreter over the trace so far. <code>prepare</code> stores the leaves (no compilation), <code>observe</code> appends to an in-memory log, and <code>evaluate</code> runs the interpreter at the last timepoint.</p>
+<p><strong>Authored leaves.</strong> Before every <code>prepare</code> (at build and at each policy update), the authorizer calls <code>set_authored_leaves</code> with the <strong>non-relativized</strong> leaves, parallel by position to the leaves <code>prepare</code> then receives (the same ids, in the same order). Under partitioned evaluation they are those leaves; under global evaluation with a universal symmetric pin, <code>prepare</code> receives their relativized form. A compiling engine that applies the pins’ visibility itself reads the leaf as authored here, the one the conformance bridge hands the specification. The default ignores it.</p>
+<p><code>set_generation(generation)</code> is called before every <code>prepare</code>, with the deployment generation of the leaves it is about to install (the builder’s <code>generation</code> at build, one more at each update). An engine whose instances share history across processes uses it to order deployments, so that a key decided under one generation is never decided again under an older one; an engine that keeps its history to itself ignores it.</p>
+<p><strong>Live updates.</strong> <code>Authorizer::update_policies</code> calls <code>prepare</code> again with the new set’s leaves, keeping the engine’s history, but only for an engine whose <code>supports_policy_update()</code> is <code>true</code> (default <code>false</code>). Such an engine defines its <strong>update reading</strong>, what the new leaves see of the past, and documents it. <code>InMemoryTemporalEngine</code> supports updates and evaluates every leaf over the whole retained history (retrospective). An engine that keeps per-leaf state must not key it by <code>TemporalField::id</code>, which is positional and so names another leaf after a reorder: key it by <code>TemporalField::content_hash()</code> (a SHA-256 of the leaf’s canonical, position-free content), so that state follows the leaf and rules that share a leaf share its state.</p>
 <p>The leaves handed to <code>prepare</code> are <code>TemporalField</code>s:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -660,6 +841,7 @@ impl Temporal {
 }
 <span class="boring">}</span></code></pre>
 <p>A custom engine reads <code>TemporalField::condition</code> to decide what to evaluate; the in-memory engine interprets it directly. <code>Temporal</code> is re-exported so a custom engine can name the type, and its inner <code>condition</code> AST is public via <code>dogwood_language::temporal_ast</code> to walk.</p>
+<p>A predicate argument (<code>temporal_ast::NamedArg</code>) holds its field path as one string, <code>name</code>, with each segment escaped (<code>\</code> as <code>\\</code>, <code>.</code> as <code>\.</code>) and the segments joined by <code>.</code>: the path <code>["ids", "user.id"]</code> (the Cedar attribute <code>ids["user.id"]</code>) is the name <code>ids.user\.id</code>, and <code>["ids", "user", "id"]</code> is <code>ids.user.id</code>. Read the path with <code>NamedArg::field_path()</code>, and build or key a path’s text with <code>temporal_ast::field_path::join</code> and <code>split</code>, not with a plain <code>.</code> join or split. A path whose segments hold neither <code>.</code> nor <code>\</code> has its plain dotted text (<code>input.user</code>); every name a policy or an event schema can write is such a path.</p>
 <h4 id="slicing-a-decisions-temporal-work"><a class="header" href="#slicing-a-decisions-temporal-work">Slicing a decision’s temporal work</a></h4>
 <p><code>DecisionLeafMap</code> answers one question — <strong>which temporal leaves can this decision read?</strong> — <strong>once per policy set</strong> rather than once per decision. A leaf outside the answer is read by no applicable rule, so its condition is never evaluated and reporting it <code>false</code> cannot change the decision:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -698,18 +880,18 @@ impl LoweredPolicySet {
 pub fn replay_log(policies: LoweredPolicySet, log: &amp;str) -&gt; Result&lt;String, Error&gt;;
 <span class="boring">}</span></code></pre>
 <ul>
-<li><code>parse_trace(log)</code> — parse a <code>.log</code> trace into its sequence of <code>Event</code>s. Each non-blank line is one timepoint of the form <code>@&lt;ts&gt; [envelopes] &lt;Action&gt;(&lt;field&gt;: &lt;value&gt;, …)</code> (the optional <code>scope</code> / <code>entities</code> / <code>request_context</code> envelopes are described below). Values use Cedar surface forms (entity refs <code>Ns::Type::"id"</code>, strings, integers, decimals, <code>true</code>/<code>false</code>, arrays, objects). Feed the events to an <code>Authorizer</code> in order to replay them. On failure it returns <code>Error::TraceParse("…")</code>.</li>
-<li><code>replay_log(policies, log)</code> — replay a whole <code>.log</code> trace through <code>policies</code> and return the per-timepoint verdict stream: one <code>@&lt;ts&gt; (time point &lt;i&gt;): &lt;bool&gt;</code> line for <strong>every decision point</strong> (<code>true</code> for <code>Allow</code>, <code>false</code> for <code>Deny</code>), newline-joined. This is the corpus-comparison format. It <strong>consumes</strong> the <code>LoweredPolicySet</code> (it drives a fresh stateful <code>Authorizer</code>, so temporal leaves see prior events as history). History-only events (non-decision kinds) contribute <strong>no line</strong>.</li>
+<li><code>parse_trace(log)</code> — parse a <code>.log</code> trace into its sequence of <code>Event</code>s. Each non-blank line is one timepoint of the form <code>@&lt;ts&gt; [envelopes] &lt;Action&gt;(&lt;field&gt;: &lt;value&gt;, …)</code> (the optional <code>scope</code> / <code>entities</code> / <code>request_context</code> envelopes are described below). Values use Cedar surface forms (entity refs <code>Ns::Type::"id"</code>, strings, integers, decimals, <code>true</code>/<code>false</code>, arrays, objects, and the extension constructors <code>datetime("…")</code>, <code>duration("…")</code>, <code>ip("…")</code>, <code>decimal("…")</code>). Feed the events to an <code>Authorizer</code> in order to replay them. On failure it returns <code>Error::TraceParse("…")</code>.</li>
+<li><code>replay_log(policies, log)</code> — replay a whole <code>.log</code> trace through <code>policies</code> and return the per-timepoint verdict stream: one <code>@&lt;ts&gt; (time point &lt;i&gt;): &lt;bool&gt;</code> line for <strong>every decision point</strong> (<code>true</code> for <code>Allow</code>, <code>false</code> for <code>Deny</code>), newline-joined. This is the corpus-comparison format. It <strong>consumes</strong> the <code>LoweredPolicySet</code> (it drives a fresh stateful <code>Authorizer</code>, so temporal leaves see prior events as history). History-only events (non-decision kinds) contribute <strong>no line</strong>, and neither does a history event the authorizer rejects; drive an <code>Authorizer</code> with <code>submit</code> to see rejections.</li>
 </ul>
-<pre><code class="language-text">@0 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") Drupe::Action::"Login"::request(input: { user: "alice" })
-@10 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") Drupe::Action::"Read"::request(input: { user: "alice" })
-@7200 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") Drupe::Action::"Read"::request(input: { user: "alice" })
+<pre><code class="language-text">@0 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { user: "alice" }) Drupe::Action::"Login"::request(input: { user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1")
+@10 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { user: "alice" }) Drupe::Action::"Read"::request(input: { user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1")
+@7200 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { user: "alice" }) Drupe::Action::"Read"::request(input: { user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1")
 </code></pre>
 <p>Each <code>.log</code> line is: the <code>@&lt;timestamp&gt;</code>, then up to three optional <strong>request-supplement envelopes</strong> in a fixed order, then the event itself — a <strong>quoted, fully-qualified</strong> action id (<code>Drupe::Action::"Read"</code>) with an explicit <strong><code>::&lt;kind&gt;</code></strong> segment (<code>::request</code>) and its trailing <code>(&lt;field&gt;: …)</code> group. That trailing group is the <strong>logged</strong> record (the temporal-history fields a predicate correlates on); the envelopes carry the request-only supplements, each parsed positionally when present:</p>
 <ul>
-<li><code>scope(principal: …, resource: …)</code> — the request’s principal and resource entities. (A decision-kind event omitting <code>scope(...)</code> has no principal/resource and fails closed to <code>Deny</code>.)</li>
+<li><code>scope(principal: …, resource: …)</code> — the request’s principal and resource entities. (A decision-kind event omitting <code>scope(...)</code> has no principal/resource and fails closed to <code>Deny</code>.) Unlike <code>EventBuilder::principal</code> / <code>resource</code>, the envelope does not log them: the trailing logged group writes <code>callerPrincipal</code> / <code>callerResource</code> itself, and the default event schema requires them, since it pins <code>callerPrincipal</code> and a logged caller field must hold the request’s own.</li>
 <li><code>entities(&lt;uid&gt;: { &lt;attr&gt;: … }, …)</code> — the entity attribute store: each <code>uid</code> (e.g. <code>Drupe::OAuthUser::"alice"</code>) maps to its attributes, so a policy can read <code>principal.&lt;attr&gt;</code> / <code>resource.&lt;attr&gt;</code> or a provider can resolve one. A uid <code>"id"</code> containing <code>"</code> or <code>\</code> is escaped as in Cedar (<code>"a\"b"</code>).</li>
-<li><code>request_context(&lt;group&gt;: { … }, …)</code> — the request-only context the Cedar request is built from (<code>input</code>, <code>system</code>, …), distinct from the trailing logged group. A field a policy reads via <code>context.&lt;group&gt;.&lt;name&gt;</code> must appear here; a field a temporal predicate correlates on must appear in the trailing logged group. A field both need (<code>input</code>) is supplied in both.</li>
+<li><code>request_context(&lt;group&gt;: { … }, …)</code> — the request-only context the Cedar request is built from (<code>input</code>, <code>system</code>, …), distinct from the trailing logged group. A field a policy reads via <code>context.&lt;group&gt;.&lt;name&gt;</code> must appear here; a field a temporal predicate correlates on must appear in the trailing logged group. A field both need (<code>input</code>) is supplied in both. The context must be an instance of the action’s context record type: every attribute it requires, such as the Drupe template’s <code>system: { now: datetime }</code>, and no other. A value of an extension type is written as Cedar writes it: <code>system: { now: datetime("2024-01-01T00:00:00Z") }</code>, or <code>duration("1h")</code>, <code>ip("10.0.0.1")</code>, <code>decimal("1.50")</code>.</li>
 </ul>
 <p>The envelopes appear in that order (<code>scope</code>, then <code>entities</code>, then <code>request_context</code>) before the event group, and any may be omitted. Parsing is <strong>strict</strong>: an unterminated envelope, or a <strong>duplicate key</strong> within any group (a repeated uid in <code>entities(...)</code>, a repeated group in <code>scope</code>/<code>request_context</code>, a repeated field in the logged group or a nested record), is a <code>TraceParse</code> error rather than a silent last-wins — so a hand-written trace cannot mis-decide on an accidental duplicate.</p>
 <p>Running <code>replay_log</code> on the trace above (which uses only <code>scope(...)</code>) with the tour’s policy produces one line per <code>request</code>-kind timepoint:</p>
@@ -720,7 +902,7 @@ pub fn replay_log(policies: LoweredPolicySet, log: &amp;str) -&gt; Result&lt;Str
 <p>— the same <code>[Deny, Allow, Deny]</code> shape you saw in the tutorial (<code>false</code>/<code>true</code> = <code>Deny</code>/<code>Allow</code>; note <code>replay_log</code> emits a line for <em>every</em> decision point, not only allows).</p>
 <hr>
 <h2 id="mcp-schema-generation"><a class="header" href="#mcp-schema-generation">MCP schema generation</a></h2>
-<p>Because a Dogwood action schema <em>is</em> an MCP tool manifest, you can generate the Cedar <code>.cedarschema</code> text directly from a Model Context Protocol <code>tools/list</code> payload rather than writing it by hand. The <code>PolicySchema::from_mcp_manifest</code> path is the usual entry point, but the underlying functions are also public:</p>
+<p>Because a Dogwood action schema <em>is</em> an MCP tool manifest, you can generate the Cedar <code>.cedarschema</code> text directly from a Model Context Protocol <code>tools/list</code> payload rather than writing it by hand. These APIs require the off-by-default <code>mcp-schema</code> feature. The <code>PolicySchema::from_mcp_manifest</code> path is the usual entry point, but the underlying functions are also public:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>pub const DRUPE_TEMPLATE: &amp;str; // embedded Drupe .cedarschema template stub
@@ -731,7 +913,7 @@ pub fn mcp_to_cedar_schema_with_template(manifest_json: &amp;str, template: &amp
 <li><code>manifest_json</code> is an MCP <code>tools/list</code> payload (or a JSON array of tool descriptions).</li>
 <li><code>mcp_to_cedar_schema</code> uses <code>DRUPE_TEMPLATE</code>; <code>mcp_to_cedar_schema_with_template</code> takes a caller-supplied template.</li>
 <li>The generator config matches the regression harness: <code>include_outputs(true)</code>, <code>encode_numbers_as_decimal(true)</code>, and <code>flatten_namespaces(true)</code> (so action names are unqualified).</li>
-<li><code>DRUPE_TEMPLATE</code> supplies the principals (<code>OAuthUser</code> / <code>IamEntity</code> / <code>UnauthenticatedUser</code>), the <code>Gateway</code> resource, the <code>system</code> context, and the base MCP action hierarchy. The generator layers one Cedar action per MCP tool (with input/output context records) on top of the template.</li>
+<li><code>DRUPE_TEMPLATE</code> supplies the principal type <code>User</code>, the resource type <code>Gateway</code>, the <code>system</code> context (<code>SystemContext</code>, with <code>now: datetime</code>), and the base MCP actions <code>Mcp</code> and <code>CallTool</code>. The generator layers one Cedar action per MCP tool (with input/output context records) on top of the template.</li>
 <li>Note the return type: these return <code>Result&lt;String, String&gt;</code> (a plain error string), whereas the <code>PolicySchema::from_mcp_manifest</code> path wraps failure as <code>Error::McpSchema</code>.</li>
 </ul>
 <p>For example, a manifest declaring <code>SellShares</code> / <code>ApproveSale</code> / <code>GetStockInfo</code> tools (each with <code>stock</code> / <code>shares</code> inputs) passed to <code>PolicySchema::from_mcp_manifest(MCP_MANIFEST)</code> layers them onto the Drupe template. See <a href="11-mcp-schema-generation.html">Generating the action schema from an MCP manifest</a> for the manifest format, the JSON→Cedar type mapping, and the Drupe template in depth.</p>
@@ -789,7 +971,7 @@ pub enum Error {
 <p><strong>For an enforcing integration, the caller is the enforcement point.</strong> Verdicts are computed over events in the order you pass them to <code>is_authorized</code>. An integration should:</p>
 <ul>
 <li><strong>run the action only after an <code>Allow</code> verdict</strong> for its decision event;</li>
-<li><strong>report history-only events</strong> (<code>response</code>, <code>error</code> by default) promptly and reliably once the action resolves;</li>
+<li><strong>report history-only events</strong> (<code>response</code>, <code>error</code> by default) promptly and reliably once the action resolves, <strong>with the principal and resource of the request they report on</strong> (under the default schema’s pin, an event without a principal is no one’s history, and one that logs a caller it does not carry is rejected);</li>
 <li><strong>supply increasing timestamps</strong>, each greater than the previous one, in the order events are passed in.</li>
 </ul>
 <p>See the <a href="04-temporal-expressions.html#evaluation-semantics">observed-sequence example</a>
@@ -802,6 +984,37 @@ correctly increasing timestamps.</p>
 <li><code>when temporal { … }</code> — hoisted to a <code>TemporalField</code> and evaluated by the <code>TemporalEngine</code> (not self-contained Cedar). See <a href="04-temporal-expressions.html">Temporal expressions</a>.</li>
 <li><code>when guardrails { … }</code> — an information-provider invocation, evaluated from <code>ProviderDeclarations</code> (not self-contained Cedar). See <a href="05-information-providers.html">Information providers</a>.</li>
 </ul>
+<hr>
+<h2 id="retries-and-event-ids"><a class="header" href="#retries-and-event-ids">Retries and event ids</a></h2>
+<p>A client that loses the reply to a submission cannot tell whether the event was ingested. If it submits the event again, the event must not enter the history twice, and the client should be told what it would have been told the first time. The formal specification’s <strong>event-log contract</strong> (<code>dogwood-lean</code>, <code>Dogwood.Spec.Contract</code>, <code>Run.Meets</code>) says how: it is what every implementation is measured against, whether it runs one instance or several. The crate’s <code>Authorizer</code> has no notion of an event id: every call to <code>submit</code> or <code>is_authorized</code> is a new submission, and an event submitted twice is ingested twice. An implementation that accepts event ids follows the rules below.</p>
+<p>A submission may carry an <strong>event id</strong>, which its client chooses. The contract has a <strong>retry window</strong> <code>W</code>; the default is <strong>five minutes</strong>, counted in the clock’s ticks. A submission is a <strong>retry</strong> of an earlier, accepted submission when all of these hold:</p>
+<ul>
+<li>it is on the same <strong>partition key</strong>: the logged values of the event schema’s universal symmetric pins, such as the caller under the default <code>callerPrincipal = principal</code> pin. So it is in the same log of an implementation that keeps one log per partition key;</li>
+<li>it has the same <strong>event id</strong>, and the same <strong>action and kind</strong>;</li>
+<li>its <strong>content is identical</strong>: the same logged record, and the same request (principal, resource, context, and entity data). Values are compared as values: two spellings of one decimal, or a set in another order, are the same;</li>
+<li>its <strong>time</strong> is at most <code>W</code> after the earlier submission’s timestamp. Its time is its clock reading, or the server’s time when it has none.</li>
+</ul>
+<p>What an implementation does with a submission:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>The submission</th><th>It is</th><th>The reply</th></tr>
+</thead>
+<tbody>
+<tr><td>a retry of an accepted submission</td><td><strong>not ingested again</strong></td><td>the earlier submission’s: accepted at its position, with the decision there</td></tr>
+<tr><td>the same partition key, event id, action, and kind as an accepted submission, but not a retry of it (other content, or later than <code>W</code>)</td><td><strong>rejected</strong> as a duplicate: not ingested, and not decided</td><td>a rejection, never a decision</td></tr>
+<tr><td>anything else, including every submission without an event id</td><td>ingested as a new event</td><td>as for <code>Authorizer::submit</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>The answer to a retry is the decision at the earlier submission’s position, which depends only on the history up to that position. So the client gets the decision it would have got the first time, even when a policy update came between the two submissions. An implementation may still reject a retry it cannot serve as unavailable (the contract never requires availability), but never as a duplicate. A submission whose earlier attempt was rejected, as unavailable or as nonconforming, is not a retry: nothing was accepted, so it is ingested as a new event. When no two submissions share an event id, the contract is the one without retries, whatever the window.</p>
+<p>For a client, this means:</p>
+<ul>
+<li><strong>give each event a fresh event id</strong>, unique among the events of its partition key with the same action and kind;</li>
+<li><strong>resubmit the same event with the same id</strong> after a lost reply or an unavailability rejection, within the window. A retry after the window is rejected as a duplicate: the event id was used, and the earlier reply is no longer available;</li>
+<li><strong>never reuse an event id for another event</strong>: the second event is rejected as a duplicate, and it is not recorded.</li>
+</ul>
+<p><a href="08-formal-specification.html#66-the-event-log-contract-and-retries">A formal specification of Dogwood</a> gives the rules as inference rules.</p>
 <hr>
 <h2 id="see-also"><a class="header" href="#see-also">See also</a></h2>
 <ul>

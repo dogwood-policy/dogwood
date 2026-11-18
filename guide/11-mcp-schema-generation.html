@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-e4d2f34b.js";
+            window.path_to_searchindex_js = "../searchindex-a051b7d7.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9744742b.js"></script>
@@ -184,7 +184,7 @@
                         <h1 id="generating-the-action-schema-from-an-mcp-manifest"><a class="header" href="#generating-the-action-schema-from-an-mcp-manifest">Generating the Action Schema from an MCP Manifest</a></h1>
 <p>This is the Advanced-topics page on schema <em>authoring via MCP</em>: a Dogwood action schema is, conceptually, a Model Context Protocol (MCP) tool manifest, and Dogwood can generate the Cedar <code>.cedarschema</code> for you from one. The hand-written counterpart of what this generation produces — declaring the entity and action types and laying out the <code>context.input</code> / <code>context.output</code> records yourself — is covered in <a href="02-policy-language.html">The policy language</a>. The <em>Rust API</em> for MCP generation (the <code>from_mcp_manifest</code> / <code>mcp_to_cedar_schema</code> constructors) lives in <a href="07-api-and-workflow.html">The API and workflow</a>; this page covers the manifest format, the JSON→Cedar type mapping, and the Drupe template.</p>
 <p>So you often will not hand-write a <code>.cedarschema</code>. Because the frontend works in Cedar, Dogwood converts the manifest — a list of tools with their input and output JSON schemas — into a Cedar <code>.cedarschema</code> for you, layering the tools on top of the Drupe template.</p>
-<p>From the command line, <code>dogwood schema mcp --manifest tools.json</code> generates the schema (write it out with <code>-o schema.cedarschema</code>); see <a href="12-cli.html">The command line</a>. The Rust equivalents are the <code>from_mcp_manifest</code> / <code>mcp_to_cedar_schema</code> constructors in <a href="07-api-and-workflow.html">The API and workflow</a>.</p>
+<p>From the command line, <code>dogwood schema mcp --manifest tools.json</code> generates the schema (write it out with <code>-o schema.cedarschema</code>); see <a href="12-cli.html">The command line</a>. The Rust equivalents are the <code>from_mcp_manifest</code> / <code>mcp_to_cedar_schema</code> constructors in <a href="07-api-and-workflow.html">The API and workflow</a>. Generation is behind the off-by-default <code>mcp-schema</code> Cargo feature of <code>dogwood-language</code> (forwarded by <code>dogwood-cli</code>), so build with <code>--features mcp-schema</code>.</p>
 <p>The policy example on this page is a runnable bundle under <code>examples/</code>.</p>
 <h2 id="the-manifest"><a class="header" href="#the-manifest">The manifest</a></h2>
 <p>A manifest is a JSON array of MCP tool descriptions (or an MCP <code>tools/list</code> payload). Each tool has a name, description, and <code>inputSchema</code> / <code>outputSchema</code>:</p>
@@ -199,7 +199,13 @@
     "required": ["proceeds"] }
 }
 </code></pre>
-<p>A tool’s <code>inputSchema.properties</code> becomes the Cedar <code>context.input</code> record and <code>outputSchema</code> becomes <code>context.output</code>. JSON types map to Cedar types as follows: <code>integer</code> → <code>Long</code>, <code>string</code> → <code>String</code>, <code>boolean</code> → <code>Bool</code>, and <code>number</code> with <code>format: decimal</code> → <code>decimal</code>.</p>
+<p>A tool’s <code>inputSchema.properties</code> becomes the Cedar <code>context.input</code> record and <code>outputSchema</code> becomes <code>context.output</code>. JSON types map to Cedar types as follows.</p>
+<ul>
+<li><code>integer</code> → <code>Long</code>, <code>boolean</code> → <code>Bool</code>, and <code>number</code> → <code>decimal</code>, whatever its <code>format</code>.</li>
+<li><code>string</code> → <code>String</code>, except for these formats: <code>date-time</code> and <code>date</code> → <code>datetime</code>, <code>duration</code> → <code>duration</code>, <code>ipv4</code> and <code>ipv6</code> → <code>ipaddr</code>, and <code>decimal</code> → <code>decimal</code>.</li>
+<li>A <code>string</code> with <code>enum</code> → an enumerated entity type. For example, the input field <code>senum</code> of the tool <code>T</code>, with <code>"enum": ["a", "b"]</code>, becomes <code>entity T_Input_senum enum ["a", "b"]</code>.</li>
+</ul>
+<p>In a trace, write a <code>datetime</code>, <code>duration</code>, <code>ipaddr</code>, or <code>decimal</code> value as Cedar writes it, such as <code>datetime("2026-01-01T10:00:00Z")</code>, <code>duration("1h")</code>, <code>ip("127.0.0.1")</code>, or <code>decimal("1.5")</code>. A <code>decimal</code> can also be written as <code>1.5</code>, but not as <code>1</code>, which is a <code>Long</code>. Write an enumerated value as an entity of its type, such as <code>Drupe::T_Input_senum::"a"</code>. If a <code>request</code> event gives another value, such as a string, in its request context or its logged record, the decision is <code>Deny</code>. If a history event, such as a <code>response</code>, gives one in its logged record, the authorizer rejects the event and does not add it to the history.</p>
 <h2 id="how-generation-works"><a class="header" href="#how-generation-works">How generation works</a></h2>
 <p><code>mcp_to_cedar_schema(manifest_json)</code> produces the <code>.cedarschema</code> string using the embedded Drupe template; <code>mcp_to_cedar_schema_with_template(manifest_json, template)</code> uses a template you supply. Internally the generator:</p>
 <ol>
@@ -211,31 +217,26 @@
 </ol>
 <p>The default config <code>include_outputs(true)</code> (emit <code>context.output</code> from each tool’s <code>outputSchema</code>), <code>encode_numbers_as_decimal(true)</code> (JSON <code>number</code> → Cedar <code>decimal</code>), and <code>flatten_namespaces(true)</code> (so a tool <code>SellShares</code> becomes <code>Drupe::Action::"SellShares"</code> rather than a deeply qualified name).</p>
 <h2 id="the-drupe-template"><a class="header" href="#the-drupe-template">The Drupe template</a></h2>
-<p>The template supplies the principals, resource, base context, and base action hierarchy that tool actions are layered onto. Its key parts:</p>
+<p>The template (<code>dogwood-language/configuration/mcp-template.cedarschema</code>) supplies the principal type, the resource type, the <code>system</code> context, and the two base actions that tool actions are layered onto. It declares the following (reformatted, without its comments).</p>
 <pre><code class="language-text">namespace Drupe {
-  @mcp_principal("User")                entity OAuthUser { id: String } tags String;
-  @mcp_principal("IamEntity")           entity IamEntity { id: String };
-  @mcp_principal("UnauthenticatedUser") entity UnauthenticatedUser;
-  @mcp_resource("Gateway")              entity Gateway;
-  @mcp_context("system")                type SystemContext = { now: datetime };
+  @mcp_principal("User")   entity User;
+  @mcp_resource("Gateway") entity Gateway;
+  @mcp_context("system")   type SystemContext = { now: datetime };
 
-  // guardrail leaf types
-  type ContentFilterFinding = { severityScore: decimal };
-  type PromptAttackFinding  = { severityScore: decimal };
-  type SensitiveInfoFinding = { confidenceScore: decimal };
-
-  action Mcp  appliesTo { principal: [/* 3 */], resource: [Gateway], context: { system: SystemContext } };
-  action Http appliesTo { /* … */ };
+  action Mcp appliesTo {
+    principal: [User], resource: [Gateway],
+    context: { system: SystemContext, isOutput: Bool, output?: {} }
+  };
   @mcp_action("CallTools")
-  action CallTool    in [Mcp]      appliesTo { /* … */ };
-  action UnknownTool in [CallTool] appliesTo { /* … */ };
-  action InvokeAgent in [Http]     appliesTo { /* …, */ input?: {} };
-  action InvokeLLM   in [Http]     appliesTo { /* …, */ input?: {} };
+  action CallTool in [Mcp] appliesTo {
+    principal: [User], resource: [Gateway],
+    context: { system: SystemContext, isOutput: Bool, output?: {} }
+  };
 }
 </code></pre>
 <p>The <code>@mcp_principal</code> / <code>@mcp_resource</code> / <code>@mcp_context</code> / <code>@mcp_action</code> annotations tell the generator which entities, types, and actions play each role. Generated tool actions are placed <code>in [Action::"CallTool"]</code> — matching the committed corpus schema at case 0407, where <code>Login</code>, <code>Read</code>, and <code>Transfer</code> are all <code>in [Action::"CallTool"]</code>.</p>
 <h2 id="what-you-get"><a class="header" href="#what-you-get">What you get</a></h2>
-<p>The generated <code>.cedarschema</code> combines the template (principals like <code>OAuthUser</code>, base actions) with one action per tool (<code>SellShares</code>, <code>GetStockInfo</code>, …). Because the tool’s <code>stock</code> argument lands at <code>context.input.stock</code>, a plain Cedar policy validates against it:</p>
+<p>The generated <code>.cedarschema</code> combines the template (the principal type <code>User</code>, the resource type <code>Gateway</code>, and the base actions <code>Mcp</code> and <code>CallTool</code>) with one action per tool (<code>SellShares</code>, <code>GetStockInfo</code>, …). For the <code>SellShares</code> manifest above, the generated action is <code>SellShares in [Action::"CallTool"]</code>, with the context <code>input: SellSharesInput</code>, <code>output?: SellSharesOutput</code>, and <code>system: SystemContext</code>. Because the tool’s <code>stock</code> argument lands at <code>context.input.stock</code>, a plain Cedar policy validates against it:</p>
 <pre><code class="language-text">permit(principal, action == Drupe::Action::"GetStockInfo", resource)
 when { context.input.stock == "AMZN" };
 </code></pre>

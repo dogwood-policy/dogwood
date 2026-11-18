@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-e4d2f34b.js";
+            window.path_to_searchindex_js = "../searchindex-a051b7d7.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9744742b.js"></script>
@@ -321,16 +321,16 @@ when temporal {
 }
 </code></pre>
 <h2 id="trace"><a class="header" href="#trace">Trace</a></h2>
-<pre><code class="language-text">@0 scope(principal: Repo::OAuthUser::"devin", resource: Repo::Gateway::"gw1") request_context(input: { repo: "web" }) Repo::Action::"OpenPullRequest"::request(input: { repo: "web" }, callerPrincipal: Repo::OAuthUser::"devin", callerResource: Repo::Gateway::"gw1", requestId: "r1")
+<pre><code class="language-text">@0 scope(principal: Repo::OAuthUser::"devin", resource: Repo::Gateway::"gw1") request_context(input: { repo: "web" }, system: { now: datetime("1970-01-01T00:00:00Z") }) Repo::Action::"OpenPullRequest"::request(input: { repo: "web" }, callerPrincipal: Repo::OAuthUser::"devin", callerResource: Repo::Gateway::"gw1", requestId: "r1")
 @1 scope(principal: Repo::OAuthUser::"devin", resource: Repo::Gateway::"gw1") Repo::Action::"OpenPullRequest"::response(input: { repo: "web" }, callerPrincipal: Repo::OAuthUser::"devin", callerResource: Repo::Gateway::"gw1", requestId: "r1")
-@10 scope(principal: Repo::OAuthUser::"devin", resource: Repo::Gateway::"gw1") request_context(input: { repo: "web" }) Repo::Action::"OpenPullRequest"::request(input: { repo: "web" }, callerPrincipal: Repo::OAuthUser::"devin", callerResource: Repo::Gateway::"gw1", requestId: "r2")
+@10 scope(principal: Repo::OAuthUser::"devin", resource: Repo::Gateway::"gw1") request_context(input: { repo: "web" }, system: { now: datetime("1970-01-01T00:00:10Z") }) Repo::Action::"OpenPullRequest"::request(input: { repo: "web" }, callerPrincipal: Repo::OAuthUser::"devin", callerResource: Repo::Gateway::"gw1", requestId: "r2")
 @11 scope(principal: Repo::OAuthUser::"devin", resource: Repo::Gateway::"gw1") Repo::Action::"OpenPullRequest"::response(input: { repo: "web" }, callerPrincipal: Repo::OAuthUser::"devin", callerResource: Repo::Gateway::"gw1", requestId: "r2")
-@20 scope(principal: Repo::OAuthUser::"devin", resource: Repo::Gateway::"gw1") request_context(input: { repo: "web" }) Repo::Action::"OpenPullRequest"::request(input: { repo: "web" }, callerPrincipal: Repo::OAuthUser::"devin", callerResource: Repo::Gateway::"gw1", requestId: "r3")
+@20 scope(principal: Repo::OAuthUser::"devin", resource: Repo::Gateway::"gw1") request_context(input: { repo: "web" }, system: { now: datetime("1970-01-01T00:00:20Z") }) Repo::Action::"OpenPullRequest"::request(input: { repo: "web" }, callerPrincipal: Repo::OAuthUser::"devin", callerResource: Repo::Gateway::"gw1", requestId: "r3")
 @21 scope(principal: Repo::OAuthUser::"devin", resource: Repo::Gateway::"gw1") Repo::Action::"OpenPullRequest"::response(input: { repo: "web" }, callerPrincipal: Repo::OAuthUser::"devin", callerResource: Repo::Gateway::"gw1", requestId: "r3")
-@30 scope(principal: Repo::OAuthUser::"devin", resource: Repo::Gateway::"gw1") request_context(input: { repo: "web" }) Repo::Action::"OpenPullRequest"::request(input: { repo: "web" }, callerPrincipal: Repo::OAuthUser::"devin", callerResource: Repo::Gateway::"gw1", requestId: "r4")
-@40 scope(principal: Repo::OAuthUser::"devin", resource: Repo::Gateway::"gw1") request_context(input: { repo: "web" }) Repo::Action::"CompleteReview"::request(input: { repo: "web" }, callerPrincipal: Repo::OAuthUser::"devin", callerResource: Repo::Gateway::"gw1", requestId: "v1")
+@30 scope(principal: Repo::OAuthUser::"devin", resource: Repo::Gateway::"gw1") request_context(input: { repo: "web" }, system: { now: datetime("1970-01-01T00:00:30Z") }) Repo::Action::"OpenPullRequest"::request(input: { repo: "web" }, callerPrincipal: Repo::OAuthUser::"devin", callerResource: Repo::Gateway::"gw1", requestId: "r4")
+@40 scope(principal: Repo::OAuthUser::"devin", resource: Repo::Gateway::"gw1") request_context(input: { repo: "web" }, system: { now: datetime("1970-01-01T00:00:40Z") }) Repo::Action::"CompleteReview"::request(input: { repo: "web" }, callerPrincipal: Repo::OAuthUser::"devin", callerResource: Repo::Gateway::"gw1", requestId: "v1")
 @41 scope(principal: Repo::OAuthUser::"devin", resource: Repo::Gateway::"gw1") Repo::Action::"CompleteReview"::response(input: { repo: "web" }, callerPrincipal: Repo::OAuthUser::"devin", callerResource: Repo::Gateway::"gw1", requestId: "v1")
-@50 scope(principal: Repo::OAuthUser::"devin", resource: Repo::Gateway::"gw1") request_context(input: { repo: "web" }) Repo::Action::"OpenPullRequest"::request(input: { repo: "web" }, callerPrincipal: Repo::OAuthUser::"devin", callerResource: Repo::Gateway::"gw1", requestId: "r5")
+@50 scope(principal: Repo::OAuthUser::"devin", resource: Repo::Gateway::"gw1") request_context(input: { repo: "web" }, system: { now: datetime("1970-01-01T00:00:50Z") }) Repo::Action::"OpenPullRequest"::request(input: { repo: "web" }, callerPrincipal: Repo::OAuthUser::"devin", callerResource: Repo::Gateway::"gw1", requestId: "r5")
 </code></pre>
 <h2 id="expected-output"><a class="header" href="#expected-output">Expected Output</a></h2>
 <pre><code class="language-text">@0 (time point 0): ALLOW  [rules: 0]

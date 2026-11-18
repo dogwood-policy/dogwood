@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-e4d2f34b.js";
+            window.path_to_searchindex_js = "../searchindex-a051b7d7.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9744742b.js"></script>
@@ -187,7 +187,9 @@ allowlist. The distinctive shape is the provider <strong>argument</strong>: <cod
 is passed <code>principal.id</code> — an attribute path rooted at <code>principal</code>, not
 <code>context</code>. Provider arguments are resolved <em>pre-Cedar</em> against the request
 event; <code>principal</code> / <code>resource</code> roots resolve to the request scope entity, and
-a trailing <code>.id</code> projects that entity’s id.</p>
+a trailing <code>.id</code> reads that entity’s <code>id</code> attribute, as in Cedar (the schema
+declares <code>OAuthUser = { id: String }</code>, and the trace supplies each principal’s
+<code>id</code> in its <code>entities(...)</code> data).</p>
 <p><code>allowed.rhai</code> stands in for a membership lookup with a one-name allowlist
 (<code>alice</code>). Because the CLI loads <code>providers.json</code> via <code>from_json</code> (text only,
 <code>scriptFile</code> is not resolved), the script is inlined into <code>providers.json</code> as
@@ -210,8 +212,8 @@ a trailing <code>.id</code> projects that entity’s id.</p>
 // allowlist. The distinctive shape is the ARGUMENT: the provider is passed
 // principal.id -- an attribute path rooted at principal, not context. Provider
 // arguments are resolved pre-Cedar against the request event, and principal /
-// resource roots resolve to the request scope entity (trailing .id projects
-// the entity's id).
+// resource roots resolve to the request scope entity (trailing .id reads the
+// entity's `id` attribute, as in Cedar).
 @id("read_principal_allowed")
 permit (
     principal,
@@ -244,8 +246,8 @@ when {
 }
 </code></pre>
 <h2 id="trace"><a class="header" href="#trace">Trace</a></h2>
-<pre><code class="language-text">@0 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(document: "hello") Drupe::Action::"Read"::request(callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", document: "hello", requestId: "u1")
-@10 scope(principal: Drupe::OAuthUser::"mallory", resource: Drupe::Gateway::"gw1") request_context(document: "hello") Drupe::Action::"Read"::request(callerPrincipal: Drupe::OAuthUser::"mallory", callerResource: Drupe::Gateway::"gw1", document: "hello", requestId: "u2")
+<pre><code class="language-text">@0 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") entities(Drupe::OAuthUser::"alice": { id: "alice" }) request_context(input: { document: "hello" }) Drupe::Action::"Read"::request(input: { document: "hello" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u1")
+@10 scope(principal: Drupe::OAuthUser::"mallory", resource: Drupe::Gateway::"gw1") entities(Drupe::OAuthUser::"mallory": { id: "mallory" }) request_context(input: { document: "hello" }) Drupe::Action::"Read"::request(input: { document: "hello" }, callerPrincipal: Drupe::OAuthUser::"mallory", callerResource: Drupe::Gateway::"gw1", requestId: "u2")
 </code></pre>
 <h2 id="expected-output"><a class="header" href="#expected-output">Expected Output</a></h2>
 <pre><code class="language-text">@0 (time point 0): ALLOW  [rules: 0]

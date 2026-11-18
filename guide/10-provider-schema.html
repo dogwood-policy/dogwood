@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-e4d2f34b.js";
+            window.path_to_searchindex_js = "../searchindex-a051b7d7.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9744742b.js"></script>
@@ -261,7 +261,9 @@ when { GuardDuty::ThreatDetector([context.input.prompt]).threatSeverity == Guard
 with a plain string, or an ordering comparison is rejected.</li>
 <li><strong>Fail closed at runtime:</strong> the implementation returns the bare id (<code>"HIGH"</code>). An id
 outside the list denies the request, with the diagnostic <code>provider `…`.threatSeverity: `UNKNOWN` is not a member of `GuardDuty::Severity` </code>. So does an output of the wrong
-shape: a bare <code>"HIGH"</code> instead of the declared record (<code>expected a record, got a string</code>), or a record missing a required enum field (<code>missing required field `threatSeverity` </code>). This shape check applies only to types that contain an enum.</li>
+shape: a bare <code>"HIGH"</code> instead of the declared record (<code>expected a record, got a string</code>), or a record missing a required enum field (<code>missing required field `threatSeverity` </code>). An output of any other declared type is checked against it
+too: one that is not a value of its declared type denies the request, with a
+<code>nonconforming provider output: …</code> diagnostic.</li>
 <li><strong>Only what’s used:</strong> an enum is added to the schema only when the policy set calls a
 provider that uses it.</li>
 <li><strong>Not the action schema’s enums:</strong> an output can’t use an enum declared in the action
@@ -403,38 +405,36 @@ actual-vs-declared types.</p>
 <p>Each <strong>output method</strong> in a chain is checked: it must be declared in the
 provider’s <code>availableMethods</code>, must not shadow a Cedar extension-method name,
 must be given the declared argument count/types, and — when it declares an
-<code>inputType</code> — must be fed a compatible value by the preceding pipeline stage.</p>
+<code>inputType</code> — must be fed a value of that Cedar type by the preceding
+pipeline stage. Types compare as the Cedar types they declare, so a <code>set</code> of
+<code>string</code> does not feed a <code>set</code> of <code>long</code>, and <code>integer</code> feeds <code>long</code>.</p>
 </li>
 <li>
 <p>Each <strong>field-path</strong> argument (<code>context.input.x</code>, <code>principal.id</code>,
 <code>resource.owner</code>, including paths nested inside a set argument) is resolved
 against the schema — the SAME resolution Cedar and the temporal dialect apply
-to the same dereference — on <strong>every action the rule’s scope reaches</strong>:</p>
+to the same dereference — in <strong>every request environment the rule decides</strong>:
+every action its scope reaches, with every principal and resource type the
+scope admits there.</p>
 <ul>
 <li><strong>Existence</strong>: a <code>context.&lt;path&gt;</code> undeclared on a scoped action, or a
 <code>principal.&lt;attr&gt;</code> / <code>resource.&lt;attr&gt;</code> absent from an entity type the scope
 admits, is an error. A present-but-<strong>optional</strong> context field resolves and
-is accepted. An action the rule’s <code>principal</code> / <code>resource</code> scope narrowing
-(<code>is</code> / <code>==</code> / <code>in</code>) makes <em>infeasible</em> (no valid request environment) is
-skipped, matching Cedar.</li>
-<li><strong>Type</strong>: the resolved type must match the declared <code>paramType</code> by category
-(scalar kind / set / record) and, for a <code>set</code>, by element type —
-recursively, so a <code>Set&lt;Set&lt;String&gt;&gt;</code> argument is checked to its leaves. A
-field of the wrong type on any scoped action is an error (an entity-typed
-field, for instance, matches no scalar / set / record arg). A
+is accepted: an absent one reaches the script as null. The whole request
+<code>context</code> is not an argument. An action the rule’s <code>principal</code> /
+<code>resource</code> scope narrowing (<code>is</code> / <code>==</code> / <code>in</code>) makes <em>infeasible</em> (no
+valid request environment) is skipped, matching Cedar.</li>
+<li><strong>Type</strong>: in every environment, the argument has the declared Cedar type
+exactly (the type the declaration’s <code>paramType</code> converts to). A set
+argument’s elements, literals included, each have the declared element
+type, recursively, so a <code>Set&lt;Set&lt;String&gt;&gt;</code> argument is checked to its
+leaves. A record has the declared attributes, an entity the declared
+<code>entityType</code> wherever the argument comes from, and a bare <code>principal</code> /
+<code>resource</code> is an entity of the environment’s type, so it matches no
+scalar. <code>datetime</code>, <code>ipaddr</code>, and <code>duration</code> values are not strings. A
 <code>principal</code>/<code>resource</code> attribute whose resolved type <em>differs</em> across the
 admitted entity types is rejected outright — there is no single type to
-check. Record FIELDS are not compared (Cedar records are invariant, but
-exact field matching needs structured record types, which the shared
-resolver collapses to <code>object</code>) — a deliberate deferred boundary.</li>
-<li><strong>Entity types are compared only for a direct <code>context</code> field.</strong> An <code>entity</code>
-argument such as <code>context.input.level</code> must have the declared <code>entityType</code>:
-an <code>App::Bar</code> field is rejected for a declared <code>App::Foo</code>. Anywhere else only
-the category is checked, so validation accepts a <code>Set&lt;App::Bar&gt;</code> for a
-declared <code>Set&lt;App::Foo&gt;</code>, an <code>App::Bar</code> field inside a record argument, and a
-<code>principal</code>/<code>resource</code> attribute of type <code>App::Bar</code>. The script receives the
-bare id (<code>"HIGH"</code>) either way, so nothing catches such a mismatch at runtime
-either: make sure the enum types match.</li>
+check.</li>
 </ul>
 </li>
 </ol>
@@ -559,9 +559,13 @@ compares with <code>.lessThan(decimal("0.5"))</code>.</p>
     #{ severityScore: score }
 }
 </code></pre>
-<p>Scripts can also build nested records dynamically. <code>filter.rhai</code> (cases <code>0006_set_arg_index_projection</code> /
-<code>0009_unwrapped_no_marker</code>) loops over the requested categories and builds a record keyed by category
-name:</p>
+<p>Scripts can also fill a nested record in a loop. The output type of <code>Content::Filter</code>
+requires both <code>VIOLENCE</code> and <code>HATE</code>. Thus <code>filter.rhai</code> (in the
+<a href="../examples/provider_filter_set_index_decimal.html"><code>provider_filter_set_index_decimal</code></a>
+bundle) starts with a record that has the two categories, each with the score 1.0. Then
+it loops over the requested categories and gives each declared one its real score. It
+ignores a category that the output type does not declare. A policy that reads a
+category it did not request sees the score 1.0.</p>
 <pre><code class="language-rhai">fn score_for(text, category) {
     if text == "violent" &amp;&amp; category == "VIOLENCE" {
         parse_decimal("0.90")
@@ -574,9 +578,18 @@ name:</p>
 
 fn evaluate(text, categories) {
     // … unit-argument guard elided — see "Defensive scripts" above …
-    let out = #{};
+    // The output type requires every declared category. A category that is
+    // not in the set gets the score 1.0, so a policy that reads it sees a
+    // high severity instead of a low one.
+    let out = #{
+        VIOLENCE: #{ severityScore: parse_decimal("1.0") },
+        HATE: #{ severityScore: parse_decimal("1.0") }
+    };
     for category in categories {
-        out[category] = #{ severityScore: score_for(text, category) };
+        // The script ignores an undeclared category.
+        if out.contains(category) {
+            out[category] = #{ severityScore: score_for(text, category) };
+        }
     }
     out
 }

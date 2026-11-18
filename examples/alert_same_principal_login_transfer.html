@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-e4d2f34b.js";
+            window.path_to_searchindex_js = "../searchindex-a051b7d7.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9744742b.js"></script>
@@ -190,9 +190,20 @@ if the <em>same</em> principal both logged in (<code>Login</code>) and made a tr
 declares a <code>Deny</code> action, so this example is adapted to <code>Login</code> + <code>Transfer</code>
 (both present in the lifted <code>ea_0012_exists_correlation</code> schema). The shape of
 the correlation — <code>callerPrincipal: pr</code> on both sides — is identical.</p>
+<p>A variable bound by a field must have a type every value of the field has.
+<code>callerPrincipal</code> is declared <code>principalType(A)</code>: on an event of <code>Login</code>, it
+holds an entity of any of <code>Login</code>’s principal types. So the schema declares
+<code>OAuthUser</code> as the only principal type of <code>Login</code> and <code>Transfer</code>, and <code>pr: Drupe::OAuthUser</code> accepts every value either field can hold. With the Drupe
+template’s three principal types (<code>IamEntity</code>, <code>OAuthUser</code>,
+<code>UnauthenticatedUser</code>), validation rejects the binding. <code>Alert</code> applies to
+<code>OAuthUser</code> principals only too: the default event schema pins
+<code>callerPrincipal</code> to the request’s principal, so an <code>Alert</code> by another type of
+principal could never match a <code>Login</code> of an <code>OAuthUser</code>, and validation rejects
+the pin.</p>
 <p>Schema lifted from the <code>temporal_only</code> corpus case
 <code>ea_0012_exists_correlation</code> (declares <code>Login</code>, <code>Transfer</code>, <code>Alert</code>, and the
-<code>OAuthUser</code> entity). Uses the default event schema.</p>
+<code>OAuthUser</code> entity), with <code>Alert</code>, <code>Login</code> and <code>Transfer</code> applying to
+<code>OAuthUser</code> principals only. Uses the default event schema.</p>
 <p>Referenced by <code>guide/04-temporal-expressions</code>.</p>
 <h2 id="policy"><a class="header" href="#policy">Policy</a></h2>
 <pre><code class="language-text">// An entity-typed `exists` binder correlates on the request principal via the
@@ -271,7 +282,7 @@ when temporal {
   entity UnauthenticatedUser;
 
   action "Alert" in [Action::"CallTool"] appliesTo {
-    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    principal: [OAuthUser],
     resource: [Gateway],
     context: {
       input: AlertInput,
@@ -325,7 +336,7 @@ when temporal {
   };
 
   action "Login" in [Action::"CallTool"] appliesTo {
-    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    principal: [OAuthUser],
     resource: [Gateway],
     context: {
       input: LoginInput,
@@ -343,7 +354,7 @@ when temporal {
   };
 
   action "Transfer" in [Action::"CallTool"] appliesTo {
-    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    principal: [OAuthUser],
     resource: [Gateway],
     context: {
       input: TransferInput,

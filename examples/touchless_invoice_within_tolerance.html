@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-e4d2f34b.js";
+            window.path_to_searchindex_js = "../searchindex-a051b7d7.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9744742b.js"></script>
@@ -320,14 +320,14 @@ when temporal {
 }
 </code></pre>
 <h2 id="trace"><a class="header" href="#trace">Trace</a></h2>
-<pre><code class="language-text">@0 scope(principal: Procure::OAuthUser::"alice", resource: Procure::Gateway::"gw1") request_context(input: { po_id: "po-1", amount: 1000 }) Procure::Action::"CreatePurchaseOrder"::request(input: { po_id: "po-1", amount: 1000 }, callerPrincipal: Procure::OAuthUser::"alice", callerResource: Procure::Gateway::"gw1", requestId: "p1")
+<pre><code class="language-text">@0 scope(principal: Procure::OAuthUser::"alice", resource: Procure::Gateway::"gw1") request_context(input: { po_id: "po-1", amount: 1000 }, system: { now: datetime("1970-01-01T00:00:00Z") }) Procure::Action::"CreatePurchaseOrder"::request(input: { po_id: "po-1", amount: 1000 }, callerPrincipal: Procure::OAuthUser::"alice", callerResource: Procure::Gateway::"gw1", requestId: "p1")
 @1 scope(principal: Procure::OAuthUser::"alice", resource: Procure::Gateway::"gw1") Procure::Action::"CreatePurchaseOrder"::response(input: { po_id: "po-1", amount: 1000 }, callerPrincipal: Procure::OAuthUser::"alice", callerResource: Procure::Gateway::"gw1", requestId: "p1")
-@10 scope(principal: Procure::OAuthUser::"alice", resource: Procure::Gateway::"gw1") request_context(input: { po_id: "po-1", amount: 1040 }) Procure::Action::"PayInvoice"::request(input: { po_id: "po-1", amount: 1040 }, callerPrincipal: Procure::OAuthUser::"alice", callerResource: Procure::Gateway::"gw1", requestId: "i1")
-@20 scope(principal: Procure::OAuthUser::"alice", resource: Procure::Gateway::"gw1") request_context(input: { po_id: "po-1", amount: 1100 }) Procure::Action::"PayInvoice"::request(input: { po_id: "po-1", amount: 1100 }, callerPrincipal: Procure::OAuthUser::"alice", callerResource: Procure::Gateway::"gw1", requestId: "i2")
-@30 scope(principal: Procure::OAuthUser::"alice", resource: Procure::Gateway::"gw1") request_context(input: { po_id: "po-2", amount: 40 }) Procure::Action::"PayInvoice"::request(input: { po_id: "po-2", amount: 40 }, callerPrincipal: Procure::OAuthUser::"alice", callerResource: Procure::Gateway::"gw1", requestId: "i3")
-@40 scope(principal: Procure::OAuthUser::"alice", resource: Procure::Gateway::"gw1") request_context(input: { po_id: "po-2", amount: 200 }) Procure::Action::"CreatePurchaseOrder"::request(input: { po_id: "po-2", amount: 200 }, callerPrincipal: Procure::OAuthUser::"alice", callerResource: Procure::Gateway::"gw1", requestId: "p2")
+@10 scope(principal: Procure::OAuthUser::"alice", resource: Procure::Gateway::"gw1") request_context(input: { po_id: "po-1", amount: 1040 }, system: { now: datetime("1970-01-01T00:00:10Z") }) Procure::Action::"PayInvoice"::request(input: { po_id: "po-1", amount: 1040 }, callerPrincipal: Procure::OAuthUser::"alice", callerResource: Procure::Gateway::"gw1", requestId: "i1")
+@20 scope(principal: Procure::OAuthUser::"alice", resource: Procure::Gateway::"gw1") request_context(input: { po_id: "po-1", amount: 1100 }, system: { now: datetime("1970-01-01T00:00:20Z") }) Procure::Action::"PayInvoice"::request(input: { po_id: "po-1", amount: 1100 }, callerPrincipal: Procure::OAuthUser::"alice", callerResource: Procure::Gateway::"gw1", requestId: "i2")
+@30 scope(principal: Procure::OAuthUser::"alice", resource: Procure::Gateway::"gw1") request_context(input: { po_id: "po-2", amount: 40 }, system: { now: datetime("1970-01-01T00:00:30Z") }) Procure::Action::"PayInvoice"::request(input: { po_id: "po-2", amount: 40 }, callerPrincipal: Procure::OAuthUser::"alice", callerResource: Procure::Gateway::"gw1", requestId: "i3")
+@40 scope(principal: Procure::OAuthUser::"alice", resource: Procure::Gateway::"gw1") request_context(input: { po_id: "po-2", amount: 200 }, system: { now: datetime("1970-01-01T00:00:40Z") }) Procure::Action::"CreatePurchaseOrder"::request(input: { po_id: "po-2", amount: 200 }, callerPrincipal: Procure::OAuthUser::"alice", callerResource: Procure::Gateway::"gw1", requestId: "p2")
 @41 scope(principal: Procure::OAuthUser::"alice", resource: Procure::Gateway::"gw1") Procure::Action::"CreatePurchaseOrder"::response(input: { po_id: "po-2", amount: 200 }, callerPrincipal: Procure::OAuthUser::"alice", callerResource: Procure::Gateway::"gw1", requestId: "p2")
-@50 scope(principal: Procure::OAuthUser::"alice", resource: Procure::Gateway::"gw1") request_context(input: { po_id: "po-2", amount: 240 }) Procure::Action::"PayInvoice"::request(input: { po_id: "po-2", amount: 240 }, callerPrincipal: Procure::OAuthUser::"alice", callerResource: Procure::Gateway::"gw1", requestId: "i4")
+@50 scope(principal: Procure::OAuthUser::"alice", resource: Procure::Gateway::"gw1") request_context(input: { po_id: "po-2", amount: 240 }, system: { now: datetime("1970-01-01T00:00:50Z") }) Procure::Action::"PayInvoice"::request(input: { po_id: "po-2", amount: 240 }, callerPrincipal: Procure::OAuthUser::"alice", callerResource: Procure::Gateway::"gw1", requestId: "i4")
 </code></pre>
 <h2 id="expected-output"><a class="header" href="#expected-output">Expected Output</a></h2>
 <pre><code class="language-text">@0 (time point 0): DENY

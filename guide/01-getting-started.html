@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-e4d2f34b.js";
+            window.path_to_searchindex_js = "../searchindex-a051b7d7.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9744742b.js"></script>
@@ -286,17 +286,22 @@ let event = Event::builder("Drupe::Action::Read", "request")
     .principal("Drupe::OAuthUser::\"alice\"")
     .resource("Drupe::Gateway::\"gw1\"")
     .field("input", "user", Value::String("alice".to_string()))
+    .request_context("input", "user", Value::String("alice".to_string()))
     .build();
 
 if let Some(response) = authorizer.is_authorized(&amp;event) {
     assert_eq!(response.decision(), Decision::Allow);
 }
 <span class="boring">}</span></code></pre>
-<p>Three details of Dogwood’s model are worth noting here:</p>
 <ul>
 <li>You authorize an <code>Event</code>, not a bare request. An event is a timestamped
-occurrence of an action with a <em>kind</em> (here <code>"request"</code>) plus the
-principal/resource and input fields. <code>Event::builder</code> constructs one.</li>
+occurrence of an action with a <em>kind</em> (here <code>"request"</code>), a principal and a
+resource. <code>Event::builder</code> constructs one.</li>
+<li>The builder sets <code>input.user</code> in two places. <code>.field</code> sets a logged field,
+which the history keeps and temporal conditions match against.
+<code>.request_context</code> sets a field of the Cedar request context, which policies
+read as <code>context.input.user</code>. If a <code>request</code> event lacks the logged field or
+the request context, the authorizer denies it and reports an error.</li>
 <li><code>is_authorized</code> returns <code>Option&lt;Response&gt;</code>. You get <code>Some(response)</code> for a
 <em>decision-kind</em> event (like <code>request</code>) and <code>None</code> for a history-only event.
 With the default event schema, <code>request</code> is a decision kind — so this call
@@ -336,19 +341,28 @@ of events and watch the verdicts change over time:</p>
 </span>let mut authorizer = Authorizer::new(policies);
 
 let events = vec![
-    // A Login at t=0.
+    // A Login request at t=0.
     Event::builder("Drupe::Action::Login", "request")
         .timestamp(0)
         .principal("Drupe::OAuthUser::\"alice\"")
         .resource("Drupe::Gateway::\"gw1\"")
         .field("input", "user", Value::String("alice".to_string()))
+        .request_context("input", "user", Value::String("alice".to_string()))
         .build(),
-    // A Read at t=10 — 10s after the login, well within the 1h window.
+    // The Login response at t=5. It records that the login succeeded.
+    Event::builder("Drupe::Action::Login", "response")
+        .timestamp(5)
+        .principal("Drupe::OAuthUser::\"alice\"")
+        .resource("Drupe::Gateway::\"gw1\"")
+        .field("input", "user", Value::String("alice".to_string()))
+        .build(),
+    // A Read at t=10, 5s after the login response, well within the 1h window.
     Event::builder("Drupe::Action::Read", "request")
         .timestamp(10)
         .principal("Drupe::OAuthUser::\"alice\"")
         .resource("Drupe::Gateway::\"gw1\"")
         .field("input", "user", Value::String("alice".to_string()))
+        .request_context("input", "user", Value::String("alice".to_string()))
         .build(),
     // A Read at t=7200 — two hours later; the login has expired.
     Event::builder("Drupe::Action::Read", "request")
@@ -356,6 +370,7 @@ let events = vec![
         .principal("Drupe::OAuthUser::\"alice\"")
         .resource("Drupe::Gateway::\"gw1\"")
         .field("input", "user", Value::String("alice".to_string()))
+        .request_context("input", "user", Value::String("alice".to_string()))
         .build(),
 ];
 
@@ -372,11 +387,14 @@ for event in &amp;events {
 </code></pre>
 <ul>
 <li><code>@0</code> Login → Deny. The policy gates <code>Read</code>, not <code>Login</code>, so no <code>permit</code>
-matches the login itself. (The login still matters — it is now in the history.)</li>
-<li><code>@10</code> Read → Allow. A login for <code>alice</code> happened 10 seconds ago, inside the
-1-hour window, so the temporal condition holds.</li>
-<li><code>@7200</code> Read → Deny. The only login was 7200 seconds (2 hours) ago, outside
-the window, so the condition no longer holds.</li>
+matches the login request.</li>
+<li><code>@5</code> Login response → no output. In the default event schema, <code>response</code> is
+a history-only kind, so <code>is_authorized</code> returns <code>None</code>. The authorizer still
+adds the event to the history. The temporal condition matches this event.</li>
+<li><code>@10</code> Read → Allow. The <code>Login</code> response for <code>alice</code> occurred 5 seconds
+ago, inside the 1-hour window, so the temporal condition holds.</li>
+<li><code>@7200</code> Read → Deny. The only <code>Login</code> response occurred 7195 seconds ago,
+outside the window, so the condition does not hold.</li>
 </ul>
 <p>Same policy, same code — the verdict changes because the <strong>history</strong> changed.</p>
 <h2 id="run-it-yourself"><a class="header" href="#run-it-yourself">Run it yourself</a></h2>

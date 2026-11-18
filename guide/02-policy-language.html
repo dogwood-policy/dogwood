@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-e4d2f34b.js";
+            window.path_to_searchindex_js = "../searchindex-a051b7d7.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9744742b.js"></script>
@@ -192,7 +192,7 @@ reference.</p>
 <a href="../examples/"><code>examples/</code></a>, checked on every build.</p>
 <p>Dogwood’s core language is an intentional re-implementation of upstream
 <a href="https://www.cedarpolicy.com/">Cedar</a> (the grammar is a faithful translation of
-<code>cedar-policy-core</code> v4.11.0), so its syntax follows Cedar’s. What
+<code>cedar-policy-core</code> v4.11.0; differential tests check it against v4.14.0), so its syntax follows Cedar’s. What
 Dogwood adds on top is the <code>temporal { … }</code> <em>marker clause</em> — which hands off to a
 dedicated sub-language — plus a thin <code>guardrails { … }</code> clause that is sugar for a
 bare <code>when</code> (it invokes information providers, which are ordinary Cedar calls). This page

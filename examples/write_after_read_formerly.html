@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-e4d2f34b.js";
+            window.path_to_searchindex_js = "../searchindex-a051b7d7.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9744742b.js"></script>
@@ -421,12 +421,12 @@ when temporal {
 }
 </code></pre>
 <h2 id="trace"><a class="header" href="#trace">Trace</a></h2>
-<pre><code class="language-text">@0 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { document: "doc1", user: "alice" }) Drupe::Action::"Read"::request(input: { document: "doc1", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u1")
+<pre><code class="language-text">@0 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { document: "doc1", user: "alice" }, system: { now: datetime("1970-01-01T00:00:00Z") }) Drupe::Action::"Read"::request(input: { document: "doc1", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u1")
 @5 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { document: "doc1", user: "alice" }) Drupe::Action::"Read"::response(input: { document: "doc1", user: "alice" }, output: { result: true }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u1")
-@10 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { document: "doc1", user: "alice" }) Drupe::Action::"Write"::request(input: { document: "doc1", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u2")
-@20 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { document: "doc2", user: "alice" }) Drupe::Action::"Write"::request(input: { document: "doc2", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u3")
-@30 scope(principal: Drupe::OAuthUser::"bob", resource: Drupe::Gateway::"gw1") request_context(input: { document: "doc1", user: "bob" }) Drupe::Action::"Write"::request(input: { document: "doc1", user: "bob" }, callerPrincipal: Drupe::OAuthUser::"bob", callerResource: Drupe::Gateway::"gw1", requestId: "u4")
-@3700 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { document: "doc1", user: "alice" }) Drupe::Action::"Write"::request(input: { document: "doc1", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u5")
+@10 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { document: "doc1", user: "alice" }, system: { now: datetime("1970-01-01T00:00:10Z") }) Drupe::Action::"Write"::request(input: { document: "doc1", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u2")
+@20 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { document: "doc2", user: "alice" }, system: { now: datetime("1970-01-01T00:00:20Z") }) Drupe::Action::"Write"::request(input: { document: "doc2", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u3")
+@30 scope(principal: Drupe::OAuthUser::"bob", resource: Drupe::Gateway::"gw1") request_context(input: { document: "doc1", user: "bob" }, system: { now: datetime("1970-01-01T00:00:30Z") }) Drupe::Action::"Write"::request(input: { document: "doc1", user: "bob" }, callerPrincipal: Drupe::OAuthUser::"bob", callerResource: Drupe::Gateway::"gw1", requestId: "u4")
+@3700 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { document: "doc1", user: "alice" }, system: { now: datetime("1970-01-01T01:01:40Z") }) Drupe::Action::"Write"::request(input: { document: "doc1", user: "alice" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u5")
 </code></pre>
 <h2 id="expected-output"><a class="header" href="#expected-output">Expected Output</a></h2>
 <pre><code class="language-text">@0 (time point 0): DENY

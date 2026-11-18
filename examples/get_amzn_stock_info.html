@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-e4d2f34b.js";
+            window.path_to_searchindex_js = "../searchindex-a051b7d7.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-9744742b.js"></script>
@@ -188,6 +188,9 @@ MCP manifest’s <code>inputSchema</code>, so in the generated Drupe schema it l
 <code>context.input.stock</code> — meaning an ordinary Cedar <code>when</code> clause type-checks
 against it. The rule allows <code>GetStockInfo</code> only when the requested stock is
 <code>AMZN</code>; everything else is denied.</p>
+<p><code>schema.cedarschema</code> is the output of
+<code>dogwood schema mcp --manifest dogwood-language/mcp_tools.json</code>, run from the
+package root with a <code>dogwood</code> built with the <code>mcp-schema</code> feature.</p>
 <p>The trace shows both cases:</p>
 <ul>
 <li><code>@0</code> — alice requests <code>GetStockInfo</code> for <code>AMZN</code> → <strong>allow</strong>.</li>
@@ -219,20 +222,12 @@ when { context.input.stock == "AMZN" };
     approved: Bool
   };
 
-  type ContentFilterFinding = {
-    severityScore: decimal
-  };
-
   type GetStockInfoInput = {
     stock: String
   };
 
   type GetStockInfoOutput = {
     info: String
-  };
-
-  type PromptAttackFinding = {
-    severityScore: decimal
   };
 
   type SellSharesInput = {
@@ -244,28 +239,16 @@ when { context.input.stock == "AMZN" };
     proceeds: decimal
   };
 
-  type SensitiveInfoFinding = {
-    confidenceScore: decimal
-  };
-
   type SystemContext = {
     now: datetime
   };
 
   entity Gateway;
 
-  entity IamEntity = {
-    id: String
-  };
-
-  entity OAuthUser = {
-    id: String
-  } tags String;
-
-  entity UnauthenticatedUser;
+  entity User;
 
   action "ApproveSale" in [Action::"CallTool"] appliesTo {
-    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    principal: [User],
     resource: [Gateway],
     context: {
       input: ApproveSaleInput,
@@ -275,15 +258,17 @@ when { context.input.stock == "AMZN" };
   };
 
   action "CallTool" in [Action::"Mcp"] appliesTo {
-    principal: [OAuthUser, IamEntity, UnauthenticatedUser],
+    principal: [User],
     resource: [Gateway],
     context: {
+      isOutput: Bool,
+      output?: {      },
       system: SystemContext
     }
   };
 
   action "GetStockInfo" in [Action::"CallTool"] appliesTo {
-    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    principal: [User],
     resource: [Gateway],
     context: {
       input: GetStockInfoInput,
@@ -292,42 +277,18 @@ when { context.input.stock == "AMZN" };
     }
   };
 
-  action "Http" appliesTo {
-    principal: [OAuthUser, IamEntity, UnauthenticatedUser],
-    resource: [Gateway],
-    context: {
-      system: SystemContext
-    }
-  };
-
-  action "InvokeAgent" in [Action::"Http"] appliesTo {
-    principal: [OAuthUser, IamEntity, UnauthenticatedUser],
-    resource: [Gateway],
-    context: {
-      input?: {      },
-      system: SystemContext
-    }
-  };
-
-  action "InvokeLLM" in [Action::"Http"] appliesTo {
-    principal: [OAuthUser, IamEntity, UnauthenticatedUser],
-    resource: [Gateway],
-    context: {
-      input?: {      },
-      system: SystemContext
-    }
-  };
-
   action "Mcp" appliesTo {
-    principal: [OAuthUser, IamEntity, UnauthenticatedUser],
+    principal: [User],
     resource: [Gateway],
     context: {
+      isOutput: Bool,
+      output?: {      },
       system: SystemContext
     }
   };
 
   action "SellShares" in [Action::"CallTool"] appliesTo {
-    principal: [IamEntity, OAuthUser, UnauthenticatedUser],
+    principal: [User],
     resource: [Gateway],
     context: {
       input: SellSharesInput,
@@ -335,19 +296,11 @@ when { context.input.stock == "AMZN" };
       system: SystemContext
     }
   };
-
-  action "UnknownTool" in [Action::"CallTool"] appliesTo {
-    principal: [OAuthUser, IamEntity, UnauthenticatedUser],
-    resource: [Gateway],
-    context: {
-      system: SystemContext
-    }
-  };
 }
 </code></pre>
 <h2 id="trace"><a class="header" href="#trace">Trace</a></h2>
-<pre><code class="language-text">@0 scope(principal: Drupe::OAuthUser::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { stock: "AMZN" }) Drupe::Action::"GetStockInfo"::request(input: { stock: "AMZN" }, callerPrincipal: Drupe::OAuthUser::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u1")
-@100 scope(principal: Drupe::OAuthUser::"bob", resource: Drupe::Gateway::"gw1") request_context(input: { stock: "MSFT" }) Drupe::Action::"GetStockInfo"::request(input: { stock: "MSFT" }, callerPrincipal: Drupe::OAuthUser::"bob", callerResource: Drupe::Gateway::"gw1", requestId: "u2")
+<pre><code class="language-text">@0 scope(principal: Drupe::User::"alice", resource: Drupe::Gateway::"gw1") request_context(input: { stock: "AMZN" }, system: { now: datetime("1970-01-01T00:00:00Z") }) Drupe::Action::"GetStockInfo"::request(input: { stock: "AMZN" }, callerPrincipal: Drupe::User::"alice", callerResource: Drupe::Gateway::"gw1", requestId: "u1")
+@100 scope(principal: Drupe::User::"bob", resource: Drupe::Gateway::"gw1") request_context(input: { stock: "MSFT" }, system: { now: datetime("1970-01-01T00:01:40Z") }) Drupe::Action::"GetStockInfo"::request(input: { stock: "MSFT" }, callerPrincipal: Drupe::User::"bob", callerResource: Drupe::Gateway::"gw1", requestId: "u2")
 </code></pre>
 <h2 id="expected-output"><a class="header" href="#expected-output">Expected Output</a></h2>
 <pre><code class="language-text">@0 (time point 0): ALLOW  [rules: 0]
