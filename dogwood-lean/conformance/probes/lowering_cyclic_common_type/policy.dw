@@ -1,0 +1,6 @@
+// An action's context is a common type with an attribute of a common type that contains itself.
+// Inlining the context would recurse without end; lowering rejects the cycle.
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

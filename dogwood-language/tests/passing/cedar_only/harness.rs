@@ -11,7 +11,9 @@
 //!   [`dogwood_language::Validator`], and cases with a manifest + entities have
 //!   their lowered `as_cedar()` decisions cross-validated against Cedar's own
 //!   parse of the same source. Sharing the lowering avoids doing the dominant
-//!   cost of this suite twice.
+//!   cost of this suite twice. A case Cedar validates with an impossible-policy
+//!   warning is one Dogwood's validation rejects, reporting that warning as an
+//!   error (as cedar-lean's validator does); it is counted apart.
 //!
 //! Pure-Cedar cases build the action schema with
 //! [`dogwood_language::PolicySchema::from_cedarschema_str`] paired with the DEFAULT service
@@ -194,6 +196,7 @@ fn node_kind(e: &Expr) -> &'static str {
         ExprKind::ExtensionFunctionApp { .. } => "extfn",
         ExprKind::GetAttr { .. } => "getattr",
         ExprKind::HasAttr { .. } => "hasattr",
+        ExprKind::ExtHasAttr { .. } => "exthasattr",
         ExprKind::Like { .. } => "like",
         ExprKind::Is { .. } => "is",
         ExprKind::Set(_) => "set",
@@ -484,12 +487,34 @@ const MAX_KNOWN_AUTHORIZE_MISMATCHES: usize = 0;
 struct CaseOutcome {
     // validate check
     validated: bool,
+    /// Cedar validates the policy with an impossible-policy warning, and
+    /// Dogwood rejects it with that finding as an error, as cedar-lean does.
+    impossible: bool,
     validate_skipped: bool,
     validation_failure: Option<String>,
     // authorize check
     authorized: bool,
     authorize_skipped: bool,
     decision_mismatches: Vec<String>,
+}
+
+/// Whether Cedar's own validator accepts the policy against the schema with an
+/// impossible-policy warning: the one Cedar verdict Dogwood's validation
+/// deliberately turns into an error.
+fn cedar_finds_impossible(schema_src: &str, policy_src: &str) -> bool {
+    use std::str::FromStr;
+    let Ok((schema, _)) = cedar_policy::Schema::from_cedarschema_str(schema_src) else {
+        return false;
+    };
+    let Ok(policies) = cedar_policy::PolicySet::from_str(policy_src) else {
+        return false;
+    };
+    let result = cedar_policy::Validator::new(schema)
+        .validate(&policies, cedar_policy::ValidationMode::Strict);
+    result.validation_passed()
+        && result
+            .validation_warnings()
+            .any(|w| matches!(w, cedar_policy::ValidationWarning::ImpossiblePolicy(_)))
 }
 
 /// Lower one fuzz-corpus policy against its real paired schema **once** and run
@@ -530,7 +555,14 @@ fn run_fuzz_case(path: &Path, root: &Path) -> CaseOutcome {
                 let result = Validator::new().validate(policies);
                 if !result.validation_passed() {
                     let errs: Vec<_> = result.validation_errors().map(|e| e.to_string()).collect();
-                    out.validation_failure = Some(format!("{stem}:\n  {}", errs.join("\n  ")));
+                    if errs.iter().all(|e| e.contains("policy is impossible"))
+                        && cedar_finds_impossible(&schema_src, &policy_src)
+                    {
+                        out.impossible = true;
+                    } else {
+                        out.validation_failure =
+                            Some(format!("{stem}:\n  {}", errs.join("\n  ")));
+                    }
                 } else {
                     out.validated = true;
                 }
@@ -711,6 +743,7 @@ fn corpus_fuzz_validate_and_authorize() {
 
     // Reduce: fold the per-case outcomes in corpus order.
     let mut validated = 0usize;
+    let mut impossible = 0usize;
     let mut validate_skipped = 0usize;
     let mut validation_failures = Vec::new();
     let mut authorized = 0usize;
@@ -719,6 +752,7 @@ fn corpus_fuzz_validate_and_authorize() {
 
     for outcome in outcomes {
         validated += outcome.validated as usize;
+        impossible += outcome.impossible as usize;
         validate_skipped += outcome.validate_skipped as usize;
         if let Some(f) = outcome.validation_failure {
             validation_failures.push(f);
@@ -729,7 +763,9 @@ fn corpus_fuzz_validate_and_authorize() {
     }
 
     eprintln!(
-        "corpus fuzz validate: {validated}/{total} validated, {validate_skipped} skipped, {} failures",
+        "corpus fuzz validate: {validated}/{total} validated, {impossible} impossible (a \
+         warning of Cedar's validator, an error of Dogwood's), {validate_skipped} skipped, {} \
+         failures",
         validation_failures.len()
     );
     eprintln!(

@@ -62,16 +62,28 @@ pub fn inject_pins(cond: &mut Condition, schema: &DerivedEventSchema) {
     }
 }
 
-/// Inject pins into an aggregate comparison operand's `where` body; a plain
-/// term operand carries no predicate.
+/// Inject pins into an aggregate comparison operand's `where` body, including
+/// an aggregate that is a leaf of a compound (arithmetic) operand; a plain term
+/// operand carries no predicate.
+///
+/// The arithmetic case matters: an aggregate under `+` that kept its body
+/// unpinned would count every principal's events, which defeats the isolation
+/// the pin exists to provide (`(count … Refund::response{} …) + 0 >= 1` allowed
+/// alice's refund on bob's settled one). The specification injects pins through
+/// compound operands (`dogwood-lean`, `Temporal.Term.injectPins`).
 fn inject_into_operand(operand: &mut Term, schema: &DerivedEventSchema) {
-    if let Term::Agg(agg) = operand {
-        match &mut agg.kind {
+    match operand {
+        Term::Agg(agg) => match &mut agg.kind {
             AggExprKind::Sum { body, .. } | AggExprKind::Count { body, .. } => {
                 inject_pins(body, schema);
             }
             AggExprKind::Call(_) => {}
+        },
+        Term::Arith { left, right, .. } => {
+            inject_into_operand(left, schema);
+            inject_into_operand(right, schema);
         }
+        _ => {}
     }
 }
 
@@ -98,11 +110,88 @@ fn inject_into_predicate(p: &mut Predicate, schema: &DerivedEventSchema) {
             PinRoot::Scope => Term::ScopeField(pin.context_path.clone()),
             PinRoot::Context => Term::ContextField(pin.context_path.clone()),
         };
+        // The name is the escaped text of the path (`crate::field_path`), so a
+        // segment that holds a `.` stays one segment when the evaluator reads
+        // the name back.
         p.args.push(NamedArg {
-            name: pin.field_path.join("."),
+            name: crate::field_path::join(&pin.field_path),
             value,
         });
     }
+}
+
+/// **The authored leaf of a pinned one**: `cond` with the pins
+/// [`inject_pins`] appended taken off again, or `None` when some predicate of
+/// an event with pins does not end with exactly those pins, in order.
+///
+/// The walk is [`inject_pins`]'s, so `strip_pins(inject_pins(c)) == Some(c)`
+/// for every condition `c`, and `inject_pins` of a stripped condition is the
+/// pinned one again. A lowered set keeps its leaves pinned
+/// (`LoweredPolicySet::nonrelativized_temporal_fields`); this recovers the leaf
+/// as authored, which a caller sends to an evaluator that injects the pins
+/// itself.
+pub fn strip_pins(cond: &Condition, schema: &DerivedEventSchema) -> Option<Condition> {
+    let mut out = cond.clone();
+    strip_in(&mut out, schema).then_some(out)
+}
+
+fn strip_in(cond: &mut Condition, schema: &DerivedEventSchema) -> bool {
+    match &mut cond.kind {
+        ConditionKind::And { left, right }
+        | ConditionKind::Or { left, right }
+        | ConditionKind::Since { left, right, .. } => {
+            strip_in(left, schema) && strip_in(right, schema)
+        }
+        ConditionKind::Not { inner }
+        | ConditionKind::Formerly { body: inner, .. }
+        | ConditionKind::Previous { body: inner, .. }
+        | ConditionKind::Exists { body: inner, .. } => strip_in(inner, schema),
+        ConditionKind::Predicate(p) => strip_from_predicate(p, schema),
+        ConditionKind::Refine { base, .. } => strip_in(base, schema),
+        ConditionKind::Comparison { left, right, .. } => {
+            strip_from_operand(left, schema) && strip_from_operand(right, schema)
+        }
+        ConditionKind::Tp { .. } | ConditionKind::Call(_) | ConditionKind::SigilRef { .. } => true,
+    }
+}
+
+fn strip_from_operand(operand: &mut Term, schema: &DerivedEventSchema) -> bool {
+    match operand {
+        Term::Agg(agg) => match &mut agg.kind {
+            AggExprKind::Sum { body, .. } | AggExprKind::Count { body, .. } => {
+                strip_in(body, schema)
+            }
+            AggExprKind::Call(_) => true,
+        },
+        Term::Arith { left, right, .. } => {
+            strip_from_operand(left, schema) && strip_from_operand(right, schema)
+        }
+        _ => true,
+    }
+}
+
+/// The pins of the predicate's event taken off the end of its args, after
+/// checking that they are there, in order, as [`inject_into_predicate`]
+/// appends them.
+fn strip_from_predicate(p: &mut Predicate, schema: &DerivedEventSchema) -> bool {
+    let Some(event) = schema.get(&p.namespace, &p.action, &p.kind) else {
+        return true;
+    };
+    let n = event.pins.len();
+    let Some(start) = p.args.len().checked_sub(n) else {
+        return false;
+    };
+    let appended = p.args[start..].iter().zip(&event.pins).all(|(arg, pin)| {
+        let value = match pin.root {
+            PinRoot::Scope => Term::ScopeField(pin.context_path.clone()),
+            PinRoot::Context => Term::ContextField(pin.context_path.clone()),
+        };
+        arg.name == crate::field_path::join(&pin.field_path) && arg.value == value
+    });
+    if appended {
+        p.args.truncate(start);
+    }
+    appended
 }
 
 #[cfg(test)]

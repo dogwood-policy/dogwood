@@ -1,0 +1,8 @@
+// A `Login` response logs `input.user` as a `Long`. Ingestion rejects it
+// (`Rejection.nonconforming`); the crate rejects it too, so neither allows the later `Read` that
+// only it could allow.
+@id("read_after_login_any")
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::response{ input.user: * }
+};

@@ -21,6 +21,8 @@ pub mod dialect;
 pub mod provider;
 pub mod temporal;
 
+use vstd::prelude::*;
+
 /// The dialects an extension marker can introduce. The cedar-only
 /// spine recognizes the markers but implements none of them.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -46,8 +48,17 @@ impl Dialect {
     }
 }
 
+verus! {
+
 /// An extension leaf in the AST: a parsed `temporal { … }` marker block.
+/// Inside `verus!` (transparent) so the verified macro pass can match on
+/// it; `Clone` is derived outside Verus, as for the `crate::ast` types.
 #[derive(Debug, Clone)]
+#[verifier::external_derive(Clone)]
 pub enum Extension {
     Temporal(temporal::Temporal),
 }
+
+pub assume_specification [<Extension as Clone>::clone](_0: &Extension) -> Extension;
+
+} // verus!

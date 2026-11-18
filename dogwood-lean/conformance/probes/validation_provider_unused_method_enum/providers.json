@@ -1,0 +1,13 @@
+{
+  "entityTypes": { "Risk::Level": { "enum": ["LOW", "HIGH"] } },
+  "availableProviders": {
+    "Risk::Scan": {
+      "argumentTypes": [ { "paramType": "string" } ],
+      "outputType": { "paramType": "bool" },
+      "availableMethods": {
+        "level": { "argumentTypes": [], "outputType": { "paramType": "entity", "entityType": "Risk::Level" } }
+      },
+      "implementation": { "kind": "rhai", "script": "fn evaluate(a0) { if type_of(a0) == \"()\" { return false; } a0 == \"alice\" }\nfn level(input) { \"LOW\" }" }
+    }
+  }
+}

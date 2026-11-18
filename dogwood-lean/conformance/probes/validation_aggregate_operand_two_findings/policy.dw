@@ -1,0 +1,8 @@
+// On `Ping`, whose principal may be a `Bot`, an aggregate counts `Login` requests, whose
+// `callerPrincipal` is an `OAuthUser`: the pin `callerPrincipal = principal` correlates the field
+// with a `Bot`, a predicate-argument finding and a pin finding inside one comparison operand. The
+// specification's typing check reports every problem of an operand, so both report both.
+permit (principal, action == Drupe::Action::"Ping", resource)
+when temporal {
+    (count for (t: Timepoint). where formerly within 1h (Drupe::Action::"Login"::request{} && tp(t))) >= 1
+};

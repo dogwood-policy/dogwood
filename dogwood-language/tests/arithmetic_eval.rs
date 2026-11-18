@@ -30,7 +30,7 @@ const SCHEMA: &str = r#"namespace Ns {
 /// One decision point; the count of matching `Act` requests at it is 1
 /// (the reflexive window includes the event being decided), so the bound
 /// `n` is 1 and `n - 1` is a tp-dependent zero to build expressions on.
-const TRACE: &str = r#"@0 scope(principal: Ns::User::"u", resource: Ns::Res::"r") request_context(input: { x: 1 }) Ns::Action::"Act"::request(input: { x: 1 }, callerPrincipal: Ns::User::"u", callerResource: Ns::Res::"r", requestId: "a1")"#;
+const TRACE: &str = r#"@0 scope(principal: Ns::User::"u", resource: Ns::Res::"r") request_context(input: { x: 1 }, system: { now: datetime("2024-01-01T00:00:00Z") }) Ns::Action::"Act"::request(input: { x: 1 }, callerPrincipal: Ns::User::"u", callerResource: Ns::Res::"r", requestId: "a1")"#;
 
 fn decisions(policy: &str, trace: &str) -> Vec<Decision> {
     let schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("schema parses");
@@ -102,9 +102,9 @@ fn unresolved_entity_attribute_poisons_the_compound_to_false() {
 
 /// Two decision points: at `@0` requests−responses is 1−0, at `@10` it is
 /// 2−1 (the reflexive window counts the request being decided).
-const NET_TRACE: &str = r#"@0 scope(principal: Ns::User::"u", resource: Ns::Res::"r") request_context(input: { x: 1 }) Ns::Action::"Act"::request(input: { x: 1 }, callerPrincipal: Ns::User::"u", callerResource: Ns::Res::"r", requestId: "a1")
+const NET_TRACE: &str = r#"@0 scope(principal: Ns::User::"u", resource: Ns::Res::"r") request_context(input: { x: 1 }, system: { now: datetime("2024-01-01T00:00:00Z") }) Ns::Action::"Act"::request(input: { x: 1 }, callerPrincipal: Ns::User::"u", callerResource: Ns::Res::"r", requestId: "a1")
 @1 scope(principal: Ns::User::"u", resource: Ns::Res::"r") Ns::Action::"Act"::response(input: { x: 1 }, callerPrincipal: Ns::User::"u", callerResource: Ns::Res::"r", requestId: "a1")
-@10 scope(principal: Ns::User::"u", resource: Ns::Res::"r") request_context(input: { x: 2 }) Ns::Action::"Act"::request(input: { x: 2 }, callerPrincipal: Ns::User::"u", callerResource: Ns::Res::"r", requestId: "a2")"#;
+@10 scope(principal: Ns::User::"u", resource: Ns::Res::"r") request_context(input: { x: 2 }, system: { now: datetime("2024-01-01T00:00:00Z") }) Ns::Action::"Act"::request(input: { x: 2 }, callerPrincipal: Ns::User::"u", callerResource: Ns::Res::"r", requestId: "a2")"#;
 
 const NET_MACRO: &str = r#"
 def temporal net() {

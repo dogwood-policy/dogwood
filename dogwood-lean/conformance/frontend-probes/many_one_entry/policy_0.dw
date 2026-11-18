@@ -1,0 +1,6 @@
+// One entry: the same as lowering it under its distincter. (entry 0)
+permit (principal, action == Drupe::Action::"Read", resource)
+when { temporal { formerly within 1h Drupe::Action::"Login"::response{ input.user: context.input.user } } };
+permit (principal is Drupe::OAuthUser, action in [Drupe::Action::"Read", Drupe::Action::"Login"], resource)
+when { temporal { (count for (t: Timepoint). where formerly within 10m (Drupe::Action::"Read"::request{ input.user: context.input.user } && tp(t))) < 5 } }
+unless { principal.level < 1 };

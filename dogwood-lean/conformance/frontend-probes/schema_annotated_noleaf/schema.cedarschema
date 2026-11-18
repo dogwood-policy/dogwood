@@ -1,0 +1,21 @@
+@doc("the root entity")
+entity Root;
+@doc("app namespace")
+@flag
+namespace App::Core {
+  @doc("an input")
+  type ReadInput = { @doc("who") user: String, @flag n?: Long, tags: Set<String> };
+  @doc("a gateway") entity Gateway;
+  entity Group;
+  entity User in [Group] = { @doc("id") id: String, "weird key": Bool } tags Long;
+  entity Color enum ["red", "green"];
+  @doc("the group action") action "All";
+  action "Base";
+  @doc("read") @flag
+  action "Read" in ["All", App::Core::Action::"Base"] appliesTo {
+    principal: [User],
+    resource: [Gateway],
+    context: { input: ReadInput }
+  };
+  action "Ping" appliesTo { principal: [User], resource: [Gateway] };
+}

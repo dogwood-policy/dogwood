@@ -1,0 +1,7 @@
+def cedar same(?value) { ?value == principal };
+def temporal recent(?window, ?event) {
+  count for ($t: Timepoint). where (formerly within ?window (?event && tp($t)))
+};
+def temporal total(?value, ?event) {
+  sum ?value for (?value: Long). where ?event
+};

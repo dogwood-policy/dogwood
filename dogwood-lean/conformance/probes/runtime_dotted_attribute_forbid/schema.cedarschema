@@ -1,0 +1,21 @@
+namespace Drupe {
+  type UserRef = { id: String };
+  type In = { "user.id": String, user: UserRef };
+  entity Gateway;
+  entity OAuthUser;
+  action "Login" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: { input: In }
+  };
+  action "Logout" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: { input: In }
+  };
+  action "Read" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: { input: In }
+  };
+}

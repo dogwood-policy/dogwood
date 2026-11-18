@@ -221,6 +221,7 @@ fn an_authorizer_over_the_merged_set_converts_and_fails_closed() {
             .principal("Drupe::OAuthUser::\"alice\"")
             .resource("Drupe::Gateway::\"gw\"")
             .request_context("input", "document", Value::String(document.to_string()))
+            .field("input", "document", Value::String(document.to_string()))
             .build();
         let response = authorizer.is_authorized(&event).expect("decides");
         let errors: Vec<String> = response

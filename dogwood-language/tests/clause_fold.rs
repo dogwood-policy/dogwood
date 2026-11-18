@@ -79,8 +79,8 @@ fn authorize(lowered: LoweredPolicySet) -> (Decision, bool) {
 
 /// The `&&` structure of the single policy's condition, read from its Cedar
 /// JSON (EST) form, fully parenthesized: leaves are `has x`, `!has z`, `.x`.
-/// The EST is the authoritative shape; the printed text depends on the Cedar
-/// version's parenthesization (Cedar 4.11 parenthesizes every operand).
+/// Cedar's text printer omits the parentheses of a left-nested `&&`, so the
+/// printed text alone cannot tell `(a && b) && c` from `a && b && c` built left-nested.
 fn shape(src: &str) -> String {
     fn render(e: &serde_json::Value) -> String {
         let obj = e.as_object().expect("EST expression is an object");
@@ -123,12 +123,12 @@ fn four_clauses_lower_to_a_balanced_tree() {
     ]);
     let (shape, text) = on_small_stack(move || (shape(&src), cedar_text(&src)));
     assert_eq!(shape, "((has x && has y) && (!has z && .x))");
-    // Cedar 4.11's printer parenthesizes every operand, so the text shows both
-    // groups (newer Cedar drops the left group's parentheses).
+    // The printer drops the left group's parentheses (`&&` is left-associative)
+    // but must keep the right group's.
     assert!(
         text.ends_with(
-            "when { (((context.input) has x) && ((context.input) has y)) && \
-             ((!((context.input) has z)) && ((context.input).x)) };"
+            "when { (context.input has x) && (context.input has y) && \
+             ((!(context.input has z)) && context.input.x) };"
         ),
         "{text}"
     );
@@ -145,8 +145,7 @@ fn three_clauses_carry_the_odd_one_up_a_level() {
     assert_eq!(shape, "((has x && has y) && has z)");
     assert!(
         text.ends_with(
-            "when { (((context.input) has x) && ((context.input) has y)) && \
-             ((context.input) has z) };"
+            "when { (context.input has x) && (context.input has y) && (context.input has z) };"
         ),
         "{text}"
     );
@@ -171,14 +170,24 @@ fn one_and_zero_clauses_are_unchanged() {
 // ── scale ────────────────────────────────────────────────────────────────
 
 /// Parse, lower, validate, and authorize `src` on a 2 MiB thread; returns the
-/// decision and the elapsed wall time.
+/// decision and the elapsed wall time. Validation must find no error.
 fn end_to_end(src: String) -> (Decision, bool, std::time::Duration) {
+    end_to_end_validating(src, |errors| {
+        assert!(errors.is_empty(), "validate: {errors:?}");
+    })
+}
+
+/// [`end_to_end`], with `check` judging validation's errors instead.
+fn end_to_end_validating(
+    src: String,
+    check: impl FnOnce(&[String]) + Send + 'static,
+) -> (Decision, bool, std::time::Duration) {
     on_small_stack(move || {
         let start = Instant::now();
         let lowered = lower(&src);
         let result = Validator::new().validate(&lowered);
         let errors: Vec<_> = result.validation_errors().map(|e| e.to_string()).collect();
-        assert!(errors.is_empty(), "validate: {errors:?}");
+        check(&errors);
         let (decision, errored) = authorize(lowered);
         (decision, errored, start.elapsed())
     })
@@ -220,10 +229,18 @@ fn mixed_when_and_unless_clauses_authorize_on_a_small_stack() {
     assert_eq!(decision, Decision::Allow);
     assert!(!errored);
 
-    // The last `unless` fails: one false clause anywhere denies.
+    // The last `unless` fails: one false clause anywhere denies. It
+    // contradicts the `has x` clauses, so validation reports the policy as
+    // impossible (an error: the formal specification rejects an impossible
+    // policy); it still authorizes, and denies.
     let mut denied = clauses.clone();
     denied.push("unless { context.input has x }");
-    let (decision, _, _) = end_to_end(policy(&denied));
+    let (decision, _, _) = end_to_end_validating(policy(&denied), |errors| {
+        assert!(
+            !errors.is_empty() && errors.iter().all(|e| e.contains("policy is impossible")),
+            "validate: {errors:?}"
+        );
+    });
     assert_eq!(decision, Decision::Deny);
 }
 

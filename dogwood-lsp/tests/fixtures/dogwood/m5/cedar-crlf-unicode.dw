@@ -1,0 +1,3 @@
+// cafe 🚀
+@id("🚀") permit(principal, action == Acme::Action::"Read", resource)
+when { context.input.owner.contains("é") };

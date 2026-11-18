@@ -1,0 +1,6 @@
+// An argument of type `Other::OAuthUser` is given to a field of type `Drupe::OAuthUser`: the two
+// share their last segment only. The specification rejects it (predicate arguments).
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Read"::request{ input.owner: Other::OAuthUser::"alice" }
+};

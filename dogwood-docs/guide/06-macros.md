@@ -269,6 +269,12 @@ where they appear in the body:
 In all of these, the rule is the same: `?p` is declared once in the parameter
 list, and each call supplies exactly one argument for it.
 
+The argument is checked where it lands, after expansion. A wildcard is a valid
+argument for a `?p` the body uses as a predicate argument, but not for one it
+compares: `$u == ?user` called with `*` expands to `$u == *`, which validation
+rejects (a wildcard is not a comparison operand). A macro meant to work for
+"any value" needs a definition without the comparison.
+
 The parameter list always stores names *without* the `?` internally, but you
 always *write* the `?` — both in the declaration and at every use inside the
 body. There is no whitespace allowed between the `?` and the name.
@@ -426,6 +432,9 @@ Dogwood prevents this with **hygiene**: at expansion, every distinct `$t` name
 in a macro body is renamed to a fresh, unique concrete name of the form
 `<name>$<offset>`, where `<offset>` is the byte position of the call site. So a
 `$t` becomes something like `t$412`, which cannot collide with a user's `t`.
+Since only `$t` names are renamed, a temporal body may not use a plain identifier
+as a variable at all (see
+[Plain identifiers in a temporal body](#plain-identifiers-in-a-temporal-body)).
 
 Two properties make this both safe and predictable:
 
@@ -483,6 +492,21 @@ whole-condition positions).
 `$t` binder names are the exception: they are *not* checked against the
 parameter list (they are never declared there), and are tied together by
 name at expansion.
+
+### Plain identifiers in a temporal body
+
+A `def temporal` body may not use a plain identifier as a variable or a binder:
+not in `exists (u: String)`, `count for (u: String)`, `sum a for …`, or `tp(t)`,
+nor as a term such as `input.user: u`. Expansion renames only `$t` names, so a
+plain binder would be kept as written and capture a same-named variable in an
+argument the caller passes, and a plain free variable would bind to whatever
+variable of that name the call site has in scope; either way, the expanded policy
+would mean something other than what was written. Write `$u` for a variable the
+macro binds itself, or declare a `?u` parameter for one the caller names. The
+error reads "in `def temporal` body: plain identifier `u` is not allowed, because
+expansion does not rename it and it can capture or bind a call-site variable;
+write `$u` for a variable the macro binds itself, or declare a `?u` parameter for
+a variable the caller names".
 
 ### No macro-in-macro
 

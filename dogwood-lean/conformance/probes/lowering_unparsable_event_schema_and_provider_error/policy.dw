@@ -1,0 +1,6 @@
+// The event schema does not parse, and the provider declarations declare an enum outside their
+// providers' namespaces. The public pipeline parses the event schema before it checks the
+// declarations, and fails there; the frontend harness's `export` check counts the event schema's
+// rejection first.
+permit (principal, action == Drupe::Action::"Read", resource)
+when { Risk::Scan(context.input.user) };

@@ -1,0 +1,9 @@
+// The Cedar part tests `context.input has meta.if`, a path with a reserved word, which lowering
+// writes as the conjunction `context.input has meta && context.input.meta has if`, as Cedar 4.11
+// wrote every path. Both allow alice's `Read` that carries the attribute after her login, and deny
+// her `Read` without it.
+permit (principal, action == Drupe::Action::"Read", resource)
+when { context.input has meta.if }
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

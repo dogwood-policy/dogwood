@@ -1,0 +1,5 @@
+// Baseline lexical categories.
+@id("a\\\"b")
+permit(principal, action == Demo::Action::"Read", resource)
+when { true && !false || context.value >= 42 }
+unless { 15m <= 900 + -7 * 2 / 1 % 1 != 0 };

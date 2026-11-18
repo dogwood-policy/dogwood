@@ -13,6 +13,8 @@
 //! about nine stack frames; these tests are what show that 32 levels of each
 //! fit 2 MiB. The last section sets the limit through `ParseOptions`.
 
+use dogwood_language::syntax::{event_schema_spans, policy_spans};
+use dogwood_language::syntax::{event_schema_spans_with, policy_spans_with};
 use dogwood_language::{
     DEFAULT_MAX_DEPTH, Error, LoweredPolicySet, ParseOptions, ParsedPolicySet, PolicySchema,
     ServiceSchema, Validator,
@@ -562,7 +564,9 @@ fn a_chain_at_the_limit_is_accepted_on_a_small_stack() {
     assert_accepted(policy(&terms(DEFAULT_MAX_DEPTH)));
     assert_rejected(policy(&terms(DEFAULT_MAX_DEPTH + 1)), "parse", EXPR);
 
-    let bangs = |n| format!("{}true", "!".repeat(n));
+    // The operand is chosen so the chain is `true`: a policy that is `false`
+    // for every request is rejected as impossible.
+    let bangs = |n: usize| format!("{}{}", "!".repeat(n), if n % 2 == 0 { "true" } else { "false" });
     assert_accepted(policy(&bangs(DEFAULT_MAX_DEPTH - 1)));
     assert_rejected(policy(&bangs(DEFAULT_MAX_DEPTH)), "parse", EXPR);
 
@@ -813,6 +817,40 @@ fn both_limits_together_are_accepted_on_a_small_stack() {
     )));
 }
 
+// ── Syntax highlighting ─────────────────────────────────────────────────
+
+#[test]
+fn policy_spans_refuses_an_exists_chain() {
+    let deep = temporal_policy(&format!("{}{READ}", "exists (t: Long). ".repeat(20_000)));
+    assert!(on_small_stack(move || policy_spans(&deep)).is_none());
+    let src = format!(
+        "def temporal m() {{ {}{READ} }};",
+        "exists (t: Long). ".repeat(20_000)
+    );
+    assert!(on_small_stack(move || policy_spans(&src)).is_none());
+
+    // The predicate's braces are the last level.
+    let binders = DEFAULT_MAX_DEPTH - 1;
+    let at_limit = temporal_policy(&format!("{}{READ}", "exists (t: Long). ".repeat(binders)));
+    assert!(on_small_stack(move || policy_spans(&at_limit)).is_some());
+}
+
+#[test]
+fn event_schema_spans_refuses_deep_records() {
+    let schema = |n| {
+        format!(
+            "decision event <A>::request {{ ...inputs(A), f: {}String{} }}",
+            "{ g: ".repeat(n),
+            " }".repeat(n)
+        )
+    };
+    let deep = schema(5_000);
+    assert!(on_small_stack(move || event_schema_spans(&deep)).is_none());
+    // The event's braces are the first level.
+    let at_limit = schema(DEFAULT_MAX_DEPTH - 1);
+    assert!(on_small_stack(move || event_schema_spans(&at_limit)).is_some());
+}
+
 // ── A caller-set limit ──────────────────────────────────────────────────
 
 /// A stack large enough for the raised limit's shapes in a debug build.
@@ -932,7 +970,7 @@ fn a_lowered_limit_rejects_one_past_it_what_the_default_admits() {
     assert_rejected_with(expanded(limit - 1), options, "macro", &expansion);
     parse_on_small_stack(expanded(limit - 1)).expect("the default admits it");
 
-    // The fused entry points take the same options.
+    // The fused and highlighting entry points take the same options.
     let policy_schema = PolicySchema::from_cedarschema_str(&action_schema()).expect("schema");
     let error = LoweredPolicySet::from_str_with(
         &and_chain(limit + 1),
@@ -959,6 +997,17 @@ fn a_lowered_limit_rejects_one_past_it_what_the_default_admits() {
     )
     .expect_err("one past the limit");
     assert!(error.to_string().contains(&expr), "{error}");
+    assert!(policy_spans_with(&parens(limit - 1), &options).is_some());
+    assert!(policy_spans_with(&parens(limit), &options).is_none());
+    let schema = |n| {
+        format!(
+            "decision event <A>::request {{ ...inputs(A), f: {}String{} }}",
+            "{ g: ".repeat(n),
+            " }".repeat(n)
+        )
+    };
+    assert!(event_schema_spans_with(&schema(limit - 1), &options).is_some());
+    assert!(event_schema_spans_with(&schema(limit), &options).is_none());
 }
 
 #[test]
@@ -994,9 +1043,9 @@ fn a_raised_limit_admits_what_the_default_refuses_on_a_large_stack() {
 
 // ── Flat text that lowers deeper than it parses ─────────────────────────
 //
-// A `has` path is flat in the surface tree but deep once lowered: on Cedar
-// 4.11 every multi-segment `e has a.b.c` becomes a left-nested `&&` of `has`
-// tests, reserved-word segments or not. The measure counts what lowering builds, so it is bounded by the
+// A `has` path is flat in the surface tree but deep once lowered: `e has
+// a.b.c` with a reserved-word segment becomes a left-nested `&&` of `has`
+// tests. The measure counts what lowering builds, so it is bounded by the
 // same `max_depth`. (A policy's clauses used to be the other such shape;
 // they now lower to a balanced tree, see tests/clause_fold.rs.)
 
@@ -1007,9 +1056,7 @@ fn has_path(segments: usize) -> String {
 
 #[test]
 fn a_has_path_is_measured_at_its_lowered_depth() {
-    // `k` segments lower to exactly `k + 1` levels below the `&&` root, so 30
-    // reach 32. Cedar 4.11 desugars this plain-identifier path too, so 30 is
-    // the deepest path that lowers, not an over-count.
+    // `k` segments lower to `k + 1` levels below the `&&` root, so 30 reach 32.
     assert_accepted(has_path(DEFAULT_MAX_DEPTH - 2));
     assert_rejected(has_path(DEFAULT_MAX_DEPTH - 1), "parse", EXPR);
 }
@@ -1017,13 +1064,9 @@ fn a_has_path_is_measured_at_its_lowered_depth() {
 #[test]
 fn a_long_reserved_word_has_path_is_a_parse_error() {
     // The finding's shape, which aborted in lowering at about 300 segments.
-    // On Cedar 4.11 a plain-identifier path desugars to the same `&&` chain,
-    // so it is covered too.
     for n in [300, 400_000] {
-        for head in ["if", "a"] {
-            let body = format!("context has {head}{}", ".a".repeat(n - 1));
-            assert_rejected(policy(&body), "parse", EXPR);
-        }
+        let body = format!("context has if{}", ".a".repeat(n - 1));
+        assert_rejected(policy(&body), "parse", EXPR);
     }
 }
 

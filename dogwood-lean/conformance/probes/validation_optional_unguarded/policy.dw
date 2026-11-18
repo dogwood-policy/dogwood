@@ -1,0 +1,6 @@
+// A temporal leaf reads the optional `context.input.note` without a `has` test guarding it. The
+// specification rejects it (optional attributes).
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::response{ input.user: context.input.note }
+};

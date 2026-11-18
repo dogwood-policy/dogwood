@@ -1,0 +1,5 @@
+// Two policy sets lowered together. (entry 0)
+permit (principal, action == Drupe::Action::"Read", resource)
+when { temporal { formerly within 1h Drupe::Action::"Login"::response{ input.user: context.input.user } } };
+forbid (principal, action == Drupe::Action::"Read", resource)
+when { context.input has level && context.input.level > 3 };

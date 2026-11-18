@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+crate_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
+workspace_root="$(cd -- "$crate_root/.." && pwd -P)"
+cd "$crate_root"
+
+cargo fmt --manifest-path "$workspace_root/Cargo.toml" \
+    -p dogwood-lsp -- --check
+rustfmt --edition 2024 --check \
+    "$workspace_root/dogwood-language/src/syntax.rs" \
+    "$workspace_root/dogwood-language/src/syntax/event_schema.rs" \
+    "$workspace_root/dogwood-language/src/syntax/policy.rs"
+cargo clippy --manifest-path "$workspace_root/Cargo.toml" \
+    -p dogwood-lsp --all-targets --all-features --no-deps -- -D warnings
+cargo test --manifest-path "$workspace_root/Cargo.toml" \
+    -p dogwood-lsp --all-targets -j 2
+cargo test --manifest-path "$workspace_root/Cargo.toml" \
+    -p dogwood-lsp --all-targets --all-features -j 2
+./scripts/performance --output target/check-performance-report.json

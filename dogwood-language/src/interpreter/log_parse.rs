@@ -5,8 +5,10 @@
 //!
 //! Values follow Cedar surface forms: entity refs `Ns::Type::"id"`,
 //! double-quoted strings, integers, decimals (`1.50`), `true`/`false`,
-//! arrays `[…]`, and objects `{…}`. This is the trace format the corpus is
-//! written in, so the existing corpus parses verbatim.
+//! arrays `[…]`, objects `{…}`, and the extension constructors
+//! `datetime("…")`, `duration("…")`, `ip("…")`, and `decimal("…")`. This
+//! is the trace format the corpus is written in, so the existing corpus
+//! parses verbatim.
 
 use std::collections::BTreeMap;
 
@@ -350,6 +352,24 @@ fn parse_value_depth(s: &str, depth: usize) -> Result<Value, String> {
         let id = unquote(id_with_quotes);
         return Ok(Value::Entity { ty, id });
     }
+    // A Cedar extension constructor: `datetime("…")`, `duration("…")`,
+    // `ip("…")`, or `decimal("…")`. `Value` carries an `ipaddr`, `datetime`, or
+    // `duration` as Cedar's JSON escape (`value::extension_escape`), and a
+    // `decimal` as its text. Cedar checks the argument when it builds the
+    // request.
+    for function in ["datetime", "duration", "ip", "decimal"] {
+        if let Some(arg) = s
+            .strip_prefix(function)
+            .and_then(|rest| rest.strip_prefix('('))
+            .and_then(|rest| rest.strip_suffix(')'))
+            .map(str::trim)
+            && arg.len() >= 2
+            && arg.starts_with('"')
+            && arg.ends_with('"')
+        {
+            return Ok(Value::extension(function, &unquote(arg)));
+        }
+    }
     // Quoted string.
     if s.starts_with('"') && s.ends_with('"') && s.len() >= 2 {
         return Ok(Value::String(unquote(s)));
@@ -456,11 +476,11 @@ pub(crate) fn unescape(s: &str) -> String {
                 if let Some(h) = h1 {
                     hex.push(h);
                     chars.next();
-                    if let Some(&h2) = chars.peek() {
-                        if h2.is_ascii_hexdigit() {
-                            hex.push(h2);
-                            chars.next();
-                        }
+                    if let Some(&h2) = chars.peek()
+                        && h2.is_ascii_hexdigit()
+                    {
+                        hex.push(h2);
+                        chars.next();
                     }
                 }
                 match u32::from_str_radix(&hex, 16).ok().and_then(char::from_u32) {
@@ -682,6 +702,37 @@ fn split_top_level_once(s: &str, delim: char) -> Option<(&str, &str)> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Cedar's extension constructors parse to the values a Cedar request
+    /// carries: `decimal("…")` to its text, and `datetime("…")`, `duration("…")`
+    /// and `ip("…")` to Cedar's JSON escape for an extension value.
+    #[test]
+    fn extension_constructors_parse_to_extension_values() {
+        use super::super::value::extension_escape;
+        let now = parse_value(r#"datetime("2024-01-01T00:00:00Z")"#).unwrap();
+        assert_eq!(now, Value::extension("datetime", "2024-01-01T00:00:00Z"));
+        assert_eq!(
+            extension_escape(&now),
+            Some(("datetime", "2024-01-01T00:00:00Z"))
+        );
+        assert_eq!(
+            parse_value(r#"duration("1h")"#).unwrap(),
+            Value::extension("duration", "1h")
+        );
+        assert_eq!(
+            parse_value(r#"ip("10.0.0.1")"#).unwrap(),
+            Value::extension("ip", "10.0.0.1")
+        );
+        assert_eq!(
+            parse_value(r#"decimal("1.50")"#).unwrap(),
+            Value::Decimal("1.50".to_string())
+        );
+        // Not a constructor call: an ordinary bare token.
+        assert_eq!(
+            parse_value("datetime").unwrap(),
+            Value::String("datetime".to_string())
+        );
+    }
 
     /// `unescape` is the exact inverse of the `escape_debug` escaping in
     /// `entity_uid_string` — the invariant the string-keyed entity store relies
@@ -984,7 +1035,7 @@ mod tests {
         let log = r#"@0 scope(principal: Svc::User::"alice", resource: Svc::Gateway::"gw1") entities(notAUid: { dept: "eng" }) Svc::Action::"Read"::request(input: { doc: "x" })"#;
         let err = parse_trace(log).expect_err("non-entity-ref key must be rejected");
         assert!(
-            format!("{err}").contains("not an entity ref"),
+            err.to_string().contains("not an entity ref"),
             "expected a `not an entity ref` error, got: {err}"
         );
     }

@@ -1,0 +1,6 @@
+// An entity type declared `external` (Cedar 4.14) has an enumerated entity type as its parent,
+// which no definition of it could list. Cedar rejects the schema, and so does the frontend.
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::request{ input.user: context.input.user }
+};

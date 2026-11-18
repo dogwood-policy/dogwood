@@ -5,16 +5,27 @@
 
 pub mod ast;
 pub mod check;
+pub mod construct_counts;
+pub mod facts;
 pub mod parse;
 pub mod schema_info;
+pub mod text;
+pub mod timepoints;
 pub mod validate;
+pub mod validity;
 
 use crate::error::Span;
 
 use ast::Condition;
+use vstd::prelude::*;
 
-/// A parsed `temporal { … }` leaf.
+verus! {
+
+/// A parsed `temporal { … }` leaf. Inside `verus!` (transparent) so the
+/// verified macro pass can destructure it; `Clone` is derived outside
+/// Verus, as for the `crate::ast` types.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[verifier::external_derive(Clone)]
 pub struct Temporal {
     /// The parsed temporal condition.
     pub condition: Condition,
@@ -22,6 +33,10 @@ pub struct Temporal {
     /// is the base for the condition's block-relative inner spans.
     pub span: Span,
 }
+
+pub assume_specification [<Temporal as Clone>::clone](_0: &Temporal) -> Temporal;
+
+} // verus!
 
 impl Temporal {
     /// Parse a temporal block body into a [`Temporal`] extension leaf.

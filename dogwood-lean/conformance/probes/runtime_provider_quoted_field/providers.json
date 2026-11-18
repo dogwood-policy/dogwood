@@ -1,0 +1,9 @@
+{
+  "availableProviders": {
+    "Http::Head": {
+      "argumentTypes": [],
+      "outputType": { "paramType": "record", "fields": { "content-type": { "paramType": "string" } }, "required": ["content-type"] },
+      "implementation": { "kind": "rhai", "script": "fn evaluate() { #{ \"content-type\": \"text/plain\" } }" }
+    }
+  }
+}

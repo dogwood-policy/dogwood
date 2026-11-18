@@ -1,0 +1,8 @@
+// The Cedar part of rule 0 reads `context.policy_0__temporal_0`, the name lowering gives the
+// rule's own temporal leaf. The crate records the read while it lowers the authored rule and
+// rejects it (context reads); the Lean port of its validator takes the reads from the authored
+// rules too, since in the lowered rule the author's read is indistinguishable from lowering's
+// reference to the leaf. The bridge translates the lowered rule, so the specification sees the
+// leaf twice and accepts: the conformance baseline lists the difference.
+permit (principal, action == Drupe::Action::"Read", resource)
+when { context.policy_0__temporal_0 && temporal { formerly within 1h Drupe::Action::"Login"::response{ input.user: context.input.user } } };

@@ -1,0 +1,5 @@
+permit(principal, action, resource) when temporal {
+  formerly within 1h Acme::Action::"Read"::response{
+    output.owner: context.input.owner
+  }
+};

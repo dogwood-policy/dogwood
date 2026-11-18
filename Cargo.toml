@@ -12,20 +12,33 @@ members = [
     # from the language crate because formatting works on the authored token
     # stream (including macros/comments), not the macro-expanded semantic AST.
     "dogwood-formatter",
-    # `dogwood-cli` is the `dogwood` binary — a thin shell that drives the
-    # frontend's curated public surface directly (schema/policy in, verdicts and
-    # diagnostics out). Its serializable report/error types live in the crate
-    # itself, since a JSON output shape is a CLI concern, not a library one.
+    # Host-neutral operations over the frontend's public surface (schema/policy
+    # in, owned serializable reports and diagnostics out), plus the live
+    # event-at-a-time authorizer. Shared by the CLI and the language bindings
+    # (WebAssembly, Python), so the report/error JSON shape — a contract with
+    # all of them — is defined once.
+    "dogwood-ops",
+    # `dogwood-cli` is the `dogwood` binary — a thin shell over `dogwood-ops`
+    # that parses arguments and renders the reports.
     "dogwood-cli",
     # The documentation crate: the guide prose plus complete, CLI-checked
     # example bundles (policy + schema [+ trace/providers]). Its test harness
     # runs each bundle through the `dogwood` binary, so a doc example that stops
     # compiling is a build failure.
     "dogwood-docs",
+    # Editor-agnostic Language Server Protocol implementation. The server owns
+    # diagnostics, semantic-token projection, project resolution, and stdio
+    # protocol handling; editor extensions live outside this repository.
+    "dogwood-lsp",
+    # A test of the language crate's Lean frontend as a dependency: a crate that
+    # compiles Lean modules of its own against the crate's Lean library and links
+    # them with its Lean runtime. Not published; empty unless built with its
+    # `lean` feature (`cargo test -p dogwood-lean-dependent --features lean`).
+    "dogwood-language/lean-dependent",
 ]
 
 [workspace.package]
-version = "1.1.2"
+version = "1.2.0"
 edition = "2024"
 # Registry for crates that inherit publish.workspace = true.
 publish = ["crates-io"]

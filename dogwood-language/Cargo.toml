@@ -9,12 +9,23 @@ repository = "https://github.com/dogwood-policy/dogwood"
 homepage = "https://dogwood-policy.github.io/dogwood/"
 documentation = "https://dogwood-policy.github.io/dogwood/"
 readme = "README.md"
+# The Lean frontend's link metadata (feature `lean-frontend`): the build script
+# tells a dependent's build script, as `DEP_DOGWOOD_LEAN_*`, where the Lean
+# library and toolchain are, so that it can link Lean code of its own against
+# the one Lean runtime this crate links (see `build.rs`).
+links = "dogwood_lean"
 exclude = [
     "/tools/",
     # The Cedar fuzz suite is an internal regression input, not part of the
     # reusable corpus feature, and exceeds crates.io's 30,000-file limit.
     "/tests/passing/cedar_only/corpus_fuzz/",
 ]
+
+# Opt this crate into Verus verification. Verus's Cargo subcommand,
+# `cargo verus verify`, verifies the crates that set this key. A plain cargo
+# build ignores it.
+[package.metadata.verus]
+verify = true
 
 # In-source crate identifier `dogwood_language` (the published crate is
 # `dogwood-language`). The whole frontend lives in this one crate as
@@ -24,14 +35,14 @@ exclude = [
 name = "dogwood_language"
 
 [dependencies]
-dogwood-syntax = { path = "../dogwood-syntax", version = "1.1.2" }
+dogwood-syntax = { path = "../dogwood-syntax", version = "1.2.0" }
 pest = "2"
 pest_derive = "2"
 thiserror = "1"
 miette = { version = "7" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-cedar-policy-core = "4.11"
+cedar-policy-core = "=4.14.0"
 # The string/char escape decoder that Cedar's own `unescape` module is built
 # on. We drive it directly to build `like` patterns exactly as Cedar's
 # `pub(crate)` `to_pattern` does (see `build_pattern`). Pinned `=` to the exact
@@ -43,20 +54,21 @@ cedar-policy-core = "4.11"
 # / `string_escape_differential` tests, which compare our output against Cedar's
 # parser directly — update this pin (and re-run them) whenever cedar-policy-core
 # bumps its own dependency.
-rustc-literal-escaper = "=0.0.7"
+rustc-literal-escaper = "=0.0.8"
 # High-level Cedar API used for authorization (the public Authorizer /
 # Request / Response / Decision). Re-exported through the front door so
 # consumers don't depend on Cedar directly.
-cedar-policy = "4.11"
+cedar-policy = "=4.14.0"
 smol_str = "0.3"
 # `NonEmpty<SmolStr>` is the attribute-path type Cedar's `ExprBuilder`
 # takes for the extended-`has` operator; we name it directly when lowering
 # a `has a.b.c` to loc-bearing `ast`.
 nonempty = "0.12"
-# MCP -> Cedar schema generation: a Dogwood schema is an MCP tool
-# manifest, turned into a Cedar schema via this generator.
-cedar-policy-mcp-schema-generator = "0.6"
-mcp-tools-sdk = "0.4"
+# MCP -> Cedar schema generation (feature `mcp-schema`): a Dogwood schema is
+# an MCP tool manifest, turned into a Cedar schema via this generator. Pinned
+# `=` because the generator pins `cedar-policy-core` exactly.
+cedar-policy-mcp-schema-generator = { version = "=0.7.0", optional = true }
+mcp-tools-sdk = { version = "=0.5.0", optional = true }
 # Information-provider evaluation. A provider's implementation is a
 # sandboxed Rhai script: a bare engine has no file/network/process
 # access — capabilities are exposed only by host functions we register
@@ -66,16 +78,27 @@ mcp-tools-sdk = "0.4"
 rhai = { version = "1", features = ["decimal", "sync"] }
 regex = "1"
 rust_decimal = "1"
+# SHA-256 for stable policy identity: rule revisions, policy-set version
+# hashes and temporal-leaf content hashes (see `src/identity.rs`).
+sha2 = "0.10"
 # Embeds the temporal regression corpus into the crate (feature `corpus`) so
 # that an alternative implementation of the temporal engine can be checked
 # against the same cases the in-memory engine is validated against.
 include_dir = { version = "0.7", optional = true }
+
+# Verus support library. Build-time only. This version must match the Verus
+# release.
+vstd = "=0.0.0-2026-09-20-0158"
 
 [features]
 # Expose the embedded temporal regression corpus via `crate::corpus`.
 # Off by default: only callers that want to check an alternative engine
 # against the corpus need the ~13MB of embedded case data.
 corpus = ["dep:include_dir"]
+
+# Generate a Cedar action schema from an MCP `tools/list` manifest
+# (`mcp_to_cedar_schema`, `PolicySchema::from_mcp_manifest`). Off by default.
+mcp-schema = ["dep:cedar-policy-mcp-schema-generator", "dep:mcp-tools-sdk"]
 
 # Register a networked `http_get(url)` host function for provider scripts
 # (fetch-a-value-from-the-web, in the spirit of OPA/Rego's `http.send`).
@@ -95,6 +118,34 @@ net = []
 # feature and the gate it keys (grep EXPERIMENTAL-ARITHMETIC) may be deleted
 # when arithmetic is released.
 experimental-arithmetic = []
+
+# FRONTEND-EXPORT: a JSON export of the frontend's parsed inputs and of its
+# observables at every stage boundary (`frontend_export`), for differential
+# testing of another implementation of the frontend. OFF BY DEFAULT and not
+# part of the supported API.
+frontend-export = []
+
+# LEAN-FRONTEND: build and link the Lean frontend (`dogwood-lean/`, the verified
+# port of everything after the parsers) and let a service schema select it in
+# place of the Rust frontend, or alongside it (`Frontend::Shadow`). OFF BY
+# DEFAULT: without it the crate builds and runs only its Rust frontend and needs
+# no Lean toolchain. Building with it needs Lean 4.34.0, or a prebuilt archive;
+# see the README's "The Lean frontend" section and `build.rs`.
+lean-frontend = ["dep:cc", "dep:sha2", "serde_json/unbounded_depth"]
+
+[build-dependencies]
+# Only with `lean-frontend`: compile the C shim, and check a prebuilt archive's digests.
+cc = { version = "1", optional = true }
+sha2 = { version = "0.10", optional = true }
+
+# Verifier-only cfgs set by `cargo verus`; declared so the normal build does
+# not report warnings for them.
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = [
+    'cfg(verus_keep_ghost)',
+    'cfg(verus_keep_ghost_body)',
+    'cfg(verus_only)',
+] }
 
 [dev-dependencies]
 miette = { version = "7", features = ["fancy-no-backtrace"] }
@@ -148,6 +199,7 @@ path = "tests/docs_as_tests/authorize_verdict.rs"
 [[test]]
 name = "doc_mcp_schema_gen"
 path = "tests/docs_as_tests/mcp_schema_gen.rs"
+required-features = ["mcp-schema"]
 
 [[test]]
 name = "doc_parse_probe"
@@ -191,7 +243,8 @@ path = "tests/pin_partition_differential.rs"
 name = "fail_closed"
 path = "tests/fail_closed.rs"
 
-# The MCP-manifest and macro-library schema-loading conveniences.
+# The MCP-manifest (feature `mcp-schema`) and macro-library schema-loading
+# conveniences.
 [[test]]
 name = "schema_loading"
 path = "tests/schema_loading.rs"

@@ -38,6 +38,7 @@ judgments capture this:
 | `Γ ⊢ p ⇝ π` | policy `p` **lowers** to Cedar policy `π` (recording hoisted leaves) | [§4](#4-lowering-dogwood--cedar) |
 | `Σ ⊢ L ✓` | lowered artifact `L` is **valid** under schema `Σ` (no findings) | [§5](#5-validation) |
 | `⟨H, e⟩ ⇓ ⟨H′, r⟩` | ingesting event `e` in history `H` yields history `H′` and result `r` | [§6](#6-authorization) |
+| `⟨L, s⟩ ⇓_W ⟨L′, ρ⟩` | submitting `s`, with retry window `W`, to an instance whose log is `L` yields log `L′` and reply `ρ` | [§6.6](#66-the-event-log-contract-and-retries) |
 
 Inference rules are written in the usual style — premises above the line,
 conclusion below, name at the right:
@@ -105,8 +106,10 @@ Notes. `effect` is any identifier at the grammar level; a later pass requires it
 to be `permit` or `forbid` (this yields a better diagnostic than a parse
 failure). The `":"` form in `variable_def` (`principal : User`) is legacy and is
 accepted only so the semantic pass can emit a "use `is`" hint. `block` is the raw
-text between a marker's braces, with balanced inner braces honored — it is
-dispatched to a sub-language parser.
+text between a marker's (or a `def` body's) braces, with balanced inner braces
+honored; a string literal and a `//` comment (to the end of the line) are skipped
+whole, as the sub-language parsers skip them, so a brace or a quote in either does
+not move the block's end. It is dispatched to a sub-language parser.
 
 ### 2.2 Condition clauses
 
@@ -177,7 +180,12 @@ record  ::= "{" [ rec_init { "," rec_init } ] "}"
 you mean `==`?" hint rather than a raw parse error. A run of `!` or `-` may not
 be mixed (`!-x` is rejected), matching Cedar. The grammar admits a relational
 chain `{ rel_op add }` of any length, but more than one `rel_op` is rejected
-after parsing (`a == b == c` must be parenthesized), matching Cedar. `/` and `%`
+after parsing (`a == b == c` must be parenthesized), matching Cedar. Likewise the
+right-hand side of `has` may be any `add`, but only an attribute path is
+accepted, as in Cedar: a name, a name followed by `.field` accesses, or a string
+literal on its own (`has a.b`, `has "a b"`); unlike Cedar, a word Cedar reserves
+(`if`, `then`, `__cedar`) may be a name of the path. A `number` must fit `i64`,
+except a directly negated 2^63 (`-9223372036854775808`), as in Cedar. `/` and `%`
 parse but are rejected downstream (Cedar has no division). Surface operators
 `!=`, `>`, `>=` are retained here and desugared during lowering
 ([§4.3](#43-expression-translation)).
@@ -252,7 +260,11 @@ binds `x` over `φ && ψ`; parenthesize to stop it early. An aggregate is a
 *term* syntactically; the rule that an aggregate may appear *only* as a
 comparison operand is a validation rule ([§5.4](#54-temporal-acceptance-well-formedness)),
 not a grammar rule. `param_ref` (`?p`) and `binder_ref` (`$t`) are legal *only*
-inside a macro body; the well-formedness pass rejects them elsewhere.
+inside a macro body; the well-formedness pass rejects them elsewhere. Inside a
+`def temporal` body, conversely, a variable or binder must be one of them: a
+plain `ident` there is rejected, since expansion renames only `$t` and would keep
+it as written. An `integer` (with its sign) must fit `i64`; one that does not is
+rejected at parse time.
 
 ### 2.5 Information-provider invocations (no dedicated grammar)
 
@@ -308,8 +320,10 @@ A schema-independent description of how event signatures are derived from an
 action schema.
 
 ```ebnf
-schema      ::= [ max_window ] { event_decl }
+schema      ::= { directive } { event_decl }
+directive   ::= max_window | max_horizon            (* each at most once *)
 max_window  ::= "max_window" "=" interval
+max_horizon ::= "max_horizon" "=" interval
 interval    ::= integer time_unit                  (* time_unit ∈ {s,m,h,d} *)
 event_decl  ::= [ "decision" ] "event" "<" binder ">" "::" event_kind
                 "{" [ fields ] "}"
@@ -339,11 +353,20 @@ keywords. This grammar is purely syntactic — binding the selectors to a concre
 schema is the **derivation** pass, which runs inside lowering ([§4.5](#45-schema-derivation-and-augmentation)).
 
 The optional leading `max_window = <interval>` directive caps how far back any
-policy's temporal `within` window may look; it must precede the event
-declarations, appear at most once, and be a positive interval (a zero window is
-a parse error). Absent, derivation supplies a **24h** default. The cap is
-enforced by the temporal dialect ([§5.5](#55-temporal-dialect-validation-against-the-schema),
-**TEMP-MaxWindow**).
+policy's temporal `within` window may look, and `max_horizon = <interval>` caps
+a temporal leaf's **horizon**: the largest sum of the windows along one chain
+of nested `formerly`, `previous` and `since` (`since` adds its window to the
+longer of its sides; an aggregation reaches as far as its body). Each must
+precede the event declarations, appear at most once, and be a positive
+interval (a zero cap is a parse error). They resolve as follows: `max_horizon`
+is the directive, and without one there is **no horizon cap**; `max_window` is
+the directive, else the declared `max_horizon`, else **24h**. A `max_window`
+longer than a declared `max_horizon` is an event-schema error. The caps are enforced by the temporal
+dialect ([§5.5](#55-temporal-dialect-validation-against-the-schema),
+**TEMP-MaxWindow**, **TEMP-MaxHorizon**). Since no event older than a
+condition's horizon can matter, retention of a declared `max_horizon` suffices
+for every policy set the event schema lets validate (Lean:
+`authorize_drop_maxHorizon`).
 
 ---
 
@@ -408,6 +431,13 @@ a  (AggExpr)    ::= Sum(x, (x:T)*, φ) | Count((x:T)*, φ) | Call c
 W  (WithinSpec) ::= Concrete(n, unit) | ParamRef name                  (* ParamRef transient *)
 T  (Type)       ::= Timepoint | Named(name*)
 ```
+
+A `NamedArg`'s `name` is the field path `seg*` written as one string
+(`src/field_path.rs`): each segment with `\` written `\\` and `.` written `\.`,
+and the segments joined by `.`. `NamedArg::field_path` splits the string at its
+unescaped dots and drops the escapes, the inverse on every non-empty path, so a
+segment that holds a `.` (the Cedar attribute `input["user.id"]`) stays one
+segment. A path of identifiers is its plain dotted text.
 
 `Since`'s negative form ("left has *not* held since") is `Not` around the left
 operand — there is no dedicated flag. `Tp(x)` binds `x` to the current
@@ -507,13 +537,23 @@ A rule's condition `γ` is the conjunction of its clauses, `when` verbatim and
    Γ ⊢ (unless e) ⇝ !⟦e⟧ ⊣ Γ′
 ```
 ```
-   Γ ⊢ c ⇝ γ_c ⊣ Γ₁       Γ₁ ⊢ rest ⇝ γ_r ⊣ Γ₂       rest ≠ []
+   Γ ⊢ cᵢ ⇝ γᵢ ⊣ Γᵢ₊₁  (each clause in source order)       n ≥ 1
   ──────────────────────────────────────────────────────────────── (L-Fold-Cons)
-   Γ ⊢ (c :: rest) ⇝ (γ_c && γ_r) ⊣ Γ₂
+   Γ₁ ⊢ [c₁ … cₙ] ⇝ balanced(γ₁ … γₙ) ⊣ Γₙ₊₁
 ```
 
-*(`cedarify/mod.rs` `emit_policy`.)* Clauses fold **left-associatively in source
-order**: `[c₁, c₂, c₃]` becomes `And(And(γ₁, γ₂), γ₃)`. A bare rule (no clauses)
+*(`cedarify/mod.rs` `emit_policy`.)* Each clause translates in source order,
+threading the context, and the results are conjoined as a **balanced** `&&`
+tree over them in that order: adjacent operands are paired left to right, an odd
+last operand is carried up a level unchanged, and the pairing repeats until one
+operand remains. So `[c₁, c₂]` becomes `And(γ₁, γ₂)`, `[c₁, c₂, c₃]`
+`And(And(γ₁, γ₂), γ₃)`, and `[c₁ … c₄]` `And(And(γ₁, γ₂), And(γ₃, γ₄))`. The
+tree is ⌈log₂ n⌉ deep instead of n, so a rule with many clauses does not
+overflow Cedar's recursive printer, typechecker or evaluator. It decides as the
+left-nested chain does: Cedar's `&&` evaluates its left operand first and
+returns at the first `false` or error, so any `&&` tree over the same operands
+in the same order visits the clauses in clause order and stops at the same one.
+A bare rule (no clauses)
 has condition literal `true` — note this is `Some(true)`, an explicit condition,
 not an absent one. The synthesized `Not` (for `unless`) and `And` (for the
 conjunction) nodes carry the **whole-rule** source location, since they
@@ -624,16 +664,43 @@ Two schema transformations happen inside `lower`:
    previously generated shared definition, preserving earlier providers
    (`cedarify/schema_augment.rs`).
 
+   A temporal leaf's field is added only to the actions its rule's action scope
+   can apply to, and the Lean specification augments the same actions
+   (`PolicySet.augmentedSchema`), up to two differences that change no
+   verdict: the crate gives each action a provider rule reaches the whole
+   shared provider record, and leaves out pure action groups, which have no
+   request environment. Adding the fields to more actions gives the same
+   validation verdict (`Dogwood.Thm.valid_iff_covers`).
+
+   **Combining sets: a whole-context read breaks once any set has a leaf.**
+   The schema adds a hoisted field only to its rule's actions, but at decision
+   time the authorizer puts every hoisted value of the store into every
+   request's context. So a rule that reads `context` whole, which a set
+   without leaves may do, is silently `false` once it shares a store with any
+   set that has a leaf, whichever actions that leaf targets; re-validating the
+   earlier set against the final schema catches this only when the leaf is on
+   the same action. The specification states the rule precisely
+   (`Dogwood.Thm.Composition`): two lowerings, each valid, compose into a valid
+   set exactly when the combined set passes the context-read check
+   (`valid_join_iff_contextReadsOk`), provided the second set's leaves and the
+   pins read none of the first set's hoisted attributes. The crate rejects such
+   reads. A whole-context read in the first set breaks composition once the
+   second has a leaf
+   (`not_valid_join_of_whole_context_read`). `Validator::validate` on the
+   result of `lower_many` performs that check on the combined set.
+
 Finally the temporal leaves' conditions have schema **pins** injected — a pinned
 event field `f` is conjoined `f: context.<pin-path>` onto every matching
-predicate, realizing the "same X" correlation (`event_schema/pin.rs`).
+predicate, realizing the "same X" correlation (`event_schema/pin.rs`). The
+injected argument's name is the text of the pinned field's path, written as
+for every `NamedArg`.
 
 After pin injection, leaves are **relativized** when the schema declares at
-least one *universal symmetric* pin — a pin present (identically) on every
-derived event kind whose context path is the field's own path, or a reserved
-scope-alias pair (`callerPrincipal`/`principal`,
-`callerResource`/`resource` — the bare scope reference, not
-`context.principal`) (**L-Relativize**,
+least one *universal symmetric* pin — a symmetric pin (one whose value is the
+request's principal, its resource, or a context attribute, written
+`= principal`, `= resource` or `= context.<path>`, whatever the field is
+called) present
+identically on every derived event kind (**L-Relativize**,
 `event_schema/relativize.rs`). Let μ be the disjunction, over every derived
 event kind, of a predicate carrying exactly the pinned correlations ("an event
 of any kind agreeing with the current request on every universally-pinned
@@ -647,13 +714,30 @@ left". The rewritten formula's verdict over the global trace equals the
 original formula's verdict over the sub-trace agreeing with the request on the
 pinned fields — the **partition guarantee**: storage and evaluation may be
 sharded by the pinned key without changing any verdict. Every synthesized
-binder is fresh (`__pin_*`) and range-restricted by a positive atom before any
-filter uses it. Validation (§5) runs on the **pre-rewrite** leaves, so
+binder is fresh (`__pin_*`, with as many `_` after `__pin` as it takes for no
+variable of the leaf to start with the prefix) and range-restricted by a
+positive atom before any filter uses it. Validation (§5) runs on the **pre-rewrite** leaves, so
 findings point at authored structure; engines receive the rewritten leaves
 (`Lowered.temporal_rewritten`, surfaced by `temporal_fields()` /
 `temporal_leaves()`). With no universal symmetric pin the rewrite is the identity. The default event
 schema is not such a case: it pins `callerPrincipal` on every derived kind, so under
 the default the rewrite is active.
+
+**Sharding by key, and stamps.** The partition guarantee is stated over a history
+whose timestamps are given. An authorizer that assigns the timestamps itself, as
+the formal specification's does (`dogwood-lean`, `Dogwood.Spec.Ingest`: an
+event's stamp is `max(reading, last + 1)`), and that keeps one log per key,
+stamps each key's log on its own: `last` is the stamp of the last event of the
+same key. The formal specification defines this partitioned evaluation
+(`dogwood-lean`, `Dogwood.Spec.Partitioned`, `PolicySet.PartLeafHolds`): each
+temporal leaf of a decision is evaluated over the decision's own key's log,
+stamped on its own. It is what `AuthorizerBuilder::partition_temporal()`
+([API and workflow](07-api-and-workflow.md)) and an engine that keeps one log
+per key compute. It agrees with stamping one log of all events
+when the clock readings strictly increase across keys. When they do not, an
+event that arrives at the reading of another key's event is stamped one tick
+later in the single log than in its own key's log, and at a window's edge that
+tick can change a verdict.
 
 The result is the `Lowered` artifact (**L-Lowered-Artifact**, `api.rs`, `struct Lowered`):
 the Cedar `policies`, the `augmented_schema` (+ its source text), the hoisted
@@ -713,7 +797,14 @@ checks. `ctx = (Σ = L.augmented_schema, event_schema = L.event_schema, dw_src)`
 
 *(`validate.rs` `validate_impl`.)* Cedar's own validator runs in **strict** mode over the
 augmented schema. Its errors become `ValidationError::Cedar` findings and its
-warnings pass through verbatim (**V-Cedar-Warnings**). Crucially, this pass is
+warnings pass through verbatim (**V-Cedar-Warnings**), except an impossible policy
+(a condition false for every request its scope admits), which is an error, as
+cedar-lean's validator reports it (**V-Cedar-Impossible**). The Cedar part of a
+rule reads the request context only through attributes lowering does not hoist:
+a read of the whole `context` (when the policy set has a temporal or provider
+leaf, since lowering then adds the leaves' values to it), or of an attribute
+named like a hoisted leaf (`<rule>__temporal_<n>`, `providers`), is an error
+with the code `context` (**V-Cedar-ContextRead**). Crucially, this pass is
 where several things are *deliberately delegated* rather than re-checked
 elsewhere: **provider output/projection typing**, **provider field-path
 arguments**, and **context typing under an unconstrained action scope**. Each
@@ -829,8 +920,10 @@ this temporal condition …"*. Here `fv` is the standard free-variable set (an
 aggregate binds its `for` list over its `where` body; `exists` binds its
 binder; `tp(t)` outside any binder leaves `t` free). No sigil punt is needed:
 an unresolved macro call contributes no visible variables, and macro hygiene
-guarantees expansion can never capture a call-site variable, so a variable free
-at parse time is necessarily still free after expansion.
+guarantees expansion can never capture a call-site variable (a `def temporal`
+body has no plain identifier: it binds `$t` names, renamed at each call, and the
+names the caller passes for its binder parameters), so a variable free at parse
+time is necessarily still free after expansion.
 
 **Monitoring scope must monitor (tp-dependence).** Every scope that establishes a
 timepoint must actually vary with the current timepoint (`is_tp_dep`):
@@ -987,39 +1080,106 @@ name resolution is owned solely by the event-schema checker** ([§5.7](#57-event
 the dialect additionally checks:
 
 - **Entity types** — every `Entity(ty, id)` term must name a declared entity
-  type; an action ref (`…::Action::"X"`) is skipped (Cedar reserves `Action`);
-  an enum entity's id must be a permitted eid (**TEMP-EntityType-***).
+  type, and an action ref (`…::Action::"X"`) a declared action (Cedar reserves
+  `Action`); an enum entity's id must be a permitted eid (**TEMP-EntityType-***).
+  A `decimal("…")` literal must be a decimal Cedar accepts (**TEMP-Decimal**). A
+  wildcard is not a comparison operand: it resolves to no value, so the
+  comparison would always be false (**TEMP-Wildcard**).
 - **Context paths** — a `context.<path>` must resolve against the scoped
   action's **full** declared context record (Cedar's `context` variable —
   `context.input.<field>…`, `context.system.<field>…`, etc.), on **every**
-  action the leaf's scope pins; an unconstrained scope defers to Cedar
+  action the leaf's scope resolves to (an unconstrained scope to every action);
+  an attribute lowering hoists is not part of the request, and does not resolve
   (**TEMP-ContextPath-***). A `principal` / `resource` **scope** term is
   separate (Cedar's request scope entities, not a context field): the bare root
-  types to the scoped action's principal / resource entity type, and an
-  attribute tail (`principal.dept`) is accepted and resolved at eval time
-  against the request's entity store (untyped here, as on the provider surface).
-- **Types** (best-effort) — from a monomorphic environment seeded by the concrete
-  scoped action's input fields **and every binder's declared annotation**
-  (`exists (x: T)` and each aggregation `for (v: T)`; the declared type is
-  **authoritative**, not reverse-inferred from a use site). Against that
-  environment: a predicate arg must match its declared field type; a use of a
-  bound variable must be consistent with its declared type; an ordering
-  comparison requires both operands **numeric** (only `int` is numeric — an
-  aggregate and a compound arithmetic operand type as `int`, decimal is
-  **not** numeric here); an equality requires compatible types; every atom
+  types to the environment's principal / resource entity type, and an
+  attribute tail (`principal.dept`, `principal.id`) to the type that entity
+  type declares.
+- **Types** — once per request environment of the rule (an action its scope
+  resolves to, and a principal and a resource type the scope admits for it),
+  from the variable types **of every binder's declared annotation** (`exists
+  (x: T)` and each aggregation `for (v: T)`; the declared type is
+  **authoritative**, not reverse-inferred from a use site). A binder's type is
+  `Long`, `String`, `Bool`, `decimal`, `Timepoint`, or a declared entity type
+  written with its namespace; the body of a binder of another type is not typed
+  further (**TEMP-Binder-Type**). Types compare exactly: an entity type by its
+  qualified name, and a record by its attributes. A
+  predicate arg must match its declared field
+  type: the type the predicate action's context declares for a spliced
+  `input` / `output` field, and the type the event schema declares for any
+  other (`callerPrincipal`, `requestId`); a use of a bound variable must be
+  consistent with its declared type; an ordering comparison requires both
+  operands **numeric** (only `int` is numeric — an aggregate and a compound
+  arithmetic operand type as `int`, decimal is **not** numeric here); an
+  equality requires equal types, or two entities when it does not have the
+  shape of one that can bind a variable (a bare variable against a term that
+  is not a variable and holds no wildcard, under `==` or `!=`): evaluation
+  does not consult a binder's declared type, so an equality of this shape that
+  binds the variable could give it a value outside its type;
+  every atom
   of a compound arithmetic operand must type `int` — decimal, string, bool,
   entity, array, and wildcard atoms are rejected, the wildcard by name
   since it would make the guard silently false (**TEMP-Arith-Long**); and a
   `tp(x)` binder must be declared `Timepoint` — any other declaration conflates a timepoint index with a
   data value, making the condition permanently false (a validated dead
   guard). A check fires only when both types are known (**TEMP-Type-***).
+  Temporal conditions do not support Cedar's extension types other than
+  `decimal`: a binder declared `datetime`, `duration`, or `ipaddr` is rejected,
+  and so is a request-side path whose type is or holds one, as a comparison
+  operand (which is then not typed further), an atom of a compound operand, a
+  predicate argument, or a pin's request-side path, as in the formal
+  specification's typing (`CedarType.temporalSupported`). A predicate that
+  leaves such a field out, or matches it with a wildcard, is valid
+  (**TEMP-Type-Extension**).
 - **Max window** — every `within` window in the leaf (on a `formerly`,
   `previous`, or `since`, at any depth including inside an aggregation `where`
   body) must be **≤** the event schema's `max_window` cap, compared in seconds.
   A window strictly greater than the cap is rejected, located at the offending
   operator (**TEMP-MaxWindow**). The cap is the schema's `max_window` directive
-  or the 24h default ([§2.6](#26-event-schema-dsl)); post-expansion every
+  or its default ([§2.6](#26-event-schema-dsl)); post-expansion every
   window is concrete, so macro-supplied windows are checked too.
+- **Max horizon** — the leaf's horizon, in seconds — `formerly`/`previous`
+  within `w` add `w` to their body's, `since` within `w` adds `w` to the larger
+  of its sides', conjunction, negation, `exists` and comparison take the
+  largest of their parts' (an aggregate operand its body's), and a predicate or
+  `tp` looks back nothing, with a non-positive window counting as zero — must
+  be **≤** the event schema's `max_horizon` cap, when it declares one. The sum
+  is exact. A leaf
+  whose horizon is strictly greater is rejected, located at the leaf
+  (**TEMP-MaxHorizon**; Lean: `Formula.horizon`, `PolicySet.Valid.horizon`).
+
+The type environment is **lexically scoped** (`walk_typed`): a binder's declared
+type holds over its own body only, an `exists` over its body and an
+aggregation's `for` list over its `where` body. So a name an aggregation rebinds
+has its enclosing type again outside the aggregation (**TEMP-Type-Scope**).
+
+Four further rules come from the formal specification's typing relation
+(`dogwood-lean`, `Formula.WellTyped`; `temporal/validity.rs`). Each is checked in
+every request environment the rule's scope admits: every action the scope
+resolves to, and every principal and resource type the scope admits for it.
+
+- **Optional attributes** — a `context.<path>`, `principal.<path>`, or
+  `resource.<path>` term reads an optional attribute only where the Cedar part
+  of the rule tests it with `has` at the leaf's position (**TEMP-Optional**),
+  as in `context.input has amount && temporal { … }`. The facts a position
+  establishes are read off the lowered rule (`temporal/facts.rs`): a `has` test
+  on an attribute chain rooted at `context`, `principal`, or `resource`
+  establishes its path; a conjunction establishes the facts of both operands;
+  facts flow from the left operand of `&&` to its right, from the condition of
+  `if` to its `then` branch, and from a `when` clause to the clauses after it.
+  `principal.id` and `principal.type` are attributes like any other, as in
+  Cedar: an optional one needs a guard.
+- **Pins** — every pin of an event a predicate names correlates its field with
+  a request-side path that is **declared and required** in every environment
+  of the rule, of a type the field can hold (**TEMP-Pin**). So a conforming
+  request always has the pin's value. A `has` test does not guard a pin: pin
+  injection conjoins it onto every predicate of the event.
+- **`for` variables** — the `for` variables of one aggregation have distinct
+  names (**TEMP-For-Distinct**).
+- **Binding fields** — a variable bound by a field the event schema names,
+  `P{ callerPrincipal: x }`, has a type every value of the field has
+  (**TEMP-Binding-Field**). A field of `principalType(A)` holds an entity of any
+  of `A`'s principal types, so `x` must accept every one of them.
 
 ### 5.6 Provider dialect
 
@@ -1036,12 +1196,16 @@ type permissively) — *"provider `k` is not present in the provider
 declarations"* (**PROV-DeclaredProvider**). Argument **count** must match
 (**PROV-ArgCount**); a directly-typed literal/set argument must match the
 declared `paramType` (`string`/`integer`|`long`/`bool`|`boolean`/`decimal`/`set`
-— **PROV-ArgType**); a field-path argument (`context`/`principal`/`resource`) is
-deferred to Cedar. Each **output method** in a chain is likewise checked here
+— **PROV-ArgType**); a field-path argument (`context`/`principal`/`resource`),
+and every element of a set argument, has the declared Cedar type exactly in
+every request environment of the rule; an optional attribute along a path needs
+no `has` test, since an absent argument reaches the script as null; a bare
+`principal` / `resource` is an entity, and the whole `context` is not an argument
+(**PROV-ArgPath**). Each **output method** in a chain is likewise checked here
 (**PROV-Method-***): it must be declared in `availableMethods`, must not shadow a
 Cedar extension-method name, must be given the declared argument count/types,
-and — when it declares an `inputType` — must be fed a compatible value by the
-preceding pipeline stage (the running type starts at the invocation's
+and — when it declares an `inputType` — must be fed a value of that Cedar type by
+the preceding pipeline stage (the running type starts at the invocation's
 `outputType` and advances by each method's `outputType`). Provider
 **output/projection** typing is not checked here — it was lowered to native Cedar
 and is checked by the Cedar side ([§5.3](#53-the-cedar-side), **PROV-Output-Deferred**).
@@ -1072,14 +1236,15 @@ field **group** rather than a leaf (**EVENT-Field-Group**), or to nothing
 Authorization is **stateful** and event-driven. The judgment is
 
 ```
-   ⟨H, e⟩ ⇓ ⟨H′, r⟩            r ∈ { None } ∪ { Some(ρ) : ρ a Response }
+   ⟨H, e⟩ ⇓ ⟨H′, r⟩            r ∈ { None, Rejected } ∪ { Some(ρ) : ρ a Response }
 ```
 
-where `H` is the temporal engine's observed history and `H′ = H · e` (the history
-always grows). A `Response ρ = (decision ∈ {Allow, Deny}, reason: DogwoodRuleRef*,
-errors: String*)`. This is `Authorizer::is_authorized` (`authorize/mod.rs`,
-`api.rs`). The `None` result — "this event decided nothing" — is the essential
-difference from Cedar.
+where `H` is the temporal engine's observed history and `H′` is `H · e` when `e`
+conforms to the event schema, and `H` when it does not ([§6.1](#61-check-observe-then-gate-on-decision-kind)).
+A `Response ρ = (decision ∈ {Allow, Deny}, reason: DogwoodRuleRef*,
+errors: String*)`. This is `Authorizer::submit` (`authorize/mod.rs`, `api.rs`);
+`Authorizer::is_authorized` reports `Rejected` as `None`. The `None` result —
+"this event decided nothing" — is the essential difference from Cedar.
 
 An event `e` records a **single occurrence at one point in time**, carrying an
 action, event kind, fields, and timestamp. Under the default event schema, a
@@ -1098,91 +1263,118 @@ Timestamps determine membership in `within` windows. Evaluation at position
 Event timestamps are assumed to be **increasing** along `H`:
 `ts(i + 1) > ts(i)`, so timestamps are also unique. The reference interpreter
 neither sorts events nor checks this assumption. Other authorizer implementations
-can assign strictly increasing timestamps at ingestion; durable Local Engine
-submission does so. Traces with repeated or decreasing
+can assign strictly increasing timestamps at ingestion, as the formal
+specification's authorizer does. An authorizer that keeps one log per partition key assigns
+them per key, so they increase within each key's log; the formal specification's
+partitioned evaluation evaluates a decision over its own key's log
+(see **Sharding by key, and stamps** in §4.5). Traces with repeated or decreasing
 timestamps are outside the specified semantics. See
 [Evaluation semantics](04-temporal-expressions.md#evaluation-semantics).
 
-### 6.1 Observe, then gate on decision kind
+### 6.1 Check, observe, then gate on decision kind
 
-Every event is observed first, unconditionally; then its kind decides whether a
-verdict is produced.
+An event is checked against the event schema first; a conforming event is
+observed; then its kind decides whether a verdict is produced.
 
 ```
-  ─────────────────────────── (A-Observe)     H′ := H · e   for every ingested e (observe runs first)
-```
-```
-   H′ = H · e        e.kind ∉ decision_kinds
-  ─────────────────────────────────────────────── (A-Ingest-History)
+   e ⊨ S        H′ = H · e        e.kind ∉ decision_kinds
+  ──────────────────────────────────────────────────────── (A-Ingest-History)
    ⟨H, e⟩ ⇓ ⟨H′, None⟩
 ```
 ```
-   H′ = H · e        e.kind ∈ decision_kinds        ⟨H′, e⟩ ⇓_d ρ
-  ────────────────────────────────────────────────────────────────── (A-Ingest-Decide)
+   e ⊭ S        e.kind ∉ decision_kinds
+  ──────────────────────────────────────────────── (A-Reject-History)
+   ⟨H, e⟩ ⇓ ⟨H, Rejected(nonconforming)⟩
+```
+```
+   e ⊨ S        H′ = H · e        e.kind ∈ decision_kinds        ⟨H′, e⟩ ⇓_d ρ
+  ──────────────────────────────────────────────────────────────────────────── (A-Ingest-Decide)
    ⟨H, e⟩ ⇓ ⟨H′, Some(ρ)⟩
 ```
+```
+   e ⊭ S        e.kind ∈ decision_kinds        ⟨H, e⟩ ⇓_d ρ
+  ─────────────────────────────────────────────────────────── (A-Decide-Nonconforming)
+   ⟨H, e⟩ ⇓ ⟨H, Some(ρ)⟩
+```
 
-*(`api.rs`, `ingest`.)* `observe(e)` runs for *both* decision and history-only events
-(**A-Observe**), so at a later decision point the temporal leaves see the full
-prefix history including interleaved history-only events (**A-Stateful-Invariant**).
-`⇓_d` is the decision judgment of [§6.2](#62-the-decision-pipeline-fail-closed).
-A stateless single decision is a fresh authorizer fed one decision-kind event.
+*(`api.rs`, `ingest`; `conformance.rs`, `RuntimeChecks`, `check_pins`.)* `e ⊨ S` is **event conformance**
+(**A-Event-Conforms**): the event schema declares a signature for the event's
+action and kind, and the event's logged record is an instance of it — every
+logged declared field has its declared type, every required field and every
+pinned field is logged, and every logged field that mirrors the request holds
+the request's value (the field of each symmetric pin, and `callerPrincipal`
+and `callerResource` when no pin names them). The pin clauses follow the
+authorizer's mirror rule (`MirrorRule`; `conformance.rs`, `check_pins`): under
+the default, **strict**, rule a mirrored field is also absent when the event
+has no request-side value for it; `Current` drops that case; `Unchecked` checks no pin clause. A field spliced from the action's `context.input` /
+`context.output` has the type the context declares at its path, and is required
+when every attribute along the path is; any other declared field has the type
+the event schema names, and is optional. A `Null` value is absent.
+`LoweredPolicySet::check_event_conformance(e, rule)` decides `e ⊨ S` under a
+mirror rule without ingesting `e`, through the same function `ingest` calls.
+
+A nonconforming event is **not ingested**: the temporal engine never observes
+it, so no later decision sees it. A nonconforming history event is
+**rejected** (**A-Reject-History**), which `Authorizer::submit` reports as
+`Err(Rejection::Nonconforming)` and `Authorizer::is_authorized` as `None`; a
+rejection is not a decision, in particular not a `Deny`. A nonconforming
+decision event fails its decision closed ([§6.2](#62-the-decision-pipeline-fail-closed)).
+A conforming event is observed (`try_observe`; an event the engine could not
+record is not in the history: a history event is rejected as
+`Rejection::Unavailable`, a decision event fails closed) for *both* decision
+and history-only kinds, so
+at a later decision point the temporal leaves see the full prefix history of
+conforming events, interleaved history-only events included
+(**A-Stateful-Invariant**). `⇓_d` is the decision judgment of
+[§6.2](#62-the-decision-pipeline-fail-closed). A stateless single decision is a
+fresh authorizer fed one decision-kind event. The authorizer preserves supplied
+timestamps; it does not check their order.
 
 ### 6.2 The decision pipeline (fail-closed)
 
-`⇓_d` runs four steps — evaluate temporal leaves, build context, build request,
-decide — each of the first three a **fail-closed** short-circuit. There are
-exactly three top-level fail-closed points (and `build_request` decomposes into
-four sub-causes). A fail-closed `Response` is always `(Deny, reason = [], errors =
-[msg…])`.
+`⇓_d` makes its checks in the order of the formal specification's
+`PolicySet.decideWith` (`dogwood-lean`, `Dogwood.Spec.Decision`), each a
+**fail-closed** short-circuit, then decides. A fail-closed `Response` is always
+`(Deny, reason = [], errors = [msg])`.
+
+| # | Check | Fails closed with |
+|---|---|---|
+| 1 | the event has a principal and a resource in scope, with well-formed uids | `decision event has no principal in scope` (or resource), or the uid's parse error (**FailClosed-Scope**) |
+| 2 | the event conforms to the event schema (`e ⊨ S`) | `nonconforming decision event: …` (**FailClosed-Event**) |
+| 3 | the request conforms to the action schema: its action is declared, its principal and resource are of types the action applies to, and its context is an instance of the action's context record type, without the hoisted attributes (no undeclared attribute; every required attribute present) | `nonconforming request: …` (**FailClosed-Request**) |
+| 4 | the entity store conforms to the augmented schema (Cedar's `Entities::from_entities`) | `entity conformance: …` (**FailClosed-Entities**) |
+| 5 | every information provider of the policy set produces a value | the provider's error (**FailClosed-Provider**) |
+| 6 | every provider output is a value of its declared output type | `nonconforming provider output: …` (**FailClosed-ProviderOutput**) |
+| 7 | the temporal engine values the leaves: it does not fail, and it returns a value for exactly the hoisted leaves | `temporal evaluation: …` (**FailClosed-Temporal**) |
 
 ```
-   temporal.evaluate(H) = β        β, providers, e ⊢ ctx ⇓ Ok(κ)        e, κ ⊢ req ⇓ Ok(q)
-   decide(q) = ρ₀        ρ = ρ₀ with pre-errors prepended
-  ────────────────────────────────────────────────────────────────────────────────────────── (A-Decide-Ok)
-   ⟨H, e⟩ ⇓_d ρ
-```
-```
-   temporal.evaluate(H) = Err(m)
-  ───────────────────────────────────────────────────────── (FailClosed-Temporal)
-   ⟨H, e⟩ ⇓_d (Deny, [], ["temporal evaluation: " · m])
-```
-```
-   β, providers, e ⊢ ctx ⇓ Err(m)
-  ─────────────────────────────────────── (FailClosed-Context)
-   ⟨H, e⟩ ⇓_d (Deny, [], [m])
-```
-```
-   e, κ ⊢ req ⇓ Err(m)
-  ─────────────────────────────────────── (FailClosed-Request)
-   ⟨H, e⟩ ⇓_d (Deny, [], [m])
+   checks 1–7 pass        β, providers, e ⊢ ctx ⇓ Ok(κ)        Request::new(p, a, r, κ) = Ok(q)
+  ─────────────────────────────────────────────────────────────────────────────────────────────── (A-Decide-Ok)
+   ⟨H, e⟩ ⇓_d decide(q)
 ```
 
-*(`api.rs`, `decide_at`.)* The rationale for **FailClosed-Context** is explicit
-in the code: authorizing against a *partial* context could let a `permit` fire
-whose guard can no longer be checked — a `Deny` silently flipping to `Allow`.
-**Scope of this rule:** it describes THIS reference implementation. For
-provider-originated errors (the dominant cause of a context-build failure) the
-language-level semantics is *undefined behavior* — an erroring provider carries
-no cross-implementation guarantee, and a policy set must not rely on
-deny-on-error (see [the provider
-contract](05-information-providers.md#the-provider-contract)). The
-**FailClosed-Request** family below is NOT so scoped: a decision event with a
-missing or malformed principal/resource must deny in every implementation. `build_request` fails closed when the event's
-labeled scope has **no principal** or **no resource**
-(**FailClosed-Request-NoPrincipal/NoResource**), when the principal/action/resource
-UID is **malformed** (**FailClosed-Request-MalformedUID** — a fabricated fallback
-would silently authorize against the wrong entity), or when Cedar `Request::new`
-rejects the request.
+*(`api.rs`, `ingest` and `decide_at`; `conformance.rs`.)* The Cedar request is
+built without a schema, because the decision supplies every hoisted attribute to
+every action's context (§6.3); check 3 is where the request is validated
+instead. Check 7 matters because Cedar would report an absent `context.<id>` as
+an error of the policy that reads it, and skip that policy: a `forbid` whose leaf
+is missing would stop applying. **Scope of check 5:** for provider-originated
+errors the language-level semantics is *undefined behavior* — an erroring
+provider carries no cross-implementation guarantee, and a policy set must not
+rely on deny-on-error (see [the provider
+contract](05-information-providers.md#the-provider-contract)); the formal
+specification fixes this reference implementation's choice, the denial. The
+other checks are not so scoped: data that does not conform to the schemas must
+fail closed in every implementation.
 
 ### 6.3 Context assembly
 
 The Cedar context `κ` is an ordered record with three groups of keys
 (`api.rs`, `build_context`, **A-Context-Keys**):
 
-1. `input` → the event's `input` record. Only a `Value::Object` is taken; any
-   other shape (or absence) degrades to an empty record — it does **not** error
-   (**A-Context-Input**).
+1. every group of the event's request context (`input`, `system`, …), verbatim;
+   a `Null` group or record member is absent (**A-Context-Groups**). Check 3 of
+   §6.2 has already checked them against the action's context record type.
 2. for each `(id, b) ∈ β`: `id → Bool(b)` — the hoisted **temporal** booleans, at
    top level, i.e. `context.<id>`.
 3. if any provider leaves exist: `providers → { id → v }` for **every**
@@ -1192,12 +1384,17 @@ The Cedar context `κ` is an ordered record with three groups of keys
    action clause, scope constraints, or conditions (see [the provider
    contract](05-information-providers.md#the-provider-contract)).
 
-Value mapping (`value_to_expr`, **A-Context-ValueMap**) is the obvious one, with
-two lossy cases worth flagging: `Null` and a record-construction failure both
-collapse to the **empty string** literal. An entity *value inside the context*
-uses a **sentinel** (`Drupe::Gateway::"unknown"`) on a malformed UID rather
-than failing closed — the deliberate counterpart to the fail-closed treatment of
-the request's principal/action/resource (**A-Context-EntityValue-Sentinel**).
+Value mapping (`value_to_expr`, **A-Context-ValueMap**) is the obvious one. A
+`Null` record member, set element or context group is **absent** and left out
+(`Null` stands for an absent value). A record that is Cedar's JSON escape for an
+extension value, `{"__extn": {"fn": F, "arg": A}}` (what `Value::extension`
+builds and a trace writes `datetime("…")`), becomes that extension value: `ip`,
+`datetime`, `duration`, or `decimal` (**A-Context-Extension**). Two lossy cases
+remain: a `Null` outside a record and a record-construction failure both
+collapse to the **empty string** literal, and an entity *value inside the
+context* uses a **sentinel** (`Drupe::Gateway::"unknown"`) on a malformed UID.
+Check 3 of §6.2 rejects every context in which a lossy case could arise, so they
+never reach a decision (**A-Context-EntityValue-Sentinel**).
 
 ### 6.4 Provider evaluation
 
@@ -1207,7 +1404,7 @@ Each provider's value is computed **resolver-first, Rhai-fallback**
 ```
    resolver present     resolver.resolve(name, args) = Some(res)
   ──────────────────────────────────────────────────────────────── (A-Provider-Resolver)
-   eval_provider = res        (res = Ok(v) ⇒ v ; res = Err(m) ⇒ FailClosed-Context)
+   eval_provider = res        (res = Ok(v) ⇒ v ; res = Err(m) ⇒ FailClosed-Provider)
 ```
 ```
    resolver absent ∨ resolver declines (None)     field.declaration = Some(decl)
@@ -1217,22 +1414,33 @@ Each provider's value is computed **resolver-first, Rhai-fallback**
 
 A caller-supplied `ProviderResolver` gets first refusal on every invocation; if
 it declines, the declared sandboxed Rhai implementation runs. An invocation with
-no declaration and no resolver value is an error (⇒ **FailClosed-Context**):
+no declaration and no resolver value is an error (⇒ **FailClosed-Provider**):
 *"provider `k` was not declared … so it has no implementation to evaluate"*.
 Arguments are resolved against the event: a `context.<path>` argument reads the
-event's field at that path (falling back to a bare last-segment lookup, then
-`Null`); literals and sets map directly (**A-Provider-ArgResolve**).
+event's request context at that path (falling back to a bare last-segment
+lookup, then `Null`); a `principal` / `resource` argument reads the request's
+scope entity, with its attributes (`id` and `type` included, as in Cedar) read
+off the supplied entity data; literals and sets map directly
+(**A-Provider-ArgResolve**).
+The value is then converted to its declared type (an enum id becomes an
+entity), and checked against it: a value outside a declared enum is a provider
+error, and any other value that is not of the declared type, such as a record
+with an undeclared attribute, fails closed (⇒ **FailClosed-ProviderOutput**).
+A provider without a declared output type has no conforming output.
 
 ### 6.5 The decision core
 
 Once context and request are built, the decision is delegated to the pluggable
 `PolicyEngine` (default: local Cedar; alternatively, a remote Cedar-based engine) over the entity store
-`E` assembled by `build_entities`: the request's **scope entities** (made
-present bare), any **caller-supplied attributed entities** from the event's
-entity store — attributes and direct `memberOf` parents, validated against the
-augmented schema — and the schema's **action-hierarchy entities** (so
-`action in [Group]` membership resolves). Cross-event state lives in the
-temporal history; per-event entity data flows through `E`:
+`E` assembled by `build_entities`: the schema's **action-hierarchy entities** (so
+`action in [Group]` membership resolves), any **caller-supplied attributed
+entities** from the event's entity store — attributes and direct `memberOf`
+parents, validated against the augmented schema — and the request's **scope
+entities**, made present bare when the event supplies no data for them. The
+schema's action entities take precedence: supplied data for a declared action's
+uid is dropped, so it cannot change the action hierarchy (**A-Entities-Actions**).
+Cross-event state lives in the temporal history; per-event entity data flows
+through `E`:
 
 ```
    policy.is_authorized(q, E) = (d, ids, errs)
@@ -1248,6 +1456,101 @@ and any errors. Each determining id is mapped **back** to its Dogwood rule by
 exactly as Cedar's does — which means a fail-closed `Deny` and an implicit `Deny`
 are indistinguishable in the `reason` channel and differ only in `errors`.
 
+### 6.6 The event-log contract and retries
+
+The crate's `Authorizer` is one instance that ingests events in the order they
+are passed to it. An implementation may run several instances, or retry a step
+after a conflict, and must still decide as if one instance had built one log.
+The formal specification states what every run of an implementation must
+guarantee, the **event-log contract** (`dogwood-lean`, `Dogwood.Spec.Contract`,
+`Run.Meets`); it is what implementations are measured against. Its log `L`
+holds the accepted submissions in one order, each with the entry it became: an
+event stamped with its timestamp, or a deployment. A submission `s` carries an
+arrival (an event and the clock reading it arrived with, or a deployment) and,
+optionally, an **event id** `id(s)` its client chose. A reply `ρ` is
+`Accepted(i, o)`, the position `i` in the log and the outcome `o` there, or
+`Rejected(why)`, `why ∈ { nonconforming, unavailable, duplicate }`.
+
+The **retry key** of a submission of an event `e` with an event id is
+`key(s) = (pkey(e), id(s), action(e), kind(e))`, where `pkey(e)` is the
+partition key, the logged values of the universal symmetric pins
+(`EventSchema.partitionKey`). A deployment, and an event submitted without an
+event id, has no retry key. `s` is a **retry** of the entry `x` under the
+retry window `W` (`Submission.RetryOf`) when
+
+```
+   retry_W(s, x)  ⟺  key(s) = key(x)  ∧  event(s) = event(x)  ∧  clock(s) ≤ stamp(x) + W
+```
+
+`event(s) = event(x)` is identical content: the same action and kind, the same
+logged record, and the same request (principal, resource, context, and entity
+data), compared as values. The default window is five minutes, in the clock's
+ticks (`defaultRetryWindow`). A single instance that receives the submissions in
+arrival order (`Sequential.step`) takes these steps, where `decide(L, i)` is the
+outcome at position `i` of the log (`Log.decide`), and `keys(L)` the retry keys
+of its entries:
+
+```
+   L[i] = x        key(s) = key(x)        retry_W(s, x)
+  ──────────────────────────────────────────────────────── (C-Retry)
+   ⟨L, s⟩ ⇓_W ⟨L, Accepted(i, decide(L, i))⟩
+```
+```
+   L[i] = x        key(s) = key(x)        ¬ retry_W(s, x)
+  ──────────────────────────────────────────────────────── (C-Duplicate)
+   ⟨L, s⟩ ⇓_W ⟨L, Rejected(duplicate)⟩
+```
+```
+   key(s) ∉ keys(L)        s ⊨ S        y = stamp(s, L)
+  ──────────────────────────────────────────────────────────── (C-New)
+   ⟨L, s⟩ ⇓_W ⟨L · y, Accepted(|L|, decide(L · y, |L|))⟩
+```
+```
+   key(s) ∉ keys(L)        s ⊭ S
+  ────────────────────────────────────────── (C-Nonconforming)
+   ⟨L, s⟩ ⇓_W ⟨L, Rejected(nonconforming)⟩
+```
+
+`key(s) ∉ keys(L)` holds of every submission without a retry key. `s ⊨ S` is
+event conformance (**A-Event-Conforms**), and a deployment always conforms.
+`stamp(s, L)` is the entry `s` becomes: its event stamped `max(reading, last + 1)`
+after the last stamp of `L`, or its deployment. C-Retry and C-Duplicate leave
+the log unchanged, so no two entries of a log share a retry key. C-New and
+C-Nonconforming are ingestion (`Log.submit`). A single instance meets the
+contract for every `W` (`sequential_meets`).
+
+A run of any number of instances **meets the contract** (`Run.Meets`) when:
+every submission is accepted at exactly one position and told it, or is a
+retry of an entry, absent from the log, and told that entry's position, or is
+rejected, absent from the log, and told why; the entries an instance had
+observed when it answered are a prefix of the log that contains the position;
+each outcome is `decide` at its position over that prefix, for a retry as for
+an accepted submission; no two entries share a retry key; each logged event is
+its submission's, stamped at or after its reading and after the event before
+it; every logged event conforms; and a rejection as nonconforming or as a
+duplicate is truthful. An implementation may reject any submission as
+unavailable: availability is not required.
+
+What follows (`Dogwood.Thm.Contract`):
+
+- a retry is not ingested again (`Run.Meets.retry_not_logged`), and leaves a
+  single instance's log as it was (`sequential_retry_log`);
+- the answer to a retry is its original's, or an unavailability
+  (`Run.Meets.retry_reply`, `sequential_retry_reply`). A decision depends only
+  on the log up to its position (`decide_append`), so the answer is the
+  original's even when a deployment came between the two;
+- a submission with the key of an entry that is not a retry of it is rejected
+  (`Run.Meets.duplicate_rejected`);
+- when no two submissions share a retry key, the contract is the contract
+  without retries, in which every resubmission is a new submission, whatever
+  `W`, `W = 0` included (`Run.meets_iff_withoutRetries`).
+
+The crate's `Authorizer` has no event ids: each submission is new, so only
+C-New and C-Nonconforming apply, as **A-Ingest-History**, **A-Ingest-Decide**,
+and **A-Reject-History** of [§6.1](#61-check-observe-then-gate-on-decision-kind),
+with the difference that a nonconforming decision event fails its decision
+closed (**A-Decide-Nonconforming**) instead of being rejected.
+
 ---
 
 ## 7. Meta-properties
@@ -1256,7 +1559,10 @@ These follow from the rules above; they are the properties a caller may rely on.
 
 - **Fail-closed.** No evaluation failure produces `Allow`. Every error path in
   `⇓_d` yields `(Deny, [], errors)` (FailClosed-*), and the context is never
-  partial when the policy engine runs — an incomplete context denies. *(§6.2.)*
+  partial when the policy engine runs — an incomplete context denies. Neither
+  does data that does not conform to the schemas: a nonconforming decision
+  event, request, entity store, or provider output denies, and a nonconforming
+  event never enters the history. *(§6.1, §6.2.)*
 - **Lowering totality of the syntactic map.** Every non-extension surface form
   has exactly one translation ([§4.3](#43-expression-translation)); the only
   non-structural step is hoisting, which is deterministic given the rule key and
@@ -1269,10 +1575,16 @@ These follow from the rules above; they are the properties a caller may rely on.
   a pure function of the rule key `key(δ, i)` and the per-rule ordinal — so two
   lowerings with distinct distinguishers never collide, and the same input with
   the same distincter is byte-identical. *(§4.1, §4.4.)*
+- **Idempotent retries.** Under the event-log contract, a resubmission of an
+  accepted event with its event id, the same content, on the same partition
+  key, within the retry window, is not ingested again and gets the answer the
+  first submission got; any other reuse of an event id is rejected, and is not
+  decided. *(§6.6.)*
 - **Statefulness is confined to the temporal engine.** The policy engine is
-  invoked per-request over an empty entity set; all history-dependence flows
+  invoked per-request over the decision's own entity store; all history-dependence flows
   through `observe`/`evaluate` and the hoisted `context.<id>` booleans. History-only
-  events matter precisely because they mutate that state. *(§6.1, §6.5.)*
+  events matter precisely because they mutate that state, and so only conforming
+  ones are observed. *(§6.1, §6.5.)*
 - **Acceptance ⇒ monitorability.** A temporal condition that passes [§5.4](#54-temporal-acceptance-well-formedness)
   denotes a finite, computable relation over the history (safe-range): the
   leaf is closed (every variable `exists`- or `for`-bound), every bound

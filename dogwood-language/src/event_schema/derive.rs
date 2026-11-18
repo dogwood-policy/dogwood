@@ -32,7 +32,8 @@ use super::ast::{EventSchema, FieldSpec, PinRoot, Selector, TypeExpr};
 use crate::extension::temporal::ast::{Interval, TimeUnit};
 
 /// The default maximum look-back window a temporal `within` clause may use
-/// when the event schema declares no explicit `max_window`: 24 hours.
+/// when the event schema declares neither `max_window` nor `max_horizon`:
+/// 24 hours.
 pub const DEFAULT_MAX_WINDOW: Interval = Interval {
     amount: 24,
     unit: TimeUnit::Hours,
@@ -44,10 +45,16 @@ pub const DEFAULT_MAX_WINDOW: Interval = Interval {
 pub struct DerivedEventSchema {
     pub events: Vec<DerivedEvent>,
     /// The maximum temporal look-back window any policy `within` clause may
-    /// use, enforced by the temporal validator. Resolved at derive time from
-    /// the event schema's `max_window` directive, defaulting to
-    /// [`DEFAULT_MAX_WINDOW`] when the schema declared none.
+    /// use, enforced by the temporal validator. Resolved at derive time by
+    /// [`EventSchema::limits`]: the `max_window` directive, else a declared
+    /// `max_horizon`, else [`DEFAULT_MAX_WINDOW`].
     pub max_window: Interval,
+    /// The maximum horizon of a temporal condition — the largest sum of the
+    /// windows along one chain of `formerly`, `previous` and `since` — if the
+    /// schema declares `max_horizon`; enforced by the temporal validator. No
+    /// event older than it can matter to a policy the service accepts. `None`
+    /// is no cap.
+    pub max_horizon: Option<Interval>,
 }
 
 /// One derived event signature.
@@ -158,7 +165,9 @@ impl DerivedEvent {
     }
 
     /// The declared top-level names and group-qualified paths, for error
-    /// messages. E.g. `["requestId", "input.user", "output.result"]`.
+    /// messages, each as its text (`crate::field_path::join`). E.g.
+    /// `["requestId", "input.user", "output.result"]`; a spliced attribute
+    /// whose name holds a `.` reads `input.user\.id`.
     pub fn declared_paths(&self) -> Vec<String> {
         let mut out = Vec::new();
         collect_paths(&self.fields, "", &mut out);
@@ -170,16 +179,17 @@ impl DerivedEvent {
     /// descending groups. The typed analog of [`declared_paths`](DerivedEvent::declared_paths):
     /// `input.meta.region` → `(["input", "meta", "region"], Cedar("String"))`.
     /// Groups are not emitted (a predicate matches only leaves). Sorted by the
-    /// **joined dotted path** — the exact key [`declared_paths`](DerivedEvent::declared_paths)
-    /// sorts by — so the two agree leaf-for-leaf in order, not just as sets.
+    /// **path's text** (`crate::field_path::join`) — the exact key
+    /// [`declared_paths`](DerivedEvent::declared_paths) sorts by — so the two
+    /// agree leaf-for-leaf in order, not just as sets.
     /// Backs the public `LoweredPolicySet::event_signatures` projection.
     pub fn leaf_fields(&self) -> Vec<(Vec<String>, FieldType)> {
         let mut out = Vec::new();
         collect_typed_leaves(&self.fields, &[], &mut out);
-        // Sort by the joined dotted string (not segment-wise), matching
-        // `declared_paths`'s `sort_unstable` on the joined form — a leaf name
+        // Sort by the path's text (not segment-wise), matching
+        // `declared_paths`'s `sort_unstable` on the same text — a leaf name
         // containing a byte below `.` would otherwise order differently.
-        out.sort_by_key(|(path, _)| path.join("."));
+        out.sort_by_key(|(path, _)| crate::field_path::join(path));
         out
     }
 }
@@ -205,9 +215,11 @@ fn collect_typed_leaves(
 fn collect_paths(map: &BTreeMap<String, DerivedFieldNode>, prefix: &str, out: &mut Vec<String>) {
     for (name, node) in map {
         let path = if prefix.is_empty() {
-            name.clone()
+            crate::field_path::join(std::slice::from_ref(name))
         } else {
-            format!("{prefix}.{name}")
+            let mut path = prefix.to_string();
+            crate::field_path::push_segment(&mut path, name);
+            path
         };
         match node {
             DerivedFieldNode::Leaf(_) => out.push(path),
@@ -225,9 +237,16 @@ impl DerivedEventSchema {
     }
 
     /// The maximum temporal look-back window any policy `within` clause may
-    /// use — the schema's `max_window` directive, or [`DEFAULT_MAX_WINDOW`].
+    /// use — the schema's `max_window` directive, else its `max_horizon`, else
+    /// [`DEFAULT_MAX_WINDOW`].
     pub fn max_window(&self) -> Interval {
         self.max_window
+    }
+
+    /// The maximum horizon of a temporal condition — the schema's
+    /// `max_horizon` directive, or `None` for no cap.
+    pub fn max_horizon(&self) -> Option<Interval> {
+        self.max_horizon
     }
 
     /// The set of kinds marked `decision`. Consumed by `parse` to populate
@@ -244,6 +263,8 @@ impl DerivedEventSchema {
 /// Derive the event signatures from `schema` (the DSL) against
 /// `action_schema_src` (a `.cedarschema`).
 pub fn derive(schema: &EventSchema, action_schema_src: &str) -> Result<DerivedEventSchema, String> {
+    #[cfg(test)]
+    crate::api::stage_probe::enter("derive");
     let (fragment, _warnings) =
         Fragment::<RawName>::from_cedarschema_str(action_schema_src, Extensions::all_available())
             .map_err(|e| format!("parse action schema: {e}"))?;
@@ -271,10 +292,13 @@ pub fn derive(schema: &EventSchema, action_schema_src: &str) -> Result<DerivedEv
             }
         }
     }
+    // Resolve the look-back caps (`EventSchema::limits`); parsing already
+    // rejected an inconsistent pair, so this only fails on a hand-built schema.
+    let limits = schema.limits()?;
     Ok(DerivedEventSchema {
         events,
-        // Resolve the max-window cap: the schema's directive, or the 24h default.
-        max_window: schema.max_window.unwrap_or(DEFAULT_MAX_WINDOW),
+        max_window: limits.max_window,
+        max_horizon: limits.max_horizon,
     })
 }
 
@@ -609,7 +633,8 @@ type ResolvedRecord<'a> = (
 /// Resolve a [`Type`] to a record **and the namespace it was declared in**:
 /// either it is an inline record (declared in `home_ns`), or it is a
 /// common-type reference that names a record. A bare reference
-/// (`LoginInput`) resolves in `home_ns`; a qualified reference
+/// (`LoginInput`) resolves in `home_ns`, and then in the root namespace, as
+/// Cedar resolves it; a qualified reference
 /// (`Shared::Addr`) resolves in the named namespace — Cedar stores the
 /// reference fully-qualified iff it is cross-namespace, and keys each
 /// namespace's `common_types` by the bare id (verified against
@@ -686,48 +711,61 @@ fn resolve_to_record<'a>(
             {
                 return Ok(None);
             }
-            // Split a qualified reference into (namespace, basename); a bare
-            // reference resolves in the action's home namespace.
-            let (target_ns, basename) = match full.rsplit_once("::") {
-                Some((ns, base)) => (qualify(ns)?, base.to_string()),
-                None => (home_ns.clone(), full.clone()),
-            };
-            let Some(ns_def) = fragment.0.get(&target_ns) else {
-                // The reference names a namespace not in the schema. A
-                // primitive/entity reference (`String`, an entity type)
-                // legitimately has no common-type entry — treat as "not a
-                // record" rather than an error.
-                return Ok(None);
-            };
-            match ns_def
-                .common_types
-                .iter()
-                .find(|(id, _)| id.as_ref().to_string() == basename)
-            {
+            // The declarations a reference may name, in Cedar's order
+            // (`RawName::conditionally_qualify_with`, `ConditionalName::resolve`):
+            // a qualified reference names its own namespace; a bare one the
+            // action's home namespace, and then the root namespace. In each,
+            // a common type comes before an entity type.
+            let qualified = full.contains("::");
+            let candidates: Vec<(Option<cedar_policy_core::ast::Name>, String)> =
+                match full.rsplit_once("::") {
+                    Some((ns, base)) => vec![(qualify(ns)?, base.to_string())],
+                    None if home_ns.is_some() => {
+                        vec![(home_ns.clone(), full.clone()), (None, full.clone())]
+                    }
+                    None => vec![(None, full.clone())],
+                };
+            let mut namespace_found = false;
+            for (target_ns, basename) in &candidates {
+                // A namespace not in the schema declares nothing: a primitive
+                // or entity reference (`String`, an entity type) legitimately
+                // has no common-type entry.
+                let Some(ns_def) = fragment.0.get(target_ns) else {
+                    continue;
+                };
+                namespace_found = true;
                 // Resolve the referenced common type's own type — recursing
                 // in *its* namespace, so a common type defined in terms of
                 // another common type chains correctly. The alias hop counts
                 // against the depth cap so a cyclic alias errors cleanly.
-                Some((_, ct)) => resolve_to_record(&ct.ty, &target_ns, fragment, depth + 1),
-                // Not a declared common type in the target namespace. A
-                // reference (bare or qualified) that instead names a declared
-                // *entity type* is a legitimate non-record leaf — e.g. an
-                // input field typed by an enum entity (`role:
-                // Ns::Grant_Input_role`). Only a *qualified* reference that
-                // names neither a common type nor an entity type is a dangling
-                // reference we surface; a bare unknown is a primitive
-                // (`String`) → not a record.
-                None if ns_def
+                if let Some((_, ct)) = ns_def
+                    .common_types
+                    .iter()
+                    .find(|(id, _)| id.as_ref().to_string() == *basename)
+                {
+                    return resolve_to_record(&ct.ty, target_ns, fragment, depth + 1);
+                }
+                // A reference that names a declared *entity type* is a
+                // legitimate non-record leaf — e.g. an input field typed by an
+                // enum entity (`role: Ns::Grant_Input_role`).
+                if ns_def
                     .entity_types
                     .keys()
-                    .any(|id| id.to_string() == basename) =>
+                    .any(|id| id.to_string() == *basename)
                 {
-                    Ok(None)
+                    return Ok(None);
                 }
-                None if full.contains("::") => Err(format!(
+            }
+            // Only a *qualified* reference into a declared namespace that names
+            // neither a common type nor an entity type is a dangling reference
+            // we surface; a bare unknown is a primitive (`String`) → not a
+            // record.
+            if qualified && namespace_found {
+                Err(format!(
                     "type reference `{full}` does not resolve to a declared common type"
-                )),
-                None => Ok(None),
+                ))
+            } else {
+                Ok(None)
             }
         }
         _ => Ok(None),
@@ -1773,6 +1811,39 @@ mod tests {
         );
     }
 
+    /// A spliced Cedar attribute whose name holds a `.` (`"user.id"`) is one
+    /// segment of the path `["input", "user.id"]`, distinct from the nested
+    /// `["input", "user", "id"]`, and the two paths have different texts.
+    #[test]
+    fn a_spliced_attribute_whose_name_holds_a_dot_is_one_segment() {
+        let action_schema = r#"
+            namespace Drupe {
+                entity U;
+                entity G;
+                type In = { "user.id": String, user: { id: String } };
+                action "Login" appliesTo {
+                    principal: [U], resource: [G], context: { input: In }
+                };
+            }
+        "#;
+        let dsl = parse_event_schema("decision event <A>::request { ...inputs(A) }").unwrap();
+        let d = derive(&dsl, action_schema).expect("derive succeeds");
+        let ns = vec!["Drupe".to_string(), "Action".to_string()];
+        let req = d.get(&ns, "Login", "request").expect("Login::request");
+        assert_leaf(req, &["input", "user.id"]);
+        assert_leaf(req, &["input", "user", "id"]);
+        assert_eq!(
+            req.declared_paths(),
+            vec!["input.user.id".to_string(), "input.user\\.id".to_string()]
+        );
+        let typed: Vec<String> = req
+            .leaf_fields()
+            .into_iter()
+            .map(|(path, _)| crate::field_path::join(&path))
+            .collect();
+        assert_eq!(typed, req.declared_paths());
+    }
+
     #[test]
     fn leaf_fields_agrees_with_declared_paths_in_order() {
         // `leaf_fields` (typed) must yield the same leaves in the same order as
@@ -1788,7 +1859,7 @@ mod tests {
         let typed: Vec<String> = req
             .leaf_fields()
             .into_iter()
-            .map(|(path, _)| path.join("."))
+            .map(|(path, _)| crate::field_path::join(&path))
             .collect();
         assert_eq!(typed, req.declared_paths());
     }

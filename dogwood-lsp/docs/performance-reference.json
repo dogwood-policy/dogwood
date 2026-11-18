@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "dogwood_source": "workspace",
+  "generated_at_utc": "2026-08-21T12:34:15Z",
+  "generated_unix_seconds": 1787315655,
+  "command": "./scripts/performance --output <path>",
+  "build_profile": "cargo test (unoptimized + debuginfo)",
+  "warm_up_count": 3,
+  "sample_count": 10,
+  "system": {
+    "os": "linux",
+    "architecture": "aarch64",
+    "cpu": "ARM implementer 0x41, part 0xd40",
+    "logical_cpu_count": 64,
+    "rustc": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "cargo": "cargo 1.96.0 (30a34c682 2026-05-25)"
+  },
+  "workloads": [
+    {
+      "name": "lexical-fallback",
+      "fixture": "generated-unicode-crlf-long-line",
+      "bytes": 57369,
+      "lines": 2,
+      "output_kind": "tokens",
+      "output_count": 16385,
+      "dependency_count": 0,
+      "warm_up_count": 3,
+      "sample_count": 10,
+      "elapsed_nanoseconds": {
+        "minimum": 6217169,
+        "median": 6275092,
+        "mean": 6266932,
+        "maximum": 6314537,
+        "total": 62669325
+      }
+    },
+    {
+      "name": "valid-policy-analysis",
+      "fixture": "m3/all-optional-valid/policy-semantic-inputs",
+      "bytes": 2593,
+      "lines": 67,
+      "output_kind": "tokens",
+      "output_count": 71,
+      "dependency_count": 3,
+      "warm_up_count": 3,
+      "sample_count": 10,
+      "elapsed_nanoseconds": {
+        "minimum": 3270873,
+        "median": 3299756,
+        "mean": 3304437,
+        "maximum": 3342814,
+        "total": 33044370
+      }
+    },
+    {
+      "name": "valid-event-schema-analysis",
+      "fixture": "m3/all-optional-valid/event.dwschema",
+      "bytes": 600,
+      "lines": 17,
+      "output_kind": "tokens",
+      "output_count": 61,
+      "dependency_count": 0,
+      "warm_up_count": 3,
+      "sample_count": 10,
+      "elapsed_nanoseconds": {
+        "minimum": 793694,
+        "median": 800952,
+        "mean": 802538,
+        "maximum": 815415,
+        "total": 8025382
+      }
+    },
+    {
+      "name": "full-bundle-validation",
+      "fixture": "m3/all-optional-valid",
+      "bytes": 4879,
+      "lines": 185,
+      "output_kind": "diagnostics",
+      "output_count": 0,
+      "dependency_count": 4,
+      "warm_up_count": 3,
+      "sample_count": 10,
+      "elapsed_nanoseconds": {
+        "minimum": 69449224,
+        "median": 69517022,
+        "mean": 69510664,
+        "maximum": 69578436,
+        "total": 695106644
+      }
+    },
+    {
+      "name": "invalid-diagnostics",
+      "fixture": "generated-unicode-eof-policy-with-all-inputs",
+      "bytes": 4475,
+      "lines": 169,
+      "output_kind": "diagnostics",
+      "output_count": 1,
+      "dependency_count": 4,
+      "warm_up_count": 3,
+      "sample_count": 10,
+      "elapsed_nanoseconds": {
+        "minimum": 563617,
+        "median": 565927,
+        "mean": 572968,
+        "maximum": 623835,
+        "total": 5729680
+      }
+    },
+    {
+      "name": "utf16-token-encoding",
+      "fixture": "generated-unicode-crlf-long-line-over-stdio",
+      "bytes": 57369,
+      "lines": 2,
+      "output_kind": "tokens",
+      "output_count": 16385,
+      "dependency_count": 0,
+      "warm_up_count": 3,
+      "sample_count": 10,
+      "elapsed_nanoseconds": {
+        "minimum": 85801646,
+        "median": 86031934,
+        "mean": 85976202,
+        "maximum": 86219716,
+        "total": 859762023
+      }
+    },
+    {
+      "name": "dependency-revalidation",
+      "fixture": "m3/all-optional-valid/action-change-full-bundle",
+      "bytes": 4879,
+      "lines": 185,
+      "output_kind": "diagnostics",
+      "output_count": 0,
+      "dependency_count": 4,
+      "warm_up_count": 3,
+      "sample_count": 10,
+      "elapsed_nanoseconds": {
+        "minimum": 69264640,
+        "median": 69527970,
+        "mean": 69505637,
+        "maximum": 69871700,
+        "total": 695056379
+      }
+    },
+    {
+      "name": "incremental-edits",
+      "fixture": "generated-32k-event-schema-comment",
+      "bytes": 32768,
+      "lines": 1,
+      "output_kind": "publications",
+      "output_count": 1,
+      "dependency_count": 0,
+      "warm_up_count": 3,
+      "sample_count": 10,
+      "elapsed_nanoseconds": {
+        "minimum": 21839475,
+        "median": 21888951,
+        "mean": 21893373,
+        "maximum": 21960611,
+        "total": 218933732
+      }
+    }
+  ]
+}

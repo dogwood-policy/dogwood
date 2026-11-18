@@ -244,6 +244,7 @@ fn decision_kinds_match_the_authorizer_gate() {
         .principal("Drupe::OAuthUser::\"alice\"")
         .resource("Drupe::Gateway::\"gw1\"")
         .field("input", "user", Value::String("alice".to_string()))
+        .request_context("input", "user", Value::String("alice".to_string()))
         .build();
     let response = Event::builder("Drupe::Action::Read", "response")
         .principal("Drupe::OAuthUser::\"alice\"")
@@ -494,9 +495,23 @@ fn escaped_action_identity_and_fields_survive_feed_forward() {
         let carried = PolicySchema::from_cedarschema_str(&after_a)
             .unwrap_or_else(|error| panic!("{label}: schema A re-ingests: {error:?}"));
 
-        let guard = format!("when {{ context.{a_field} == true }}");
+        // A Dogwood rule may not read a hoisted name (it is reserved for the leaf's
+        // value), so Cedar itself probes that the carried field survived.
+        let carried_cedar = cedar_policy::Schema::from_cedarschema_str(&after_a)
+            .unwrap_or_else(|error| panic!("{label}: schema A compiles: {error:?}"))
+            .0;
+        let carried_probe = format!(
+            r#"
+            permit (principal, action == Escaped::Action::"{action_source}", resource)
+            when {{ context.{a_field} == true }};
+            "#
+        );
+        assert!(
+            cedar_validation_errors(&carried_cedar, &carried_probe).is_empty(),
+            "{label}: the carried field survives on the escaped action"
+        );
         let b = ParsedPolicySet::parse(
-            &escaped_temporal_policy(action_source, "previous", &guard),
+            &escaped_temporal_policy(action_source, "previous", ""),
             &svc,
         )
         .unwrap_or_else(|error| panic!("{label}: policy B parses: {error:?}"))
@@ -504,7 +519,7 @@ fn escaped_action_identity_and_fields_survive_feed_forward() {
         .unwrap_or_else(|error| panic!("{label}: policy B lowers: {error:?}"));
         assert!(
             Validator::new().validate(&b).validation_passed(),
-            "{label}: policy B validates against the carried field"
+            "{label}: policy B validates against the carried schema"
         );
         let b_field = b
             .temporal_fields()
@@ -516,18 +531,19 @@ fn escaped_action_identity_and_fields_survive_feed_forward() {
         let after_b = b
             .cedar_schema_str()
             .unwrap_or_else(|error| panic!("{label}: schema B serializes: {error:?}"));
-        let final_schema = PolicySchema::from_cedarschema_str(&after_b)
+        PolicySchema::from_cedarschema_str(&after_b)
             .unwrap_or_else(|error| panic!("{label}: schema B re-ingests: {error:?}"));
+        let final_cedar = cedar_policy::Schema::from_cedarschema_str(&after_b)
+            .unwrap_or_else(|error| panic!("{label}: schema B compiles: {error:?}"))
+            .0;
         let probe = format!(
             r#"
             permit (principal, action == Escaped::Action::"{action_source}", resource)
             when {{ context.{a_field} && context.{b_field} }};
             "#
         );
-        let probed = LoweredPolicySet::from_str(&probe, &svc, &final_schema)
-            .unwrap_or_else(|error| panic!("{label}: accumulated-field probe lowers: {error:?}"));
         assert!(
-            Validator::new().validate(&probed).validation_passed(),
+            cedar_validation_errors(&final_cedar, &probe).is_empty(),
             "{label}: both carried fields remain attached to the exact escaped action"
         );
     }
@@ -603,7 +619,7 @@ fn schema_aware_validation_still_runs_after_escaped_action_feed_forward() {
             .map(|error| error.to_string())
             .collect();
         assert!(
-            errors.len() == 1 && errors[0].contains("expects `Mode` but got `int`"),
+            errors.len() == 1 && errors[0].contains("expects `Escaped::Mode` but got `int`"),
             "{label}: schema-aware validation was skipped after feed-forward: {errors:#?}"
         );
     }
@@ -741,9 +757,17 @@ fn escaped_action_groups_survive_text_and_json_feed_forward() {
             .unwrap_or_else(|error| panic!("{label}: text export: {error:?}"));
         let carried = PolicySchema::from_cedarschema_str(&text)
             .unwrap_or_else(|error| panic!("{label}: text re-ingests: {error:?}"));
-        let guard = format!("when {{ context.{a_field} }}");
+        // A Dogwood rule may not read a hoisted name, so Cedar probes the carried
+        // field on the group member.
+        let carried_cedar = cedar_policy::Schema::from_cedarschema_str(&text)
+            .unwrap_or_else(|error| panic!("{label}: text schema compiles: {error:?}"))
+            .0;
+        assert!(
+            cedar_validation_errors(&carried_cedar, &member_probe).is_empty(),
+            "{label}: text export did not carry the field to the group member"
+        );
         let b = ParsedPolicySet::parse(
-            &escaped_group_temporal_policy(group_source, "previous", &guard),
+            &escaped_group_temporal_policy(group_source, "previous", ""),
             &svc,
         )
         .unwrap_or_else(|error| panic!("{label}: policy B parses: {error:?}"))

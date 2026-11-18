@@ -32,3 +32,5 @@ Pass `-` as `POLICIES` to read the policy set from stdin. Run
 - `experimental-arithmetic` — forward the language crate's off-by-default
   arithmetic feature, so a `dogwood` built with it accepts (and warns on)
   policies using arithmetic in temporal comparison operands.
+- `mcp-schema` — forward the language crate's off-by-default MCP generator,
+  enabling `dogwood schema mcp --manifest tools.json`.

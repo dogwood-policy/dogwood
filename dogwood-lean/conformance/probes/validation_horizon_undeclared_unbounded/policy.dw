@@ -1,0 +1,12 @@
+// Two nested 24h windows: each is within the default 24h `max_window`, and the condition looks
+// back 48h in total. Without a declared `max_horizon` there is no horizon cap, so the crate and
+// the specification both accept it, as they did before `max_horizon` existed.
+@id("read_after_login_nested")
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 24h (formerly within 24h Drupe::Action::"Login"::response{ input.user: context.input.user })
+};

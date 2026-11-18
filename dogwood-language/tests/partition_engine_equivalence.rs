@@ -97,7 +97,9 @@ fn ev(ts: i64, who: &'static str, action: &'static str) -> Ev {
         ts,
         who,
         action,
-        amount: None,
+        // A `Transfer`'s input is an amount, not a user: an event that logs
+        // another input does not conform, and is not ingested.
+        amount: (action == "Transfer").then_some(0),
     }
 }
 fn ev_amount(ts: i64, who: &'static str, amount: i64) -> Ev {
@@ -127,13 +129,13 @@ fn render(events: &[Ev]) -> String {
         .join("\n")
 }
 
+/// One authorizer's verdict stream: `(ts, principal, decision)` per decision point.
+type Verdicts = Vec<(i64, String, Decision)>;
+
 /// Replay `log` through a **global** authorizer (default engine, relativized
 /// leaves) and a **partitioned** authorizer (partition_temporal, non-relativized
 /// leaves), returning `(ts, principal, decision)` streams from each.
-fn run_both(
-    policy: &str,
-    log: &str,
-) -> (Vec<(i64, String, Decision)>, Vec<(i64, String, Decision)>) {
+fn run_both(policy: &str, log: &str) -> (Verdicts, Verdicts) {
     let events = parse_trace(log).expect("trace parses");
 
     // Sanity: this schema must actually be in partition mode, else the test is

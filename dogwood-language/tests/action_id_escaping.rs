@@ -309,7 +309,7 @@ fn temporal_predicate_type_check_is_invariant_under_action_id_escaping() {
         &service,
     );
     assert_eq!(expected.len(), 1);
-    assert!(expected[0].contains("expects `Mode` but got `int`"));
+    assert!(expected[0].contains("expects `Escaped::Mode` but got `int`"));
 
     for case in &ACTION_IDS[1..] {
         let schema = temporal_schema(case.source);
@@ -337,7 +337,7 @@ fn temporal_predicate_type_check_is_invariant_under_action_id_escaping() {
         );
         let errors = validation_errors(&policy, &schema, &service);
         assert!(
-            errors.len() == 1 && errors[0].contains("expects `Mode` but got `int`"),
+            errors.len() == 1 && errors[0].contains("expects `Escaped::Mode` but got `int`"),
             "{} action ID changed validation: {errors:#?}",
             case.label
         );
@@ -368,7 +368,7 @@ fn temporal_diagnostics_render_action_ids_like_cedar_eids() {
             .parse()
             .expect("Cedar action UID");
         let expected = format!(
-            "argument `input.mode` of `{}` expects `Mode` but got `int`",
+            "argument `input.mode` of `{}` expects `Escaped::Mode` but got `int`",
             uid.eid().escaped()
         );
         assert_eq!(
@@ -403,8 +403,12 @@ fn public_validation_handles_top_level_and_multisegment_namespaces() {
             "#
         );
         let errors = validation_errors(&policy, &schema, &ServiceSchema::defaults());
+        let mode = match namespace {
+            Some(namespace) => format!("{namespace}::Mode"),
+            None => "Mode".to_string(),
+        };
         assert!(
-            errors.len() == 1 && errors[0].contains("expects `Mode` but got `int`"),
+            errors.len() == 1 && errors[0].contains(&format!("expects `{mode}` but got `int`")),
             "namespace {namespace:?} skipped escaped action validation: {errors:#?}"
         );
     }

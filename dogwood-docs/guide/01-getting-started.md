@@ -116,6 +116,7 @@ let event = Event::builder("Drupe::Action::Read", "request")
     .principal("Drupe::OAuthUser::\"alice\"")
     .resource("Drupe::Gateway::\"gw1\"")
     .field("input", "user", Value::String("alice".to_string()))
+    .request_context("input", "user", Value::String("alice".to_string()))
     .build();
 
 if let Some(response) = authorizer.is_authorized(&event) {
@@ -123,11 +124,14 @@ if let Some(response) = authorizer.is_authorized(&event) {
 }
 ```
 
-Three details of Dogwood's model are worth noting here:
-
 - You authorize an `Event`, not a bare request. An event is a timestamped
-  occurrence of an action with a *kind* (here `"request"`) plus the
-  principal/resource and input fields. `Event::builder` constructs one.
+  occurrence of an action with a *kind* (here `"request"`), a principal and a
+  resource. `Event::builder` constructs one.
+- The builder sets `input.user` in two places. `.field` sets a logged field,
+  which the history keeps and temporal conditions match against.
+  `.request_context` sets a field of the Cedar request context, which policies
+  read as `context.input.user`. If a `request` event lacks the logged field or
+  the request context, the authorizer denies it and reports an error.
 - `is_authorized` returns `Option<Response>`. You get `Some(response)` for a
   *decision-kind* event (like `request`) and `None` for a history-only event.
   With the default event schema, `request` is a decision kind — so this call
@@ -172,19 +176,28 @@ of events and watch the verdicts change over time:
 let mut authorizer = Authorizer::new(policies);
 
 let events = vec![
-    // A Login at t=0.
+    // A Login request at t=0.
     Event::builder("Drupe::Action::Login", "request")
         .timestamp(0)
         .principal("Drupe::OAuthUser::\"alice\"")
         .resource("Drupe::Gateway::\"gw1\"")
         .field("input", "user", Value::String("alice".to_string()))
+        .request_context("input", "user", Value::String("alice".to_string()))
         .build(),
-    // A Read at t=10 — 10s after the login, well within the 1h window.
+    // The Login response at t=5. It records that the login succeeded.
+    Event::builder("Drupe::Action::Login", "response")
+        .timestamp(5)
+        .principal("Drupe::OAuthUser::\"alice\"")
+        .resource("Drupe::Gateway::\"gw1\"")
+        .field("input", "user", Value::String("alice".to_string()))
+        .build(),
+    // A Read at t=10, 5s after the login response, well within the 1h window.
     Event::builder("Drupe::Action::Read", "request")
         .timestamp(10)
         .principal("Drupe::OAuthUser::\"alice\"")
         .resource("Drupe::Gateway::\"gw1\"")
         .field("input", "user", Value::String("alice".to_string()))
+        .request_context("input", "user", Value::String("alice".to_string()))
         .build(),
     // A Read at t=7200 — two hours later; the login has expired.
     Event::builder("Drupe::Action::Read", "request")
@@ -192,6 +205,7 @@ let events = vec![
         .principal("Drupe::OAuthUser::\"alice\"")
         .resource("Drupe::Gateway::\"gw1\"")
         .field("input", "user", Value::String("alice".to_string()))
+        .request_context("input", "user", Value::String("alice".to_string()))
         .build(),
 ];
 
@@ -211,11 +225,14 @@ This prints:
 ```
 
 - `@0` Login → Deny. The policy gates `Read`, not `Login`, so no `permit`
-  matches the login itself. (The login still matters — it is now in the history.)
-- `@10` Read → Allow. A login for `alice` happened 10 seconds ago, inside the
-  1-hour window, so the temporal condition holds.
-- `@7200` Read → Deny. The only login was 7200 seconds (2 hours) ago, outside
-  the window, so the condition no longer holds.
+  matches the login request.
+- `@5` Login response → no output. In the default event schema, `response` is
+  a history-only kind, so `is_authorized` returns `None`. The authorizer still
+  adds the event to the history. The temporal condition matches this event.
+- `@10` Read → Allow. The `Login` response for `alice` occurred 5 seconds
+  ago, inside the 1-hour window, so the temporal condition holds.
+- `@7200` Read → Deny. The only `Login` response occurred 7195 seconds ago,
+  outside the window, so the condition does not hold.
 
 Same policy, same code — the verdict changes because the **history** changed.
 

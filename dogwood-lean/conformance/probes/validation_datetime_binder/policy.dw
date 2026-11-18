@@ -1,0 +1,10 @@
+// A `datetime` variable binds the `datetime` field `input.at`, and is compared with the `datetime`
+// attribute `context.input.since`. Temporal conditions do not support `datetime`, so both reject
+// the binder (binders).
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    exists (t: datetime). (
+        formerly within 1h Drupe::Action::"Login"::response{ input.user: context.input.user, input.at: t }
+        && t == context.input.since
+    )
+};

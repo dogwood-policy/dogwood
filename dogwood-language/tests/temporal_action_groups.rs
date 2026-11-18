@@ -489,8 +489,9 @@ when temporal { (count for (t: Timepoint). where formerly within 1h
         format!(
             "@{ts} scope(principal: W::Staff::\"s\", resource: W::Gateway::\"gw\") \
              entities(W::Staff::\"s\": {{ id: \"s\", tier: 1 }}) \
-             request_context(input: {{ amount: 10, tag: \"t\" }}) \
-             W::Action::\"Read\"::request(input: {{ amount: 10, tag: \"t\" }}, \
+             request_context(input: {{ amount: 10, tag: \"t\", readonly: 0 }}, \
+             system: {{ now: \"t\", seq: 0 }}) \
+             W::Action::\"Read\"::request(input: {{ amount: 10, tag: \"t\", readonly: 0 }}, \
              callerPrincipal: W::Staff::\"s\", callerResource: W::Gateway::\"gw\", \
              requestId: \"r{n}\")"
         )
@@ -715,13 +716,11 @@ fn temporal_group_scope_summand_restrictor() {
     assert_rejects(
         "temporal: action in [Reads], Long summand restricted by a String field on Peek",
         says::TEMPORAL_TYPE_MISMATCH,
-        &format!(
-            r#"permit (principal, action in [W::Action::"Reads"], resource)
-when temporal {{
+        r#"permit (principal, action in [W::Action::"Reads"], resource)
+when temporal {
   (sum a for (a: Long), (t: Timepoint). where formerly within 1h
-    (W::Action::"Read"::request{{}} && tp(t) && a == context.input.amount)) > 0
-}};"#
-        ),
+    (W::Action::"Read"::request{} && tp(t) && a == context.input.amount)) > 0
+};"#,
     );
 }
 
@@ -775,4 +774,80 @@ fn temporal_group_scope_non_input_context_correct() {
             r#"context.system.now == "t""#,
         ),
     );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// 20. The slice of a member action holds the group-scoped leaf
+// ═══════════════════════════════════════════════════════════════════════════
+// A caller that lowers the policies here and sends each decision's temporal leaves to an
+// evaluator elsewhere takes the set's slice for the decision's action
+// (`LoweredPolicySet::temporal_slice`). A rule scoped by a group (or a list) can apply to every
+// action the group resolves to, so its leaf is in the slice of each of them, sent with that action
+// as its scope: a descriptor carries one action, and a leaf's scope does not enter its verdict.
+
+#[test]
+fn the_slice_of_a_member_holds_the_group_scoped_leaf() {
+    use dogwood_language::temporal_ast::{condition_text, parse_condition};
+    use dogwood_language::{ActionRef, ActionScope};
+    let service = ServiceSchema::builder()
+        .event_schema_str(EVENT_SCHEMA)
+        .build()
+        .expect("event schema builds");
+    let schema = PolicySchema::from_cedarschema_str(SCHEMA).expect("schema builds");
+    let src = r#"forbid (principal, action in [W::Action::"Reads"], resource)
+when temporal { (count for (t: Timepoint). where formerly within 1h
+  (W::Action::"Read"::request{} && tp(t))) > 1 };
+
+forbid (principal, action in [W::Action::"All"], resource)
+when temporal { formerly within 1h W::Action::"Write"::request{ input.tag: context.input.tag } };
+
+forbid (principal, action in [W::Action::"Reads", W::Action::"Solo"], resource)
+when temporal { formerly within 1h W::Action::"Solo"::request{} };
+
+forbid (principal, action == W::Action::"Solo", resource)
+when temporal { formerly within 1h W::Action::"Peek"::request{} };"#;
+    let lowered = LoweredPolicySet::from_str(src, &service, &schema).expect("policy lowers");
+    let ids: Vec<String> = lowered
+        .nonrelativized_temporal_fields()
+        .map(|f| f.id.clone())
+        .collect();
+    let w = |id: &str| ActionRef {
+        namespace: Some("W".to_owned()),
+        id: id.to_owned(),
+    };
+    // (the action, the rules whose leaves its slice holds, and whether each is narrowed)
+    let cases: [(&str, &[(usize, bool)]); 7] = [
+        // through `Reads`, and two levels down from `All`
+        ("Read", &[(0, true), (1, true), (2, true)]),
+        ("Peek", &[(0, true), (1, true), (2, true)]),
+        ("Write", &[(1, true)]),
+        // an appliable group and its member, through `All`
+        ("Hub", &[(1, true)]),
+        ("Spoke", &[(1, true)]),
+        // listed beside a group, and named by `==` (sent as written)
+        ("Solo", &[(2, true), (3, false)]),
+        // a group that resolves to no action
+        ("Empty", &[]),
+    ];
+    for (action, rules) in cases {
+        let slice = lowered.temporal_slice(&w(action)).expect("a slice");
+        let got: Vec<&str> = slice.iter().map(|d| d.id.as_str()).collect();
+        let want: Vec<&str> = rules.iter().map(|&(r, _)| ids[r].as_str()).collect();
+        assert_eq!(got, want, "the slice of {action}");
+        for (d, &(_, narrowed)) in slice.iter().zip(rules) {
+            let scope = if narrowed {
+                ActionScope::Concrete(w(action))
+            } else {
+                ActionScope::Concrete(w("Solo"))
+            };
+            assert_eq!(d.action, scope, "{action}: the scope of {}", d.id);
+            let parsed = parse_condition(&d.condition).expect("the text parses");
+            assert_eq!(condition_text(&parsed).as_deref(), Ok(d.condition.as_str()));
+        }
+        assert_eq!(
+            lowered.temporal_slice(&w(action)),
+            Ok(slice),
+            "{action}: again"
+        );
+    }
 }

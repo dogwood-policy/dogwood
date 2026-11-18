@@ -1,0 +1,5 @@
+// Two `@id`s on one rule: an error under IdSource::Annotation, as the id would be ambiguous.
+@id("x")
+@id("y")
+permit (principal, action == Drupe::Action::"Read", resource)
+when { temporal { formerly within 1h Drupe::Action::"Login"::response{ input.user: context.input.user } } };

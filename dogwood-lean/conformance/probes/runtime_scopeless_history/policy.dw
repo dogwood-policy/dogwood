@@ -1,0 +1,12 @@
+// A `Login` response that carries no scope logs alice as its caller. Under the strict mirror rule,
+// a caller field is logged only by an event that carries the caller, so ingestion rejects it
+// (`Rejection.nonconforming`), and alice's `Read` has no login to rely on: the specification
+// denies it. The crate does the same under its default rule, `MirrorRule::Strict`: it rejects the
+// response and denies the `Read`. Under the opt-out `MirrorRule::Current`, which accepts any
+// logged caller when the request side does not resolve, it would ingest the response and allow the
+// `Read`.
+@id("read_after_login")
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::response{ input.user: context.input.user }
+};

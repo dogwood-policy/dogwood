@@ -1,0 +1,10 @@
+// The simplest possible Dogwood policy: a single permit with
+// no further condition. It allows the GetStockInfo tool to be
+// invoked. Every other action remains denied (Dogwood's
+// default decision is deny when no rule matches).
+
+permit (
+    principal,
+    action == Drupe::Action::"GetStockInfo",
+    resource
+);

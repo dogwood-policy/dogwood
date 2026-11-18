@@ -1,0 +1,5 @@
+max_window = 0h
+
+event <A>::audit {
+    value: String,
+}

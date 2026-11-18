@@ -22,10 +22,15 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use super::ast::{
     AggExpr, AggExprKind, BinderSlot, CmpOp, Condition, ConditionKind, Interval, Predicate, Term,
-    WithinSpec,
+    TimeUnit, WithinSpec,
 };
-use super::schema_info::{ActionHandle, ArrayElem, PathResolution, RichType, SchemaInfo};
+use super::schema_info::{
+    ActionHandle, ArrayElem, PathResolution, RichType, SchemaInfo, UNSUPPORTED_EXTENSION,
+};
+use crate::conformance::CType;
 use crate::error::{Span, ValidationError};
+use crate::event_schema::derive::DerivedEventSchema;
+use cedar_policy_core::ast::EntityType;
 
 /// A single temporal validation finding, located in the temporal block body
 /// (the validator rebases it into the `.dw` source). `span` is `None` when
@@ -51,6 +56,7 @@ pub struct LeafError {
 pub fn validate_leaf(
     leaf: &super::Temporal,
     info: &SchemaInfo,
+    events: Option<&DerivedEventSchema>,
     target_actions: &[crate::api::ActionRef],
     narrow: ScopeNarrowing<'_>,
 ) -> Vec<LeafError> {
@@ -61,10 +67,12 @@ pub fn validate_leaf(
     // unique to the temporal dialect: entity types, `context.input` paths on
     // the request, time-point dependence, and operand/argument typing.
     let mut errs = Vec::new();
+    check_wildcard_operands(&leaf.condition, &mut errs);
     check_entity_types(&leaf.condition, info, &mut errs);
+    check_decimal_literals(&leaf.condition, &mut errs);
     check_context_fields(&leaf.condition, info, target_actions, narrow, &mut errs);
     check_tp_dependence(&leaf.condition, &mut errs);
-    check_types(&leaf.condition, info, target_actions, narrow, &mut errs);
+    check_types(&leaf.condition, info, events, target_actions, narrow, &mut errs);
     check_sum_summands(&leaf.condition, &mut errs);
     errs
 }
@@ -104,6 +112,7 @@ impl DogwoodDialect for TemporalDialect {
         // re-parse of a schema source string.
         let info = SchemaInfo::from_validator_schema(ctx.schema.as_ref());
         let max_window = ctx.event_schema.max_window();
+        let max_horizon = ctx.event_schema.max_horizon();
         let mut findings = Vec::new();
         for field in leaves {
             // The leaf's inner spans are relative to the `temporal { … }`
@@ -131,13 +140,27 @@ impl DogwoodDialect for TemporalDialect {
             // positive, in-range (no i64 overflow), and at most the event
             // schema's `max_window` cap. Each violation is rebased from the
             // block body into the `.dw` source.
-            for e in check_windows(&field.condition.condition, max_window) {
+            for e in check_windows(&field.condition.condition, max_window, max_horizon) {
                 findings.push(TemporalFinding {
                     message: e.message,
                     span: match e.span {
                         Some(s) => s.rebased(base),
                         None => field.condition.span,
                     },
+                });
+            }
+
+            // Horizon check: how far back the leaf looks in total — the largest
+            // sum of the windows along one chain of operators — must be at
+            // most the event schema's `max_horizon`, when it declares one, so
+            // that no event older than `max_horizon` can matter to an accepted
+            // policy.
+            if let Some(message) = max_horizon
+                .and_then(|cap| check_horizon(&field.condition.condition, cap))
+            {
+                findings.push(TemporalFinding {
+                    message,
+                    span: field.condition.span,
                 });
             }
 
@@ -162,7 +185,26 @@ impl DogwoodDialect for TemporalDialect {
                 principal: Some(&field.principal),
                 resource: Some(&field.resource),
             };
-            for e in validate_leaf(&field.condition, &info, &field.target_actions, narrow) {
+            let facts = ctx
+                .leaf_facts
+                .get(&field.id)
+                .map(Vec::as_slice)
+                .unwrap_or(&[]);
+            let errors = validate_leaf(
+                &field.condition,
+                &info,
+                Some(ctx.event_schema),
+                &field.target_actions,
+                narrow,
+            )
+                .into_iter()
+                .chain(super::validity::check_leaf(
+                    field,
+                    &info,
+                    ctx.event_schema,
+                    facts,
+                ));
+            for e in errors {
                 let span = match e.span {
                     Some(s) => s.rebased(base),
                     // No narrower location than the leaf: the block body.
@@ -273,6 +315,13 @@ fn derive_temporal_help(message: &str) -> Option<String> {
     }
 
     // ─── Max-window findings ────────────────────────────────────────
+    if message.contains("exceeds the maximum allowed window") && message.contains("`max_horizon`") {
+        return Some(
+            "when the event schema declares `max_horizon`, `max_window` defaults to it \
+             and may not exceed it, so a longer window needs a larger `max_horizon`"
+                .to_string(),
+        );
+    }
     if message.contains("exceeds the maximum allowed window") {
         return Some(
             "every temporal `within` window is capped by the event schema's \
@@ -364,36 +413,56 @@ fn derive_temporal_help(message: &str) -> Option<String> {
 // ─── Type checking ──────────────────────────────────────────────────
 //
 // A variable-type environment is built from the scoped action's input
-// fields plus every binder's **declared** type — each `exists (x: T)` and
-// aggregation `for (v: T)` carries a mandatory annotation, so a bound
-// variable's type is read from its declaration, never reverse-inferred
-// from a use site. The condition is then walked to report mismatched
+// fields plus every binder's **declared** type, where the binder is in scope
+// (`walk_typed`) — each `exists (x: T)` and aggregation `for (v: T)` carries a
+// mandatory annotation, so a bound variable's type is read from its
+// declaration, never reverse-inferred from a use site. The condition is then
+// walked to report mismatched
 // comparison operands and predicate arguments; because a bound variable's
 // env entry is its declared type, those same checks enforce that every use
 // *respects the annotation* (e.g. `exists (x: Long). … x == "s"` is now a
 // type error, not silently reconciled). Types are values of
-// [`super::schema_info::RichType`] (`Long`, `String`, `Decimal`, `Bool`,
+// [`super::schema_info::RichType`] (`Long`, `String`, `Decimal`,
+// `Extension(..)` for a `datetime` / `duration` / `ipaddr` path, which no
+// temporal term may have (`check_unsupported_operand`), `Bool`,
 // `Timepoint`, `Entity(..)`, `Array(..)`, `Record`), compared via its
 // `accepts` / `compatible` / `is_numeric` methods.
 // Type inference for temporal terms, re-bound to the native AST.
 // Entity subtyping is not modeled (the projection carries no ancestor
-// closure), so entity comparisons require equal tags or an untagged side —
-// a conservative subset.
+// closure), so an entity compares with an entity of its own type; two entities
+// of different types compare only by an equality that binds no variable.
+
+/// One request environment a rule decides: an action its scope resolves to,
+/// and a principal type and a resource type the action admits and the rule's
+/// scope narrows to. Cedar validates a policy once per such environment, and
+/// so do the type checks: in each, `principal` and `resource` have one entity
+/// type, and their attributes the types that entity type declares.
+#[derive(Clone, Copy)]
+struct RequestEnv<'e> {
+    sig: &'e ActionHandle<'e>,
+    principal: &'e EntityType,
+    resource: &'e EntityType,
+}
 
 fn check_types(
     c: &Condition,
     info: &SchemaInfo,
+    events: Option<&DerivedEventSchema>,
     target_actions: &[crate::api::ActionRef],
     narrow: ScopeNarrowing<'_>,
     errs: &mut Vec<LeafError>,
 ) {
-    // Type inference seeds from ONE action's signature, so the condition is
-    // checked once per action its scope resolves to — the same set
-    // `check_context_fields` resolves paths against. A field may be typed
-    // differently by two of them (`amount` a `Long` on one action and a `String`
-    // on another), and the leaf is evaluated for each, so a comparison wrong for
-    // ANY of them is wrong: this mirrors Cedar, which validates a policy in every
-    // request environment its scope admits and fails if the body fails in one.
+    // The condition is checked once per request environment its rule decides:
+    // every action its scope resolves to — the same set `check_context_fields`
+    // resolves paths against — and every principal and resource type the action
+    // admits and the scope narrows to. A field may be typed differently by two
+    // of them (`amount` a `Long` on one action and a `String` on another), and
+    // the leaf is evaluated for each, so a comparison wrong for ANY of them is
+    // wrong: this mirrors Cedar, which validates a policy in every request
+    // environment its scope admits and fails if the body fails in one. Typing
+    // once per action instead, with a scope root of several types as an untagged
+    // entity, let `principal` stand for an entity of a type the comparison or
+    // field cannot hold.
     //
     // Seeding from a single concrete action was why a non-`==` scope was checked
     // at all: `ActionScope::concrete()` returns `None` for a list or an
@@ -404,70 +473,50 @@ fn check_types(
     // a `forbid` never fires — and Cedar cannot catch it, the leaf being an opaque
     // `context.<id>` boolean.
     //
-    // The same finding is reported once however many actions produce it, so a
-    // wide scope does not multiply one mistake into one error per action.
+    // The same finding is reported once however many environments produce it, so
+    // a wide scope does not multiply one mistake into one error per environment.
     let mut seen: std::collections::BTreeSet<(String, Option<usize>)> = Default::default();
     for action in target_actions {
-        let mut per_action = Vec::new();
-        check_types_for_action(c, info, action, narrow, &mut per_action);
-        for e in per_action {
-            if seen.insert((e.message.clone(), e.span.map(|s| s.start))) {
-                errs.push(e);
+        // An action the projection lacks is one lowering could not graft onto;
+        // Cedar's own validator owns the unknown-action diagnostic.
+        let Some(sig) = info.action(action.namespace.as_deref(), &action.id) else {
+            continue;
+        };
+        // An environment the rule's principal/resource scope does not admit is one
+        // the rule is never evaluated in, so holding its types against the
+        // condition would be a false rejection. Cedar filters whole triples.
+        let principals = sig.admitted_types("principal", narrow.principal);
+        let resources = sig.admitted_types("resource", narrow.resource);
+        for &principal in &principals {
+            for &resource in &resources {
+                let req = RequestEnv {
+                    sig: &sig,
+                    principal,
+                    resource,
+                };
+                let mut per_env = Vec::new();
+                check_types_in_env(c, info, events, req, &mut per_env);
+                for e in per_env {
+                    if seen.insert((e.message.clone(), e.span.map(|s| s.start))) {
+                        errs.push(e);
+                    }
+                }
             }
         }
     }
 }
 
-fn check_types_for_action(
+fn check_types_in_env(
     c: &Condition,
     info: &SchemaInfo,
-    action: &crate::api::ActionRef,
-    narrow: ScopeNarrowing<'_>,
+    events: Option<&DerivedEventSchema>,
+    req: RequestEnv<'_>,
     errs: &mut Vec<LeafError>,
 ) {
-    let rule_sig = info.action(action.namespace.as_deref(), &action.id);
-    // An action for which the rule's principal/resource scope admits no request
-    // environment is one the rule can never be evaluated on, so holding its types
-    // against the condition is a false rejection. Cedar filters whole triples.
-    if let Some(sig) = rule_sig.as_ref()
-        && !sig.admits_any_env(narrow.principal, narrow.resource)
-    {
-        return;
-    }
-    let env = build_type_env(c, info, rule_sig.as_ref());
+    let mut env = build_type_env(info, Some(req.sig));
 
-    walk(c, &mut |node| match &node.kind {
-        ConditionKind::Predicate(p) => {
-            let ns = predicate_namespace(p);
-            if let Some(sig) = info.action(ns.as_deref(), &p.action) {
-                for na in &p.args {
-                    // Resolve the predicate field's declared type by its FULL
-                    // dotted path (`input.mode`, `output.status`) — the same
-                    // walk the comparison path uses for `context.input.mode`
-                    // (see `context_field_type`). The field name `na.name` is a
-                    // dotted string (`"input.mode"`); resolving it segment by
-                    // segment against the predicate action's context record is
-                    // what makes the type check fire. A flat lookup of the
-                    // whole dotted string never matched, so field-pattern
-                    // arguments used to go entirely un-type-checked and a
-                    // mis-typed literal validated cleanly (then silently never
-                    // matched a real event at runtime).
-                    if let Some(expected) = predicate_field_type(&na.field_path(), &sig) {
-                        check_arg_type(
-                            &na.value,
-                            &expected,
-                            &p.action,
-                            &na.name,
-                            &env,
-                            rule_sig.as_ref(),
-                            narrow,
-                            p.span,
-                            errs,
-                        );
-                    }
-                }
-            }
-        }
+    walk_typed(c, info.validator_schema(), &mut env, &mut |node, env| match &node.kind {
+        ConditionKind::Predicate(p) => check_predicate_args(p, info, events, env, req, errs),
         // `tp(x)` binds `x` to the current TIMEPOINT index, so the binder's
         // declared type must be `Timepoint`. Any other declaration conflates
         // a timepoint with a data value: every use of `x` against a data
@@ -494,15 +543,27 @@ fn check_types_for_action(
         ConditionKind::Comparison { op, left, right } => {
             for operand in [left, right] {
                 if matches!(operand, Term::Arith { .. }) {
-                    check_arith_atoms(operand, &env, rule_sig.as_ref(), narrow, node.span, errs);
+                    check_arith_atoms(operand, env, req, node.span, errs);
                 }
             }
             let (lt, rt) = (
-                term_type(left, &env, rule_sig.as_ref(), narrow),
-                term_type(right, &env, rule_sig.as_ref(), narrow),
+                term_type(left, env, Some(req)),
+                term_type(right, env, Some(req)),
             );
-            if let (Some(l), Some(r)) = (lt, rt) {
+            // `|`, not `||`: each unsupported operand is reported.
+            let unsupported = check_unsupported_operand(left, lt.as_ref(), node.span, errs)
+                | check_unsupported_operand(right, rt.as_ref(), node.span, errs);
+            if unsupported {
+                // The comparison is not typed further: the operand's finding
+                // stands for it, as in the specification (`Term.check?`).
+            } else if let (Some(l), Some(r)) = (lt, rt) {
                 let numeric = matches!(op, CmpOp::Lt | CmpOp::Le | CmpOp::Gt | CmpOp::Ge);
+                // An `==` or `!=` with a bare variable on one side and a term that
+                // is not a variable and holds no wildcard on the other (`x == t`,
+                // the shape of an equality that can bind `x`) needs equal types.
+                // The test is syntactic, like the specification's (`eqRestricted?`,
+                // `EqCompatible`): it applies whether or not `x` is already bound.
+                let binding = super::check::eq_restricted_var(left, right).is_some();
                 if numeric && !(l.is_numeric() && r.is_numeric()) {
                     errs.push(LeafError {
                         message: format!(
@@ -512,7 +573,7 @@ fn check_types_for_action(
                         ),
                         span: Some(node.span),
                     });
-                } else if !numeric && !l.compatible(&r) {
+                } else if !numeric && !l.compatible(&r, binding) {
                     errs.push(LeafError {
                         message: format!(
                             "equality requires both sides to have the same type, got `{}` and `{}`",
@@ -528,6 +589,135 @@ fn check_types_for_action(
     });
 }
 
+/// Type a predicate's arguments against the fields of its event. A field of the
+/// spliced `input` / `output` group has the type the predicate action's context
+/// declares at its path; any other field (`callerPrincipal`, `requestId`, …)
+/// the type the event schema declares. A variable argument of such a field is
+/// typed by `validity::check_binding_fields`, and a wildcard matches anything.
+fn check_predicate_args(
+    p: &Predicate,
+    info: &SchemaInfo,
+    events: Option<&DerivedEventSchema>,
+    env: &BTreeMap<String, RichType>,
+    req: RequestEnv<'_>,
+    errs: &mut Vec<LeafError>,
+) {
+    let ns = predicate_namespace(p);
+    let pred_sig = info.action(ns.as_deref(), &p.action);
+    let fields = events
+        .and_then(|e| e.get(&p.namespace, &p.action, &p.kind))
+        .map(|event| crate::conformance::event_fields(event, info.validator_schema()))
+        .unwrap_or_default();
+    for na in &p.args {
+        // Resolve the predicate field's declared type by its FULL dotted path
+        // (`input.mode`, `output.status`) — the same walk the comparison path
+        // uses for `context.input.mode`. A flat lookup of the whole dotted
+        // string never matched, so field-pattern arguments used to go entirely
+        // un-type-checked and a mis-typed literal validated cleanly (then
+        // silently never matched a real event at runtime).
+        let path = na.field_path();
+        // A variable, a wildcard and a macro slot are not request-side paths, so
+        // `check_unsupported_operand` reports nothing for them.
+        if check_unsupported_operand(
+            &na.value,
+            term_type(&na.value, env, Some(req)).as_ref(),
+            p.span,
+            errs,
+        ) {
+            continue;
+        }
+        let spliced = matches!(path.first().map(String::as_str), Some("input" | "output"));
+        if spliced
+            && let Some(expected) = pred_sig
+                .as_ref()
+                .and_then(|sig| predicate_field_type(&path, sig))
+        {
+            check_arg_type(&na.value, &expected, &p.action, &na.name, env, req, p.span, errs);
+            continue;
+        }
+        if matches!(
+            na.value,
+            Term::Var(_) | Term::Wildcard | Term::ParamRef(_) | Term::BinderRef(_)
+        ) {
+            continue;
+        }
+        let Some((_, field_ty, _)) = fields.iter().find(|(f, _, _)| *f == path) else {
+            continue;
+        };
+        let Some(got) = term_type(&na.value, env, Some(req)) else {
+            continue;
+        };
+        let held = rich_ctype(&got)
+            .is_some_and(|value| super::validity::accepts(field_ty, &value));
+        if !held {
+            let action = cedar_policy_core::ast::Eid::new(p.action.as_str()).escaped();
+            errs.push(LeafError {
+                message: format!(
+                    "argument `{}` of `{action}` expects `{}` but got `{}`",
+                    na.name,
+                    field_ty.render(),
+                    got.display()
+                ),
+                span: Some(p.span),
+            });
+        }
+    }
+}
+
+/// The value type a rich type names, in the event schema's vocabulary: `None`
+/// for a timepoint, which no field holds, and for an array literal's
+/// unclassified element.
+fn rich_ctype(t: &RichType) -> Option<CType> {
+    Some(match t {
+        RichType::Long => CType::Long,
+        RichType::String => CType::String,
+        RichType::Bool => CType::Bool,
+        RichType::Decimal => CType::Decimal,
+        RichType::Extension(name) => CType::Extension(name.clone()),
+        RichType::Array(ArrayElem::Of(inner)) => CType::Set(Box::new(rich_ctype(inner)?)),
+        RichType::Array(_) | RichType::Timepoint => return None,
+        RichType::Record(attrs) => CType::Record {
+            attrs: attrs
+                .iter()
+                .map(|(name, required, ty)| Some((name.clone(), (rich_ctype(ty)?, *required))))
+                .collect::<Option<_>>()?,
+            open: false,
+        },
+        RichType::Entity(Some(name)) => CType::Entity(vec![name.clone()]),
+        RichType::Entity(None) => CType::AnyEntity,
+        RichType::Never => CType::Never,
+    })
+}
+
+/// Report a request-side path whose type is, or holds, one of Cedar's
+/// extension types other than `decimal` (`datetime`, `duration`, `ipaddr`):
+/// temporal conditions do not support them, as a comparison operand, an atom
+/// of one, or a predicate argument (the specification's
+/// `CedarType.temporalSupported`). Whether it reported one.
+fn check_unsupported_operand(
+    t: &Term,
+    ty: Option<&RichType>,
+    span: Span,
+    errs: &mut Vec<LeafError>,
+) -> bool {
+    let Some(ty) = ty.filter(|ty| ty.holds_unsupported_extension()) else {
+        return false;
+    };
+    let path = match t {
+        Term::ContextField(p) => crate::field_path::join_under("context", p),
+        Term::ScopeField(p) => crate::field_path::join(p),
+        _ => return false,
+    };
+    errs.push(LeafError {
+        message: format!(
+            "`{path}` has the type `{}`; {UNSUPPORTED_EXTENSION}",
+            ty.display()
+        ),
+        span: Some(span),
+    });
+    true
+}
+
 /// The all-`Long` atom rule for a compound arithmetic operand: every leaf
 /// must type as `Long`. Decimals stay equality-only; strings, booleans,
 /// entities, and arrays cannot be operated on; a wildcard is unresolvable
@@ -536,15 +726,14 @@ fn check_types_for_action(
 fn check_arith_atoms(
     t: &Term,
     env: &BTreeMap<String, RichType>,
-    rule_sig: Option<&ActionHandle>,
-    narrow: ScopeNarrowing<'_>,
+    req: RequestEnv<'_>,
     span: Span,
     errs: &mut Vec<LeafError>,
 ) {
     match t {
         Term::Arith { left, right, .. } => {
-            check_arith_atoms(left, env, rule_sig, narrow, span, errs);
-            check_arith_atoms(right, env, rule_sig, narrow, span, errs);
+            check_arith_atoms(left, env, req, span, errs);
+            check_arith_atoms(right, env, req, span, errs);
         }
         Term::Wildcard => errs.push(LeafError {
             message: "a wildcard (`*` / `_`) cannot appear inside an arithmetic \
@@ -554,8 +743,9 @@ fn check_arith_atoms(
             span: Some(span),
         }),
         Term::ParamRef(_) | Term::BinderRef(_) => {}
-        atom => match term_type(atom, env, rule_sig, narrow) {
+        atom => match term_type(atom, env, Some(req)) {
             Some(RichType::Long) | None => {}
+            Some(other) if check_unsupported_operand(atom, Some(&other), span, errs) => {}
             Some(other) => errs.push(LeafError {
                 message: format!(
                     "arithmetic operates only on `Long` values, but this \
@@ -598,7 +788,12 @@ fn check_sum_summands(c: &Condition, errs: &mut Vec<LeafError>) {
     walk(c, &mut |node| {
         for_each_term(node, &mut |t| {
             let Term::Agg(agg) = t else { return };
-            let AggExprKind::Sum { bound_var, .. } = &agg.kind else {
+            let AggExprKind::Sum {
+                bound_var,
+                for_vars,
+                ..
+            } = &agg.kind
+            else {
                 return;
             };
             // A summand still carrying a macro sigil has no concrete name;
@@ -606,10 +801,16 @@ fn check_sum_summands(c: &Condition, errs: &mut Vec<LeafError>) {
             let BinderSlot::Name(summand) = bound_var else {
                 return;
             };
-            // The summand is guaranteed to be bound in scope (see
-            // `check_aggregation`); an unresolved name means a sibling defect
-            // already reported by that check, so skip rather than double-report.
-            let Some(ty) = binder_types.get(summand) else {
+            // The summand is a binder of the aggregation's own `for` list (see
+            // `check_aggregation`), which scopes over the body; only an
+            // in-crate caller that skipped the parse-time check reaches the
+            // fallback. An unresolved name means a sibling defect already
+            // reported by that check, so skip rather than double-report.
+            let own = for_vars.iter().find(|v| match &v.slot {
+                BinderSlot::Name(name) => name == summand,
+                _ => false,
+            });
+            let Some(ty) = own.map(|v| &v.ty).or_else(|| binder_types.get(summand)) else {
                 return;
             };
             if let Some(message) = sum_summand_type_error(summand, ty) {
@@ -623,10 +824,9 @@ fn check_sum_summands(c: &Condition, errs: &mut Vec<LeafError>) {
 }
 
 /// Collect every declared binder's source-syntax [`Type`](super::ast::Type) by
-/// name: each `exists (x: T)` and every aggregation `for (v: T)` element.
-/// Mirrors [`collect_declared_binders`] (which keeps rich-type strings for the
-/// operand checks) but retains the `Type` for summand diagnostics; innermost
-/// binder wins on a name clash, matching that function's lexical approximation.
+/// name: each `exists (x: T)` and every aggregation `for (v: T)` element. The
+/// fallback of [`check_sum_summands`] for a summand outside its own `for`
+/// list; the innermost binder wins on a name clash, a lexical approximation.
 fn collect_declared_binder_types(c: &Condition) -> BTreeMap<String, super::ast::Type> {
     let mut map = BTreeMap::new();
     let record = |binder: &super::ast::TypedBinder, map: &mut BTreeMap<_, _>| {
@@ -682,8 +882,9 @@ fn sum_summand_type_error(summand: &str, ty: &super::ast::Type) -> Option<String
 }
 
 // Each parameter carries distinct context the type check needs (the term, its
-// expected/declared types, the scoped action, the env, and the span to report
-// against); bundling them into a struct would not clarify the call sites.
+// expected/declared types, the request environment, the variable types, and the
+// span to report against); bundling them into a struct would not clarify the
+// call sites.
 #[allow(clippy::too_many_arguments)]
 fn check_arg_type(
     arg: &Term,
@@ -691,12 +892,11 @@ fn check_arg_type(
     action: &str,
     param: &str,
     env: &BTreeMap<String, RichType>,
-    rule_sig: Option<&ActionHandle>,
-    narrow: ScopeNarrowing<'_>,
+    req: RequestEnv<'_>,
     pred_span: Span,
     errs: &mut Vec<LeafError>,
 ) {
-    if let Some(got) = term_type(arg, env, rule_sig, narrow)
+    if let Some(got) = term_type(arg, env, Some(req))
         && !expected.accepts(&got)
     {
         let action = cedar_policy_core::ast::Eid::new(action).escaped();
@@ -724,13 +924,14 @@ fn check_arg_type(
 /// arg, comparison operand) is consistent with the declared type, instead of
 /// letting the first use silently define it.
 fn build_type_env(
-    c: &Condition,
     _info: &SchemaInfo,
     rule_sig: Option<&ActionHandle>,
 ) -> BTreeMap<String, RichType> {
     let mut env = BTreeMap::new();
     // Seed the scoped action's input field names with their types (a bare
     // `field` reference in the leaf resolves to the rule action's input).
+    // Every declaration-site binder then types its variable by annotation,
+    // where it is in scope (`walk_typed`).
     if let Some(sig) = rule_sig {
         for name in sig.input_field_names() {
             if let Some(ty) = sig.input_field_type(&name) {
@@ -738,41 +939,88 @@ fn build_type_env(
             }
         }
     }
-    // Every declaration-site binder types its variable by annotation.
-    collect_declared_binders(c, &mut env);
     env
 }
 
-/// Walk the condition and record each declaration-site binder's variable
-/// with the rich type of its **declared** annotation: `exists (x: T)` and
-/// every aggregation `for (v: T)` element. A binder still carrying a macro
-/// sigil (unresolved `?p`/`$b`) has no concrete name yet, so it is skipped —
-/// expansion re-runs validation on the substituted form.
-fn collect_declared_binders(c: &Condition, env: &mut BTreeMap<String, RichType>) {
-    let record = |binder: &super::ast::TypedBinder, env: &mut BTreeMap<String, RichType>| {
-        if let super::ast::BinderSlot::Name(name) = &binder.slot {
-            // A binder's declared type is authoritative; if the same name is
-            // introduced by nested binders, the innermost (last-walked) wins,
-            // matching lexical scoping for the shapes the language admits.
-            env.insert(name.clone(), rich_type_of_annotation(&binder.ty));
+/// Walk every node of a condition, as [`walk`] does, with the variable types
+/// in scope at the node: `env`, overridden by each enclosing binder's declared
+/// type, the innermost last. A binder scopes over its own body only: an
+/// `exists` over its body, and an aggregation's `for` list over its `where`
+/// body. So a name that an aggregation's `for` list rebinds has its enclosing
+/// type again outside the aggregation.
+fn walk_typed(
+    c: &Condition,
+    schema: &cedar_policy_core::validator::ValidatorSchema,
+    env: &mut BTreeMap<String, RichType>,
+    f: &mut impl FnMut(&Condition, &BTreeMap<String, RichType>),
+) {
+    /// Bind `binders` in `env` for the duration of `body`. The body of an
+    /// ill-formed binder list (an undeclared type, a repeated name) is not
+    /// typed: the binder's finding stands for it, as in the specification.
+    fn scoped(
+        binders: &[super::ast::TypedBinder],
+        schema: &cedar_policy_core::validator::ValidatorSchema,
+        env: &mut BTreeMap<String, RichType>,
+        body: &mut dyn FnMut(&mut BTreeMap<String, RichType>),
+    ) {
+        if !super::validity::binders_typed(binders, schema) {
+            return;
         }
-    };
-    walk(c, &mut |node| match &node.kind {
-        ConditionKind::Exists { var, .. } => record(var, env),
-        ConditionKind::Comparison { left, right, .. } => {
-            for operand in [left, right] {
-                operand.for_each_operand_agg(&mut |agg| match &agg.kind {
-                    AggExprKind::Sum { for_vars, .. } | AggExprKind::Count { for_vars, .. } => {
-                        for v in for_vars {
-                            record(v, env);
-                        }
-                    }
-                    AggExprKind::Call(_) => {}
-                });
+        let mut saved = Vec::new();
+        for b in binders {
+            if let BinderSlot::Name(name) = &b.slot {
+                saved.push((
+                    name.clone(),
+                    env.insert(name.clone(), rich_type_of_annotation(&b.ty)),
+                ));
             }
         }
-        _ => {}
-    });
+        body(env);
+        for (name, old) in saved.into_iter().rev() {
+            match old {
+                Some(ty) => env.insert(name, ty),
+                None => env.remove(&name),
+            };
+        }
+    }
+
+    f(c, env);
+    match &c.kind {
+        ConditionKind::And { left, right }
+        | ConditionKind::Or { left, right }
+        | ConditionKind::Since { left, right, .. } => {
+            walk_typed(left, schema, env, f);
+            walk_typed(right, schema, env, f);
+        }
+        ConditionKind::Not { inner }
+        | ConditionKind::Formerly { body: inner, .. }
+        | ConditionKind::Previous { body: inner, .. } => walk_typed(inner, schema, env, f),
+        ConditionKind::Exists { var, body } => {
+            scoped(std::slice::from_ref(var), schema, env, &mut |env| {
+                walk_typed(body, schema, env, f)
+            });
+        }
+        ConditionKind::Comparison { left, right, .. } => {
+            let mut aggs = Vec::new();
+            for operand in [left, right] {
+                operand.for_each_operand_agg(&mut |agg| aggs.push(agg));
+            }
+            for agg in aggs {
+                if let AggExprKind::Sum { for_vars, body, .. }
+                | AggExprKind::Count { for_vars, body } = &agg.kind
+                {
+                    scoped(for_vars, schema, env, &mut |env| {
+                        walk_typed(body, schema, env, f)
+                    });
+                }
+            }
+        }
+        ConditionKind::Refine { base, .. } => walk_typed(base, schema, env, f),
+        ConditionKind::Predicate(_)
+        | ConditionKind::Tp { .. }
+        | ConditionKind::Call(_)
+        | ConditionKind::SigilRef { .. } => {}
+    }
 }
 
 /// Map a binder's declared [`Type`](super::ast::Type) annotation to the
@@ -792,21 +1040,22 @@ fn rich_type_of_annotation(ty: &super::ast::Type) -> RichType {
                 "String" => RichType::String,
                 "Bool" | "Boolean" => RichType::Bool,
                 "decimal" | "Decimal" => RichType::Decimal,
-                // Any other named type is a declared entity type; tag it with
-                // its simple name so entity comparisons check by tag.
-                other => RichType::Entity(Some(other.to_string())),
+                // Any other named type is an entity type, by its qualified name
+                // as written (`validity::check_binder_types` requires it to be
+                // declared).
+                _ => RichType::Entity(Some(path.join("::"))),
             }
         }
     }
 }
 
-/// The rich type of a term, or `None` if it can't be classified (a free
-/// variable, wildcard, or an unresolved path).
+/// The rich type of a term in the request environment `req`, or `None` if it
+/// can't be classified (a free variable, wildcard, or an unresolved path). With
+/// no environment, a request-side term has no type.
 fn term_type(
     t: &Term,
     env: &BTreeMap<String, RichType>,
-    rule_sig: Option<&ActionHandle>,
-    narrow: ScopeNarrowing<'_>,
+    req: Option<RequestEnv<'_>>,
 ) -> Option<RichType> {
     match t {
         Term::Var(v) => env.get(v).cloned(),
@@ -814,10 +1063,17 @@ fn term_type(
         Term::Decimal(_) => Some(RichType::Decimal),
         Term::String(_) => Some(RichType::String),
         Term::Bool(_) => Some(RichType::Bool),
-        Term::Entity { ty, .. } => Some(RichType::Entity(Some(simple_name(ty).to_string()))),
+        Term::Entity { ty, .. } => Some(RichType::Entity(Some(ty.clone()))),
         Term::Array(elems) => Some(array_literal_type(elems)),
-        Term::ContextField(path) => context_field_type(path, rule_sig),
-        Term::ScopeField(path) => scope_field_type(path, rule_sig, narrow),
+        // Walk the action's full declared context record (via the schema
+        // handle, which reads Cedar's own typed context), so `context.input.x`,
+        // `context.system.now`, etc. all resolve. A `principal` / `resource`
+        // head is an ordinary context field (Cedar semantics), not the scope.
+        Term::ContextField(path) => match req?.sig.resolve_context_path(path) {
+            PathResolution::Resolved(ty) => Some(ty),
+            _ => None,
+        },
+        Term::ScopeField(path) => scope_field_type(path, req?),
         // An aggregate (`count`/`sum`) yields a `Long`; typed as Long so a
         // comparison against it (`(count …) == n`, `sum … > k`) checks like
         // any numeric operand.
@@ -829,26 +1085,13 @@ fn term_type(
     }
 }
 
-/// Type of a `context.…` path: walk the scoped action's full declared context
-/// record (via the schema handle, which reads Cedar's own typed context), so
-/// `context.input.x`, `context.system.now`, etc. all resolve. A `principal` /
-/// `resource` head is an ordinary context field (Cedar semantics), not the
-/// scope — the scope entities are typed by [`scope_field_type`].
-fn context_field_type(path: &[String], rule_sig: Option<&ActionHandle>) -> Option<RichType> {
-    match rule_sig?.resolve_context_path(path) {
-        PathResolution::Resolved(ty) => Some(ty),
-        _ => None,
-    }
-}
-
 /// The declared rich type of a predicate field pattern's argument, resolved by
 /// its full dotted path (`input.mode`, `output.status`, `system.now`) against
-/// the *predicate's* action context record — the counterpart to
-/// [`context_field_type`], which resolves the *rule's* `context.…` operands.
-/// Returns `None` when the path does not fully resolve (an undeclared or
-/// non-record segment), which the event-schema names check already reports; a
-/// path that resolves to a group rather than a leaf yields that group's rich
-/// type (`"object"`), which `check_arg_type` compares like any other.
+/// the *predicate's* action context record. Returns `None` when the path does
+/// not fully resolve (an undeclared or non-record segment), which the
+/// event-schema names check already reports; a path that resolves to a group
+/// rather than a leaf yields that group's record type, which `check_arg_type`
+/// compares like any other.
 fn predicate_field_type(path: &[String], sig: &ActionHandle) -> Option<RichType> {
     match sig.resolve_context_path(path) {
         PathResolution::Resolved(ty) => Some(ty),
@@ -856,11 +1099,6 @@ fn predicate_field_type(path: &[String], sig: &ActionHandle) -> Option<RichType>
     }
 }
 
-/// Type of a `principal` / `resource` scope term. A bare root types to the
-/// scoped action's principal / resource entity type; an attribute tail
-/// (`principal.dept`) is left untyped (the coarse projection carries no entity
-/// attribute types — attribute paths resolve at eval time, matching the
-/// provider-arg surface).
 /// The rule's per-axis scope narrowing, threaded to wherever a scope path resolves.
 #[derive(Clone, Copy, Default)]
 pub(crate) struct ScopeNarrowing<'a> {
@@ -878,38 +1116,29 @@ impl<'a> ScopeNarrowing<'a> {
     }
 }
 
-fn scope_field_type(
-    path: &[String],
-    rule_sig: Option<&ActionHandle>,
-    narrow: ScopeNarrowing<'_>,
-) -> Option<RichType> {
-    let sig = rule_sig?;
-    match path {
-        // Narrowed by the rule's scope: `principal is W::Staff` under a multi-type
-        // action leaves one candidate, so the root types tagged rather than untagged.
-        [root] if root == "principal" => sig.principal_type_narrowed(narrow.principal),
-        [root] if root == "resource" => sig.resource_type_narrowed(narrow.resource),
-        // An attribute tail resolves against the scope entity's declared
-        // attributes. Typing this is what makes a comparison against a scope
-        // attribute checkable at all: `check_types` skips any comparison with an
-        // untyped side, so while this returned `None` a mis-typed comparison
-        // against `principal.<attr>` validated cleanly and then silently never
-        // matched at runtime — and for an aggregation summand it did worse than
-        // never match, since `sum` skips a non-integer value while `count`
-        // counts it, so a `forbid` cap could never fire.
-        [root, tail @ ..] if !tail.is_empty() && (root == "principal" || root == "resource") => {
-            sig.scope_attribute_type(root, tail, narrow.for_root(root))
-        }
-        _ => None,
+/// Type of a `principal` / `resource` scope term in one request environment. A
+/// bare root types to the environment's principal / resource entity type, and
+/// an attribute tail (`.id` and `.type` included) to the type that entity type
+/// declares at it.
+///
+/// Typing an attribute tail is what makes a comparison against a scope
+/// attribute checkable at all: `check_types` skips any comparison with an
+/// untyped side, so while this returned `None` a mis-typed comparison against
+/// `principal.<attr>` validated cleanly and then silently never matched at
+/// runtime — and for an aggregation summand it did worse than never match,
+/// since `sum` skips a non-integer value while `count` counts it, so a `forbid`
+/// cap could never fire.
+fn scope_field_type(path: &[String], req: RequestEnv<'_>) -> Option<RichType> {
+    let (root, tail) = path.split_first()?;
+    let ety = match root.as_str() {
+        "principal" => req.principal,
+        "resource" => req.resource,
+        _ => return None,
+    };
+    if tail.is_empty() {
+        return Some(RichType::Entity(Some(ety.to_string())));
     }
-}
-
-/// The simple (last-segment) name of a possibly-qualified type name.
-fn simple_name(qualified: &str) -> &str {
-    qualified
-        .rsplit_once("::")
-        .map(|(_, r)| r)
-        .unwrap_or(qualified)
+    req.sig.scope_attribute_type_of(ety, tail)
 }
 
 /// Classify an array literal's element type: empty is a bare array (element
@@ -923,13 +1152,13 @@ fn array_literal_type(elems: &[Term]) -> RichType {
     // No action signature in hand here, so no scope path can type anyway.
     let mut tys = elems
         .iter()
-        .map(|e| term_type(e, &empty, None, ScopeNarrowing::default()));
+        .map(|e| term_type(e, &empty, None));
     let Some(Some(first)) = tys.next() else {
         return RichType::Array(ArrayElem::Mixed);
     };
     if elems
         .iter()
-        .any(|e| term_type(e, &empty, None, ScopeNarrowing::default()).is_none())
+        .any(|e| term_type(e, &empty, None).is_none())
     {
         return RichType::Array(ArrayElem::Mixed);
     }
@@ -992,11 +1221,11 @@ fn is_tp_dep(c: &Condition, env: &BTreeSet<String>, errs: &mut Vec<LeafError>) -
 
         ConditionKind::Comparison { left, right, .. } => {
             // An aggregate operand's `where` body must itself be
-            // tp-dependent (a degenerate body monitors nothing); check each.
+            // tp-dependent (a degenerate body monitors nothing); check each,
+            // whether the aggregate is the operand or an atom of a compound
+            // operand.
             for operand in [left, right] {
-                if let Term::Agg(agg) = operand {
-                    check_agg_tp_dependence(agg, env, errs);
-                }
+                operand.for_each_operand_agg(&mut |agg| check_agg_tp_dependence(agg, env, errs));
             }
             term_is_tp_dep(left, env) || term_is_tp_dep(right, env)
         }
@@ -1258,6 +1487,88 @@ fn predicate_namespace(p: &Predicate) -> Option<String> {
     }
 }
 
+/// How far back, in seconds, `c` can look from the timepoint it is evaluated
+/// at: the specification's `Formula.horizon`, at one tick per second. A
+/// `formerly` / `previous` adds its window to its body's horizon, and `since`
+/// its window to the larger of its two sides'; a conjunction, disjunction,
+/// negation or `exists` takes the largest of its parts', and a comparison the
+/// largest of its aggregate operands' bodies'. A predicate or `tp` looks back
+/// nothing, and a non-positive window counts as zero (it is rejected on its
+/// own). The arithmetic is exact: each window's length fits an `i128`, and a
+/// sum of as many of them as a source can nest does too.
+pub(crate) fn horizon_seconds(c: &Condition) -> i128 {
+    fn window(w: &WithinSpec) -> i128 {
+        match w {
+            WithinSpec::Concrete(i) => (i128::from(i.amount) * i128::from(i.unit.seconds())).max(0),
+            // A residual parameter (only on an unexpanded macro body).
+            _ => 0,
+        }
+    }
+    fn term(t: &Term) -> i128 {
+        match t {
+            Term::Agg(agg) => match &agg.kind {
+                AggExprKind::Sum { body, .. } | AggExprKind::Count { body, .. } => {
+                    horizon_seconds(body)
+                }
+                // An unexpanded aggregate macro call (none post-expansion).
+                AggExprKind::Call(_) => 0,
+            },
+            Term::Arith { left, right, .. } => term(left).max(term(right)),
+            _ => 0,
+        }
+    }
+    match &c.kind {
+        ConditionKind::And { left, right } | ConditionKind::Or { left, right } => {
+            horizon_seconds(left).max(horizon_seconds(right))
+        }
+        ConditionKind::Not { inner } => horizon_seconds(inner),
+        ConditionKind::Exists { body, .. } => horizon_seconds(body),
+        ConditionKind::Formerly { within, body } | ConditionKind::Previous { within, body } => {
+            window(within).saturating_add(horizon_seconds(body))
+        }
+        ConditionKind::Since {
+            left,
+            within,
+            right,
+        } => window(within).saturating_add(horizon_seconds(left).max(horizon_seconds(right))),
+        ConditionKind::Comparison { left, right, .. } => term(left).max(term(right)),
+        ConditionKind::Predicate(_)
+        | ConditionKind::Tp { .. }
+        | ConditionKind::Call(_)
+        | ConditionKind::SigilRef { .. }
+        | ConditionKind::Refine { .. } => 0,
+    }
+}
+
+/// Render a number of seconds as an interval, in `unit` when it divides evenly,
+/// and in seconds otherwise.
+fn render_seconds(secs: i128, unit: TimeUnit) -> String {
+    let per = i128::from(unit.seconds());
+    if per > 0 && secs % per == 0 {
+        format!("{}{}", secs / per, unit.token())
+    } else {
+        format!("{secs}s")
+    }
+}
+
+/// The finding for a leaf whose horizon exceeds the event schema's
+/// `max_horizon`, if it does.
+fn check_horizon(c: &Condition, max_horizon: Interval) -> Option<String> {
+    let horizon = horizon_seconds(c);
+    let cap = i128::from(max_horizon.seconds());
+    (horizon > cap).then(|| {
+        format!(
+            "temporal condition looks back up to `{}` (the largest sum of the `within` windows \
+             along one chain of nested `formerly`, `previous` and `since` operators), which \
+             exceeds the event schema's `max_horizon` of `{}`; shorten or un-nest its \
+             windows, or raise `max_horizon` in the event schema (events older than \
+             `max_horizon` are never consulted)",
+            render_seconds(horizon, max_horizon.unit),
+            max_horizon.render(),
+        )
+    })
+}
+
 /// Validate every `within` window in the leaf. Three checks, per operator
 /// (`formerly` / `previous` / `since`), each located at the operator's node:
 ///
@@ -1270,13 +1581,19 @@ fn predicate_namespace(p: &Predicate) -> Option<String> {
 ///      "effectively unbounded" and, worse, could evade the cap check below;
 ///      reject it explicitly rather than let it saturate silently.
 ///   3. **Within the cap** — the window must be `<=` the event schema's
-///      `max_window`.
+///      `max_window`. A `max_window` may not exceed a declared `max_horizon`,
+///      so for a window longer than `max_horizon` the finding says to raise
+///      `max_horizon`.
 ///
 /// The whole condition tree is walked, so a `within` nested inside an
 /// aggregation `where` body is checked too. Post-expansion every window is
 /// [`WithinSpec::Concrete`]; a residual `ParamRef` (only possible on an
 /// unexpanded macro body) is skipped.
-fn check_windows(c: &Condition, max_window: Interval) -> Vec<LeafError> {
+fn check_windows(
+    c: &Condition,
+    max_window: Interval,
+    max_horizon: Option<Interval>,
+) -> Vec<LeafError> {
     // The cap itself is schema-supplied and already validated (`max_window`
     // parsing rejects a zero window); `seconds()` saturates, so this is safe.
     let cap = max_window.seconds();
@@ -1317,8 +1634,17 @@ fn check_windows(c: &Condition, max_window: Interval) -> Vec<LeafError> {
         };
         // 3. Over the cap.
         if secs > cap {
-            errs.push(LeafError {
-                message: format!(
+            let message = match max_horizon {
+                Some(h) if secs > h.seconds() => format!(
+                    "temporal window `{}` exceeds the maximum allowed window `{}`; \
+                     shorten this window to at most `{}`, or raise the event schema's \
+                     `max_horizon` of `{}` (and its `max_window`, if it declares one)",
+                    interval.render(),
+                    max_window.render(),
+                    max_window.render(),
+                    h.render(),
+                ),
+                _ => format!(
                     "temporal window `{}` exceeds the maximum allowed window `{}` \
                      set by the event schema's `max_window`; shorten this window to \
                      at most `{}`, or raise `max_window` in the event schema",
@@ -1326,11 +1652,56 @@ fn check_windows(c: &Condition, max_window: Interval) -> Vec<LeafError> {
                     max_window.render(),
                     max_window.render(),
                 ),
+            };
+            errs.push(LeafError {
+                message,
                 span: Some(node.span),
             });
         }
     });
     errs
+}
+
+/// A wildcard is a pattern for a predicate argument only. As a comparison
+/// operand it resolves to no value, so the comparison is always false, and its
+/// negation always true: a guard that silently never fires. A wildcard inside a
+/// compound operand is reported by `check_arith_atoms`.
+fn check_wildcard_operands(c: &Condition, errs: &mut Vec<LeafError>) {
+    walk(c, &mut |node| {
+        if let ConditionKind::Comparison { left, right, .. } = &node.kind
+            && (matches!(left, Term::Wildcard) || matches!(right, Term::Wildcard))
+        {
+            errs.push(LeafError {
+                message: "a wildcard (`*` / `_`) cannot be a comparison operand; it resolves \
+                          to no value, so the comparison is always false, and its negation \
+                          always true"
+                    .to_string(),
+                span: Some(node.span),
+            });
+        }
+    });
+}
+
+/// Every `decimal("…")` literal is a decimal Cedar accepts. One that is not
+/// denotes no value, so a comparison with it never holds.
+fn check_decimal_literals(c: &Condition, errs: &mut Vec<LeafError>) {
+    walk(c, &mut |node| {
+        let node_span = node.span;
+        for_each_term(node, &mut |t| {
+            if let Term::Decimal(text) = t
+                && crate::interpreter::value::cedar_decimal_value(text).is_none()
+            {
+                errs.push(LeafError {
+                    message: format!(
+                        "`decimal({text:?})` does not parse as a `decimal`: Cedar's decimals \
+                         have digits on both sides of a point, at most four after it, and fit \
+                         a 64-bit integer at that scale"
+                    ),
+                    span: Some(node_span),
+                });
+            }
+        });
+    });
 }
 
 fn check_entity_types(c: &Condition, info: &SchemaInfo, errs: &mut Vec<LeafError>) {
@@ -1342,10 +1713,20 @@ fn check_entity_types(c: &Condition, info: &SchemaInfo, errs: &mut Vec<LeafError
                 // An action UID (`Ns::Action::"X"`) parses to a
                 // `Term::Entity` whose last qualified segment is `Action`.
                 // Cedar reserves `Action` as an entity-type name, so it can
-                // never be a *declared* entity type; the lookup below would
-                // only ever emit a spurious "unknown entity type" for it
-                // (the hoisted leaf is not seen by Cedar's validator). Skip.
+                // never be a *declared* entity type: it must name a declared
+                // action instead. (The hoisted leaf is not seen by Cedar's
+                // validator, so nothing else resolves it.)
                 if is_action_ref(ty) {
+                    if info.action(ns_opt.as_deref(), id).is_none() {
+                        let id = cedar_policy_core::ast::Eid::new(id.as_str()).escaped();
+                        errs.push(LeafError {
+                            message: format!(
+                                "`{ty}::\"{id}\"` is not a declared action; an action literal \
+                                 names an action the schema declares"
+                            ),
+                            span: Some(node_span),
+                        });
+                    }
                     return;
                 }
                 match info.entity_type(ns_opt.as_deref(), simple) {
@@ -1412,10 +1793,10 @@ fn check_context_fields(
         walk(c, &mut |node| {
             let node_span = node.span;
             for_each_term(node, &mut |t| {
-                // A bare `principal` / `resource` root and its `.id` / `.type`
-                // projections always resolve, so they need no check. An ATTRIBUTE
-                // tail does: the entity's declared attributes say whether it
-                // exists and what it is, so an unresolvable tail is a policy that
+                // A bare `principal` / `resource` root always resolves, so it
+                // needs no check. An ATTRIBUTE tail does: the entity's declared
+                // attributes say whether it exists and what it is, so an
+                // unresolvable tail is a policy that
                 // can never match rather than one deferred to eval time. Leaving
                 // it unchecked is fail-open — silent for most comparisons, and for
                 // an aggregation summand worse, since `sum` skips a non-integer
@@ -1460,8 +1841,8 @@ fn check_one_context_path(
         }),
         PathResolution::NestedMissing(seg) => errs.push(LeafError {
             message: format!(
-                "record has no field `{seg}` in `context.{}` path",
-                path.join(".")
+                "record has no field `{seg}` in `{}` path",
+                crate::field_path::join_under("context", path)
             ),
             span: Some(node_span),
         }),
@@ -1475,9 +1856,8 @@ fn check_one_context_path(
 /// Check a `principal.<path>` / `resource.<path>` attribute tail against the
 /// declared attributes of every entity type the scope permits.
 ///
-/// A bare root always resolves and never reaches here. A `.id` / `.type` projection
-/// resolves too — as a string, so a comparison against one is type-checked like any
-/// other rather than waved through. Rejecting an
+/// A bare root always resolves and never reaches here. `id` and `type` are
+/// attributes like any other, as in Cedar. Rejecting an
 /// unresolvable tail rather than ignoring it is the point: the comparison it feeds
 /// can never match, so the condition is permanently false, and a permanently false
 /// `forbid` is a cap that never fires.
@@ -1492,10 +1872,13 @@ fn check_one_scope_path(
     if tail.is_empty() || !(root == "principal" || root == "resource") {
         return;
     }
-    let rendered = format!("{root}.{}", tail.join("."));
+    let rendered = crate::field_path::join_under(root, tail);
     use super::schema_info::ScopePath;
     match sig.resolve_scope_path(root, tail, narrow.for_root(root)) {
-        ScopePath::Resolved(_) | ScopePath::Unknown => {}
+        // A path of a different type on each entity type the scope admits is typed in
+        // each request environment, as Cedar types it (`check_types`): a use well typed in
+        // every one is valid, and one wrong in some is rejected there.
+        ScopePath::Resolved | ScopePath::Unknown | ScopePath::Ambiguous { .. } => {}
         ScopePath::Missing { entities, segment } => errs.push(LeafError {
             message: format!(
                 "`{rendered}` does not resolve for every entity the rule's `{root}` may \
@@ -1509,15 +1892,6 @@ fn check_one_scope_path(
         }),
         ScopePath::NonRecord { segment } => errs.push(LeafError {
             message: format!("`{segment}` accesses a field of a non-record type in `{rendered}`"),
-            span: Some(node_span),
-        }),
-        ScopePath::Ambiguous { types } => errs.push(LeafError {
-            message: format!(
-                "`{rendered}` has a different type on each entity the action's \
-                 `{root}` may be (`{}`), so the condition cannot be checked against \
-                 one type; it is evaluated whichever entity the request carries",
-                types.join("`, `")
-            ),
             span: Some(node_span),
         }),
     }
@@ -1607,6 +1981,109 @@ mod tests {
     use crate::error::Span;
     use crate::extension::temporal::parse::parse_condition;
 
+    // ── The horizon (`horizon_seconds`), node by node ──────────────────
+
+    const LOGIN: &str = r#"Drupe::Action::"Pay"::request{input.amount: 1}"#;
+
+    fn h(src: &str) -> i128 {
+        horizon_seconds(&parse_condition(src).expect("condition parses"))
+    }
+
+    fn agg_term(src: &str) -> Term {
+        let condition = parse_condition(src).expect("comparison parses");
+        match &condition.kind {
+            ConditionKind::Comparison { left, .. } => left.clone(),
+            other => panic!("not a comparison: {other:?}"),
+        }
+    }
+
+    #[test]
+    fn horizon_adds_nested_windows() {
+        assert_eq!(h(&format!("formerly within 2h (formerly within 3h {LOGIN})")), 5 * 3600);
+        assert_eq!(h(&format!("previous within 2h (formerly within 3h {LOGIN})")), 5 * 3600);
+    }
+
+    #[test]
+    fn horizon_since_adds_its_window_to_the_larger_side() {
+        let src = format!(
+            "(formerly within 1h {LOGIN}) since within 2h (formerly within 4h {LOGIN})"
+        );
+        assert_eq!(h(&src), 6 * 3600);
+        let src = format!(
+            "(formerly within 5h {LOGIN}) since within 2h (formerly within 4h {LOGIN})"
+        );
+        assert_eq!(h(&src), 7 * 3600);
+    }
+
+    #[test]
+    fn horizon_takes_the_larger_conjunct_and_sees_through_negation_and_exists() {
+        let src = format!("(formerly within 2h {LOGIN}) && !(formerly within 3h {LOGIN})");
+        assert_eq!(h(&src), 3 * 3600);
+        let src = format!(
+            r#"exists (n: Long). (formerly within 4h Drupe::Action::"Pay"::request{{input.amount: n}})"#
+        );
+        assert_eq!(h(&src), 4 * 3600);
+    }
+
+    #[test]
+    fn horizon_of_a_disjunction_is_the_larger_side() {
+        // `||` is internal (pin relativization builds it), so build it directly.
+        let left = parse_condition(&format!("formerly within 2h {LOGIN}")).unwrap();
+        let right = parse_condition(&format!("formerly within 7h {LOGIN}")).unwrap();
+        let or = Condition {
+            span: Span::new(0, 0),
+            kind: ConditionKind::Or {
+                left: Box::new(left),
+                right: Box::new(right),
+            },
+        };
+        assert_eq!(horizon_seconds(&or), 7 * 3600);
+    }
+
+    #[test]
+    fn horizon_of_an_aggregate_is_its_body() {
+        let src = format!(
+            "(count for (t: Timepoint). where (formerly within 3h ({LOGIN} && tp(t)))) > 0"
+        );
+        assert_eq!(h(&src), 3 * 3600);
+    }
+
+    #[test]
+    fn horizon_of_an_arithmetic_operand_is_its_larger_aggregate() {
+        // Arithmetic needs the `experimental-arithmetic` feature to parse, so build
+        // `(count … 3h …) + (count … 5h …) > 0` from two parsed aggregates.
+        let a = agg_term(&format!(
+            "(count for (t: Timepoint). where (formerly within 3h ({LOGIN} && tp(t)))) > 0"
+        ));
+        let b = agg_term(&format!(
+            "(count for (t: Timepoint). where (formerly within 5h ({LOGIN} && tp(t)))) > 0"
+        ));
+        let cmp = Condition {
+            span: Span::new(0, 0),
+            kind: ConditionKind::Comparison {
+                op: CmpOp::Gt,
+                left: Term::Arith {
+                    op: super::super::ast::ArithOp::Add,
+                    left: Box::new(a),
+                    right: Box::new(b),
+                },
+                right: Term::Integer(0),
+            },
+        };
+        assert_eq!(horizon_seconds(&cmp), 5 * 3600);
+    }
+
+    #[test]
+    fn horizon_counts_a_non_positive_window_as_zero() {
+        assert_eq!(h(&format!("formerly within 2h (formerly within 0h {LOGIN})")), 2 * 3600);
+        assert_eq!(h(&format!("formerly within 2h (formerly within -5h {LOGIN})")), 2 * 3600);
+    }
+
+    #[test]
+    fn horizon_of_a_predicate_or_tp_is_zero() {
+        assert_eq!(h(LOGIN), 0);
+    }
+
     const SCHEMA: &str = r#"
 namespace Drupe {
   type PayInput = { amount: Long, note: String };
@@ -1639,7 +2116,7 @@ namespace Drupe {
             namespace: Some("Drupe".to_string()),
             id: "Pay".to_string(),
         }];
-        validate_leaf(&leaf, &info, &actions, ScopeNarrowing::default())
+        validate_leaf(&leaf, &info, None, &actions, ScopeNarrowing::default())
             .into_iter()
             .map(|e| e.message)
             .collect()

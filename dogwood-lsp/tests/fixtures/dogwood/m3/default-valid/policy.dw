@@ -1,0 +1,3 @@
+// The simplest possible policy: a single permit with no further condition.
+@id("get_stock_info")
+permit ( principal, action == Drupe::Action::"GetStockInfo", resource );

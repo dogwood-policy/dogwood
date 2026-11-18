@@ -84,7 +84,8 @@ when temporal {{
 fn meter(ts: i64, amount: i64) -> String {
     format!(
         "@{ts} scope(principal: Test::User::\"u\", resource: Test::Gateway::\"g\") \
-         request_context(input: {{ amount: {amount} }}) \
+         request_context(input: {{ amount: {amount} }}, \
+         system: {{ now: datetime(\"2024-01-01T00:00:00Z\") }}) \
          Test::Action::\"Meter\"::request(input: {{ amount: {amount} }}, \
          callerPrincipal: Test::User::\"u\", callerResource: Test::Gateway::\"g\", \
          requestId: \"m{ts}\")"

@@ -495,6 +495,39 @@ fn a_malformed_distincter_is_rejected_at_construction() {
     }
 }
 
+/// Cedar's parser reads an identifier with white space or a comment around it,
+/// but a distincter is the identifier alone: it is interpolated into the rule
+/// ids (`" pad"` would name rules `" pad_0"`), so anything around it is
+/// rejected, white space with a message that says so.
+#[test]
+fn a_distincter_with_anything_around_it_is_rejected() {
+    let parsed = ParsedPolicySet::parse(ONE_LEAF, &service()).expect("parses");
+    for bad in [" pad", "pad ", "\tpad\n", "pad//c", "//c\npad"] {
+        let err = bad.parse::<Distincter>().expect_err("a padded distincter");
+        assert!(
+            matches!(&err, Error::InvalidDistincter(d) if d == bad),
+            "{err:?}"
+        );
+        let alone = parsed
+            .lower_with_distincter(&base_schema(), bad)
+            .expect_err("a padded distincter");
+        assert_eq!(err.to_string(), alone.to_string());
+    }
+    assert_eq!(
+        " pad".parse::<Distincter>().unwrap_err().to_string(),
+        "invalid distincter ` pad`: must be a Cedar identifier ([_A-Za-z][_A-Za-z0-9]*), \
+         without white space around it"
+    );
+    assert_eq!(
+        "pad//c".parse::<Distincter>().unwrap_err().to_string(),
+        "invalid distincter `pad//c`: must be a Cedar identifier ([_A-Za-z][_A-Za-z0-9]*)"
+    );
+    // An identifier alone, a keyword included, still is one.
+    for good in ["pad", "_x9", "if", "permit"] {
+        assert_eq!(distincter(good).as_str(), good);
+    }
+}
+
 #[test]
 fn a_distincter_round_trips_its_string() {
     let d = distincter("tenant_42");

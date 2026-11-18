@@ -39,20 +39,136 @@ impl Value {
     ///
     /// A `decimal` is Cedar's extension type, so two decimals are equal exactly
     /// when Cedar says they are — see `cedar_decimal_value`.
+    ///
+    /// An array is a Cedar **set**: two arrays are equal when they have the same
+    /// elements, whatever their order and however often each is repeated
+    /// (`["a", "b"]` = `["b", "a", "a"]`). A `null` element is absent.
+    ///
+    /// A record member whose value is [`Value::Null`] is **absent**: the
+    /// specification has no null, and a logged or supplied `null` stands for a
+    /// field that is not there (`dogwood-lean`, `Dogwood.Spec.Conformance`), so
+    /// `{a: 1, b: null}` equals `{a: 1}`.
     pub fn dom_eq(&self, other: &Value) -> bool {
         match (self, other) {
             (Value::Decimal(a), Value::Decimal(b)) => decimal_eq(a, b),
             (Value::Array(a), Value::Array(b)) => {
-                a.len() == b.len() && a.iter().zip(b).all(|(x, y)| x.dom_eq(y))
+                fn present(s: &[Value]) -> Vec<&Value> {
+                    s.iter().filter(|v| !v.is_null()).collect()
+                }
+                let (a, b) = (present(a), present(b));
+                a.iter().all(|x| b.iter().any(|y| x.dom_eq(y)))
+                    && b.iter().all(|y| a.iter().any(|x| x.dom_eq(y)))
             }
             (Value::Object(a), Value::Object(b)) => {
+                fn present(m: &BTreeMap<String, Value>) -> Vec<(&String, &Value)> {
+                    m.iter().filter(|(_, v)| !v.is_null()).collect()
+                }
+                let (a, b) = (present(a), present(b));
                 a.len() == b.len()
                     && a.iter()
-                        .zip(b)
+                        .zip(&b)
                         .all(|((ka, va), (kb, vb))| ka == kb && va.dom_eq(vb))
             }
             _ => self == other,
         }
+    }
+
+    /// A value of one of Cedar's extension types, by its constructor and its
+    /// argument: `Value::extension("datetime", "2024-01-01T00:00:00Z")`,
+    /// `Value::extension("duration", "1h")`, `Value::extension("ip", "10.0.0.1")`,
+    /// or `Value::extension("decimal", "1.50")`.
+    ///
+    /// A `decimal` is a [`Value::Decimal`]. A value of the other types is held as
+    /// Cedar's JSON escape for it, `{"__extn": {"fn": …, "arg": …}}`, the form
+    /// `cedar_policy::Context::to_json_value` writes, and the Cedar request is
+    /// built with the extension value itself. Cedar checks the argument when it
+    /// builds the request: a decision whose context holds an argument Cedar does
+    /// not accept fails closed. A trace writes the same value as Cedar does,
+    /// `datetime("2024-01-01T00:00:00Z")`.
+    pub fn extension(constructor: &str, arg: &str) -> Value {
+        if constructor == "decimal" {
+            return Value::Decimal(arg.to_string());
+        }
+        let inner = BTreeMap::from([
+            ("fn".to_string(), Value::String(constructor.to_string())),
+            ("arg".to_string(), Value::String(arg.to_string())),
+        ]);
+        Value::Object(BTreeMap::from([(
+            "__extn".to_string(),
+            Value::Object(inner),
+        )]))
+    }
+
+    /// Whether this is [`Value::Null`], which stands for an absent value.
+    pub fn is_null(&self) -> bool {
+        matches!(self, Value::Null)
+    }
+
+    /// The **canonical form** of this value: the one representative of its
+    /// class under [`dom_eq`](Value::dom_eq), so that two values are `dom_eq`
+    /// exactly when their canonical forms are structurally equal (`==`).
+    ///
+    /// * A decimal Cedar accepts is respelled canonically
+    ///   ([`canonical_decimal`](Value::canonical_decimal)): `02.5` and `2.50`
+    ///   become `2.5`, and `-0.0` becomes `0.0`. A spelling Cedar rejects is
+    ///   kept as written (it equals only itself).
+    /// * An array is a set: its elements are made canonical, `null` elements
+    ///   are dropped, and the rest are sorted (by
+    ///   [`partition_value_key`](crate::partition_value_key)) and deduplicated.
+    /// * A record drops its `null` members (an absent value), and makes the
+    ///   others canonical.
+    /// * A top-level `null` stays `null`.
+    ///
+    /// The specification requires canonical, well-formed values (`dogwood-lean`,
+    /// `Dogwood.Spec.Conformance`). An engine that stores or compares values
+    /// outside this crate (as text, for example) stores this form, so that
+    /// equal values are stored alike.
+    pub fn canonical(&self) -> Value {
+        match self {
+            Value::Decimal(s) => {
+                Value::Decimal(Value::canonical_decimal(s).unwrap_or_else(|| s.clone()))
+            }
+            Value::Array(items) => {
+                let mut keyed: Vec<(String, Value)> = items
+                    .iter()
+                    .filter(|v| !v.is_null())
+                    .map(|v| {
+                        let c = v.canonical();
+                        (crate::engine::partition_value_key(&c), c)
+                    })
+                    .collect();
+                keyed.sort_by(|a, b| a.0.cmp(&b.0));
+                keyed.dedup_by(|a, b| a.0 == b.0);
+                Value::Array(keyed.into_iter().map(|(_, v)| v).collect())
+            }
+            Value::Object(members) => Value::Object(
+                members
+                    .iter()
+                    .filter(|(_, v)| !v.is_null())
+                    .map(|(k, v)| (k.clone(), v.canonical()))
+                    .collect(),
+            ),
+            other => other.clone(),
+        }
+    }
+
+    /// The canonical spelling of a decimal Cedar accepts, or `None` when Cedar
+    /// rejects the spelling. Two spellings Cedar accepts denote the same decimal
+    /// exactly when their canonical spellings are equal.
+    ///
+    /// The canonical spelling is the shortest one Cedar accepts: an optional
+    /// `-`, the integer part without leading zeros, a point, and the fraction
+    /// without trailing zeros but with at least one digit (`2.5`, `2.0`,
+    /// `-0.25`, `0.0`; never `-0.0`).
+    pub fn canonical_decimal(spelling: &str) -> Option<String> {
+        let value = i128::from(cedar_decimal_value(spelling)?);
+        let sign = if value < 0 { "-" } else { "" };
+        let magnitude = value.abs();
+        let whole = magnitude / 10_000;
+        let fraction = format!("{:04}", magnitude % 10_000);
+        let fraction = fraction.trim_end_matches('0');
+        let fraction = if fraction.is_empty() { "0" } else { fraction };
+        Some(format!("{sign}{whole}.{fraction}"))
     }
 
     /// Integer view for numeric comparison; `None` if not an integer.
@@ -61,6 +177,37 @@ impl Value {
             Value::Int(n) => Some(*n),
             _ => None,
         }
+    }
+}
+
+/// The extension function and argument of Cedar's JSON escape for an
+/// extension value, `{"__extn": {"fn": F, "arg": A}}`, when `value` is exactly
+/// that escape: a one-attribute record whose `__extn` record holds a string `fn`
+/// and a string `arg`, and nothing else.
+///
+/// [`Value`] has a variant for `decimal` ([`Value::Decimal`]) but none for Cedar's
+/// `ipaddr`, `datetime`, and `duration`, so a value of those types is carried as
+/// the escape, the form `cedar_policy::Context::to_json_value` produces
+/// ([`Value::extension`]): a trace writes it `datetime("2024-01-01T00:00:00Z")`,
+/// [`Event::from_request`] reads it off a Cedar request, and the Cedar request is
+/// built with the extension value itself. The function names are Cedar's constructors: `ip`, `datetime`,
+/// `duration`, and `decimal`.
+pub(crate) fn extension_escape(value: &Value) -> Option<(&str, &str)> {
+    let Value::Object(outer) = value else {
+        return None;
+    };
+    if outer.len() != 1 {
+        return None;
+    }
+    let Value::Object(inner) = outer.get("__extn")? else {
+        return None;
+    };
+    if inner.len() != 2 {
+        return None;
+    }
+    match (inner.get("fn")?, inner.get("arg")?) {
+        (Value::String(function), Value::String(arg)) => Some((function, arg)),
+        _ => None,
     }
 }
 
@@ -190,15 +337,10 @@ pub struct EventData {
 }
 
 impl EventData {
-    /// A **logged** field by top-level key (the temporal-history record).
-    pub fn field(&self, key: &str) -> Option<&Value> {
-        self.logged.get(key)
-    }
-
     /// Look up a possibly-nested **logged** field by dotted path, descending
     /// into [`Value::Object`] at each non-final segment. `["input", "user"]`
     /// reads the `user` member of the `input` sub-record; a single-segment
-    /// path (`["requestId"]`) is the flat [`EventData::field`] lookup.
+    /// path (`["requestId"]`) is a top-level lookup.
     ///
     /// Returns `None` if any segment is absent or if an intermediate
     /// segment is not an object (so descending through a scalar fails
@@ -206,6 +348,16 @@ impl EventData {
     /// `logged` — request-only context is not visible to temporal matching.
     pub fn field_path(&self, path: &[String]) -> Option<&Value> {
         path_descend(&self.logged, path)
+    }
+
+    /// The **logged** value at `path`, with a [`Value::Null`] read as absent:
+    /// [`field_path`](EventData::field_path), except that a `null` leaf is
+    /// `None`. The specification has no null, and a logged `null` is a field
+    /// that is not logged (`dogwood-lean`, `Dogwood.Spec.Conformance`); this is
+    /// the lookup temporal matching and partitioning use, so a `*` wildcard
+    /// never matches a `null`, and a `null` never binds a variable.
+    pub(crate) fn logged_value(&self, path: &[String]) -> Option<&Value> {
+        self.field_path(path).filter(|v| !v.is_null())
     }
 
     /// A **request-context** field by top-level key. The request-only context
@@ -231,12 +383,11 @@ impl EventData {
     /// provider-arg resolver (`resolve_scope_path`) and the temporal env seeder
     /// (`seed_scope_env`) so the two agree by construction:
     ///
-    ///   * a **supplied** attribute wins: the first segment is looked up in the
-    ///     uid's supplied attributes, then any remaining segments descend nested
-    ///     records (a non-record encountered mid-path is unresolvable);
-    ///   * failing that, a single-segment `.id` / `.type` **projects the uid**
-    ///     (so an identity-only entity still resolves those), but a supplied
-    ///     attribute of the same name takes precedence (checked first);
+    ///   * the path's first segment is looked up in the uid's supplied
+    ///     attributes, then nested records are descended for the remaining
+    ///     segments (a non-record encountered mid-path is unresolvable). `id`
+    ///     and `type` are attributes like any other, as in Cedar: there is no
+    ///     projection of the uid (the specification's `Event.entityAttr?`);
     ///   * anything else — an unsupplied attribute, or a deeper path with no
     ///     supplied root — is `None` (absent).
     ///
@@ -248,31 +399,19 @@ impl EventData {
     pub fn resolve_entity_attr(&self, ty: &str, id: &str, path: &[String]) -> Option<Value> {
         let (attr, deeper) = path.split_first()?;
         let uid = entity_uid_string(ty, id);
-        if let Some(start) = self
+        let start = self
             .entities
             .get(&uid)
-            .and_then(|rec| rec.attrs.get(attr.as_str()))
-        {
-            let mut cur = start;
-            for seg in deeper {
-                match cur {
-                    Value::Object(map) => cur = map.get(seg.as_str())?,
-                    // A non-record encountered mid-path is unresolvable.
-                    _ => return None,
-                }
-            }
-            return Some(cur.clone());
-        }
-        // No supplied attribute: `.id` / `.type` project the uid for a
-        // single-segment path (a deeper path has no uid-projection fallback).
-        if deeper.is_empty() {
-            match attr.as_str() {
-                "id" => return Some(Value::String(id.to_string())),
-                "type" => return Some(Value::String(ty.to_string())),
-                _ => {}
+            .and_then(|rec| rec.attrs.get(attr.as_str()))?;
+        let mut cur = start;
+        for seg in deeper {
+            match cur {
+                Value::Object(map) => cur = map.get(seg.as_str())?,
+                // A non-record encountered mid-path is unresolvable.
+                _ => return None,
             }
         }
-        None
+        Some(cur.clone())
     }
 }
 
@@ -432,6 +571,53 @@ impl Event {
     /// The event's wall-clock timestamp.
     pub fn timestamp(&self) -> i64 {
         self.ts
+    }
+
+    /// This event with every value in its **canonical form**
+    /// ([`Value::canonical`]): its logged record, its request context, its
+    /// scope, and the attributes and parents of its entities. A `null` record
+    /// member or set element is dropped (it is absent), a set is sorted and
+    /// deduplicated, and a decimal is respelled canonically. The event decides
+    /// exactly as the original does.
+    ///
+    /// An engine that logs events outside this crate canonicalizes them first,
+    /// so that equal values are logged alike (`02.5` and `2.5`; `["a", "b"]`
+    /// and `["b", "a"]`), and a logged `null` is not logged at all.
+    pub fn canonical(&self) -> Event {
+        let canon = |m: &BTreeMap<String, Value>| -> BTreeMap<String, Value> {
+            m.iter()
+                .filter(|(_, v)| !v.is_null())
+                .map(|(k, v)| (k.clone(), v.canonical()))
+                .collect()
+        };
+        Event {
+            ts: self.ts,
+            scope: Scope {
+                principal: self.scope.principal.as_ref().map(Value::canonical),
+                resource: self.scope.resource.as_ref().map(Value::canonical),
+            },
+            event: EventData {
+                namespace: self.event.namespace.clone(),
+                action: self.event.action.clone(),
+                kind: self.event.kind.clone(),
+                logged: canon(&self.event.logged),
+                request_context: canon(&self.event.request_context),
+                entities: self
+                    .event
+                    .entities
+                    .iter()
+                    .map(|(uid, rec)| {
+                        (
+                            uid.clone(),
+                            EntityRecord {
+                                attrs: canon(&rec.attrs),
+                                parents: rec.parents.iter().map(Value::canonical).collect(),
+                            },
+                        )
+                    })
+                    .collect(),
+            },
+        }
     }
 
     /// Convert this complete event back into an [`EventBuilder`] without
@@ -620,8 +806,8 @@ impl Event {
     ///
     /// A bare `root` (empty `attrs`) returns the entity itself as
     /// [`Value::Entity`]. An attribute tail follows the same response as
-    /// `EventData::resolve_entity_attr`: supplied attributes win, then
-    /// `.id` / `.type` project the uid, else `None`.
+    /// `EventData::resolve_entity_attr`: it reads the supplied attributes
+    /// (`id` and `type` included, as in Cedar), else `None`.
     pub fn scope_attr(&self, root: &str, attrs: &[String]) -> Option<Value> {
         let entity = match root {
             "principal" => self.scope.principal.as_ref()?,
@@ -665,7 +851,11 @@ impl Event {
     /// this bridge — supply that field to the logged record too (or construct the
     /// event via [`Event::builder`]) if such an event participates in partitioned
     /// temporal history. Not a concern for the single-decision use above (no
-    /// history to correlate against) or for scope / `input.*` pins.
+    /// history to correlate against) or for `input.*` pins. A scope pin is
+    /// covered only under the field names `callerPrincipal` / `callerResource`:
+    /// under a pin with another name (`pin actor = principal`) the event does
+    /// not log the pinned field, so the authorizer rejects it (a decision fails
+    /// closed). Build such an event with [`Event::builder`] and log the field.
     pub fn from_request(request: &cedar_policy::Request) -> Result<Event, crate::api::Error> {
         crate::api::request_to_event(0, request)
     }
@@ -1164,8 +1354,8 @@ mod tests {
     // This is the single source of truth both the provider-arg resolver
     // (`api::resolve_scope_path`) and the temporal env seeder
     // (`eval::seed_scope_env`) delegate to, so the two agree by construction.
-    // These cases pin the full semantic contract (supplied-attr-wins,
-    // `.id`/`.type` uid projection, nested descent, absent → None) in one place.
+    // These cases pin the full semantic contract (supplied attributes, `id`
+    // and `type` included, nested descent, absent → None) in one place.
 
     /// An event whose `Drupe::OAuthUser::"alice"` entity carries the given
     /// attributes.
@@ -1226,23 +1416,13 @@ mod tests {
     }
 
     #[test]
-    fn resolve_entity_attr_id_type_project_the_uid() {
-        // With no supplied attributes, `.id` / `.type` fall back to the uid.
+    fn resolve_entity_attr_id_type_are_ordinary_attributes() {
+        // Without supplied attributes, `.id` / `.type` are absent: there is no
+        // projection of the uid.
         let e = event_with_attrs(&[]);
-        assert_eq!(
-            resolve(&e, &["id"]),
-            Some(Value::String("alice".to_string()))
-        );
-        assert_eq!(
-            resolve(&e, &["type"]),
-            Some(Value::String("Drupe::OAuthUser".to_string()))
-        );
-    }
-
-    #[test]
-    fn resolve_entity_attr_supplied_id_wins_over_uid_projection() {
-        // A supplied attribute named `id`/`type` is looked up before the uid
-        // fallback, so it wins.
+        assert_eq!(resolve(&e, &["id"]), None);
+        assert_eq!(resolve(&e, &["type"]), None);
+        // With them, `.id` / `.type` read the supplied attributes.
         let e = event_with_attrs(&[
             ("id", Value::String("override".to_string())),
             ("type", Value::String("Custom".to_string())),
@@ -1255,13 +1435,6 @@ mod tests {
             resolve(&e, &["type"]),
             Some(Value::String("Custom".to_string()))
         );
-    }
-
-    #[test]
-    fn resolve_entity_attr_deeper_id_path_has_no_uid_fallback() {
-        // The `.id`/`.type` projection is single-segment only: `id.x` does not
-        // fall back to the uid (there's nothing to descend into).
-        let e = event_with_attrs(&[]);
         assert_eq!(resolve(&e, &["id", "x"]), None);
     }
 

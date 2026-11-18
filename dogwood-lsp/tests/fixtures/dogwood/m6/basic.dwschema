@@ -1,0 +1,4 @@
+event <A>::audit {
+    ...inputs(A),
+    result: String,
+}

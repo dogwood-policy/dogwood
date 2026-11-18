@@ -1,0 +1,8 @@
+// The `Read` request logs `callerPrincipal` as bob while its principal is alice. The mirror rule
+// makes the event nonconforming: the specification fails the decision closed (nonconforming
+// decision event); the crate fails it closed too, with the reason in its diagnostics.
+@id("read_after_login")
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::response{ input.user: context.input.user }
+};

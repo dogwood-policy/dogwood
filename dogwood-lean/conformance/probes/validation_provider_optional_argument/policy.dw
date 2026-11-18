@@ -1,0 +1,4 @@
+// A provider argument reads the optional `context.input.note` without a `has` test. The provider
+// contract tolerates an absent argument, and both accept it.
+permit (principal, action == Drupe::Action::"Read", resource)
+when { Risk::Score(context.input.note) > 3 };

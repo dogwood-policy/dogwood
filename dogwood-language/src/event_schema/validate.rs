@@ -49,7 +49,8 @@ pub fn validate_condition(cond: &Condition, schema: &DerivedEventSchema) -> Resu
 }
 
 /// Check the predicates inside a term: an aggregate term descends into its
-/// `where` body; any other term is a leaf.
+/// `where` body, and a compound operand into both of its operands, since an
+/// aggregate may be an atom of one; any other term is a leaf.
 fn validate_term(term: &Term, schema: &DerivedEventSchema) -> Result<(), String> {
     match term {
         Term::Agg(agg) => match &agg.kind {
@@ -60,6 +61,10 @@ fn validate_term(term: &Term, schema: &DerivedEventSchema) -> Result<(), String>
             // no predicate of its own to check.
             AggExprKind::Call(_) => Ok(()),
         },
+        Term::Arith { left, right, .. } => {
+            validate_term(left, schema)?;
+            validate_term(right, schema)
+        }
         _ => Ok(()),
     }
 }

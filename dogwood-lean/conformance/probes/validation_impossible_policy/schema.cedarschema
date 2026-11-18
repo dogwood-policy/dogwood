@@ -1,0 +1,35 @@
+namespace Drupe {
+  type LoginInput = { user: String };
+  type Profile = { name: String };
+  type ReadInput = {
+    user: String,
+    note?: String,
+    count: Long,
+    owner: OAuthUser,
+    profile: Profile,
+    card: { number: Long },
+    when: datetime
+  };
+  entity Gateway;
+  entity Bot;
+  entity Group;
+  entity OAuthUser in [Group] = { id: Long, level: Long, dept?: String };
+  action "Login" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: { input: LoginInput }
+  };
+  action "Read" appliesTo {
+    principal: [OAuthUser],
+    resource: [Gateway],
+    context: { input: ReadInput }
+  };
+  action "Ping" appliesTo {
+    principal: [OAuthUser, Bot],
+    resource: [Gateway],
+    context: { input: ReadInput }
+  };
+}
+namespace Other {
+  entity OAuthUser;
+}

@@ -1,0 +1,24 @@
+[package]
+name = "dogwood-lean-bridge"
+version = "0.1.0"
+edition = "2024"
+publish = false
+description = "Exports Dogwood policy sets, as the in-tree dogwood-language crate parses and lowers them, as JSON values of the dogwood-lean specification's types."
+
+# A workspace of its own: the bridge is not a member of the package's Cargo
+# workspace, so `cargo build` at the package root never sees it.
+[workspace]
+
+[dependencies]
+# The front end this specification describes: the crate in this repository. Its
+# `frontend-export` feature exports the parsed inputs and every stage's
+# observable for the `--frontend` mode.
+dogwood-language = { package = "dogwood-language", path = "../../dogwood-language", features = ["experimental-arithmetic", "frontend-export"] }
+# Pinned exactly so the crate resolves to the Cedar release the Lean side
+# builds on (cedar-spec `v4.14.0`, see `../lakefile.lean`); `conformance/run.sh`
+# checks the two agree. `cedar-policy` also reads the lowered rules and the
+# action entities.
+cedar-policy = "=4.14.0"
+cedar-policy-core = "=4.14.0"
+# Cedar's policy JSON (the EST), which the bridge reads, and the JSON it writes.
+serde_json = "1"

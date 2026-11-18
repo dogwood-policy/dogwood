@@ -1,0 +1,3 @@
+// A string that mixes Latin and Cyrillic letters may be confused for another.
+permit (principal, action == W::Action::"Meter", resource)
+when { context.input.note == "pаssword" };

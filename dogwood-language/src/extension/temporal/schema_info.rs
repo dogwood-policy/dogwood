@@ -24,6 +24,11 @@ pub struct SchemaInfo {
 }
 
 impl SchemaInfo {
+    /// The schema this handle reads.
+    pub(crate) fn validator_schema(&self) -> &ValidatorSchema {
+        &self.schema
+    }
+
     /// Build directly from an already-parsed [`ValidatorSchema`]. The public
     /// `cedar_policy::Schema` is a transparent newtype over a `ValidatorSchema`
     /// and exposes it via `AsRef`, so a caller that already holds the augmented
@@ -64,16 +69,21 @@ impl SchemaInfo {
             .map(|ety| EntityTypeHandle { ety })
     }
 
-    /// The refs of every declared entity type, for diagnostics.
+    /// The refs of every declared entity type, for diagnostics, sorted (the
+    /// schema holds them in a hash map, whose order varies from run to run).
     pub fn known_entity_refs(&self) -> Vec<String> {
-        self.schema
+        let mut known: Vec<String> = self
+            .schema
             .entity_types()
             .map(|e| e.name().to_string())
-            .collect()
+            .collect();
+        known.sort();
+        known
     }
 }
 
 /// A declared action and its Cedar-typed context.
+#[derive(Clone, Copy)]
 pub struct ActionHandle<'a> {
     action: &'a ValidatorActionId,
     /// Kept so a scope entity's ATTRIBUTES can be resolved, not just its type
@@ -102,33 +112,40 @@ impl ActionHandle<'_> {
             .unwrap_or_default()
     }
 
-    /// The fully-qualified entity type (`Ns::Type`) of the `context.<path>`
-    /// field, or of its elements if it is a set; `None` when the path does not
-    /// resolve to a single entity type. [`resolve_context_path`] reports only
-    /// an entity's basename, which cannot tell `A::Score` from `B::Score`.
-    ///
-    /// [`resolve_context_path`]: ActionHandle::resolve_context_path
-    pub fn context_entity_type(&self, path: &[String]) -> Option<String> {
+    /// The Cedar type of the `context.<path>` field, when every attribute along
+    /// it is declared (an optional one need not be present). `None` when the
+    /// path does not resolve, or runs through an attribute lowering hoisted
+    /// (see [`resolve_context_path`](ActionHandle::resolve_context_path)).
+    pub(crate) fn context_path_cedar_type(&self, path: &[String]) -> Option<&Type> {
         let (head, rest) = path.split_first()?;
-        let mut current = record_attrs(self.action.context())?
+        if crate::api::is_hoisted_name(head) {
+            return None;
+        }
+        // `context()` is `None` for an `external` action (Cedar 4.14, RFC 116).
+        let mut current = record_attrs(self.action.context()?)?
             .get_attr(head)?
             .attr_type
             .as_ref();
         for seg in rest {
             current = record_attrs(current)?.get_attr(seg)?.attr_type.as_ref();
         }
-        if let Type::Set {
-            element_type: Some(inner),
-        } = current
-        {
-            current = inner.as_ref();
+        Some(current)
+    }
+
+    /// The Cedar type of the attribute `path` of the entity type `ety`, when
+    /// every attribute along it is declared. `id` and `type` are attributes
+    /// like any other, as in Cedar.
+    pub(crate) fn scope_attribute_cedar_type(
+        &self,
+        ety: &EntityType,
+        path: &[String],
+    ) -> Option<&Type> {
+        let (first, rest) = path.split_first()?;
+        let mut current = self.schema.get_entity_type(ety)?.attr(first)?.attr_type.as_ref();
+        for seg in rest {
+            current = record_attrs(current)?.get_attr(seg)?.attr_type.as_ref();
         }
-        match current {
-            Type::Entity(EntityKind::Entity(lub)) => {
-                lub.get_single_entity().map(|et| et.name().to_string())
-            }
-            _ => None,
-        }
+        Some(current)
     }
 
     /// Resolve a `context.<seg0>.<seg1>…` field path against the scoped
@@ -139,55 +156,75 @@ impl ActionHandle<'_> {
     /// against `input`, and `context.principal` resolves only if the context
     /// record actually declares a `principal` field (matching Cedar, where
     /// `context.principal` is a plain field access, not the request scope).
+    ///
+    /// The attributes lowering hoists into the context (`<rule>__temporal_<n>`,
+    /// `providers`) are not part of the request a caller supplies, so a path
+    /// through one does not resolve.
     pub fn resolve_context_path(&self, path: &[String]) -> PathResolution {
         let Some(head) = path.first() else {
             return PathResolution::HeadMissing;
         };
-        let Some(attrs) = record_attrs(self.action.context()) else {
+        if crate::api::is_hoisted_name(head) {
+            return PathResolution::HeadMissing;
+        }
+        // An `external` action's context is unknown, so no head resolves.
+        let Some(attrs) = self.action.context().and_then(record_attrs) else {
             return PathResolution::HeadMissing;
         };
         resolve_in(attrs, head, &path[1..])
     }
 
-    /// The scoped action's principal entity type as a rich `entity:<Name>`
-    /// string, if it declares exactly one principal type. `None` when the
-    /// action admits several (a LUB the coarse projection does not model) or
-    /// none — the bare `principal` term is then left untyped.
-    /// The scope entity's type, narrowed by `narrow` when given.
-    ///
-    /// Exactly one candidate yields the TAGGED type (`entity:Staff`). Several yield the
-    /// UNTAGGED `entity`, which is the honest answer — the arriving entity is some one of
-    /// them and the tag is not statically known, but it IS an entity. Returning `None`
-    /// there was fail-open: every comparison check is guarded on both operands having a
-    /// type, so an entity compared against a STRING or an INT — a genuine type error
-    /// Cedar rejects — went unreported whenever an action permitted more than one type.
-    fn scope_entity_type<'t>(
-        &self,
-        tys: impl Iterator<Item = &'t EntityType>,
-        narrow: Option<&crate::api::ScopeConstraint>,
-    ) -> Option<RichType> {
-        let mut admitted = tys.filter(|ety| narrow.is_none_or(|n| self.admits(n, ety)));
-        let first = admitted.next()?;
-        if admitted.next().is_some() {
-            return Some(RichType::Entity(None));
-        }
-        Some(RichType::Entity(Some(first.name().basename().to_string())))
+    /// The action's uid, as Cedar renders it (`Ns::Action::"Id"`).
+    pub(crate) fn uid(&self) -> String {
+        self.action.name().to_string()
     }
 
-    /// [`principal_type`](ActionHandle::principal_type), narrowed by the rule's scope.
-    pub fn principal_type_narrowed(
-        &self,
-        narrow: Option<&crate::api::ScopeConstraint>,
-    ) -> Option<RichType> {
-        self.scope_entity_type(self.action.applies_to_principals(), narrow)
+    /// The action's full declared context record type; `None` for an
+    /// `external` action, whose context is unknown.
+    pub(crate) fn context_type(&self) -> Option<&Type> {
+        self.action.context_type()
     }
 
-    /// [`resource_type`](ActionHandle::resource_type), narrowed by the rule's scope.
-    pub fn resource_type_narrowed(
+    /// The entity types the action admits for `scope` (`"principal"` or
+    /// `"resource"`) that the rule's scope narrowing admits too: the scope
+    /// types of the request environments the rule decides, in the order of
+    /// their names (Cedar's order of entity types).
+    pub(crate) fn admitted_types(
         &self,
+        scope: &str,
         narrow: Option<&crate::api::ScopeConstraint>,
+    ) -> Vec<&EntityType> {
+        let mut types: Vec<&EntityType> = match scope {
+            "principal" => self.action.applies_to_principals().collect(),
+            "resource" => self.action.applies_to_resources().collect(),
+            _ => Vec::new(),
+        };
+        // The applies-to spec is a hash set, whose order varies from run to run;
+        // the request environments are visited in this order, and a check reports
+        // the first environment that fails, so it is sorted.
+        types.sort();
+        types
+            .into_iter()
+            .filter(|ety| narrow.is_none_or(|n| self.admits(n, ety)))
+            .collect()
+    }
+
+    /// The declared attributes of the entity type `ety`, when it is declared.
+    pub(crate) fn entity_attributes(&self, ety: &EntityType) -> Option<&Attributes> {
+        self.schema.get_entity_type(ety).map(|e| e.attributes())
+    }
+
+    /// The declared type at attribute `path` of the entity type `ety`, one of this
+    /// action's scope types: its type in one request environment. `None` when the
+    /// path does not resolve there, which the path checks report.
+    pub(crate) fn scope_attribute_type_of(
+        &self,
+        ety: &EntityType,
+        path: &[String],
     ) -> Option<RichType> {
-        self.scope_entity_type(self.action.applies_to_resources(), narrow)
+        let (first, rest) = path.split_first()?;
+        let declared = self.schema.get_entity_type(ety)?;
+        resolve_one(declared, first, rest).ok()
     }
 
     /// Whether this action admits ANY request environment under `principal` / `resource`
@@ -241,23 +278,6 @@ impl ActionHandle<'_> {
         }
     }
 
-    /// The declared type at attribute `path` under this action's `scope` entity
-    /// (`"principal"` or `"resource"`), or `None` when it does not resolve.
-    ///
-    /// Typing only: a caller wanting to know WHY a path did not resolve, so it can
-    /// say so, uses [`resolve_scope_path`](ActionHandle::resolve_scope_path).
-    pub fn scope_attribute_type(
-        &self,
-        scope: &str,
-        path: &[String],
-        narrow: Option<&crate::api::ScopeConstraint>,
-    ) -> Option<RichType> {
-        match self.resolve_scope_path(scope, path, narrow) {
-            ScopePath::Resolved(ty) => Some(ty),
-            _ => None,
-        }
-    }
-
     /// Resolve attribute `path` under this action's `scope` entity, explaining any
     /// failure so it can be reported rather than silently ignored.
     ///
@@ -266,11 +286,11 @@ impl ActionHandle<'_> {
     /// record-typed attribute, mirroring how a context path resolves.
     ///
     /// A scope may permit SEVERAL entity types. The path is resolved against every
-    /// one of them and must resolve the same way for all, because the condition is
-    /// evaluated whichever entity the request carries — the same rule context paths
-    /// follow across the actions a hoisted leaf attaches to. A path that resolves to
-    /// different types is therefore [`Ambiguous`](ScopePath::Ambiguous) rather than
-    /// silently one of them.
+    /// one of them, because the condition is evaluated whichever entity the request
+    /// carries. A path that resolves to different types is
+    /// [`Ambiguous`](ScopePath::Ambiguous) rather than silently one of them: a
+    /// provider argument needs one type, and the temporal validator types the path
+    /// in each request environment instead, as Cedar does.
     pub fn resolve_scope_path(
         &self,
         scope: &str,
@@ -346,9 +366,10 @@ impl ActionHandle<'_> {
         }
 
         // Type it only when every permitted entity type agrees. Compare the QUALIFIED
-        // entity types' resolved types as rendered; a disagreement means the
-        // comparison is a mismatch for at least one admissible request, which is
-        // reported rather than silently resolved to one side.
+        // entity types' resolved types as rendered; a disagreement is reported as
+        // `Ambiguous` rather than silently resolved to one side. A provider argument
+        // rejects it; the temporal validator types the path in each request
+        // environment instead.
         let mut types: Vec<RichType> = resolved.iter().map(|(_, t)| t.clone()).collect();
         types.sort();
         types.dedup();
@@ -362,7 +383,7 @@ impl ActionHandle<'_> {
             rendered.sort();
             return ScopePath::Ambiguous { types: rendered };
         }
-        ScopePath::Resolved(types.remove(0))
+        ScopePath::Resolved
     }
 }
 
@@ -394,24 +415,13 @@ enum ScopePathFailure {
 }
 
 /// Resolve `first` (then `rest`) against one entity type's declared attributes.
-///
-/// `.id` / `.type` project the entity uid when no attribute of that name is declared,
-/// and the uid's parts are strings. A DECLARED attribute shadows the projection, which
-/// the attribute lookup below already handles by running first — matching the
-/// interpreter, which looks a supplied attribute up before falling back to the uid.
+/// `id` and `type` are attributes like any other, as in Cedar.
 fn resolve_one(
     declared: &ValidatorEntityType,
     first: &str,
     rest: &[String],
 ) -> Result<RichType, ScopePathFailure> {
     let Some(attr) = declared.attr(first) else {
-        if matches!(first, "id" | "type") {
-            return match rest.first() {
-                None => Ok(RichType::String),
-                // The projection is a string, so it has no fields.
-                Some(segment) => Err(ScopePathFailure::NonRecord(segment.clone())),
-            };
-        }
         return Err(ScopePathFailure::Missing(first.to_string()));
     };
     let mut ty = &attr.attr_type;
@@ -434,8 +444,8 @@ fn resolve_one(
 /// context path does not: the scope may permit several entity types, which can
 /// declare the same attribute differently.
 pub enum ScopePath {
-    /// The full path resolved on every permitted entity type, to this type.
-    Resolved(RichType),
+    /// The full path resolved on every permitted entity type, to one type.
+    Resolved,
     /// A segment is declared on NONE of the permitted entity types, listed in
     /// sorted order so the diagnostic does not depend on hash iteration order.
     Missing {
@@ -445,7 +455,8 @@ pub enum ScopePath {
     /// A segment tried to traverse into a non-record type.
     NonRecord { segment: String },
     /// The path resolved on every permitted entity type but to different types,
-    /// so there is no single type the condition can be checked against. The
+    /// so it has no single type: a provider argument, which needs one, rejects
+    /// it, and the temporal validator types it in each request environment. The
     /// types are the rendered rich-type names, for the diagnostic.
     Ambiguous { types: Vec<String> },
     /// Nothing to resolve against, and nothing to report: no attribute tail, an
@@ -472,13 +483,13 @@ pub struct EntityTypeHandle<'a> {
 
 impl EntityTypeHandle<'_> {
     /// The permitted eids if this is an enum entity type; `None` for a
-    /// standard entity type.
+    /// standard or `external` (Cedar 4.14, RFC 116) entity type.
     pub fn enum_eids(&self) -> Option<Vec<String>> {
         match &self.ety.kind {
             ValidatorEntityTypeKind::Enum(eids) => {
                 Some(eids.iter().map(|e| e.as_ref().to_string()).collect())
             }
-            ValidatorEntityTypeKind::Standard(_) => None,
+            ValidatorEntityTypeKind::Standard(_) | ValidatorEntityTypeKind::External => None,
         }
     }
 }
@@ -486,7 +497,7 @@ impl EntityTypeHandle<'_> {
 /// The `input` record's attributes of an action's context, if the context is
 /// a record carrying an `input` record attribute (the MCP convention).
 fn input_attrs(action: &ValidatorActionId) -> Option<&Attributes> {
-    let input_ty = record_attrs(action.context())?
+    let input_ty = record_attrs(action.context()?)?
         .get_attr("input")?
         .attr_type
         .as_ref();
@@ -534,11 +545,13 @@ pub enum ArrayElem {
     Of(Box<RichType>),
 }
 
-/// The "rich" type vocabulary the temporal (and provider) checkers compare
-/// against — a small, coarse projection of Cedar's `Type` that the dialects own
-/// (insulating them from Cedar's internal type representation). Replaces the
-/// former stringly-typed projection; [`RichType::render`] reproduces those exact
-/// strings for diagnostics.
+/// The "rich" type vocabulary the temporal checkers compare against — a
+/// projection of Cedar's `Type` that the dialects own (insulating them from
+/// Cedar's internal type representation). It is exact for the types a schema
+/// declares: an entity type by its qualified name, a record with its
+/// attributes, and each extension type by its name, so two operands have equal
+/// rich types exactly when they have equal Cedar types. [`RichType::render`]
+/// reproduces the former stringly-typed projection's strings for diagnostics.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum RichType {
     /// Cedar `Long` (rendered `"int"`).
@@ -549,13 +562,17 @@ pub enum RichType {
     /// A timepoint index (a `tp` binder); distinct from `Long` so a timepoint is
     /// not silently comparable to an integer.
     Timepoint,
+    /// A Cedar extension type other than `decimal` (`datetime`, `ipaddr`,
+    /// `duration`), by name.
+    Extension(String),
     /// An array/set, with its element state.
     Array(ArrayElem),
-    /// A record (rendered `"object"`).
-    Record,
-    /// An entity: `Some(name)` is a single known type (`"entity:Name"`), `None`
-    /// is an untagged entity — a multi-type scope root or Cedar's `AnyEntity`
-    /// (`"entity"`).
+    /// A record (rendered `"object"`): each attribute's name, whether it is
+    /// required, and its type, in name order.
+    Record(Vec<(String, bool, RichType)>),
+    /// An entity: `Some(name)` is a single known type, by its qualified name
+    /// (`"entity:Ns::Name"`); `None` is an untagged entity — Cedar's `AnyEntity`,
+    /// which no declared type is (`"entity"`).
     Entity(Option<String>),
     Never,
 }
@@ -570,10 +587,11 @@ impl std::fmt::Display for RichType {
             RichType::Decimal => f.write_str("decimal"),
             RichType::Bool => f.write_str("boolean"),
             RichType::Timepoint => f.write_str("timepoint"),
+            RichType::Extension(name) => f.write_str(name),
             RichType::Array(ArrayElem::Unknown) => f.write_str("array"),
             RichType::Array(ArrayElem::Mixed) => f.write_str("array<?>"),
             RichType::Array(ArrayElem::Of(inner)) => write!(f, "array<{inner}>"),
-            RichType::Record => f.write_str("object"),
+            RichType::Record(_) => f.write_str("object"),
             RichType::Entity(None) => f.write_str("entity"),
             RichType::Entity(Some(name)) => write!(f, "entity:{name}"),
             RichType::Never => f.write_str("never"),
@@ -594,58 +612,67 @@ impl RichType {
     }
 
     /// Whether an `actual` value is acceptable where `self` is the DECLARED
-    /// (expected) type — the former `param_accepts`. Equal types pass; two
-    /// entities pass iff both are tagged and equal (an untagged side passes);
-    /// arrays match element-wise with a bare array pairing any array and a
-    /// `Mixed` element never matching a different array. (The former `null`
-    /// escape hatch is dropped — no producer ever yielded it.)
+    /// (expected) type — the former `param_accepts`: the two types are equal.
+    /// A field of one entity type holds no entity of another, a field of one
+    /// record shape no record of another, and a `datetime` field no string.
     pub fn accepts(&self, actual: &RichType) -> bool {
-        if self == actual {
-            return true;
-        }
-        match (self, actual) {
-            (RichType::Entity(x), RichType::Entity(y)) => match (x, y) {
-                (Some(a), Some(b)) => a == b,
-                _ => true,
-            },
-            (RichType::Array(ee), RichType::Array(aa)) => match (ee, aa) {
-                (ArrayElem::Unknown, _) | (_, ArrayElem::Unknown) => true,
-                (ArrayElem::Mixed, _) | (_, ArrayElem::Mixed) => false,
-                (ArrayElem::Of(e), ArrayElem::Of(a)) => e.accepts(a),
-            },
-            _ => false,
-        }
+        self == actual
     }
 
     /// Whether two operands are comparable with `==` — the former
-    /// `types_compatible`. Symmetric variant of [`accepts`](Self::accepts) with
-    /// numeric widening (a no-op today, since only `Long` is numeric) and with
-    /// ANY two entities comparable regardless of tag.
-    pub fn compatible(&self, other: &RichType) -> bool {
-        if self == other || (self.is_numeric() && other.is_numeric()) {
-            return true;
-        }
-        match (self, other) {
-            (RichType::Entity(_), RichType::Entity(_)) => true,
-            (RichType::Array(x), RichType::Array(y)) => match (x, y) {
-                (ArrayElem::Unknown, _) | (_, ArrayElem::Unknown) => true,
-                (ArrayElem::Mixed, _) | (_, ArrayElem::Mixed) => false,
-                (ArrayElem::Of(a), ArrayElem::Of(b)) => a.compatible(b),
-            },
-            _ => false,
-        }
+    /// `types_compatible`: equal types, or two entities of any types, when the
+    /// equality does not have the shape of one that can bind a variable
+    /// (`binding` is false; `check::eq_restricted_var`). An equality that binds
+    /// a variable gives it the other side's value, so an equality of that shape
+    /// needs equal types, whether or not it binds: a `User` variable cannot hold
+    /// a `Gateway`.
+    pub fn compatible(&self, other: &RichType, binding: bool) -> bool {
+        self == other
+            || (!binding && matches!((self, other), (RichType::Entity(_), RichType::Entity(_))))
     }
 
     /// User-facing rendering for diagnostics — the former `display_type`:
-    /// `array<?>` reads as "mixed-type array", an entity shows just its tag, and
-    /// a known array element is rendered recursively (tags stripped).
+    /// `array<?>` reads as "mixed-type array", an entity shows just its
+    /// qualified type, a record its attributes, and a known array element is
+    /// rendered recursively.
     pub fn display(&self) -> String {
         match self {
             RichType::Array(ArrayElem::Mixed) => "mixed-type array".to_string(),
             RichType::Array(ArrayElem::Of(inner)) => format!("array<{}>", inner.display()),
             RichType::Entity(Some(tag)) => tag.clone(),
-            // Scalars, `array` (Unknown), `entity` (untagged), `object`, `never`.
+            RichType::Record(attrs) => {
+                let attrs: Vec<String> = attrs
+                    .iter()
+                    .map(|(name, required, ty)| {
+                        format!("{name}{}: {}", if *required { "" } else { "?" }, ty.display())
+                    })
+                    .collect();
+                format!("{{ {} }}", attrs.join(", "))
+            }
+            // Scalars, `array` (Unknown), `entity` (untagged), `never`.
             _ => self.render(),
+        }
+    }
+}
+
+/// What a temporal finding says of a binder or a term of one of Cedar's
+/// extension types other than `decimal`: temporal conditions do not support
+/// them (the specification's `CedarType.temporalSupported`).
+pub(crate) const UNSUPPORTED_EXTENSION: &str =
+    "temporal conditions do not support Cedar's `datetime`, `duration`, and `ipaddr` types";
+
+impl RichType {
+    /// Whether the type is, or holds as a set element or record attribute, one
+    /// of Cedar's extension types other than `decimal`, which temporal
+    /// conditions do not support (`UNSUPPORTED_EXTENSION`).
+    pub fn holds_unsupported_extension(&self) -> bool {
+        match self {
+            RichType::Extension(_) => true,
+            RichType::Array(ArrayElem::Of(inner)) => inner.holds_unsupported_extension(),
+            RichType::Record(attrs) => attrs
+                .iter()
+                .any(|(_, _, t)| t.holds_unsupported_extension()),
+            _ => false,
         }
     }
 }
@@ -656,21 +683,28 @@ pub fn rich_type(ty: &Type) -> RichType {
         Type::Long => RichType::Long,
         Type::String => RichType::String,
         Type::Bool(_) => RichType::Bool,
-        // `decimal` is comparison-relevant; `datetime`/`ipaddr` (and any
-        // other extension) collapse to `string`, matching the prior
-        // hand-rolled projection's coarse mapping. (A finer extension-type
-        // treatment would be a deliberate behavior change, not this dedup.)
         Type::ExtensionType { name } => match name.basename().as_ref() {
             "decimal" => RichType::Decimal,
-            _ => RichType::String,
+            other => RichType::Extension(other.to_string()),
         },
         Type::Set {
             element_type: Some(inner),
         } => RichType::Array(ArrayElem::Of(Box::new(rich_type(inner)))),
         Type::Set { element_type: None } => RichType::Array(ArrayElem::Unknown),
-        Type::Record { .. } => RichType::Record,
+        Type::Record { attrs, .. } => RichType::Record(
+            attrs
+                .iter()
+                .map(|(name, attr)| {
+                    (
+                        name.to_string(),
+                        attr.is_required(),
+                        rich_type(&attr.attr_type),
+                    )
+                })
+                .collect(),
+        ),
         Type::Entity(EntityKind::Entity(lub)) => match lub.get_single_entity() {
-            Some(et) => RichType::Entity(Some(et.name().basename().to_string())),
+            Some(et) => RichType::Entity(Some(et.to_string())),
             None => RichType::Entity(None),
         },
         Type::Entity(EntityKind::AnyEntity) => RichType::Entity(None),
@@ -682,7 +716,7 @@ pub fn rich_type(ty: &Type) -> RichType {
 mod tests {
     use std::collections::BTreeSet;
 
-    use super::{RichType, SchemaInfo};
+    use super::{PathResolution, RichType, SchemaInfo};
 
     struct ActionIdCase {
         label: &'static str,
@@ -962,5 +996,82 @@ mod tests {
                     .is_none()
             );
         }
+    }
+
+    /// A schema with Cedar 4.14 (RFC 116) `external` declarations next to
+    /// their normal counterparts, so each external assertion has a control.
+    fn external_schema_info() -> SchemaInfo {
+        let schema_source = r#"
+            namespace Ext {
+                entity User;
+                entity Mode enum ["on", "off"];
+                external entity Remote;
+                action "Normal" appliesTo {
+                    principal: [User],
+                    resource: [User],
+                    context: { input: { owner: User } }
+                };
+                external action "Outside";
+            }
+        "#;
+        let schema = cedar_policy::Schema::from_cedarschema_str(schema_source)
+            .unwrap_or_else(|e| panic!("external fixture schema should parse: {e:?}"))
+            .0;
+        SchemaInfo::from_validator_schema(schema.as_ref())
+    }
+
+    #[test]
+    fn external_action_has_no_context_and_input_helpers_are_empty() {
+        let info = external_schema_info();
+        let path = ["input".to_string(), "owner".to_string()];
+
+        // Control: the normal action's input field resolves.
+        let normal = info.action(Some("Ext"), "Normal").expect("normal action");
+        assert_eq!(
+            normal.input_field_type("owner"),
+            Some(RichType::Entity(Some("Ext::User".to_string())))
+        );
+        assert_eq!(normal.input_field_names(), vec!["owner".to_string()]);
+        assert!(matches!(
+            normal.resolve_context_path(&path),
+            PathResolution::Resolved(RichType::Entity(Some(_)))
+        ));
+        assert_eq!(
+            normal
+                .context_path_cedar_type(&path)
+                .map(ToString::to_string)
+                .as_deref(),
+            Some("Ext::User")
+        );
+
+        // The external action is declared, but its context is unknown.
+        let external = info
+            .action(Some("Ext"), "Outside")
+            .expect("external action");
+        assert!(matches!(
+            external.resolve_context_path(&path),
+            PathResolution::HeadMissing
+        ));
+        assert!(external.context_path_cedar_type(&path).is_none());
+        assert_eq!(external.input_field_type("owner"), None);
+        assert!(external.input_field_names().is_empty());
+    }
+
+    #[test]
+    fn external_entity_has_no_enum_eids_while_enum_entity_does() {
+        let info = external_schema_info();
+        let remote = info
+            .entity_type(Some("Ext"), "Remote")
+            .expect("external entity type is declared");
+        assert!(remote.enum_eids().is_none());
+
+        let modes: BTreeSet<_> = info
+            .entity_type(Some("Ext"), "Mode")
+            .expect("enum entity type")
+            .enum_eids()
+            .expect("enum IDs")
+            .into_iter()
+            .collect();
+        assert_eq!(modes, BTreeSet::from(["on".to_string(), "off".to_string()]));
     }
 }

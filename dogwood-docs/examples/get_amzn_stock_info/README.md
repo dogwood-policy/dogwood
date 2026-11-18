@@ -7,6 +7,10 @@ MCP manifest's `inputSchema`, so in the generated Drupe schema it lands at
 against it. The rule allows `GetStockInfo` only when the requested stock is
 `AMZN`; everything else is denied.
 
+`schema.cedarschema` is the output of
+`dogwood schema mcp --manifest dogwood-language/mcp_tools.json`, run from the
+package root with a `dogwood` built with the `mcp-schema` feature.
+
 The trace shows both cases:
 
 - `@0` — alice requests `GetStockInfo` for `AMZN` → **allow**.

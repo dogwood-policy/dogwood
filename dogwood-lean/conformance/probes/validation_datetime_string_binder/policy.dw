@@ -1,0 +1,7 @@
+// A `String` variable binds the `datetime` field `input.at`. Not every value of the field is a
+// `String`, so the specification rejects it (predicate arguments), and so does the crate. A
+// validator that typed the field as a `String` would accept the leaf, which never matches.
+permit (principal, action == Drupe::Action::"Read", resource)
+when temporal {
+    exists (t: String). formerly within 1h Drupe::Action::"Login"::response{ input.user: context.input.user, input.at: t }
+};

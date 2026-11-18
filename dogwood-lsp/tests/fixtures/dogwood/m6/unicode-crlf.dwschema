@@ -1,0 +1,5 @@
+// event schema 🚀
+decision event <A>::request {
+    ...inputs(A),
+    pin caller: principalType(A) = principal,
+}

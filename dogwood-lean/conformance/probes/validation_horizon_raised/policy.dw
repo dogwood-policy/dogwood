@@ -1,0 +1,12 @@
+// Two nested 24h windows (a 48h horizon), under an event schema that raises `max_horizon` to 48h:
+// both validate it. The read at @100000, 27.8h after the login response, is allowed through the
+// intermediate login request at @50000, which lies within 24h of the response.
+@id("read_after_login_nested")
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 24h (formerly within 24h Drupe::Action::"Login"::response{ input.user: context.input.user })
+};

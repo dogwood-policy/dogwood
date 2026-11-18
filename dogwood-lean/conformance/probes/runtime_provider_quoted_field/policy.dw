@@ -1,0 +1,5 @@
+// A provider's output record has a field named `content-type`, which is not a Cedar identifier.
+// The shared provider type writes it as a string, as Cedar's schema printer does, so lowering
+// succeeds. Both allow the `Read`.
+permit (principal, action == Drupe::Action::"Read", resource)
+when { Http::Head()["content-type"] == "text/plain" };

@@ -353,6 +353,28 @@ fn esc(s: &str) -> String {
     s.replace('{', "{{").replace('}', "}}")
 }
 
+/// One attribute-path segment as the prose shows it: bare when it is a Cedar
+/// identifier, otherwise as a quoted Cedar string. A segment that is not an
+/// identifier (`"input.user"`, `"a b"`) could otherwise read the same as a
+/// path or a group-and-field phrase (`input.user`, `a b`), so two attribute
+/// accesses with different meanings would get the same explanation.
+fn path_segment(s: &str) -> String {
+    if crate::render::is_ident(s) {
+        s.to_string()
+    } else {
+        crate::render::quote(s)
+    }
+}
+
+/// An attribute path (`input.user`) with each segment shown by
+/// [`path_segment`], so `a.b` and `"a.b"` read differently.
+fn join_path(path: &[String]) -> String {
+    path.iter()
+        .map(|seg| path_segment(seg))
+        .collect::<Vec<_>>()
+        .join(".")
+}
+
 impl fmt::Display for Phrase {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(&self.to_text())
@@ -529,12 +551,12 @@ fn with_short_names<R>(paths: &[Vec<String>], f: impl FnOnce() -> R) -> R {
     let from_input: BTreeSet<String> = paths
         .iter()
         .filter(|p| p.len() > 1 && p[0] == "input")
-        .map(|p| p[1..].join("."))
+        .map(|p| join_path(&p[1..]))
         .collect();
     let ambiguous: BTreeSet<String> = paths
         .iter()
         .filter(|p| p.first().is_some_and(|g| g != "input"))
-        .map(|p| p.join("."))
+        .map(|p| join_path(p))
         .filter(|name| from_input.contains(name))
         .collect();
     let previous = AMBIGUOUS_SHORT_NAMES.with(|a| a.replace(ambiguous));
@@ -587,7 +609,7 @@ fn binder_display(name: &str) -> String {
 fn short_input_name(path: &[String]) -> Option<String> {
     match path {
         [group, rest @ ..] if group == "input" && !rest.is_empty() => {
-            let name = rest.join(".");
+            let name = join_path(rest);
             let ambiguous = AMBIGUOUS_SHORT_NAMES.with(|a| a.borrow().contains(&name));
             (!ambiguous).then_some(name)
         }
@@ -599,8 +621,8 @@ fn short_input_name(path: &[String]) -> Option<String> {
 fn pin_paths(schema: &EventSchema) -> Vec<Vec<String>> {
     let mut out = Vec::new();
     for decl in &schema.decls {
-        for (name, pin) in declared_pins(&decl.fields) {
-            out.push(name.split('.').map(str::to_string).collect());
+        for (path, pin) in declared_pins(&decl.fields) {
+            out.push(path);
             if pin.root == PinRoot::Context {
                 out.push(pin.context_path.clone());
             }
@@ -710,7 +732,7 @@ fn term_paths(t: &tast::Term, out: &mut Vec<Vec<String>>) {
 /// fields ("Only past events from this request's principal count."), else
 /// one such sentence per pinning kind, or `None` if nothing is pinned.
 fn pin_preamble(schema: &EventSchema) -> Option<Phrase> {
-    let per_kind: Vec<(String, Vec<(String, &PinValue)>)> = schema
+    let per_kind: Vec<(String, Vec<(Vec<String>, &PinValue)>)> = schema
         .decls
         .iter()
         .map(|d| (d.kind.clone(), declared_pins(&d.fields)))
@@ -742,11 +764,15 @@ fn pin_preamble(schema: &EventSchema) -> Option<Phrase> {
 /// x count." A pin that compares an event field with the request's
 /// same-named value reads "… this request's f"; any other pin reads "whose f
 /// is v".
-fn pin_sentence(events: &str, pins: &[(String, &PinValue)]) -> String {
+fn pin_sentence(events: &str, pins: &[(Vec<String>, &PinValue)]) -> String {
     let mut same = Vec::new();
     let mut whose = Vec::new();
-    for (field, pin) in pins {
-        match same_as_request(field, pin) {
+    for (path, pin) in pins {
+        // Shown like any other attribute path: a non-identifier segment is
+        // quoted, so the comparison with the request's field below and the
+        // prose agree on one rendering.
+        let field = join_path(path);
+        match same_as_request(&field, pin) {
             Some(s) => same.push(s),
             None => whose.push(format!("whose {field} is {}", pin_ref(pin))),
         }
@@ -773,32 +799,33 @@ fn same_as_request(field: &str, pin: &PinValue) -> Option<String> {
             _ => None,
         },
         PinRoot::Context => {
-            let request_field = short_input_name(path).unwrap_or_else(|| path.join("."));
+            let request_field = short_input_name(path).unwrap_or_else(|| join_path(path));
             (request_field == field).then(|| format!("with this request's {field}"))
         }
     }
 }
 
-fn declared_pins(fields: &[FieldSpec]) -> Vec<(String, &PinValue)> {
+fn declared_pins(fields: &[FieldSpec]) -> Vec<(Vec<String>, &PinValue)> {
     let mut pins = Vec::new();
-    collect_pins(fields, "", &mut pins);
+    collect_pins(fields, &[], &mut pins);
     pins
 }
 
-/// Every pin in `fields`, in declaration order, named by its dotted path.
+/// Every pin in `fields`, in declaration order, named by its path segments.
 /// Recurses into record-typed fields, so a pin nested in a group
 /// (`__drupe: { pin session_id: … }`) is reported as `__drupe.session_id`
 /// rather than dropped: the engine enforces it all the same.
-fn collect_pins<'a>(fields: &'a [FieldSpec], prefix: &str, out: &mut Vec<(String, &'a PinValue)>) {
+fn collect_pins<'a>(
+    fields: &'a [FieldSpec],
+    prefix: &[String],
+    out: &mut Vec<(Vec<String>, &'a PinValue)>,
+) {
     for f in fields {
         let FieldSpec::Named { name, ty, pin, .. } = f else {
             continue;
         };
-        let path = if prefix.is_empty() {
-            name.clone()
-        } else {
-            format!("{prefix}.{name}")
-        };
+        let mut path = prefix.to_vec();
+        path.push(name.clone());
         if let Some(pin) = pin {
             out.push((path.clone(), pin));
         }
@@ -1033,10 +1060,12 @@ fn cedar_expr(e: &Expr, facts: &SchemaFacts) -> Phrase {
         }
         ExprKind::BinaryApp { op, left, right } => match op {
             // `&&` / `||` operands sit on their own rows, so the layout
-            // already shows the grouping.
+            // already shows the grouping -- except for an `if`, whose
+            // open-ended ", otherwise {2}" slot would read a following row as
+            // part of its else-branch: fence it (see `connective_operand`).
             BinOp::And | BinOp::Or => {
-                let l = cedar_expr(left, facts);
-                let r = cedar_expr(right, facts);
+                let l = connective_operand(left, facts);
+                let r = connective_operand(right, facts);
                 let template = if *op == BinOp::And {
                     "{0} and {1}"
                 } else {
@@ -1071,7 +1100,7 @@ fn cedar_expr(e: &Expr, facts: &SchemaFacts) -> Phrase {
             };
             let inner = cedar_operand(expr, facts);
             Phrase::inline(
-                format!("the {} field of {{0}}", esc(attr)),
+                format!("the {} field of {{0}}", esc(&path_segment(attr))),
                 vec![inner],
                 span,
             )
@@ -1079,7 +1108,7 @@ fn cedar_expr(e: &Expr, facts: &SchemaFacts) -> Phrase {
         ExprKind::HasAttr { expr, attrs } => {
             let inner = cedar_operand(expr, facts);
             Phrase::inline(
-                format!("{{0}} has {}", esc(&attrs.join("."))),
+                format!("{{0}} has {}", esc(&join_path(attrs))),
                 vec![inner],
                 span,
             )
@@ -1149,7 +1178,7 @@ fn cedar_expr(e: &Expr, facts: &SchemaFacts) -> Phrase {
             let mut template_parts = Vec::new();
             let mut children = Vec::new();
             for (i, (k, v)) in entries.iter().enumerate() {
-                template_parts.push(format!("{}: {{{i}}}", esc(k)));
+                template_parts.push(format!("{}: {{{i}}}", esc(&path_segment(k))));
                 children.push(cedar_expr(v, facts));
             }
             Phrase::inline(
@@ -1209,6 +1238,18 @@ fn cedar_operand(e: &Expr, facts: &SchemaFacts) -> Phrase {
         Phrase::inline("({0})", vec![p], None)
     } else {
         p
+    }
+}
+
+/// An operand of `&&` / `||`. Connective operands sit on their own rows, so
+/// they stay bare -- except an `if`: its ", otherwise {2}" slot runs to the
+/// end of the phrase, so a block laid out after it would be indistinguishable
+/// from one inside its else-branch. Fence it like any other operand.
+fn connective_operand(e: &Expr, facts: &SchemaFacts) -> Phrase {
+    if matches!(e.kind, ExprKind::IfThenElse { .. }) {
+        cedar_operand(e, facts)
+    } else {
+        cedar_expr(e, facts)
     }
 }
 
@@ -1348,9 +1389,13 @@ fn rooted_path_phrase(root: cedar_ast::Var, path: &[String]) -> String {
 fn context_path_phrase(path: &[String]) -> String {
     match path {
         [] => "the request context".to_string(),
-        [single] => format!("the request's {single}"),
+        [single] => format!("the request's {}", path_segment(single)),
         _ if let Some(name) = short_input_name(path) => format!("the request's {name}"),
-        [group, rest @ ..] => format!("the request's {group} {}", rest.join(".")),
+        [group, rest @ ..] => format!(
+            "the request's {} {}",
+            path_segment(group),
+            join_path(rest)
+        ),
     }
 }
 
@@ -1367,7 +1412,7 @@ fn scope_path_phrase_of(root: &str, rest: &[String]) -> String {
     if rest.is_empty() {
         format!("the {root}")
     } else {
-        format!("the {root}'s {}", rest.join("."))
+        format!("the {root}'s {}", join_path(rest))
     }
 }
 
@@ -2156,9 +2201,9 @@ fn field_display(path: &[String]) -> String {
     }
     match path {
         [group, rest @ ..] if (group == "output" || group == "input") && !rest.is_empty() => {
-            format!("{group} {}", rest.join("."))
+            format!("{group} {}", join_path(rest))
         }
-        _ => path.join("."),
+        _ => join_path(path),
     }
 }
 

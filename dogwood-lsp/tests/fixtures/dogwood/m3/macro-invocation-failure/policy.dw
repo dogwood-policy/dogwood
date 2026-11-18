@@ -1,0 +1,4 @@
+// Adapted from call_cedar_macro_is_small with an extra argument.
+@id("sell_small")
+permit (principal, action == Drupe::Action::"SellShares", resource)
+when { is_small(context.input.shares, 100) };

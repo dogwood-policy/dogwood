@@ -1,0 +1,13 @@
+// The guide's `read_after_login` policy, over a trace that records a `Read` earlier than the
+// `Login` response before it. The specification's authorizer stamps the `Read` one tick after the
+// response, so the login lies in its window, and allows it; the crate takes the time as given, so
+// the login lies in the future, and denies it.
+@id("read_after_login")
+permit (
+    principal,
+    action == Drupe::Action::"Read",
+    resource
+)
+when temporal {
+    formerly within 1h Drupe::Action::"Login"::response{ input.user: context.input.user }
+};

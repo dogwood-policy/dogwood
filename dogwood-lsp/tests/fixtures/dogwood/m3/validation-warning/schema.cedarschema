@@ -1,0 +1,16 @@
+namespace W {
+  type MeterInput = {
+    note: String
+  };
+
+  entity Staff;
+  entity Gateway;
+
+  action "Meter" appliesTo {
+    principal: [Staff],
+    resource: [Gateway],
+    context: {
+      input: MeterInput
+    }
+  };
+}

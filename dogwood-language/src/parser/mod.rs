@@ -176,14 +176,12 @@ fn tree_measure(root: DepthNode<'_>) -> TreeMeasure {
                 | ExprKind::GetAttr { expr, .. }
                 | ExprKind::Like { expr, .. } => push(Node::Expr(expr)),
                 // The parser keeps `e has a.b.c` as one node with a flat path,
-                // but lowering (`cedarify::to_ast`, through Cedar 4.11's
-                // `ExprBuilder::extended_has_attr`, which has no flat node and
-                // desugars every path) spells a path of `k` segments as a
-                // left-nested `&&` of `k` `has` tests, the last over a `GetAttr`
-                // chain of `k - 1`: `e` ends up exactly `k + 1` levels below the
-                // root `&&` (one, for a single segment). Measure that, so a long
-                // path is refused here, before anything recurses over the
-                // lowered tree.
+                // but lowering (`cedarify::to_ast::lower_has`) spells a path of
+                // `k` segments as a left-nested `&&` of `k` `has` tests, the last
+                // over a `GetAttr` chain of `k - 1`: `e` ends up `k + 1` levels
+                // below the root `&&` (one, for a single segment). Measure that,
+                // so a long path is refused here, before anything recurses over
+                // the lowered tree.
                 ExprKind::HasAttr { expr, attrs } => {
                     let below = attrs.len() + usize::from(attrs.len() > 1);
                     stack.push((Node::Expr(expr), depth + below.max(1)));
@@ -508,14 +506,14 @@ fn format_pest_error(e: &pest::error::Error<Rule>, src: &str) -> String {
             // ── Missing `when`/`unless` before `{` ───────────────────────
             // If `{` appears right after `)`, the user forgot the condition
             // keyword.
-            if let Some(ref token) = found_token {
-                if token == "{" {
-                    let before = src[..at_pos].trim_end();
-                    if before.ends_with(')') {
-                        return "expected `when` or `unless` before `{`; \
-                                condition bodies must be preceded by a keyword"
-                            .to_string();
-                    }
+            if let Some(ref token) = found_token
+                && token == "{"
+            {
+                let before = src[..at_pos].trim_end();
+                if before.ends_with(')') {
+                    return "expected `when` or `unless` before `{`; \
+                            condition bodies must be preceded by a keyword"
+                        .to_string();
                 }
             }
 
@@ -836,7 +834,7 @@ fn build_def_decl(pair: Pair<'_>, limit: usize) -> Result<MacroDef, RawParseErro
     let kind = kind.ok_or_else(|| err("macro definition missing a kind", span))?;
     let (body_src, body_span) =
         body_text.ok_or_else(|| err("macro definition missing a body", span))?;
-    let body = match kind {
+    let mut body = match kind {
         DefKind::Cedar => {
             let expr = parse_cedar_macro_body(&body_src, body_span, limit)?;
             MacroBody::Cedar(expr)
@@ -844,6 +842,9 @@ fn build_def_decl(pair: Pair<'_>, limit: usize) -> Result<MacroDef, RawParseErro
         DefKind::Temporal => temporal::parse_macro_body(&body_src, limit)
             .map_err(|e| err(format!("in `def temporal` body: {e}"), body_span))?,
     };
+    // The body was parsed on its own, so its spans are relative to its start;
+    // make them positions in the source, as the rest of the definition's are.
+    shift_macro_body(&mut body, body_span.start);
     Ok(MacroDef {
         span,
         name,
@@ -884,6 +885,120 @@ fn parse_cedar_macro_body(src: &str, body_span: Span, limit: usize) -> Result<Ex
         message: e.message,
         span: Span::new(body_span.start + e.span.start, body_span.start + e.span.end),
     })
+}
+
+/// Add `by` to every span of a macro body.
+fn shift_macro_body(body: &mut MacroBody, by: usize) {
+    match body {
+        MacroBody::Cedar(e) => shift_expr(e, by),
+        MacroBody::TemporalCondition(c) => shift_condition(c, by),
+        MacroBody::TemporalValue(t) => shift_term(t, by),
+    }
+}
+
+fn shift_expr(e: &mut Expr, by: usize) {
+    e.span = e.span.rebased(by);
+    match &mut e.kind {
+        ExprKind::Lit(_) | ExprKind::Var(_) | ExprKind::Slot(_) | ExprKind::ParamRef { .. } => {}
+        // A block's own condition stays relative to the block's body, whose
+        // span moves.
+        ExprKind::Extension(Extension::Temporal(t)) => t.span = t.span.rebased(by),
+        ExprKind::Call { args, .. } => args.iter_mut().for_each(|a| shift_expr(a, by)),
+        ExprKind::MethodCall { receiver, args, .. } => {
+            shift_expr(receiver, by);
+            args.iter_mut().for_each(|a| shift_expr(a, by));
+        }
+        ExprKind::UnaryApp { expr, .. }
+        | ExprKind::GetAttr { expr, .. }
+        | ExprKind::HasAttr { expr, .. }
+        | ExprKind::Like { expr, .. } => shift_expr(expr, by),
+        ExprKind::BinaryApp { left, right, .. } => {
+            shift_expr(left, by);
+            shift_expr(right, by);
+        }
+        ExprKind::Is { expr, in_expr, .. } => {
+            shift_expr(expr, by);
+            if let Some(e) = in_expr {
+                shift_expr(e, by);
+            }
+        }
+        ExprKind::IfThenElse {
+            cond,
+            then_expr,
+            else_expr,
+        } => {
+            shift_expr(cond, by);
+            shift_expr(then_expr, by);
+            shift_expr(else_expr, by);
+        }
+        ExprKind::Set(elems) => elems.iter_mut().for_each(|e| shift_expr(e, by)),
+        ExprKind::Record(entries) => entries.values_mut().for_each(|e| shift_expr(e, by)),
+    }
+}
+
+fn shift_condition(c: &mut temporal::ast::Condition, by: usize) {
+    use temporal::ast::ConditionKind as K;
+    c.span = c.span.rebased(by);
+    match &mut c.kind {
+        K::And { left, right } | K::Or { left, right } | K::Since { left, right, .. } => {
+            shift_condition(left, by);
+            shift_condition(right, by);
+        }
+        K::Not { inner } | K::Formerly { body: inner, .. } | K::Previous { body: inner, .. } => {
+            shift_condition(inner, by)
+        }
+        K::Exists { body, .. } => shift_condition(body, by),
+        K::Predicate(p) => shift_predicate(p, by),
+        K::Comparison { left, right, .. } => {
+            shift_term(left, by);
+            shift_term(right, by);
+        }
+        K::Tp { .. } | K::SigilRef { .. } => {}
+        K::Call(call) => shift_call(call, by),
+        K::Refine { base, fields, span } => {
+            *span = span.rebased(by);
+            shift_condition(base, by);
+            fields.iter_mut().for_each(|f| shift_term(&mut f.value, by));
+        }
+    }
+}
+
+fn shift_predicate(p: &mut temporal::ast::Predicate, by: usize) {
+    p.span = p.span.rebased(by);
+    p.args.iter_mut().for_each(|a| shift_term(&mut a.value, by));
+}
+
+fn shift_call(call: &mut temporal::ast::Call, by: usize) {
+    use temporal::ast::CallArg;
+    call.span = call.span.rebased(by);
+    for arg in &mut call.args {
+        match arg {
+            CallArg::Condition(c) => shift_condition(c, by),
+            CallArg::Term(t) => shift_term(t, by),
+            CallArg::Within(_) => {}
+        }
+    }
+}
+
+fn shift_term(t: &mut temporal::ast::Term, by: usize) {
+    use temporal::ast::{AggExprKind, Term};
+    match t {
+        Term::Agg(agg) => {
+            agg.span = agg.span.rebased(by);
+            match &mut agg.kind {
+                AggExprKind::Sum { body, .. } | AggExprKind::Count { body, .. } => {
+                    shift_condition(body, by)
+                }
+                AggExprKind::Call(call) => shift_call(call, by),
+            }
+        }
+        Term::Array(items) => items.iter_mut().for_each(|i| shift_term(i, by)),
+        Term::Arith { left, right, .. } => {
+            shift_term(left, by);
+            shift_term(right, by);
+        }
+        _ => {}
+    }
 }
 
 fn build_policy(
